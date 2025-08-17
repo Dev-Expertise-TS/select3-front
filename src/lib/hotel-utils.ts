@@ -15,8 +15,8 @@ export function transformHotelToCardData(
   imageUrl?: string,
   benefits?: string[]
 ): HotelCardData {
-  // slug 생성: 기존 slug가 있으면 사용, 없으면 property_name_kor 기반으로 생성
-  const slug = hotel.slug || (hotel.property_name_kor ? generateSlug(hotel.property_name_kor) : undefined)
+  // slug 사용: 기존 slug가 있으면 사용, 없으면 undefined
+  const slug = hotel.slug || undefined
   
   return {
     sabre_id: hotel.sabre_id,

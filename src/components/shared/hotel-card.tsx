@@ -83,13 +83,6 @@ export function HotelCard({
     promotion: "aspect-[4/3] h-48"
   }
 
-  // 디버깅: slug 값 확인
-  console.log('🔍 Hotel Card Debug:', {
-    sabre_id: hotel.sabre_id,
-    slug: hotel.slug,
-    finalLink: hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`
-  })
-
   return (
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card className={cn(
