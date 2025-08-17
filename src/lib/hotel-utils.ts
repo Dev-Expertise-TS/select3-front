@@ -21,7 +21,6 @@ export function transformHotelToCardData(
       hotel.benefit_5,
       hotel.benefit_6
     ].filter(Boolean),
-    link: hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`,
     slug: hotel.slug,
     rating: hotel.rating,
     price: hotel.price,

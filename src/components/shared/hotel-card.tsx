@@ -15,7 +15,6 @@ export interface HotelCardData {
   property_address: string
   image: string
   benefits: string[]
-  link: string
   slug?: string
   rating?: number
   price?: number
@@ -84,8 +83,15 @@ export function HotelCard({
     promotion: "aspect-[4/3] h-48"
   }
 
+  // 디버깅: slug 값 확인
+  console.log('🔍 Hotel Card Debug:', {
+    sabre_id: hotel.sabre_id,
+    slug: hotel.slug,
+    finalLink: hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`
+  })
+
   return (
-    <Link href={hotel.slug ? `/hotel/${hotel.slug}` : hotel.link}>
+    <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card className={cn(
         "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0",
         variantClasses[variant],
