@@ -490,6 +490,56 @@ export type Database = {
           created_at?: string
         }
       }
+
+      // select_hotel_promotions: 호텔 프로모션 정보
+      select_hotel_promotions: {
+        Row: {
+          promotion_id: number
+          promotion: string
+          promotion_description: string | null
+          booking_date: string | null
+          check_in_date: string | null
+          created_at: string
+        }
+        Insert: {
+          promotion_id?: number
+          promotion: string
+          promotion_description?: string | null
+          booking_date?: string | null
+          check_in_date?: string | null
+          created_at?: string
+        }
+        Update: {
+          promotion_id?: number
+          promotion?: string
+          promotion_description?: string | null
+          booking_date?: string | null
+          check_in_date?: string | null
+          created_at?: string
+        }
+      }
+
+      // select_hotel_promotions_map: 호텔-프로모션 매핑
+      select_hotel_promotions_map: {
+        Row: {
+          id: number
+          sabre_id: number
+          promotion_id: number
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          sabre_id: number
+          promotion_id: number
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          sabre_id?: number
+          promotion_id?: number
+          created_at?: string
+        }
+      }
     }
   }
 }

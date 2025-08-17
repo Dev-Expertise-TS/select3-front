@@ -8,7 +8,9 @@
     "lint": "next lint",
     "start": "next start",
     "check-table": "tsx src/scripts/check-table-structure.ts",
-    "check-all-tables": "tsx src/scripts/check-all-tables.ts"
+    "check-all-tables": "tsx src/scripts/check-all-tables.ts",
+    "check-promotion-tables": "tsx src/scripts/check-promotion-tables.ts",
+    "test-promotion-hook": "tsx src/scripts/test-promotion-hook.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

@@ -50,8 +50,9 @@ export function HotelCard({
   imageClassName,
   contentClassName
 }: HotelCardProps) {
-  // 프로모션 혜택 정보 조회
-  const { data: promotionBenefits } = useHotelPromotion(hotel.sabre_id)
+  // 프로모션 정보 조회
+  const { data: promotions } = useHotelPromotion(hotel.sabre_id)
+  
   // variant별 스타일 클래스
   const variantClasses = {
     default: "border border-gray-200 bg-white shadow-sm hover:shadow-md",
@@ -193,33 +194,28 @@ export function HotelCard({
             </div>
           )}
 
-          {/* 프로모션 혜택 정보 */}
-          {variant === 'promotion' && promotionBenefits && promotionBenefits.length > 0 && (
+          {/* 프로모션 정보 */}
+          {variant === 'promotion' && promotions && promotions.length > 0 && (
             <div className="border-t pt-3 mt-3">
               <div className="mb-3">
                 <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
                 <div className="space-y-2">
-                  {promotionBenefits.map((benefit, index) => (
+                  {promotions.map((promotion, index) => (
                     <div key={index} className="bg-blue-50 p-2 rounded-lg">
                       <div className="text-xs text-gray-700 mb-1 font-medium">
-                        {benefit.benefit}
+                        {promotion.promotion}
                       </div>
-                      {benefit.benefit_description && (
-                        <div className="text-xs text-gray-600 mb-2">
-                          {benefit.benefit_description}
-                        </div>
-                      )}
                       <div className="flex items-center gap-4 text-xs text-gray-500">
-                        {benefit.start_date && (
+                        {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
-                            <span>시작: {benefit.start_date}</span>
+                            <span>예약: {promotion.booking_date}</span>
                           </div>
                         )}
-                        {benefit.end_date && (
+                        {promotion.check_in_date && (
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            <span>종료: {benefit.end_date}</span>
+                            <span>체크인: {promotion.check_in_date}</span>
                           </div>
                         )}
                       </div>
@@ -234,9 +230,7 @@ export function HotelCard({
           <div className="border-t pt-3 mt-3">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                {variant === 'promotion' ? (
-                  <p className="text-xs text-gray-600">프로모션 패키지</p>
-                ) : (
+                {variant !== 'promotion' && (
                   <p className="text-xs text-gray-600">호텔 상세 정보</p>
                 )}
               </div>
