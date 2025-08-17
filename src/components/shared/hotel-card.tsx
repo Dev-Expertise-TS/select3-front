@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin, Coffee, Star, Badge } from "lucide-react"
 import { cn } from "@/lib/utils"
 
