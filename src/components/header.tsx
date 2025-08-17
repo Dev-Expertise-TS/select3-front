@@ -162,7 +162,7 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                  className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -196,7 +196,7 @@ export function Header() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                        className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
                         {item.label}

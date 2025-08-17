@@ -26,7 +26,7 @@ function usePromotionHotels() {
       // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_kor, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6')
+        .select('sabre_id, property_name_ko, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
         .in('sabre_id', sabreIds)
         .limit(4)
       

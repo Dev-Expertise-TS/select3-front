@@ -20,8 +20,8 @@ export function transformHotelToCardData(
   
   return {
     sabre_id: hotel.sabre_id,
-    property_name_kor: hotel.property_name_kor || hotel.property_name_eng || `호텔 ${hotel.sabre_id}`,
-    city: hotel.city || hotel.city_kor || hotel.city_eng || '위치 정보 없음',
+    property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,
+    city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
     property_address: hotel.property_address || '주소 정보 없음',
     image: imageUrl || hotel.image_1 || '/placeholder.svg',
     benefits: benefits || [

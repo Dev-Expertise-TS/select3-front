@@ -10,7 +10,7 @@ import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 // 호텔 데이터 타입 정의
 export interface HotelCardData {
   sabre_id: number
-  property_name_kor: string
+  property_name_ko: string
   city: string
   property_address: string
   image: string
@@ -96,19 +96,19 @@ export function HotelCard({
           imageAspectClasses[variant],
           imageClassName
         )}>
-          <Image
-            src={hotel.image}
-            alt={`${hotel.property_name_kor} - ${hotel.city}`}
-            fill
-            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            priority={variant === 'featured' || variant === 'promotion'}
-            onError={(e) => {
-              console.error(`❌ 이미지 로딩 실패: ${hotel.image}`)
-              const target = e.target as HTMLImageElement
-              target.src = '/placeholder.svg'
-            }}
-          />
+                      <Image
+              src={hotel.image}
+              alt={`${hotel.property_name_ko} - ${hotel.city}`}
+              fill
+              className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              priority={variant === 'featured' || variant === 'promotion'}
+              onError={(e) => {
+                console.error(`❌ 이미지 로딩 실패: ${hotel.image}`)
+                const target = e.target as HTMLImageElement
+                target.src = '/placeholder.svg'
+              }}
+            />
           
           {/* 이미지 오버레이 */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -151,9 +151,9 @@ export function HotelCard({
           {/* 호텔 기본 정보 */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-900 text-sm truncate flex-1 mr-2 group-hover:text-blue-600 transition-colors">
-                {hotel.property_name_kor}
-              </h3>
+                          <h3 className="font-bold text-gray-900 text-sm truncate flex-1 mr-2 group-hover:text-blue-600 transition-colors">
+              {hotel.property_name_ko}
+            </h3>
               <span className="text-xs text-gray-500 font-medium flex-shrink-0">
                 {hotel.city}
               </span>

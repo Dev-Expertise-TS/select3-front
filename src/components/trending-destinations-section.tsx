@@ -78,8 +78,8 @@ export function TrendingDestinationsSection() {
       <div className="container mx-auto max-w-[1200px] px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">
-            Immerse yourself in trending <em className="italic font-normal">destinations</em>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Immerse yourself in trending destinations
           </h2>
         </div>
 
