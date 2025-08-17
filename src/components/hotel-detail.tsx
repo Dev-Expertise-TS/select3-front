@@ -35,10 +35,10 @@ const hotel = {
 }
 
 interface HotelDetailProps {
-  hotelId: string
+  hotelSlug: string
 }
 
-export function HotelDetail({ hotelId }: HotelDetailProps) {
+export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [activeTab, setActiveTab] = useState("benefits")
 

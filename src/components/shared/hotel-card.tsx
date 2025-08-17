@@ -16,6 +16,7 @@ export interface HotelCardData {
   image: string
   benefits: string[]
   link: string
+  slug?: string
   rating?: number
   price?: number
   original_price?: number
@@ -84,7 +85,7 @@ export function HotelCard({
   }
 
   return (
-    <Link href={hotel.link}>
+    <Link href={hotel.slug ? `/hotel/${hotel.slug}` : hotel.link}>
       <Card className={cn(
         "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0",
         variantClasses[variant],
@@ -223,13 +224,13 @@ export function HotelCard({
                         {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
-                            <span>예약일: ~ {formatDate(promotion.booking_date)} 까지</span>
+                            <span>예약일 : ~{formatDate(promotion.booking_date)}까지</span>
                           </div>
                         )}
                         {promotion.check_in_date && (
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            <span>투숙일: ~ {formatDate(promotion.check_in_date)} 까지</span>
+                            <span>투숙일 : ~{formatDate(promotion.check_in_date)}까지</span>
                           </div>
                         )}
                       </div>
