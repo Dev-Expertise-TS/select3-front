@@ -3,8 +3,9 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/hotel-card"
-import { MapPin, Coffee, Star, Badge } from "lucide-react"
+import { MapPin, Coffee, Star, Badge, Calendar, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 
 // 호텔 데이터 타입 정의
 export interface HotelCardData {
@@ -49,6 +50,8 @@ export function HotelCard({
   imageClassName,
   contentClassName
 }: HotelCardProps) {
+  // 프로모션 혜택 정보 조회
+  const { data: promotionBenefits } = useHotelPromotion(hotel.sabre_id)
   // variant별 스타일 클래스
   const variantClasses = {
     default: "border border-gray-200 bg-white shadow-sm hover:shadow-md",
@@ -59,22 +62,22 @@ export function HotelCard({
 
   // 이미지 aspect ratio 클래스
   const imageAspectClasses = {
-    default: "aspect-[4/3]",
-    featured: "aspect-[4/3]",
-    compact: "aspect-[3/2]",
-    promotion: "aspect-[4/3]"
+    default: "aspect-[4/3] h-48",
+    featured: "aspect-[4/3] h-52",
+    compact: "aspect-[3/2] h-40",
+    promotion: "aspect-[4/3] h-48"
   }
 
   return (
     <Link href={hotel.link}>
       <Card className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1",
+        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0",
         variantClasses[variant],
         className
       )}>
         {/* 이미지 영역 */}
         <div className={cn(
-          "relative overflow-hidden",
+          "relative overflow-hidden w-full",
           imageAspectClasses[variant],
           imageClassName
         )}>
@@ -82,7 +85,7 @@ export function HotelCard({
             src={hotel.image}
             alt={`${hotel.property_name_kor} - ${hotel.city}`}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-500"
+            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
             priority={variant === 'featured' || variant === 'promotion'}
             onError={(e) => {
@@ -190,17 +193,49 @@ export function HotelCard({
             </div>
           )}
 
+          {/* 프로모션 혜택 정보 */}
+          {variant === 'promotion' && promotionBenefits && promotionBenefits.length > 0 && (
+            <div className="border-t pt-3 mt-3">
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
+                <div className="space-y-2">
+                  {promotionBenefits.map((benefit, index) => (
+                    <div key={index} className="bg-blue-50 p-2 rounded-lg">
+                      <div className="text-xs text-gray-700 mb-1 font-medium">
+                        {benefit.benefit}
+                      </div>
+                      {benefit.benefit_description && (
+                        <div className="text-xs text-gray-600 mb-2">
+                          {benefit.benefit_description}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        {benefit.start_date && (
+                          <div className="flex items-center">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            <span>시작: {benefit.start_date}</span>
+                          </div>
+                        )}
+                        {benefit.end_date && (
+                          <div className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            <span>종료: {benefit.end_date}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 액션 영역 */}
           <div className="border-t pt-3 mt-3">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 {variant === 'promotion' ? (
-                  <>
-                    <p className="text-xs font-semibold text-gray-900 mb-1">프로모션 혜택</p>
-                    <div className="text-xs text-gray-500">
-                      <span>특별 혜택이 포함된 패키지</span>
-                    </div>
-                  </>
+                  <p className="text-xs text-gray-600">프로모션 패키지</p>
                 ) : (
                   <p className="text-xs text-gray-600">호텔 상세 정보</p>
                 )}
