@@ -52,6 +52,20 @@ export function HotelCard({
 }: HotelCardProps) {
   // 프로모션 정보 조회
   const { data: promotions } = useHotelPromotion(hotel.sabre_id)
+
+  // 날짜 포맷 함수
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}.${month}.${day}`
+    } catch (error) {
+      console.error('날짜 포맷 오류:', error)
+      return dateString
+    }
+  }
   
   // variant별 스타일 클래스
   const variantClasses = {
@@ -209,13 +223,13 @@ export function HotelCard({
                         {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
-                            <span>예약: {promotion.booking_date}</span>
+                            <span>예약일: ~ {formatDate(promotion.booking_date)} 까지</span>
                           </div>
                         )}
                         {promotion.check_in_date && (
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            <span>체크인: {promotion.check_in_date}</span>
+                            <span>투숙일: ~ {formatDate(promotion.check_in_date)} 까지</span>
                           </div>
                         )}
                       </div>

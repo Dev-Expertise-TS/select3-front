@@ -10,6 +10,21 @@ console.log('🧪 프로모션 훅 테스트 시작...')
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// 날짜 포맷 함수
+function formatDate(dateString: string | null): string {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  } catch (error) {
+    console.error('날짜 포맷 오류:', error)
+    return dateString
+  }
+}
+
 async function testPromotionHook() {
   const testSabreId = 52 // 실제 데이터에 있는 sabre_id
 
@@ -53,15 +68,15 @@ async function testPromotionHook() {
       return
     }
 
-    console.log('✅ 프로모션 정보 조회 성공:', promotions?.length || 0, '개')
-    if (promotions && promotions.length > 0) {
-      console.log('프로모션 데이터:')
-      promotions.forEach((promo, index) => {
-        console.log(`  ${index + 1}. ${promo.promotion}`)
-        console.log(`     예약: ${promo.booking_date || 'N/A'}`)
-        console.log(`     체크인: ${promo.check_in_date || 'N/A'}`)
-      })
-    }
+          console.log('✅ 프로모션 정보 조회 성공:', promotions?.length || 0, '개')
+      if (promotions && promotions.length > 0) {
+        console.log('프로모션 데이터:')
+        promotions.forEach((promo, index) => {
+          console.log(`  ${index + 1}. ${promo.promotion}`)
+          console.log(`     예약일: ~ ${formatDate(promo.booking_date)} 까지`)
+          console.log(`     투숙일: ~ ${formatDate(promo.check_in_date)} 까지`)
+        })
+      }
 
   } catch (error) {
     console.error('❌ 테스트 중 예외 발생:', error)
