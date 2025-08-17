@@ -1,11 +1,23 @@
 import { HotelCardData } from "@/components/shared/hotel-card"
 
+// property_name_kor을 기반으로 slug 생성
+export function generateSlug(propertyName: string): string {
+  return propertyName
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]/g, '-') // 한글, 영문, 숫자만 유지하고 나머지는 하이픈으로
+    .replace(/-+/g, '-') // 연속된 하이픈을 하나로
+    .replace(/^-|-$/g, '') // 앞뒤 하이픈 제거
+}
+
 // Supabase 호텔 데이터를 HotelCardData로 변환
 export function transformHotelToCardData(
   hotel: any,
   imageUrl?: string,
   benefits?: string[]
 ): HotelCardData {
+  // slug 생성: 기존 slug가 있으면 사용, 없으면 property_name_kor 기반으로 생성
+  const slug = hotel.slug || (hotel.property_name_kor ? generateSlug(hotel.property_name_kor) : undefined)
+  
   return {
     sabre_id: hotel.sabre_id,
     property_name_kor: hotel.property_name_kor || hotel.property_name_eng || `호텔 ${hotel.sabre_id}`,
@@ -21,7 +33,7 @@ export function transformHotelToCardData(
       hotel.benefit_5,
       hotel.benefit_6
     ].filter(Boolean),
-    slug: hotel.slug,
+    slug: slug,
     rating: hotel.rating,
     price: hotel.price,
     original_price: hotel.original_price,

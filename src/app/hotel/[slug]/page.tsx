@@ -3,12 +3,14 @@ import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { HotelDetail } from "@/components/hotel-detail"
 
-export default async function HotelDetailPage({ params }: { params: { slug: string } }) {
+export default async function HotelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <HotelDetail hotelSlug={(await params).slug} />
+        <HotelDetail hotelSlug={slug} />
       </main>
       <Footer />
       <ScrollToTop />

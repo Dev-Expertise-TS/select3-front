@@ -89,9 +89,10 @@ const destinationHotels: Record<string, any[]> = {
   ],
 }
 
-export default async function DestinationPage({ params }: { params: { city: string } }) {
-  const cityName = (await params).city.charAt(0).toUpperCase() + (await params).city.slice(1)
-  const hotels = destinationHotels[(await params).city] || []
+export default async function DestinationPage({ params }: { params: Promise<{ city: string }> }) {
+  const { city } = await params
+  const cityName = city.charAt(0).toUpperCase() + city.slice(1)
+  const hotels = destinationHotels[city] || []
 
   return (
     <div className="min-h-screen bg-white">
