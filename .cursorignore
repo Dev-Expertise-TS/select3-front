@@ -1,0 +1,19 @@
+# 전역적으로 무시할 폴더
+node_modules/
+dist/
+.next/
+build/
+
+
+# 로그/캐시
+*.log
+*.tmp
+.cache/
+
+
+# 기본적으로 모든 환경 변수 무시
+.env
+.env.*
+
+# 단, .env.local 은 무시하지 않음 (AI가 읽고 수정 가능)
+!.env.local
