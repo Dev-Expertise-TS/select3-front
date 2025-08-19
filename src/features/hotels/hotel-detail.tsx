@@ -6,33 +6,7 @@ import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
 import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed } from "lucide-react"
 import { useState } from "react"
-
-const hotel = {
-  id: 1,
-  name: "엔 호텔 하카타",
-  englishName: "EN HOTEL Hakata",
-  location: "Choeng Thale, Phuket, Thailand",
-  address: "3 Chome-30-25 Hakata Ekimae, 하카타 구, 812-0011 후쿠오카시, 후쿠오카 현, 일본",
-  image: "/twinpalms-surin-luxury-hotel.png",
-  originalPrice: "97,503원",
-  price: "94,384원",
-  rating: 3,
-  description: "하카타 구에 머무시는 동안 엔 호텔 하카타에서 경험하실 수 있는 모든 즐거움과 만나보세요.",
-  benefits: ["12pm Check-in", "Room Upgrade", "Daily Breakfast", "$100 Credit", "Late Checkout", "WiFi", "Spa Access"],
-  category: "City Center",
-  amenities: ["Free WiFi", "Valet Parking", "Fine Dining", "Fitness Center", "Spa & Wellness", "Concierge"],
-  images: [
-    "/hotels/resort-pool-view.png",
-    "/hotels/ocean-view-suite.png",
-    "/hotels/luxury-restaurant-dining.png",
-    "/hotels/spa-wellness-center.png",
-    "/hotels/hotel-lobby-entrance.png",
-    "/hotels/beachfront-terrace.png",
-  ],
-  reviewScore: 8.8,
-  reviewCount: 1020,
-  totalPhotos: 135,
-}
+import { useHotelBySlug, useHotelMedia } from "@/hooks/use-hotels"
 
 interface HotelDetailProps {
   hotelSlug: string
@@ -41,55 +15,88 @@ interface HotelDetailProps {
 export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [activeTab, setActiveTab] = useState("benefits")
+  
+  // slug로 호텔 데이터 조회
+  const { data: hotel, isLoading, error } = useHotelBySlug(hotelSlug)
+  
+  // 호텔 미디어 이미지 조회
+  const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="bg-gray-100 min-h-screen">
+        <div className="container mx-auto max-w-[1440px] px-4 py-8">
+          <div className="space-y-4">
+            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 w-96 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-64 w-full bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 에러 상태
+  if (error || !hotel) {
+    return (
+      <div className="bg-gray-100 min-h-screen">
+        <div className="container mx-auto max-w-[1440px] px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">호텔을 찾을 수 없습니다</h1>
+            <p className="text-gray-600 mb-4">요청하신 호텔 정보를 불러올 수 없습니다.</p>
+            <Link href="/">
+              <Button>홈으로 돌아가기</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Header with Back Button */}
       <div className="py-3">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="container mx-auto max-w-[1440px] px-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              후쿠오카 모든 숙소
-            </Button>
+            <Link href={`/destination/${hotel.city_ko || hotel.city_eng || 'unknown'}`}>
+              <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                {hotel.city_ko || hotel.city_eng || '모든 숙소'}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Combined Hotel Info Header and Image Gallery */}
       <div className="bg-gray-100 py-4">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="container mx-auto max-w-[1440px] px-4">
           <div className="bg-white rounded-lg shadow-sm p-6">
             {/* Hotel Info Header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{hotel.name}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>
+                  {hotel.property_name_en && (
+                    <span className="text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
+                  )}
                   <div className="flex items-center">
-                    {[...Array(hotel.rating)].map((_, i) => (
+                    {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-orange-400 text-orange-400" />
                     ))}
                   </div>
                 </div>
-                <div className="text-gray-600 mb-2">{hotel.englishName}</div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm">{hotel.address}</span>
+                  <span className="text-sm">{hotel.property_address || '주소 정보 없음'}</span>
                   <Link href="#" className="text-blue-600 text-sm hover:underline ml-2">
                     지도에서 호텔보기
                   </Link>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-sm text-gray-500 line-through">{hotel.originalPrice}</div>
-                  <div className="text-2xl font-bold text-gray-900">{hotel.price}</div>
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <span>💚</span>
-                    <span>최저가 보장제</span>
-                  </div>
-                </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3">객실 선택</Button>
                 <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500">
                   <Heart className="h-5 w-5" />
                 </Button>
@@ -99,39 +106,89 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             {/* Image Gallery */}
             <div className="flex gap-2 h-[400px] rounded-lg overflow-hidden">
               <div
-                className="w-[60%] relative group cursor-pointer rounded-lg overflow-hidden"
+                className="w-[60%] relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100"
                 onClick={() => setSelectedImage(0)}
               >
-                <Image
-                  src={hotel.images[selectedImage] || "/placeholder.svg"}
-                  alt={hotel.name}
-                  fill
-                  className="object-cover"
-                />
+                {hotelMedia.length > 0 ? (
+                  <Image
+                    src={hotelMedia[selectedImage]?.media_path || hotelMedia[0]?.media_path}
+                    alt={hotel.property_name_ko || '호텔 이미지'}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <div className="text-2xl mb-2">📷</div>
+                      <div className="text-sm font-medium">No Image</div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="w-[40%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
-                {hotel.images.slice(1, 5).map((image, index) => (
-                  <div
-                    key={index + 1}
-                    className="relative group cursor-pointer rounded-lg overflow-hidden"
-                    onClick={() => setSelectedImage(index + 1)}
-                  >
-                    <Image
-                      src={image || "/placeholder.svg"}
-                      alt={`Gallery ${index + 2}`}
-                      fill
-                      className="object-cover"
-                    />
-                    {index === 3 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div className="text-white text-center">
-                          <div className="text-lg font-bold">사진 모두보기</div>
-                          <div className="text-sm">({hotel.totalPhotos}장)</div>
+                {/* 호텔 미디어 이미지가 있는 경우 순차적으로 표시 */}
+                {hotelMedia.length > 0 ? (
+                  <>
+                    {hotelMedia.slice(1, 5).map((media, index) => (
+                      <div
+                        key={media.id}
+                        className="relative group cursor-pointer rounded-lg overflow-hidden"
+                        onClick={() => setSelectedImage(index + 1)}
+                      >
+                        <Image
+                          src={media.media_path}
+                          alt={`Gallery ${index + 2}`}
+                          fill
+                          className="object-cover"
+                        />
+                        {index === 3 && hotelMedia.length > 5 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <div className="text-white text-center">
+                              <div className="text-lg font-bold">사진 모두보기</div>
+                              <div className="text-sm">({hotelMedia.length}장)</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {/* 5개 미만인 경우 빈 썸네일 표시 */}
+                    {hotelMedia.length < 5 && Array.from({ length: 5 - hotelMedia.length }).map((_, index) => (
+                      <div key={`empty-${index}`} className="bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                          <div className="text-lg mb-1">📷</div>
+                          <div className="text-xs font-medium">No Image</div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-lg mb-1">📷</div>
+                        <div className="text-xs font-medium">No Image</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-lg mb-1">📷</div>
+                        <div className="text-xs font-medium">No Image</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-lg mb-1">📷</div>
+                        <div className="text-xs font-medium">No Image</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <div className="text-lg mb-1">📷</div>
+                        <div className="text-xs font-medium">No Image</div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -139,7 +196,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       </div>
 
       <div className="bg-gray-100 py-4">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="container mx-auto max-w-[1440px] px-4">
           <div className="bg-white rounded-lg shadow-sm p-6">
             {/* Tab Navigation */}
             <div className="flex items-center gap-8 border-b mb-6">
@@ -227,25 +284,18 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             {activeTab === "introduction" && (
               <div className="space-y-4">
                 <div className="prose max-w-none">
-                  <h4 className="text-lg font-semibold mb-3">엔 호텔 하카타 소개</h4>
+                  <h4 className="text-lg font-semibold mb-3">{hotel.property_name_ko || '호텔'} 소개</h4>
                   <p className="text-gray-700 leading-relaxed mb-4">
-                    하카타 구의 중심부에 위치한 엔 호텔 하카타는 현대적인 시설과 전통적인 일본의 환대 정신을 완벽하게
-                    조화시킨 프리미엄 호텔입니다. JR 하카타역에서 도보로 5분 거리에 위치하여 교통이 매우 편리하며,
-                    비즈니스와 레저 여행객 모두에게 최적의 선택입니다.
-                  </p>
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    모든 객실은 현대적인 디자인과 최신 편의시설을 갖추고 있으며, 편안한 휴식을 위한 프리미엄 침구류와
-                    업무를 위한 넓은 데스크 공간을 제공합니다. 또한 무료 Wi-Fi와 스마트 TV 등 다양한 편의시설을 이용하실
-                    수 있습니다.
+                    {hotel.property_description || `${hotel.property_name_ko || '호텔'}에 대한 상세한 정보가 제공되지 않았습니다.`}
                   </p>
                   <div className="grid grid-cols-2 gap-4 mt-6">
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold mb-2">체크인/체크아웃</h5>
-                      <p className="text-sm text-gray-600">체크인: 15:00 / 체크아웃: 11:00</p>
+                      <h5 className="font-semibold mb-2">위치</h5>
+                      <p className="text-sm text-gray-600">{hotel.city_ko || hotel.city_eng || '위치 정보 없음'}</p>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold mb-2">언어 서비스</h5>
-                      <p className="text-sm text-gray-600">일본어, 영어, 한국어</p>
+                      <h5 className="font-semibold mb-2">체인</h5>
+                      <p className="text-sm text-gray-600">{hotel.chain_ko || hotel.chain_eng || '체인 정보 없음'}</p>
                     </div>
                   </div>
                 </div>
@@ -261,57 +311,57 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   </h4>
                   <div className="space-y-4">
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-blue-900 mb-2">🚄 기차역</h5>
+                      <h5 className="font-semibold text-blue-900 mb-2">📍 위치 정보</h5>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>JR 하카타역</span>
-                          <span className="text-blue-600 font-medium">도보 5분 (400m)</span>
+                          <span>도시</span>
+                          <span className="text-blue-600 font-medium">{hotel.city_ko || hotel.city_eng || '정보 없음'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>지하철 하카타역</span>
-                          <span className="text-blue-600 font-medium">도보 7분 (550m)</span>
+                          <span>주소</span>
+                          <span className="text-blue-600 font-medium">{hotel.property_address || '정보 없음'}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="bg-green-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-green-900 mb-2">✈️ 공항</h5>
+                      <h5 className="font-semibold text-green-900 mb-2">🏨 호텔 정보</h5>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>후쿠오카 공항</span>
-                          <span className="text-green-600 font-medium">지하철 11분</span>
+                          <span>체인</span>
+                          <span className="text-green-600 font-medium">{hotel.chain_ko || hotel.chain_eng || '정보 없음'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>택시 이용시</span>
-                          <span className="text-green-600 font-medium">약 15분 (4.6km)</span>
+                          <span>브랜드</span>
+                          <span className="text-green-600 font-medium">{hotel.brand_ko || hotel.brand_eng || '정보 없음'}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="bg-orange-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-orange-900 mb-2">🚌 버스</h5>
+                      <h5 className="font-semibold text-orange-900 mb-2">⭐ 등급</h5>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>하카타 버스터미널</span>
-                          <span className="text-orange-600 font-medium">도보 8분</span>
+                          <span>호텔 등급</span>
+                          <span className="text-orange-600 font-medium">{hotel.rating || '정보 없음'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>공항 리무진 버스</span>
-                          <span className="text-orange-600 font-medium">하카타역 정류장 이용</span>
+                          <span>카테고리</span>
+                          <span className="text-orange-600 font-medium">{hotel.category || '정보 없음'}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-gray-900 mb-2">🚗 자동차</h5>
+                      <h5 className="font-semibold text-gray-900 mb-2">ℹ️ 추가 정보</h5>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>주차장</span>
-                          <span className="text-gray-600 font-medium">1박 1,500엔</span>
+                          <span>설명</span>
+                          <span className="text-gray-600 font-medium">{hotel.property_description ? '있음' : '없음'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>발렛 파킹</span>
-                          <span className="text-gray-600 font-medium">이용 가능</span>
+                          <span>이미지</span>
+                          <span className="text-gray-600 font-medium">{hotel.image ? '있음' : '없음'}</span>
                         </div>
                       </div>
                     </div>
@@ -324,12 +374,12 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       </div>
 
       <div className="bg-gray-100 py-4">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="container mx-auto max-w-[1440px] px-4">
           <CommonSearchBar
             variant="hotel-detail"
-            location="후쿠오카"
-            checkIn="8월 16일(토)"
-            checkOut="8월 17일(일)"
+            location={hotel.city_ko || hotel.city_eng || '도시'}
+            checkIn="체크인 날짜"
+            checkOut="체크아웃 날짜"
             guests="객실 1개, 성인 2명, 어린이 0명"
           />
         </div>

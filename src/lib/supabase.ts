@@ -228,7 +228,7 @@ export type Database = {
           
           // 위치 정보
           city?: string
-          city_kor?: string | null
+          city_ko?: string | null
           city_en?: string | null
           country_kor?: string | null
           country_en?: string | null

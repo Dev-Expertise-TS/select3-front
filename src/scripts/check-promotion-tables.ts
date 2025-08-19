@@ -1,120 +1,105 @@
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
+import path from 'path'
 
-dotenv.config({ path: '.env.local' })
+// .env.local 파일 로드
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-console.log('🔍 프로모션 테이블 구조 확인 시작...')
-console.log('URL:', supabaseUrl)
-console.log('Key:', supabaseAnonKey ? '설정됨' : '설정되지 않음')
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ 환경 변수가 설정되지 않았습니다.')
+  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '설정됨' : '설정되지 않음')
+  console.log('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '설정됨' : '설정되지 않음')
+  process.exit(1)
+}
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function checkPromotionTables() {
-  const tables = [
-    'select_hotel_promotions',
-    'select_hotel_promotions_map'
-  ]
+  console.log('🔍 프로모션 관련 테이블 구조 확인 중...\n')
 
-  for (const tableName of tables) {
-    console.log(`\n📋 테이블: ${tableName}`)
-    console.log('='.repeat(50))
-    
-    try {
-      // 테이블 존재 여부 확인
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .limit(1)
-
-      if (error) {
-        console.error(`❌ ${tableName} 테이블 오류:`, error)
-        console.error('오류 코드:', error.code)
-        console.error('오류 메시지:', error.message)
-        console.error('오류 상세:', error.details)
-        console.error('오류 힌트:', error.hint)
-        continue
-      }
-
-      if (data && data.length > 0) {
-        console.log(`✅ ${tableName} 테이블 데이터 조회 성공`)
-        console.log('첫 번째 레코드:')
-        console.log(JSON.stringify(data[0], null, 2))
-        
-        // 컬럼 정보 추출
-        const columns = Object.keys(data[0])
-        console.log(`\n📊 컬럼 목록 (${columns.length}개):`)
-        columns.forEach((col, index) => {
-          console.log(`${index + 1}. ${col}: ${typeof data[0][col as keyof typeof data[0]]}`)
-        })
-      } else {
-        console.log(`⚠️ ${tableName} 테이블은 존재하지만 데이터가 없습니다.`)
-        
-        // 테이블 스키마 정보 확인 시도
-        try {
-          const { data: schemaData, error: schemaError } = await supabase
-            .rpc('get_table_schema', { table_name: tableName })
-          
-          if (!schemaError && schemaData) {
-            console.log('테이블 스키마:', schemaData)
-          }
-        } catch (schemaErr) {
-          console.log('스키마 정보 조회 실패 (정상)')
-        }
-      }
-    } catch (err) {
-      console.error(`❌ ${tableName} 테이블 확인 중 예외 발생:`, err)
-    }
-  }
-
-  // 실제 데이터가 있는지 확인
-  console.log('\n🔍 실제 프로모션 데이터 확인...')
-  
   try {
-    // select_hotel_promotions_map에서 실제 데이터 확인
+    // 1. select_hotel_promotions_map 테이블 확인
+    console.log('📋 select_hotel_promotions_map 테이블:')
     const { data: mapData, error: mapError } = await supabase
       .from('select_hotel_promotions_map')
       .select('*')
       .limit(5)
-
+    
     if (mapError) {
       console.error('❌ select_hotel_promotions_map 조회 실패:', mapError)
-    } else if (mapData && mapData.length > 0) {
-      console.log('✅ select_hotel_promotions_map 데이터:', mapData.length, '개')
-      console.log('샘플 데이터:', mapData[0])
     } else {
-      console.log('⚠️ select_hotel_promotions_map에 데이터가 없습니다.')
+      console.log('✅ 데이터 조회 성공')
+      console.log('📊 샘플 데이터:', mapData)
+      console.log('📊 총 레코드 수:', mapData?.length || 0)
     }
 
-    // select_hotel_promotions에서 실제 데이터 확인
-    const { data: promoData, error: promoError } = await supabase
+    // 2. select_hotel_promotions 테이블 확인
+    console.log('\n📋 select_hotel_promotions 테이블:')
+    const { data: promotionData, error: promotionError } = await supabase
       .from('select_hotel_promotions')
       .select('*')
       .limit(5)
-
-    if (promoError) {
-      console.error('❌ select_hotel_promotions 조회 실패:', promoError)
-    } else if (promoData && promoData.length > 0) {
-      console.log('✅ select_hotel_promotions 데이터:', promoData.length, '개')
-      console.log('샘플 데이터:', promoData[0])
+    
+    if (promotionError) {
+      console.error('❌ select_hotel_promotions 조회 실패:', promotionError)
     } else {
-      console.log('⚠️ select_hotel_promotions에 데이터가 없습니다.')
+      console.log('✅ 데이터 조회 성공')
+      console.log('📊 샘플 데이터:', promotionData)
+      console.log('📊 총 레코드 수:', promotionData?.length || 0)
     }
 
-  } catch (err) {
-    console.error('❌ 프로모션 데이터 확인 중 예외 발생:', err)
+    // 3. select_feature_slots 테이블 확인 (프로모션 호텔 목록)
+    console.log('\n📋 select_feature_slots 테이블:')
+    const { data: featureData, error: featureError } = await supabase
+      .from('select_feature_slots')
+      .select('*')
+      .eq('surface', '프로모션')
+      .limit(5)
+    
+    if (featureError) {
+      console.error('❌ select_feature_slots 조회 실패:', featureError)
+    } else {
+      console.log('✅ 데이터 조회 성공')
+      console.log('📊 프로모션 surface 데이터:', featureData)
+      console.log('📊 총 레코드 수:', featureData?.length || 0)
+    }
+
+    // 4. 실제 연결 테스트
+    if (mapData && mapData.length > 0 && promotionData && promotionData.length > 0) {
+      console.log('\n🔗 테이블 연결 테스트:')
+      const sampleMap = mapData[0]
+      console.log('📊 샘플 map 데이터:', sampleMap)
+      
+      if (sampleMap.promotion_id) {
+        const { data: connectedPromotion, error: connectError } = await supabase
+          .from('select_hotel_promotions')
+          .select('*')
+          .eq('id', sampleMap.promotion_id)
+          .single()
+        
+        if (connectError) {
+          console.error('❌ 연결 테스트 실패:', connectError)
+        } else {
+          console.log('✅ 연결 테스트 성공')
+          console.log('📊 연결된 프로모션 데이터:', connectedPromotion)
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ 전체 확인 과정에서 오류 발생:', error)
   }
 }
 
-// 실행
 checkPromotionTables()
   .then(() => {
     console.log('\n✅ 프로모션 테이블 확인 완료')
     process.exit(0)
   })
   .catch((error) => {
-    console.error('\n❌ 프로모션 테이블 확인 실패:', error)
+    console.error('❌ 스크립트 실행 실패:', error)
     process.exit(1)
   })

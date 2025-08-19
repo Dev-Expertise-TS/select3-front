@@ -75,7 +75,7 @@ const destinations = [
 export function TrendingDestinationsSection() {
   return (
     <section className="py-16 bg-gray-50">
-      <div className="container mx-auto max-w-[1200px] px-4">
+              <div className="container mx-auto max-w-[1440px] px-4">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">

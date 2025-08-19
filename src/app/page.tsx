@@ -1,4 +1,5 @@
 import { Header } from "@/components/header"
+import { PromotionBanner } from "@/components/promotion-banner"
 import { Hero } from "@/features/hero"
 import { SearchSection } from "@/features/search"
 import { HotelGrid } from "@/features/hotels"
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <PromotionBanner />
       <main>
         <Hero />
         <SearchSection />

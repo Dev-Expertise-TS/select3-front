@@ -89,8 +89,8 @@ export function Hero() {
   const currentSlideData = carouselSlides[currentSlide]
 
   return (
-    <div className="container mx-auto max-w-[1200px] px-4 pt-8">
-      <section className="relative h-[40.8vh] min-h-[307px] overflow-hidden rounded-lg">
+            <div className="container mx-auto max-w-[1440px] px-4 pt-8">
+      <section className="relative h-[700px] overflow-hidden rounded-lg">
         {/* Background Image */}
         <div className="absolute inset-0">
           {isLoading ? (

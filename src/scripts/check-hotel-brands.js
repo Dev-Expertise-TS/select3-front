@@ -1,4 +1,7 @@
-require('dotenv').config({ path: '../.env.local' })
+require('dotenv').config({ path: '.env.local' })
+
+// select_hotels 테이블의 새로운 컬럼명 사용
+// city_kor -> city_ko, city_eng -> city_en
 
 const { createClient } = require('@supabase/supabase-js')
 

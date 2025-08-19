@@ -5,53 +5,23 @@ import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigationItems = [
-  { href: "/fine-hotels", label: "Fine Hotels + Resorts" },
-  { href: "/destinations", label: "Destinations" },
-  { href: "/benefits", label: "Member Benefits" },
-  { href: "/platinum-card", label: "Platinum Card" },
-  { href: "/travel", label: "Travel" },
-  { href: "/support", label: "Support" },
+  { href: "/fine-hotels", label: "셀렉트 소개" },
+  { href: "/destinations", label: "프로모션" },
+  { href: "/benefits", label: "브랜드 & 프로그램" },
+  { href: "/platinum-card", label: "아티클" },
+  { href: "/travel", label: "호텔 & 리조트 전체보기" },
+  { href: "/support", label: "투어비스" },
 ]
 
-const sponsoredHotels = [
-  {
-    id: 1,
-    name: "The St. Regis New York",
-    location: "New York, NY",
-    image: "/luxury-hotel-st-regis-new-york.png",
-    offer: "Exclusive Amex Benefits + $100 Credit",
-    sponsor: "Fine Hotels + Resorts®",
-    price: "From $650/night",
-  },
-  {
-    id: 2,
-    name: "Park Hyatt Tokyo",
-    location: "Tokyo, Japan",
-    image: "/luxury-hotel-tokyo.png",
-    offer: "Room Upgrade + Daily Breakfast for Two",
-    sponsor: "Fine Hotels + Resorts®",
-    price: "From $480/night",
-  },
-  {
-    id: 3,
-    name: "The Ritz-Carlton Laguna Niguel",
-    location: "Dana Point, CA",
-    image: "/ritz-carlton-laguna-niguel-ocean-view.png",
-    offer: "4pm Late Checkout + Complimentary Wi-Fi",
-    sponsor: "Fine Hotels + Resorts®",
-    price: "From $750/night",
-  },
-]
+// 프로모션 호텔 데이터는 usePromotionHotels 훅에서 가져옴
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [showPromoBanner, setShowPromoBanner] = useState(true)
-  const [currentPromoIndex, setCurrentPromoIndex] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,110 +32,41 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  useEffect(() => {
-    if (showPromoBanner) {
-      const interval = setInterval(() => {
-        setCurrentPromoIndex((prev) => (prev + 1) % sponsoredHotels.length)
-      }, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [showPromoBanner])
-
-  const currentPromo = sponsoredHotels[currentPromoIndex]
-
   return (
     <>
-      {showPromoBanner && (
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
-          <div className="container mx-auto max-w-[1200px] px-4">
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="relative w-20 h-14 rounded-lg overflow-hidden shadow-md">
-                  <Image
-                    src={currentPromo.image || "/placeholder.svg"}
-                    alt={currentPromo.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-xs font-semibold bg-white/25 text-white px-3 py-1 rounded-full">
-                      {currentPromo.sponsor}
-                    </span>
-                    <span className="text-xs font-bold bg-yellow-400 text-blue-900 px-3 py-1 rounded-full">
-                      Avg. $550 Value
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-bold text-white">
-                    {currentPromo.name} - {currentPromo.offer}
-                  </h3>
-                  <p className="text-xs text-blue-100">
-                    {currentPromo.location} • {currentPromo.price} • Platinum Card® Benefits Included
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-white hover:bg-white/20"
-                  onClick={() =>
-                    setCurrentPromoIndex((prev) => (prev - 1 + sponsoredHotels.length) % sponsoredHotels.length)
-                  }
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-white hover:bg-white/20"
-                  onClick={() => setCurrentPromoIndex((prev) => (prev + 1) % sponsoredHotels.length)}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 ml-2 text-white hover:bg-white/20"
-                  onClick={() => setShowPromoBanner(false)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <header
         className={cn(
           "sticky top-0 z-50 w-full transition-all duration-300 bg-white border-b border-gray-200",
           isScrolled ? "shadow-md" : "",
         )}
-      >
-        <div className="container mx-auto max-w-[1200px] px-4">
-          <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center space-x-3 text-blue-600 hover:text-blue-700 transition-colors">
-              <div className="w-9 h-9 bg-blue-600 rounded-sm flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-base">TS</span>
-              </div>
-              <div className="flex flex-col">
-                <div className="text-lg font-bold text-gray-900 leading-tight">Tourvis Select</div>
-                <div className="text-xs text-blue-600 font-medium -mt-0.5">Fine Hotels + Resorts®</div>
+              >
+          <div className="container mx-auto max-w-[1440px] px-4">
+            <div className="flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+              <div className="w-24 h-12">
+                <Image
+                  src="/select_logo.avif"
+                  alt="Tourvis Select Logo"
+                  width={96}
+                  height={48}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </Link>
 
-            <nav className="hidden lg:flex items-center space-x-8">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                >
-                  {item.label}
-                </Link>
+            <nav className="hidden lg:flex items-center">
+              {navigationItems.map((item, index) => (
+                <div key={item.href} className="flex items-center">
+                  <Link
+                    href={item.href}
+                    className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                  >
+                    {item.label}
+                  </Link>
+                  {index < navigationItems.length - 1 && (
+                    <div className="w-px h-4 bg-gray-300 mx-2"></div>
+                  )}
+                </div>
               ))}
             </nav>
 

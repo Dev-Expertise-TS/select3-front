@@ -11,6 +11,7 @@ import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 export interface HotelCardData {
   sabre_id: number
   property_name_ko: string
+  property_name_en?: string // 영문 호텔명 추가
   city: string
   property_address: string
   image: string
@@ -149,23 +150,33 @@ export function HotelCard({
         )}>
           {/* 호텔 기본 정보 */}
           <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-bold text-gray-900 text-sm truncate flex-1 mr-2 group-hover:text-blue-600 transition-colors">
-              {hotel.property_name_ko}
-            </h3>
+            <div className="flex items-end justify-between mb-1">
+              <div className="flex-1 mr-2">
+                <h3 className="font-bold text-gray-900 text-base truncate group-hover:text-blue-600 transition-colors">
+                  {hotel.property_name_ko}
+                </h3>
+                {hotel.property_name_en && (
+                  <p className="text-sm text-gray-600 truncate mt-1">
+                    {hotel.property_name_en}
+                  </p>
+                )}
+              </div>
               <span className="text-xs text-gray-500 font-medium flex-shrink-0">
                 {hotel.city}
               </span>
             </div>
 
-            <div className="flex items-start text-xs text-gray-500 mb-2">
-              <MapPin className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
-              <span className="truncate">{hotel.property_address}</span>
-            </div>
+            {/* 주소 정보가 있을 때만 표시 */}
+            {hotel.property_address && hotel.property_address !== '주소 정보 없음' && (
+              <div className="flex items-start text-sm text-gray-500 mb-2">
+                <MapPin className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
+                <span className="truncate">{hotel.property_address}</span>
+              </div>
+            )}
           </div>
 
-          {/* 혜택 정보 */}
-          {showBenefits && hotel.benefits && hotel.benefits.length > 0 && (
+          {/* 혜택 정보 - 주석 처리 */}
+          {/* {showBenefits && hotel.benefits && hotel.benefits.length > 0 && (
             <div className="mb-3">
               <div className="grid grid-cols-2 gap-1 h-[54px]">
                 {hotel.benefits.slice(0, 6).map((benefit, index) => (
@@ -179,7 +190,7 @@ export function HotelCard({
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* 가격 정보 */}
           {showPrice && hotel.price && (
@@ -222,13 +233,13 @@ export function HotelCard({
                         {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
-                            <span>예약일 : ~{formatDate(promotion.booking_date)}까지</span>
+                            <span>예약일 : ~{formatDate(promotion.booking_date)}</span>
                           </div>
                         )}
                         {promotion.check_in_date && (
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            <span>투숙일 : ~{formatDate(promotion.check_in_date)}까지</span>
+                            <span>투숙일 : ~{formatDate(promotion.check_in_date)}</span>
                           </div>
                         )}
                       </div>

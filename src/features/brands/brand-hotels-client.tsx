@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { BrandHotelCard } from "@/components/shared/brand-hotel-card"
 import { ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Hotel {
   id: number
@@ -16,6 +17,7 @@ interface Hotel {
   rating: number
   price: string
   brand?: string
+  chain?: string
   benefits: Array<{
     icon: any
     text: string
@@ -36,25 +38,49 @@ function makeHotelHref(hotel: Hotel) {
 interface BrandHotelsClientProps {
   hotels: Hotel[]
   displayName: string
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
+  selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string }>
 }
 
-export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProps) {
+export function BrandHotelsClient({ hotels, displayName, allChains, selectedChainBrands }: BrandHotelsClientProps) {
+  const router = useRouter()
   const [selectedCity, setSelectedCity] = useState<string>("all")
+  const [selectedBrand, setSelectedBrand] = useState<string>("all")
 
   const cities = useMemo(() => {
     const uniqueCities = Array.from(new Set(hotels.map((hotel) => hotel.location)))
     return uniqueCities.sort()
   }, [hotels])
 
+  // 현재 체인에 속한 브랜드들 표시
+  const availableBrands = useMemo(() => {
+    return selectedChainBrands.map(brand => brand.brand_name_en).sort()
+  }, [selectedChainBrands])
+
+  // 현재 선택된 체인의 한국어 이름
+  const currentChainName = useMemo(() => {
+    const currentChain = allChains.find(chain => chain.chain_name_en === displayName)
+    return currentChain?.chain_name_kr || currentChain?.chain_name_en || displayName
+  }, [allChains, displayName])
+
   const filteredHotels = useMemo(() => {
-    if (selectedCity === "all") return hotels
-    return hotels.filter((hotel) => hotel.location === selectedCity)
-  }, [hotels, selectedCity])
+    let filtered = hotels
+
+    if (selectedCity !== "all") {
+      filtered = filtered.filter((hotel) => hotel.location === selectedCity)
+    }
+
+    if (selectedBrand !== "all") {
+      filtered = filtered.filter((hotel) => hotel.brand === selectedBrand)
+    }
+
+    return filtered
+  }, [hotels, selectedCity, selectedBrand])
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="bg-white border-b">
-        <div className="container mx-auto max-w-[1200px] px-4 py-6">
+        <div className="container mx-auto max-w-[1440px] px-4 py-6">
           <div className="flex items-center gap-4 mb-4">
             <Link href="/">
               <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
@@ -69,47 +95,151 @@ export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProp
               <p className="text-gray-600">
                 {filteredHotels.length}개의 {displayName}의 체인 브랜드를 만나보세요
               </p>
+              
+              {/* 필터 상태 표시 */}
+              {(selectedCity !== "all" || selectedBrand !== "all") && (
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-gray-500">적용된 필터:</span>
+                  {selectedCity !== "all" && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      도시: {selectedCity}
+                    </span>
+                  )}
+                  {selectedBrand !== "all" && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      브랜드: {selectedBrand}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedCity("all")
+                      setSelectedBrand("all")
+                    }}
+                    className="text-sm text-red-600 hover:text-red-800 underline"
+                  >
+                    모든 필터 초기화
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="py-8">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="container mx-auto max-w-[1440px] px-4">
           <div className="flex gap-8">
             {/* Left Sidebar */}
             <div className="w-64 flex-shrink-0">
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  도시별 필터
-                </h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setSelectedCity("all")}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                      selectedCity === "all" ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    전체 ({hotels.length})
-                  </button>
-                  {cities.map((city) => {
-                    const cityCount = hotels.filter((hotel) => hotel.location === city).length
-                    return (
+              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4 space-y-6">
+                {/* 체인 선택 */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    체인 선택
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="text-sm text-gray-600 mb-2">
+                      현재: <span className="font-medium text-blue-600">{currentChainName}</span>
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          // 체인 변경 시 즉시 페이지 이동
+                          router.push(`/chain/${e.target.value}`)
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors"
+                    >
+                      <option value="">다른 체인 선택...</option>
+                      {allChains
+                        .filter(chain => chain.slug !== '') // 빈 slug 제외
+                        .sort((a, b) => (a.chain_name_kr || a.chain_name_en).localeCompare(b.chain_name_kr || b.chain_name_en))
+                        .map((chain) => (
+                          <option key={chain.chain_id} value={chain.slug}>
+                            {chain.chain_name_kr || chain.chain_name_en}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 도시별 필터 */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    도시별 필터
+                  </h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setSelectedCity("all")}
+                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                        selectedCity === "all" ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      전체 ({hotels.length})
+                    </button>
+                    {cities.map((city) => {
+                      const cityCount = hotels.filter((hotel) => hotel.location === city).length
+                      return (
+                        <button
+                          key={city}
+                          onClick={() => setSelectedCity(city)}
+                          className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                            selectedCity === city
+                              ? "bg-blue-50 text-blue-700 font-medium"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {city} ({cityCount})
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* 브랜드별 필터 */}
+                {availableBrands.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      브랜드별 필터
+                    </h3>
+                    <div className="space-y-2">
                       <button
-                        key={city}
-                        onClick={() => setSelectedCity(city)}
+                        onClick={() => setSelectedBrand("all")}
                         className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                          selectedCity === city
-                            ? "bg-blue-50 text-blue-700 font-medium"
-                            : "text-gray-600 hover:bg-gray-50"
+                          selectedBrand === "all" ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-50"
                         }`}
                       >
-                        {city} ({cityCount})
+                        전체 ({hotels.length})
                       </button>
-                    )
-                  })}
-                </div>
+                      {availableBrands.map((brand) => {
+                        const brandCount = hotels.filter((hotel) => hotel.brand === brand).length
+                        return (
+                          <button
+                            key={brand}
+                            onClick={() => setSelectedBrand(brand || "all")}
+                            className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                              selectedBrand === brand
+                                ? "bg-blue-50 text-blue-700 font-medium"
+                                : "text-gray-600 hover:bg-gray-50"
+                            }`}
+                          >
+                            {brand} ({brandCount})
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+
               </div>
             </div>
 

@@ -35,18 +35,22 @@ export function BrandHotelCard({
           className
         )}
       >
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[4/3] h-48 overflow-hidden">
           <Image
             src={image}
             alt={`${name} - ${city}`}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={false}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = '/placeholder.svg'
             }}
           />
+          
+          {/* 이미지 오버레이 */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
           {brandLabel && (
             <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-900">

@@ -16,7 +16,7 @@ export function SearchSection() {
 
   return (
     <section className="bg-gray-50 py-6">
-      <div className="container mx-auto max-w-[1200px] px-4">
+      <div className="container mx-auto max-w-[1440px] px-4">
         <CommonSearchBar variant="landing" onSearch={handleSearch} />
       </div>
     </section>

@@ -72,7 +72,7 @@ export default function SearchResultsPage() {
       <main className="flex-1">
         {/* 검색 영역 */}
         <section className="bg-gray-50 py-8">
-          <div className="container mx-auto max-w-[1200px] px-4">
+          <div className="container mx-auto max-w-[1440px] px-4">
             <div className="bg-white rounded-lg shadow-sm">
               <CommonSearchBar 
                 variant="landing" 
@@ -85,7 +85,7 @@ export default function SearchResultsPage() {
 
         {/* 검색 결과 */}
         <section className="py-8">
-          <div className="container mx-auto max-w-[1200px] px-4">
+          <div className="container mx-auto max-w-[1440px] px-4">
             {searchQuery.trim() ? (
               <>
                 <div className="mb-8">

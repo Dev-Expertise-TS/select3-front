@@ -147,7 +147,7 @@ export function HotelCardGridSection({
 }: HotelCardGridSectionProps) {
   return (
     <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
-      <div className="container mx-auto max-w-[1200px] px-4">
+              <div className="container mx-auto max-w-[1440px] px-4">
         {/* 헤더 */}
         {(title || subtitle) && (
           <div className={cn(

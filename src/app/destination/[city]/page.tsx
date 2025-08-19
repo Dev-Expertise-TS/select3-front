@@ -98,7 +98,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
     <div className="min-h-screen bg-white">
       {/* Top Search Bar */}
       <div className="bg-white border-b shadow-sm">
-        <div className="container mx-auto max-w-[1200px] px-4 py-4">
+        <div className="container mx-auto max-w-[1440px] px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <Link href="/">
               <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-50">
@@ -122,7 +122,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
 
       {/* Filters Bar */}
       <div className="bg-white border-b px-6 py-4">
-        <div className="container mx-auto max-w-[1200px]">
+        <div className="container mx-auto max-w-[1440px]">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" className="gap-2 bg-transparent">
               <Filter className="h-4 w-4" />

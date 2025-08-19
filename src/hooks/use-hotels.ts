@@ -20,7 +20,7 @@ export function useHotels() {
   })
 }
 
-// 특정 호텔 조회
+// 특정 호텔 조회 (sabre_id 기준)
 export function useHotel(sabreId: number) {
   return useQuery({
     queryKey: ['hotel', sabreId],
@@ -39,6 +39,44 @@ export function useHotel(sabreId: number) {
   })
 }
 
+// slug로 호텔 조회
+export function useHotelBySlug(slug: string) {
+  return useQuery({
+    queryKey: ['hotel-by-slug', slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('select_hotels')
+        .select('*')
+        .eq('slug', slug)
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000, // 5분
+  })
+}
+
+// 호텔 미디어 이미지 조회
+export function useHotelMedia(sabreId: number) {
+  return useQuery({
+    queryKey: ['hotel-media', sabreId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('select_hotel_media')
+        .select('*')
+        .eq('sabre_id', sabreId)
+        .order('id', { ascending: true })
+      
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!sabreId,
+    staleTime: 5 * 60 * 1000, // 5분
+  })
+}
+
 // 호텔 검색
 export function useHotelSearch(query: string) {
   return useQuery({
@@ -47,7 +85,7 @@ export function useHotelSearch(query: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or(`property_name_kor.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
+        .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
         .limit(20)
       
       if (error) throw error

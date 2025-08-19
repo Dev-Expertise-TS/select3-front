@@ -21,6 +21,7 @@ export function transformHotelToCardData(
   return {
     sabre_id: hotel.sabre_id,
     property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,
+    property_name_en: hotel.property_name_en || undefined,
     city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
     property_address: hotel.property_address || '주소 정보 없음',
     image: imageUrl || hotel.image_1 || '/placeholder.svg',
@@ -136,7 +137,7 @@ export function filterAndSortHotels(
   // 정렬
   switch (sortBy) {
     case 'name':
-      filteredHotels.sort((a, b) => a.property_name_kor.localeCompare(b.property_name_kor))
+      filteredHotels.sort((a, b) => a.property_name_ko.localeCompare(b.property_name_ko))
       break
     case 'rating':
       filteredHotels.sort((a, b) => (b.rating || 0) - (a.rating || 0))
@@ -156,7 +157,7 @@ export function filterAndSortHotels(
 export function validateHotelData(hotel: any): boolean {
   return !!(
     hotel.sabre_id &&
-    (hotel.property_name_kor || hotel.property_name_en) &&
+    (hotel.property_name_ko || hotel.property_name_en) &&
     hotel.city
   )
 }

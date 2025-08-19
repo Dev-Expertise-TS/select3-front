@@ -9,8 +9,8 @@ interface HotelRow {
   property_name_ko: string
   property_name_en: string
   city: string
-  city_kor?: string
-  city_eng?: string
+  city_ko?: string
+  city_en?: string
   property_address: string
   brand_id?: string
   slug?: string
@@ -31,87 +31,51 @@ function fromSlug(slug: string): string {
     .join(' ')
 }
 
-// 슬러그 → 체인 영문명 매핑(오버라이드)
-const slugAliasToName: Record<string, string> = {
-  'aman-resorts-international': 'Aman Resorts',
-  'hyatt-hotels': 'Hyatt Hotels Corporation',
-}
+// slug 컬럼을 사용하므로 alias 매핑이 필요 없음
+// const slugAliasToName: Record<string, string> = {}
 
 async function getChainHotels(chainSlug: string) {
   const supabase = await createClient()
   
   console.log(`[ Server ] 체인 slug '${chainSlug}'로 호텔 검색 시작`)
   
-  // 1. 모든 hotel_chains를 가져와서 slug와 매칭
-  const { data: allChains, error: chainsError } = await supabase
+  // 1. hotel_chains에서 slug로 체인 찾기
+  const { data: chains, error: chainsError } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_kr')
+    .select('chain_id, chain_name_en, chain_name_kr, slug')
+    .eq('slug', chainSlug)
   
-  console.log(`[ Server ] hotel_chains 조회 결과:`, { data: allChains, error: chainsError })
+  console.log(`[ Server ] hotel_chains slug 조회 결과:`, { data: chains, error: chainsError })
   
   if (chainsError) {
     console.error('[ Server ] 호텔 체인 조회 에러:', chainsError)
-    return { chain: null, hotels: [] }
+    return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
-  if (!allChains || allChains.length === 0) {
-    console.warn('[ Server ] hotel_chains 테이블에 데이터가 없습니다.')
-    return { chain: null, hotels: [] }
+  if (!chains || chains.length === 0) {
+    console.warn(`[ Server ] slug '${chainSlug}'와 매칭되는 체인을 찾을 수 없습니다.`)
+    return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
-  console.log(`[ Server ] 총 ${allChains.length}개의 체인 발견:`, allChains.map(c => `${c.chain_name_en} (${c.chain_id})`))
-  
-  // 2. slug와 매칭되는 체인 찾기 (오버라이드 우선 적용)
-  let matchedChain = null as typeof allChains[number] | null
-
-  const aliasName = slugAliasToName[chainSlug]
-  if (aliasName) {
-    matchedChain = allChains.find(c => c.chain_name_en === aliasName) || null
-  }
-
-  if (!matchedChain) {
-    matchedChain = allChains.find(chain => {
-      const chainSlugGenerated = chain.chain_name_en
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-      console.log(`[ Server ] 체인 '${chain.chain_name_en}' -> slug: '${chainSlugGenerated}' vs 입력: '${chainSlug}'`)
-      return chainSlugGenerated === chainSlug
-    }) || null
-  }
-  
-  if (!matchedChain) {
-    console.warn(`[ Server ] 체인 slug '${chainSlug}'와 매칭되는 체인을 찾을 수 없습니다.`)
-    console.log(`[ Server ] 사용 가능한 slug들:`, allChains.map(c => {
-      const slug = c.chain_name_en
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-      return `${c.chain_name_en} -> ${slug}`
-    }))
-    return { chain: null, hotels: [] }
-  }
-  
+  const matchedChain = chains[0] // slug는 unique하므로 첫 번째 결과 사용
   console.log(`[ Server ] 체인 매칭 성공: ${matchedChain.chain_name_en} (chain_id: ${matchedChain.chain_id})`)
   
-  // 3. hotel_brands에서 해당 chain_id를 가진 brand_id들 조회
+  // 3. hotel_brands에서 해당 chain_id를 가진 브랜드들 조회
   const { data: brands, error: brandsError } = await supabase
     .from('hotel_brands')
-    .select('brand_id')
+    .select('brand_id, brand_name_en, brand_name_kr')
     .eq('chain_id', matchedChain.chain_id)
   
   console.log(`[ Server ] hotel_brands 조회 결과:`, { data: brands, error: brandsError })
   
   if (brandsError) {
     console.error('[ Server ] 호텔 브랜드 조회 에러:', brandsError)
-    return { chain: matchedChain, hotels: [] }
+    return { chain: matchedChain, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
   if (!brands || brands.length === 0) {
     console.warn('[ Server ] 해당 체인에 속한 브랜드가 없습니다.')
-    return { chain: matchedChain, hotels: [] }
+    return { chain: matchedChain, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
   const brandIds = brands.map(b => b.brand_id)
@@ -121,18 +85,34 @@ async function getChainHotels(chainSlug: string) {
   // 4. select_hotels에서 해당 brand_id를 가진 호텔들 조회
   const { data: hotels, error: hotelsError } = await supabase
     .from('select_hotels')
-    .select('sabre_id, property_name_ko, property_name_en, city, city_kor, city_eng, property_address, brand_id, slug')
+    .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, brand_id, slug')
     .in('brand_id', brandIdStrings)
   
   console.log(`[ Server ] select_hotels 조회 결과:`, { data: hotels, error: hotelsError })
   
   if (hotelsError) {
     console.error('[ Server ] 호텔 조회 에러:', hotelsError)
-    return { chain: matchedChain, hotels: [] }
+    return { chain: matchedChain, hotels: [], allChains: [], selectedChainBrands: [] }
+  }
+  
+  // 5. 모든 체인 조회 (필터용)
+  const { data: allChains, error: allChainsError } = await supabase
+    .from('hotel_chains')
+    .select('chain_id, chain_name_en, chain_name_kr, slug')
+    .order('chain_name_en')
+  
+  if (allChainsError) {
+    console.error('[ Server ] 모든 체인 조회 에러:', allChainsError)
+    return { chain: matchedChain, hotels: hotels || [], allChains: [], selectedChainBrands: brands || [] }
   }
   
   console.log(`[ Server ] 호텔 ${hotels?.length || 0}개 조회 성공`)
-  return { chain: matchedChain, hotels: hotels || [] }
+  return { 
+    chain: matchedChain, 
+    hotels: hotels || [], 
+    allChains: allChains || [], 
+    selectedChainBrands: brands || [] 
+  }
 }
 
 interface ChainPageProps { 
@@ -142,7 +122,7 @@ interface ChainPageProps {
 export default async function ChainPage({ params }: ChainPageProps) {
   const { chain } = await params
   
-  const { chain: chainRow, hotels } = await getChainHotels(chain)
+  const { chain: chainRow, hotels, allChains, selectedChainBrands } = await getChainHotels(chain)
   
   if (!chainRow) {
     notFound()
@@ -157,6 +137,7 @@ export default async function ChainPage({ params }: ChainPageProps) {
     address: hotel.property_address,
     image: "/placeholder.svg", // 기본 이미지 사용
     brand: chainRow.chain_name_en,
+    chain: chainRow.chain_name_en, // 체인 정보 추가
     rating: 0,
     price: "₩0",
     benefits: [],
@@ -171,7 +152,13 @@ export default async function ChainPage({ params }: ChainPageProps) {
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      <BrandHotelsClient hotels={transformedHotels} displayName={chainRow.chain_name_en} />
+      <BrandHotelsClient 
+        hotels={transformedHotels} 
+        displayName={chainRow.chain_name_en}
+        allChains={allChains}
+        selectedChainBrands={selectedChainBrands}
+
+      />
       <Footer />
     </div>
   )

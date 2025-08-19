@@ -48,7 +48,7 @@ const benefits = [
 export function BenefitsSection() {
   return (
     <section className="py-8 bg-gradient-to-b from-white to-gray-50">
-      <div className="container mx-auto px-4 max-w-[1200px]">
+              <div className="container mx-auto px-4 max-w-[1440px]">
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
             럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
