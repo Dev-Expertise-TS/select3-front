@@ -104,7 +104,6 @@ export function HotelCard({
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
               priority={variant === 'featured' || variant === 'promotion'}
               onError={(e) => {
-                console.error(`❌ 이미지 로딩 실패: ${hotel.image}`)
                 const target = e.target as HTMLImageElement
                 target.src = '/placeholder.svg'
               }}
@@ -209,12 +208,12 @@ export function HotelCard({
           )}
 
           {/* 프로모션 정보 */}
-          {variant === 'promotion' && promotions && promotions.length > 0 && (
+          {variant === 'promotion' && Array.isArray(promotions) && promotions.length > 0 && (
             <div className="border-t pt-3 mt-3">
               <div className="mb-3">
                 <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
                 <div className="space-y-2">
-                  {promotions.map((promotion, index) => (
+                  {promotions.map((promotion: any, index: number) => (
                     <div key={index} className="bg-blue-50 p-2 rounded-lg">
                       <div className="text-xs text-gray-700 mb-1 font-medium">
                         {promotion.promotion}

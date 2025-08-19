@@ -156,7 +156,7 @@ export function filterAndSortHotels(
 export function validateHotelData(hotel: any): boolean {
   return !!(
     hotel.sabre_id &&
-    (hotel.property_name_kor || hotel.property_name_eng) &&
+    (hotel.property_name_kor || hotel.property_name_en) &&
     hotel.city
   )
 }

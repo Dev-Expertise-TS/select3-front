@@ -47,7 +47,7 @@ export function useHotelSearch(query: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or(`property_name_kor.ilike.%${query}%,property_name_eng.ilike.%${query}%,city.ilike.%${query}%`)
+        .or(`property_name_kor.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
         .limit(20)
       
       if (error) throw error

@@ -1,13 +1,13 @@
 import { Header } from "@/components/header"
-import { Hero } from "@/components/hero"
-import { SearchSection } from "@/components/search-section"
-import { HotelGrid } from "@/components/hotel-grid"
+import { Hero } from "@/features/hero"
+import { SearchSection } from "@/features/search"
+import { HotelGrid } from "@/features/hotels"
 import { Footer } from "@/components/footer"
-import { ScrollToTop } from "@/components/scroll-to-top"
-import { BenefitsSection } from "@/components/benefits-section"
-import { BrandProgramSection } from "@/components/brand-program-section"
-import { PromotionSection } from "@/components/promotion-section"
-import { TrendingDestinationsSection } from "@/components/trending-destinations-section"
+import { ScrollToTop } from "@/features/scroll-to-top"
+import { BenefitsSection } from "@/features/benefits-section"
+import { BrandProgramSection } from "@/features/brands"
+import { PromotionSection } from "@/features/promotion-section"
+import { TrendingDestinationsSection } from "@/features/destinations"
 
 export default function HomePage() {
   return (

@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CommonSearchBar } from "./common-search-bar"
+import { CommonSearchBar } from "@/features/search"
 import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed } from "lucide-react"
 import { useState } from "react"
 

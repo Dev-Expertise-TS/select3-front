@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { CommonSearchBar } from "@/components/common-search-bar"
+import { CommonSearchBar } from "@/features/search/common-search-bar"
 import { HotelCardGrid } from "@/components/shared/hotel-card-grid"
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'

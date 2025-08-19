@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CommonSearchBar } from "./common-search-bar"
+import { CommonSearchBar } from "@/features/search"
 
 export function SearchSection() {
   const router = useRouter()

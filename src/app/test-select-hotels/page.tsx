@@ -59,7 +59,7 @@ export default async function TestSelectHotelsPage() {
           <div>
             <h3 className="font-semibold text-gray-800 mb-2">🏨 호텔 기본 정보</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {tableColumns.filter(col => ['slug', 'property_name_kor', 'property_name_eng'].includes(col)).map((column, index) => (
+              {tableColumns.filter(col => ['slug', 'property_name_kor', 'property_name_en'].includes(col)).map((column, index) => (
                 <div key={index} className="bg-green-50 border border-green-200 rounded px-3 py-2 text-sm">
                   <span className="font-mono text-green-800">{column}</span>
                 </div>
@@ -120,7 +120,7 @@ export default async function TestSelectHotelsPage() {
             <h3 className="font-semibold text-gray-800 mb-2">📝 기타 컬럼들</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {tableColumns.filter(col => 
-                !['id', 'id_old', 'sort_id', 'sabre_id', 'paragon_id', 'brand_id', 'slug', 'property_name_kor', 'property_name_eng'].includes(col) &&
+                !['id', 'id_old', 'sort_id', 'sabre_id', 'paragon_id', 'brand_id', 'slug', 'property_name_kor', 'property_name_en'].includes(col) &&
                 !col.includes('city') && !col.includes('country') && !col.includes('continent') && !col.includes('address') && !col.includes('destination') && !col.includes('location') &&
                 !col.includes('chain') && !col.includes('image') && !col.includes('benefit')
               ).map((column, index) => (
@@ -151,8 +151,8 @@ export default async function TestSelectHotelsPage() {
                       🇰🇷 {hotel.property_name_kor}
                     </p>
                   )}
-                  {hotel.property_name_eng && (
-                    <p className="text-sm text-gray-600">{hotel.property_name_eng}</p>
+                  {hotel.property_name_en && (
+                    <p className="text-sm text-gray-600">{hotel.property_name_en}</p>
                   )}
                   {hotel.city && (
                     <p className="text-sm text-gray-700">📍 {hotel.city}</p>

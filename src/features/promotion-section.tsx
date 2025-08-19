@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { HotelCardGridSection } from './shared/hotel-card-grid'
+import { HotelCardGridSection } from '@/components/shared/hotel-card-grid'
 import { transformHotelsToCardData } from '@/lib/hotel-utils'
 
 const supabase = createClient()

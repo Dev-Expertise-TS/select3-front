@@ -170,15 +170,8 @@ export function Header() {
             </nav>
 
             <div className="hidden lg:flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent"
-              >
-                Sign In
-              </Button>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                Apply Now
+                로그인 / 회원가입
               </Button>
             </div>
 
@@ -204,10 +197,7 @@ export function Header() {
                     ))}
                   </nav>
                   <div className="mt-8 space-y-4">
-                    <Button variant="outline" className="w-full border-blue-600 text-blue-600 bg-transparent">
-                      Sign In
-                    </Button>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Apply Now</Button>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">로그인 / 회원가입</Button>
                   </div>
                 </div>
               </SheetContent>

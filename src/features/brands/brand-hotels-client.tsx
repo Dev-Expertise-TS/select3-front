@@ -2,19 +2,20 @@
 
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/hotel-card"
-import { ArrowLeft, MapPin, Calendar, Gift, Clock, Coffee, Bed, CreditCard, Star, Zap } from "lucide-react"
+import { BrandHotelCard } from "@/components/shared/brand-hotel-card"
+import { ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 
 interface Hotel {
   id: number
   name: string
+  nameKo?: string
   location: string
   address: string
   image: string
   rating: number
   price: string
+  brand?: string
   benefits: Array<{
     icon: any
     text: string
@@ -27,6 +28,11 @@ interface Hotel {
   }
 }
 
+// 링크 경로 생성 함수
+function makeHotelHref(hotel: Hotel) {
+  return `/hotel/hotel-${hotel.id}`
+}
+
 interface BrandHotelsClientProps {
   hotels: Hotel[]
   displayName: string
@@ -34,19 +40,6 @@ interface BrandHotelsClientProps {
 
 export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProps) {
   const [selectedCity, setSelectedCity] = useState<string>("all")
-
-  // 아이콘 문자열을 실제 아이콘 컴포넌트로 매핑
-  const iconMap: Record<string, any> = {
-    Coffee,
-    Bed,
-    CreditCard,
-    Clock,
-    Zap,
-    Star,
-    Gift,
-    MapPin,
-    Calendar
-  }
 
   const cities = useMemo(() => {
     const uniqueCities = Array.from(new Set(hotels.map((hotel) => hotel.location)))
@@ -72,9 +65,9 @@ export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProp
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayName} Hotels</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
               <p className="text-gray-600">
-                {filteredHotels.length}개의 {displayName} 브랜드 호텔을 만나보세요
+                {filteredHotels.length}개의 {displayName}의 체인 브랜드를 만나보세요
               </p>
             </div>
           </div>
@@ -125,60 +118,16 @@ export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProp
               {filteredHotels.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredHotels.map((hotel) => (
-                    <Link key={hotel.id} href={`/hotel/${hotel.id}`}>
-                      <Card className="group cursor-pointer overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 p-0">
-                        <div className="relative aspect-[4/3] overflow-hidden">
-                          <Image
-                            src={hotel.image || "/placeholder.svg"}
-                            alt={`${hotel.name} - ${hotel.location}`}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                          <div className="absolute top-3 right-3 bg-white rounded-full px-2 py-1 flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs font-medium">{hotel.rating}</span>
-                          </div>
-                        </div>
-                        <CardContent className="p-4">
-                          <div className="mb-3">
-                            <h3 className="font-semibold text-lg text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                              {hotel.name}
-                            </h3>
-                            <p className="text-sm text-gray-600 flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {hotel.location}
-                            </p>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <p className="text-2xl font-bold text-blue-600">{hotel.price}</p>
-                          </div>
-
-                          <div className="mb-3">
-                            <div className="bg-blue-50 rounded-lg p-3">
-                              <h4 className="font-medium text-blue-900 text-sm mb-2">{hotel.promotion.title}</h4>
-                              <div className="space-y-1 text-xs text-blue-700">
-                                <p>예약 마감: {hotel.promotion.bookingDeadline}</p>
-                                <p>숙박 기간: {hotel.promotion.stayPeriod}</p>
-                                <p className="font-medium">특별 혜택: {hotel.promotion.highlight}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            {hotel.benefits.slice(0, 4).map((benefit, index) => {
-                              const IconComponent = iconMap[benefit.icon]
-                              return (
-                                <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
-                                  {IconComponent && <IconComponent className="h-3 w-3 text-blue-500" />}
-                                  <span>{benefit.text}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                    <BrandHotelCard
+                      key={hotel.id}
+                      href={makeHotelHref(hotel)}
+                      image={hotel.image}
+                      name={hotel.name}
+                      nameKo={hotel.nameKo}
+                      city={hotel.location}
+                      address={hotel.address}
+                      brandLabel={hotel.brand || hotel.promotion?.title || undefined}
+                    />
                   ))}
                 </div>
               ) : (

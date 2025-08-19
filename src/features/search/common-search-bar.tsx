@@ -70,8 +70,9 @@ export function CommonSearchBar({
           </div>
 
                           <Button 
-           variant="primary"
-           className="font-bold px-8 py-2 rounded-lg" 
+           variant="brand"
+           size="lg"
+           className="font-bold px-8" 
            onClick={() => onSearch?.(initialQuery || location || "후쿠오카")}
          >
            검색

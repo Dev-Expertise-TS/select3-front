@@ -2,7 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Coffee, Utensils, Waves, Heart, Filter, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CommonSearchBar } from "@/components/common-search-bar"
+import { CommonSearchBar } from "@/features/search/common-search-bar"
 
 const destinationHotels: Record<string, any[]> = {
   thailand: [

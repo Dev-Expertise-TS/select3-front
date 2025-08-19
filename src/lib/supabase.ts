@@ -37,24 +37,24 @@ export type Database = {
           
           // 호텔 기본 정보
           slug: string
-          property_name_kor: string
-          property_name_eng: string
+          property_name_ko: string
+          property_name_en: string
           
           // 위치 정보
           city: string
-          city_kor: string | null
-          city_eng: string | null
-          country_kor: string | null
-          country_eng: string | null
-          continent_kor: string | null
-          continent_eng: string | null
+          city_ko: string | null
+          city_en: string | null
+          country_ko: string | null
+          country_en: string | null
+          continent_ko: string | null
+          continent_en: string | null
           property_address: string
           destination_sort: string
           location_section: string | null
           
           // 체인 정보
           chain: string
-          chain_eng: string | null
+          chain_en: string | null
           
           // 링크 및 상세 정보
           link: string | null
@@ -130,24 +130,24 @@ export type Database = {
           
           // 호텔 기본 정보
           slug: string
-          property_name_kor: string
-          property_name_eng: string
+          property_name_ko: string
+          property_name_en: string
           
           // 위치 정보
           city: string
-          city_kor?: string | null
-          city_eng?: string | null
-          country_kor?: string | null
-          country_eng?: string | null
-          continent_kor?: string | null
-          continent_eng?: string | null
+          city_ko?: string | null
+          city_en?: string | null
+          country_ko?: string | null
+          country_en?: string | null
+          continent_ko?: string | null
+          continent_en?: string | null
           property_address: string
           destination_sort: string
           location_section?: string | null
           
           // 체인 정보
           chain: string
-          chain_eng?: string | null
+          chain_en?: string | null
           
           // 링크 및 상세 정보
           link?: string | null
@@ -224,23 +224,23 @@ export type Database = {
           // 호텔 기본 정보
           slug?: string
           property_name_kor?: string
-          property_name_eng?: string
+          property_name_en?: string
           
           // 위치 정보
           city?: string
           city_kor?: string | null
-          city_eng?: string | null
+          city_en?: string | null
           country_kor?: string | null
-          country_eng?: string | null
+          country_en?: string | null
           continent_kor?: string | null
-          continent_eng?: string | null
+          continent_en?: string | null
           property_address?: string
           destination_sort?: string
           location_section?: string | null
           
           // 체인 정보
           chain?: string
-          chain_eng?: string | null
+          chain_en?: string | null
           
           // 링크 및 상세 정보
           link?: string | null
@@ -538,6 +538,77 @@ export type Database = {
           sabre_id?: number
           promotion_id?: number
           created_at?: string
+        }
+      }
+
+      // hotel_chains: 호텔 체인 정보
+      hotel_chains: {
+        Row: {
+          chain_id: number
+          chain_name_en: string
+          chain_name_kr?: string | null
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          chain_id?: number
+          chain_name_en: string
+          chain_name_kr?: string | null
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: number
+          chain_name_en?: string
+          chain_name_kr?: string | null
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
+      // hotel_brands: 호텔 브랜드 정보
+      hotel_brands: {
+        Row: {
+          brand_id: number
+          brand_name_en: string
+          brand_name_kr?: string | null
+          chain_id: number
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id?: number
+          brand_name_en: string
+          brand_name_kr?: string | null
+          chain_id: number
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: number
+          brand_name_en?: string
+          brand_name_kr?: string | null
+          chain_id?: number
+          logo_path?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
     }

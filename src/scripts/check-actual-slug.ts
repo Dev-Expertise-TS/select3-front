@@ -15,7 +15,7 @@ async function checkActualSlug() {
     // slug 컬럼이 있는지 확인하고 실제 데이터 조회
     const { data: hotels, error } = await supabase
       .from('select_hotels')
-      .select('sabre_id, property_name_kor, property_name_eng, slug')
+      .select('sabre_id, property_name_kor, property_name_en, slug')
       .limit(10)
     
     if (error) {
@@ -28,7 +28,7 @@ async function checkActualSlug() {
       hotels.forEach((hotel, index) => {
         console.log(`${index + 1}. ID: ${hotel.sabre_id}`)
         console.log(`   한글명: ${hotel.property_name_kor}`)
-        console.log(`   영문명: ${hotel.property_name_eng}`)
+        console.log(`   영문명: ${hotel.property_name_en}`)
         console.log(`   Slug: ${hotel.slug || 'NULL'}`)
         console.log('---')
       })

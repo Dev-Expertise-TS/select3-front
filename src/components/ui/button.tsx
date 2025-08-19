@@ -12,7 +12,7 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary:
@@ -20,10 +20,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        // 새로운 럭셔리 디자인 variant들
-        primary: "bg-[#0B0C10] text-[#E6CDB5] shadow-xs hover:bg-[#1C1C1C] transition-all duration-300",
-        secondary_luxury: "border border-[#E6CDB5] bg-transparent text-[#E6CDB5] shadow-xs hover:bg-[rgba(230,205,181,0.1)] transition-all duration-300",
-        cta: "bg-[#E6CDB5] text-[#0B0C10] shadow-xs hover:bg-[#C9A227] transition-all duration-300",
+        brand:
+          "bg-blue-600 text-white shadow-xs hover:bg-blue-700",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

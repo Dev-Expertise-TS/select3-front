@@ -204,8 +204,8 @@ export function TestSelectHotels() {
                     <p className="text-sm font-medium text-gray-800 mb-1">
                       🇰🇷 {hotel.property_name_kor}
                     </p>
-                    {hotel.property_name_eng && (
-                      <p className="text-sm text-gray-600">{hotel.property_name_eng}</p>
+                    {hotel.property_name_en && (
+                      <p className="text-sm text-gray-600">{hotel.property_name_en}</p>
                     )}
                     <p className="text-sm text-gray-700">📍 {hotel.location}</p>
                     {hotel.rating && (
