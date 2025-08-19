@@ -132,7 +132,24 @@ export function BrandHotelsClient({ hotels, displayName }: BrandHotelsClientProp
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">선택한 도시에 호텔이 없습니다.</p>
+                  {hotels.length === 0 ? (
+                    <div className="max-w-md mx-auto">
+                      <div className="text-gray-400 mb-4">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">호텔이 없습니다</h3>
+                      <p className="text-gray-600 mb-4">
+                        현재 {displayName} 체인에 속한 호텔이 등록되어 있지 않습니다.
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        새로운 호텔이 추가되면 여기에 표시됩니다.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-lg">선택한 도시에 호텔이 없습니다.</p>
+                  )}
                 </div>
               )}
             </div>

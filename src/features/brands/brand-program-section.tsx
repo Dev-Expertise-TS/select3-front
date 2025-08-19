@@ -13,6 +13,7 @@ interface HotelChain {
 function toSlug(name: string) {
   const alias: Record<string, string> = {
     'Aman Resorts': 'aman-resorts-international',
+    'Hyatt Hotels Corporation': 'hyatt-hotels',
   }
   if (alias[name]) return alias[name]
   return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')

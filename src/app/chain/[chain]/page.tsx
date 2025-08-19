@@ -34,6 +34,7 @@ function fromSlug(slug: string): string {
 // 슬러그 → 체인 영문명 매핑(오버라이드)
 const slugAliasToName: Record<string, string> = {
   'aman-resorts-international': 'Aman Resorts',
+  'hyatt-hotels': 'Hyatt Hotels Corporation',
 }
 
 async function getChainHotels(chainSlug: string) {
