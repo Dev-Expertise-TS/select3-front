@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 
-const supabase = createClient()
-
 interface HotelPromotion {
   promotion_id: number
   promotion: string
@@ -17,6 +15,8 @@ export function useHotelPromotion(sabreId: number | null) {
       if (!sabreId) return []
 
       try {
+        const supabase = createClient()
+        
         // 1. select_hotel_promotions_map에서 해당 호텔의 promotion_id 조회
         const { data: promotionMaps, error: mapError } = await supabase
           .from('select_hotel_promotions_map')

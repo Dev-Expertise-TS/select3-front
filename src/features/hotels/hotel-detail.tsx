@@ -1840,6 +1840,32 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                           </td>
                         </tr>
 
+                        {/* 요금 코드 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">요금 코드</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium w-20">Rate Code:</span>
+                                <span className="bg-blue-100 px-2 py-1 rounded text-xs font-mono">
+                                  {hotel?.rate_code || '정보 없음'}
+                                </span>
+                              </div>
+                              {hotel?.rate_code && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">상세:</span>
+                                  <div className="text-xs text-gray-600 max-w-md">
+                                    {typeof hotel.rate_code === 'string' && hotel.rate_code.length > 100 
+                                      ? `${hotel.rate_code.substring(0, 100)}...` 
+                                      : hotel.rate_code
+                                    }
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
                         {/* 주소 정보 */}
                         <tr className="hover:bg-blue-50">
                           <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">주소 정보</td>
