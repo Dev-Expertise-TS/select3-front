@@ -361,8 +361,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           
 
             
-            // RateKey 추출 - 참조 코드 기반으로 Sabre API 구조에 맞게 수정
-            let rateKey = null
             
             // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
             const deepGet = (obj: unknown, keys: string[]): unknown => {
@@ -661,11 +659,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           return transformedData
         }
         
-        return []
-      } catch (error) {
-        console.error('Supabase 조회 오류:', error)
-        return []
-      }
+
     },
     enabled: !!hotel?.sabre_id,
     staleTime: 5 * 60 * 1000, // 5분 캐시
