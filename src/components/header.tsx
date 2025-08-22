@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 const navigationItems = [
   { href: "/fine-hotels", label: "셀렉트 소개" },
   { href: "/destinations", label: "프로모션" },
-  { href: "/benefits", label: "브랜드 & 프로그램" },
+  { href: "/brands", label: "브랜드 & 프로그램" },
   { href: "/platinum-card", label: "아티클" },
   { href: "/travel", label: "호텔 & 리조트 전체보기" },
   { href: "/support", label: "투어비스" },

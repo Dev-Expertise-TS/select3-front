@@ -5,12 +5,21 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useHeroImages } from "@/hooks/use-hero-images"
+import { useHeroImages, type HeroImageData } from "@/hooks/use-hero-images"
 
-
+interface CarouselSlide {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  image: string
+  hotelName: string
+  location: string
+  hotelId: string
+}
 
 // 기본 carouselSlides (데이터가 없을 때 fallback용)
-const defaultCarouselSlides = [
+const defaultCarouselSlides: CarouselSlide[] = [
   {
     id: 1,
     title: "Over 900",
@@ -58,8 +67,8 @@ export function Hero() {
   const { data: heroImages, isLoading, error } = useHeroImages()
 
   // 동적 데이터가 있으면 사용, 없으면 기본 데이터 사용
-  const carouselSlides = heroImages && heroImages.length > 0 
-    ? heroImages.map((image, index) => ({
+  const carouselSlides: CarouselSlide[] = Array.isArray(heroImages) && heroImages.length > 0 
+    ? heroImages.map((image: HeroImageData, index: number) => ({
         id: index + 1,
         title: "Premium Luxury",
         subtitle: "at the world's finest properties",
@@ -90,7 +99,7 @@ export function Hero() {
 
   return (
             <div className="container mx-auto max-w-[1440px] px-4 pt-8">
-      <section className="relative h-[700px] overflow-hidden rounded-lg">
+      <section className="relative min-h-[40vh] h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh] xl:h-[60vh] max-h-[600px] overflow-hidden rounded-lg">
         {/* Background Image */}
         <div className="absolute inset-0">
           {isLoading ? (
