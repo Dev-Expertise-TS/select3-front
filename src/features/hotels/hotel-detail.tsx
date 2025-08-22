@@ -8,6 +8,8 @@ import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, B
 import { useState } from "react"
 import { useHotelBySlug, useHotelMedia } from "@/hooks/use-hotels"
 import { useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/lib/supabase"
 
 interface HotelDetailProps {
   hotelSlug: string
@@ -26,6 +28,648 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   
   // 호텔 미디어 이미지 조회
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+
+  // Sabre API를 통해 호텔 상세 정보 조회
+  const { data: sabreHotelInfo, isLoading: sabreLoading, error: sabreError } = useQuery({
+    queryKey: ['sabre-hotel-details', hotel?.sabre_id],
+    queryFn: async () => {
+      if (!hotel?.sabre_id) return null
+      
+      try {
+        // Sabre Hotel Details API 직접 호출
+        const requestBody = {
+          HotelCode: hotel.sabre_id.toString(),
+          CurrencyCode: 'KRW',
+          StartDate: new Date().toISOString().split('T')[0],
+          EndDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          Adults: 2
+        }
+
+        const response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(15000)
+        })
+        
+        if (!response.ok) throw new Error('Sabre API 호출 실패')
+        
+        const result = await response.json()
+        if (result.GetHotelDetailsRS?.HotelDetailsInfo?.HotelInfo) {
+          return result.GetHotelDetailsRS.HotelDetailsInfo.HotelInfo
+        }
+        return null
+      } catch (error) {
+        console.error('Sabre API 호출 오류:', error)
+        return null
+      }
+    },
+    enabled: !!hotel?.sabre_id,
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+  })
+
+
+
+  // Sabre API에서 Rate Plan 데이터 조회 및 처리
+  const { data: ratePlanCodes, isLoading: ratePlanLoading, error: ratePlanError } = useQuery({
+    queryKey: ['sabre-rate-plans', hotel?.sabre_id],
+    queryFn: async () => {
+      if (!hotel?.sabre_id) return null
+      
+      try {
+        console.log('🚀 Sabre API 호출 시작 - Hotel Details:', hotel.sabre_id)
+        
+        // Sabre Hotel Details API 호출
+        const response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sabreId: hotel.sabre_id
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Sabre API 호출 실패: ${response.status} ${response.statusText}`)
+        }
+        
+        const sabreData = await response.json()
+        console.log('✅ Sabre API 응답 성공:', sabreData)
+        
+        // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
+        const deepGet = (obj: unknown, keys: string[]): unknown => {
+          let cur: unknown = obj
+          for (const key of keys) {
+            if (cur && typeof cur === 'object' && Object.prototype.hasOwnProperty.call(cur as object, key)) {
+              cur = (cur as Record<string, unknown>)[key]
+            } else {
+              return undefined
+            }
+          }
+          return cur
+        }
+        
+        // Sabre API 응답 구조에서 Room 정보 추출
+        const root = deepGet(sabreData, ['GetHotelDetailsRS', 'HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room'])
+        if (root) {
+          console.log('✅ Sabre API에서 Room 정보 발견:', root)
+          
+          const roomArray: unknown[] = Array.isArray(root) ? root : [root]
+          const allRatePlans: any[] = []
+          
+          // 각 Room에 대해 처리
+          for (const room of roomArray) {
+            const r = room as Record<string, unknown>
+            
+            // Room 기본 정보 추출
+            const rt = deepGet(r, ['RoomType'])
+            const rdName = deepGet(r, ['RoomDescription', 'Name'])
+            const descSrc = deepGet(r, ['RoomDescription', 'Text'])
+            
+            const roomType: string = typeof rt === 'string' ? rt : (typeof rdName === 'string' ? rdName : '')
+            const roomName: string = typeof rdName === 'string' ? rdName : ''
+            const description: string = Array.isArray(descSrc) ? 
+              (typeof (descSrc as unknown[])[0] === 'string' ? (descSrc as unknown[])[0] as string : '') : 
+              (typeof descSrc === 'string' ? descSrc as string : '')
+            
+            // RatePlans 정보 추출
+            const plansNode = deepGet(r, ['RatePlans', 'RatePlan'])
+            if (plansNode) {
+              const plans: unknown[] = Array.isArray(plansNode) ? plansNode : [plansNode]
+              
+              // 각 RatePlan에 대해 처리
+              for (const plan of plans) {
+                const p = plan as Record<string, unknown>
+                
+                // RateKey 추출 - 핵심 부분
+                const rateKeyVal = deepGet(p, ['RateKey'])
+                const rateKey: string = typeof rateKeyVal === 'string' ? rateKeyVal : ''
+                
+                // 기타 요금 정보 추출
+                const currency: string = (() => {
+                  const v = deepGet(p, ['ConvertedRateInfo', 'CurrencyCode'])
+                  return typeof v === 'string' ? v : ''
+                })()
+                
+                const amountAfterTax = (() => {
+                  const v = deepGet(p, ['ConvertedRateInfo', 'AmountAfterTax'])
+                  if (typeof v === 'number') return v
+                  if (typeof v === 'string') {
+                    const parsed = parseFloat(v)
+                    return isNaN(parsed) ? '' : parsed
+                  }
+                  return ''
+                })()
+                
+                const amountBeforeTax = (() => {
+                  const v = deepGet(p, ['ConvertedRateInfo', 'AmountBeforeTax'])
+                  if (typeof v === 'number') return v
+                  if (typeof v === 'string') {
+                    const parsed = parseFloat(v)
+                    return isNaN(parsed) ? '' : parsed
+                  }
+                  return ''
+                })()
+                
+                // Rate Plan 타입 정보 추출
+                const ratePlanType = (() => {
+                  const v = deepGet(p, ['RatePlanType'])
+                  return typeof v === 'string' ? v : ''
+                })()
+                
+                // Room Type Code 추출
+                const roomTypeCode = (() => {
+                  const v = deepGet(r, ['RoomTypeCode'])
+                  return typeof v === 'string' ? v : ''
+                })()
+                
+                // Rate Plan 설명 추출
+                const ratePlanDescription = (() => {
+                  const v = deepGet(p, ['RatePlanDescription'])
+                  return typeof v === 'string' ? v : ''
+                })()
+                
+                // 행 데이터 생성
+                allRatePlans.push({
+                  RateKey: rateKey,
+                  RoomType: roomType,
+                  RoomName: roomName,
+                  Description: description,
+                  Currency: currency,
+                  AmountAfterTax: amountAfterTax,
+                  AmountBeforeTax: amountBeforeTax,
+                  RoomTypeCode: roomTypeCode,
+                  RatePlanType: ratePlanType,
+                  RatePlanDescription: ratePlanDescription
+                })
+              }
+            }
+          }
+          
+          if (allRatePlans.length > 0) {
+            console.log('✅ Sabre API에서 Rate Plan 데이터 추출 성공:', allRatePlans)
+            return allRatePlans
+          } else {
+            console.log('⚠️ Sabre API에서 Rate Plan 데이터를 찾을 수 없음')
+            return []
+          }
+        } else {
+          console.log('⚠️ Sabre API에서 Room 정보를 찾을 수 없음')
+          return []
+        }
+              
+              // 3차 경로: 다른 가능한 구조들
+              if (!foundRatePlans) {
+                if (parsedData.Rates && Array.isArray(parsedData.Rates)) {
+                  console.log('✅ Rates 배열 발견')
+                  foundRatePlans = parsedData.Rates
+                } else if (parsedData.rates && Array.isArray(parsedData.rates)) {
+                  console.log('✅ rates 배열 발견')
+                  foundRatePlans = parsedData.rates
+                } else if (parsedData.RoomRates && Array.isArray(parsedData.RoomRates)) {
+                  console.log('✅ RoomRates 배열 발견')
+                  foundRatePlans = parsedData.RoomRates
+                } else if (parsedData.roomRates && Array.isArray(parsedData.roomRates)) {
+                  console.log('✅ roomRates 배열 발견')
+                  foundRatePlans = parsedData.roomRates
+                }
+              }
+              
+              // 3-1차 경로: 추가 구조들
+              if (!foundRatePlans) {
+                if (parsedData.RoomTypes && Array.isArray(parsedData.RoomTypes)) {
+                  console.log('✅ RoomTypes 배열 발견')
+                  foundRatePlans = parsedData.RoomTypes
+                } else if (parsedData.roomTypes && Array.isArray(parsedData.roomTypes)) {
+                  console.log('✅ roomTypes 배열 발견')
+                  foundRatePlans = parsedData.roomTypes
+                } else if (parsedData.Packages && Array.isArray(parsedData.Packages)) {
+                  console.log('✅ Packages 배열 발견')
+                  foundRatePlans = parsedData.Packages
+                } else if (parsedData.packages && Array.isArray(parsedData.packages)) {
+                  console.log('✅ packages 배열 발견')
+                  foundRatePlans = parsedData.packages
+                } else if (parsedData.Offers && Array.isArray(parsedData.Offers)) {
+                  console.log('✅ Offers 배열 발견')
+                  foundRatePlans = parsedData.Offers
+                } else if (parsedData.offers && Array.isArray(parsedData.offers)) {
+                  console.log('✅ offers 배열 발견')
+                  foundRatePlans = parsedData.offers
+                }
+              }
+              
+              // 3-2차 경로: 일반적인 배열 구조들
+              if (!foundRatePlans) {
+                // 모든 키에서 배열을 찾기
+                const arrayKeys = Object.keys(parsedData).filter(key => 
+                  Array.isArray(parsedData[key]) && parsedData[key].length > 0
+                )
+                if (arrayKeys.length > 0) {
+                  console.log('✅ 배열 형태의 키들 발견:', arrayKeys)
+                  // 첫 번째 배열 사용
+                  foundRatePlans = parsedData[arrayKeys[0]]
+                  console.log(`✅ ${arrayKeys[0]} 배열 사용:`, foundRatePlans)
+                }
+              }
+              
+              if (foundRatePlans) {
+                ratePlanData = foundRatePlans
+              } else {
+                console.log('✅ 단일 객체를 배열로 변환')
+                ratePlanData = [parsedData]
+              }
+            } else {
+              console.log('✅ 단일 값을 배열로 변환')
+              ratePlanData = [parsedData]
+            }
+            
+            console.log('🔍 최종 ratePlanData:', ratePlanData)
+          } catch (parseError) {
+            console.log('❌ rate_code 파싱 실패:', parseError)
+            console.log('📝 원본 rate_code 데이터:', supabaseHotel.rate_code)
+            // 파싱 실패 시 원본 데이터를 그대로 사용
+            ratePlanData = [supabaseHotel.rate_code]
+          }
+        } else if (supabaseHotel.rate_plan_codes && supabaseHotel.rate_plan_codes !== '') {
+          console.log('✅ rate_plan_codes 필드에서 데이터 발견:', supabaseHotel.rate_plan_codes)
+          console.log('🔍 rate_plan_codes 타입:', typeof supabaseHotel.rate_plan_codes)
+          
+          try {
+            let parsedData = null
+            
+            if (typeof supabaseHotel.rate_plan_codes === 'string') {
+              if (supabaseHotel.rate_plan_codes.startsWith('{') || supabaseHotel.rate_plan_codes.startsWith('[')) {
+                parsedData = JSON.parse(supabaseHotel.rate_plan_codes)
+                console.log('✅ rate_plan_codes JSON 파싱 성공:', parsedData)
+              } else {
+                console.log('📝 rate_plan_codes가 JSON 형식이 아님, 원본 데이터 사용')
+                parsedData = supabaseHotel.rate_plan_codes
+              }
+            } else {
+              parsedData = supabaseHotel.rate_plan_codes
+            }
+            
+            if (Array.isArray(parsedData)) {
+              console.log('✅ rate_plan_codes 배열 형태의 데이터 발견')
+              ratePlanData = parsedData
+            } else if (parsedData && typeof parsedData === 'object') {
+              console.log('✅ rate_plan_codes 객체 형태의 데이터 발견')
+              console.log('🔍 rate_plan_codes 객체 키들:', Object.keys(parsedData))
+              
+              // rate_plan_codes에서도 다양한 구조 탐색
+              let foundRatePlans = null
+              
+              if (parsedData.RatePlanCodes && Array.isArray(parsedData.RatePlanCodes)) {
+                console.log('✅ rate_plan_codes에서 RatePlanCodes 배열 발견')
+                foundRatePlans = parsedData.RatePlanCodes
+              } else if (parsedData.ratePlanCodes && Array.isArray(parsedData.ratePlanCodes)) {
+                console.log('✅ rate_plan_codes에서 ratePlanCodes 배열 발견')
+                foundRatePlans = parsedData.ratePlanCodes
+              } else if (parsedData.RatePlanCode && Array.isArray(parsedData.RatePlanCode)) {
+                console.log('✅ rate_plan_codes에서 RatePlanCode 배열 발견')
+                foundRatePlans = parsedData.RatePlanCode
+              } else if (parsedData.ratePlanCode && Array.isArray(parsedData.ratePlanCode)) {
+                console.log('✅ rate_plan_codes에서 ratePlanCode 배열 발견')
+                foundRatePlans = parsedData.ratePlanCode
+              } else if (parsedData.Rates && Array.isArray(parsedData.Rates)) {
+                console.log('✅ rate_plan_codes에서 Rates 배열 발견')
+                foundRatePlans = parsedData.Rates
+              } else if (parsedData.rates && Array.isArray(parsedData.rates)) {
+                console.log('✅ rate_plan_codes에서 rates 배열 발견')
+                foundRatePlans = parsedData.rates
+              }
+              
+              if (foundRatePlans) {
+                ratePlanData = foundRatePlans
+              } else {
+                console.log('✅ rate_plan_codes 단일 객체를 배열로 변환')
+                ratePlanData = [parsedData]
+              }
+            } else {
+              console.log('✅ rate_plan_codes 단일 값을 배열로 변환')
+              ratePlanData = [parsedData]
+            }
+            
+            console.log('🔍 rate_plan_codes 최종 ratePlanData:', ratePlanData)
+          } catch (parseError) {
+            console.log('❌ rate_plan_codes 파싱 실패:', parseError)
+            console.log('📝 원본 rate_plan_codes 데이터:', supabaseHotel.rate_plan_codes)
+            ratePlanData = [supabaseHotel.rate_plan_codes]
+          }
+
+          
+
+            
+            // RateKey 추출 - 참조 코드 기반으로 Sabre API 구조에 맞게 수정
+            let rateKey = null
+            
+            // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
+            const deepGet = (obj: unknown, keys: string[]): unknown => {
+              let cur: unknown = obj
+              for (const key of keys) {
+                if (cur && typeof cur === 'object' && Object.prototype.hasOwnProperty.call(cur as object, key)) {
+                  cur = (cur as Record<string, unknown>)[key]
+                } else {
+                  return undefined
+                }
+              }
+              return cur
+            }
+            
+            // 1차: 직접적인 RateKey 필드들
+            rateKey = deepGet(item, ['RateKey']) || deepGet(item, ['rateKey']) || deepGet(item, ['rate_key'])
+            
+            // 2차: RatePlans > RatePlan > RateKey 구조 (참조 코드와 동일)
+            if (!rateKey) {
+              rateKey = deepGet(item, ['RatePlans', 'RatePlan', 'RateKey'])
+            }
+            
+            // 3차: ConvertedRateInfo > RateKey 구조 (참조 코드와 동일)
+            if (!rateKey) {
+              rateKey = deepGet(item, ['ConvertedRateInfo', 'RateKey'])
+            }
+            
+            // 4차: Room > RatePlans > RatePlan > RateKey 구조 (참조 코드와 동일)
+            if (!rateKey) {
+              rateKey = deepGet(item, ['Room', 'RatePlans', 'RatePlan', 'RateKey'])
+            }
+            
+            // 5차: HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan > RateKey 구조
+            if (!rateKey) {
+              rateKey = deepGet(item, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room', 'RatePlans', 'RatePlan', 'RateKey'])
+            }
+            
+            // 6차: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan > RateKey 구조
+            if (!rateKey) {
+              rateKey = deepGet(item, ['GetHotelDetailsRS', 'HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room', 'RatePlans', 'RatePlan', 'RateKey'])
+            }
+            
+            // 7차: 다른 가능한 경로들
+            if (!rateKey) {
+              rateKey = deepGet(item, ['RatePlan', 'RateKey']) || 
+                       deepGet(item, ['ratePlan', 'rateKey']) ||
+                       deepGet(item, ['Plan', 'RateKey']) ||
+                       deepGet(item, ['plan', 'rateKey'])
+            }
+            
+            // 8차: 일반적인 필드들 (폴백)
+            if (!rateKey) {
+              rateKey = item.RateKey || item.rateKey || item.rate_key || item.rateCode || item.rate_code || 
+                       item.RatePlanCode || item.ratePlanCode || item.RatePlan || item.ratePlan ||
+                       item.RateCode || item.rate_code || item.Rate || item.rate
+            }
+            
+            // 9차: 첫 번째 비어있지 않은 문자열 값 사용 (최후 수단)
+            if (!rateKey) {
+              const firstStringValue = Object.values(item).find(value => 
+                typeof value === 'string' && value.trim() !== '' && value !== 'null' && value !== 'undefined'
+              )
+              if (firstStringValue) {
+                rateKey = firstStringValue
+                console.log(`🔍 첫 번째 문자열 값에서 RateKey 발견:`, firstStringValue)
+              }
+            }
+            
+
+            
+            console.log(`🔍 아이템 ${index} RateKey 추출 시도 (참조 코드 기반):`, {
+              RateKey: item.RateKey,
+              rateKey: item.rateKey,
+              rate_key: item.rate_key,
+              rateCode: item.rateCode,
+              rate_code: item.rate_code,
+              RatePlanCode: item.RatePlanCode,
+              ratePlanCode: item.ratePlanCode,
+              RatePlan: item.RatePlan,
+              ratePlan: item.ratePlan,
+              RateCode: item.RateCode,
+              Rate: item.Rate,
+              rate: item.rate,
+              BookingCode: item.BookingCode,
+              PlanCode: item.PlanCode,
+              Id: item.Id,
+              ID: item.ID,
+              Identifier: item.Identifier
+            })
+            
+            if (!rateKey) {
+              console.log(`⚠️ 아이템 ${index}에서 RateKey를 찾을 수 없음:`, item)
+              console.log(`🔍 사용 가능한 키들:`, Object.keys(item))
+              console.log(`🔍 모든 값들:`, Object.values(item))
+              
+              // 추가 디버깅: 각 키-값 쌍 출력
+              Object.entries(item).forEach(([key, value]) => {
+                console.log(`  ${key}: ${value} (${typeof value})`)
+              })
+            } else {
+              console.log(`✅ 아이템 ${index}에서 RateKey 발견:`, rateKey)
+            }
+            
+            // RoomType 추출 - 객실 유형 (STD, SUP, DLX, STE 등)
+            const roomType = item.RoomType || item.roomType || item.room_type || item.RoomTypeCode || 
+                           item.roomTypeCode || item.RoomCategory || item.roomCategory || item.RoomClass || item.roomClass
+            
+            console.log(`🔍 아이템 ${index} RoomType 추출:`, {
+              RoomType: item.RoomType,
+              roomType: item.roomType,
+              room_type: item.room_type,
+              RoomTypeCode: item.RoomTypeCode,
+              roomTypeCode: item.roomTypeCode,
+              RoomCategory: item.RoomCategory,
+              roomCategory: item.roomCategory,
+              RoomClass: item.RoomClass,
+              roomClass: item.roomClass
+            })
+            
+            // RoomName 추출 - 객실 상세 명칭
+            const roomName = item.RoomName || item.roomName || item.room_name || item.RoomDescription || 
+                           item.roomDescription || item.RoomTitle || item.roomTitle || item.RoomLabel || item.roomLabel
+            
+            console.log(`🔍 아이템 ${index} RoomName 추출:`, {
+              RoomName: item.RoomName,
+              roomName: item.roomName,
+              room_name: item.room_name,
+              RoomDescription: item.RoomDescription,
+              roomDescription: item.roomDescription,
+              RoomTitle: item.RoomTitle,
+              roomTitle: item.roomTitle,
+              RoomLabel: item.RoomLabel,
+              roomLabel: item.roomLabel
+            })
+            
+            // Description 추출 - 객실 상세 설명
+            const description = item.Description || item.description || item.Description || item.RatePlanDescription || 
+                              item.ratePlanDescription || item.RateDescription || item.rateDescription || 
+                              item.RoomDescription || item.roomDescription || item.Details || item.details
+            
+            console.log(`🔍 아이템 ${index} Description 추출:`, {
+              Description: item.Description,
+              description: item.description,
+              RatePlanDescription: item.RatePlanDescription,
+              ratePlanDescription: item.ratePlanDescription,
+              RateDescription: item.RateDescription,
+              rateDescription: item.rateDescription,
+              RoomDescription: item.RoomDescription,
+              roomDescription: item.roomDescription,
+              Details: item.Details,
+              details: item.details
+            })
+            
+            // Currency 추출 - 통화 코드
+            const currency = item.Currency || item.currency || item.CurrencyCode || item.currencyCode || 
+                           item.Curr || item.curr || 'KRW'
+            
+            console.log(`🔍 아이템 ${index} Currency 추출:`, {
+              Currency: item.Currency,
+              currency: item.currency,
+              CurrencyCode: item.CurrencyCode,
+              currencyCode: item.currencyCode,
+              Curr: item.Curr,
+              curr: item.curr
+            })
+            
+            // AmountAfterTax 추출 - 세후 가격
+            const amountAfterTax = item.AmountAfterTax || item.amountAfterTax || item.amount_after_tax || 
+                                 item.TotalAmount || item.totalAmount || item.Total || item.total || 
+                                 item.Price || item.price || item.Cost || item.cost
+            
+            console.log(`🔍 아이템 ${index} AmountAfterTax 추출:`, {
+              AmountAfterTax: item.AmountAfterTax,
+              amountAfterTax: item.amountAfterTax,
+              amount_after_tax: item.amount_after_tax,
+              TotalAmount: item.TotalAmount,
+              totalAmount: item.totalAmount,
+              Total: item.Total,
+              total: item.total,
+              Price: item.Price,
+              price: item.price,
+              Cost: item.Cost,
+              cost: item.cost
+            })
+            
+            // AmountBeforeTax 추출 - 세전 가격
+            const amountBeforeTax = item.AmountBeforeTax || item.amountBeforeTax || item.amount_before_tax || 
+                                  item.BaseAmount || item.baseAmount || item.Base || item.base || 
+                                  item.Subtotal || item.subtotal || item.NetAmount || item.netAmount
+            
+            console.log(`🔍 아이템 ${index} AmountBeforeTax 추출:`, {
+              AmountBeforeTax: item.AmountBeforeTax,
+              amountBeforeTax: item.amountBeforeTax,
+              amount_before_tax: item.amount_before_tax,
+              BaseAmount: item.BaseAmount,
+              baseAmount: item.baseAmount,
+              Base: item.Base,
+              base: item.base,
+              Subtotal: item.Subtotal,
+              subtotal: item.subtotal,
+              NetAmount: item.NetAmount,
+              netAmount: item.netAmount
+            })
+            
+            // RoomTypeCode 추출 - 객실 타입 코드
+            const roomTypeCode = item.RoomTypeCode || item.roomTypeCode || item.room_type_code || 
+                               item.RoomCode || item.roomCode || item.TypeCode || item.typeCode || 
+                               item.CategoryCode || item.categoryCode
+            
+            console.log(`🔍 아이템 ${index} RoomTypeCode 추출:`, {
+              RoomTypeCode: item.RoomTypeCode,
+              roomTypeCode: item.roomTypeCode,
+              room_type_code: item.room_type_code,
+              RoomCode: item.RoomCode,
+              roomCode: item.roomCode,
+              TypeCode: item.TypeCode,
+              typeCode: item.typeCode,
+              CategoryCode: item.CategoryCode,
+              categoryCode: item.categoryCode
+            })
+            
+            // RatePlanType 추출 - 요금 플랜 타입
+            const ratePlanType = item.RatePlanType || item.ratePlanType || item.rate_plan_type || 
+                               item.RateType || item.rateType || item.PlanType || item.planType || 
+                               item.RateCategory || item.rateCategory || item.PricingType || item.pricingType
+            
+            console.log(`🔍 아이템 ${index} RatePlanType 추출:`, {
+              RatePlanType: item.RatePlanType,
+              ratePlanType: item.ratePlanType,
+              rate_plan_type: item.rate_plan_type,
+              RateType: item.RateType,
+              rateType: item.rateType,
+              PlanType: item.PlanType,
+              planType: item.planType,
+              RateCategory: item.RateCategory,
+              rateCategory: item.rateCategory,
+              PricingType: item.PricingType,
+              pricingType: item.pricingType
+            })
+            
+            // BookingCode 추출 - 예약 코드
+            const bookingCode = item.BookingCode || item.bookingCode || item.booking_code || 
+                              item.ReservationCode || item.reservationCode || item.BookCode || item.bookCode || 
+                              item.ConfirmationCode || item.confirmationCode
+            
+            console.log(`🔍 아이템 ${index} BookingCode 추출:`, {
+              BookingCode: item.BookingCode,
+              bookingCode: item.bookingCode,
+              booking_code: item.booking_code,
+              ReservationCode: item.ReservationCode,
+              reservationCode: item.reservationCode,
+              BookCode: item.BookCode,
+              bookCode: item.bookCode,
+              ConfirmationCode: item.ConfirmationCode,
+              confirmationCode: item.confirmationCode
+            })
+            
+            // RatePlanDescription 추출 - 요금 플랜 설명
+            const ratePlanDescription = item.RatePlanDescription || item.ratePlanDescription || item.rate_plan_description || 
+                                      item.RateDescription || item.rateDescription || item.PlanDescription || item.planDescription || 
+                                      item.RateInfo || item.rateInfo || item.PlanInfo || item.planInfo
+            
+            console.log(`🔍 아이템 ${index} RatePlanDescription 추출:`, {
+              RatePlanDescription: item.RatePlanDescription,
+              ratePlanDescription: item.ratePlanDescription,
+              rate_plan_description: item.rate_plan_description,
+              RateDescription: item.RateDescription,
+              rateDescription: item.rateDescription,
+              PlanDescription: item.PlanDescription,
+              planDescription: item.planDescription,
+              RateInfo: item.RateInfo,
+              rateInfo: item.rateInfo,
+              PlanInfo: item.PlanInfo,
+              planInfo: item.planInfo
+            })
+            
+            const result = {
+              RateKey: rateKey || 'N/A',
+              RoomType: roomType || 'N/A',
+              RoomName: roomName || 'N/A',
+              Description: description || 'N/A',
+              Currency: currency || 'KRW',
+              AmountAfterTax: amountAfterTax || 'N/A',
+              AmountBeforeTax: amountBeforeTax || 'N/A',
+              RoomTypeCode: roomTypeCode || 'N/A',
+              RatePlanDescription: ratePlanDescription || 'N/A',
+              RatePlanType: ratePlanType || 'N/A',
+              BookingCode: bookingCode || 'N/A'
+            }
+            
+            console.log(`🔍 아이템 ${index} 최종 변환 결과:`, result)
+            return result
+          })
+          
+          console.log('🔄 변환된 Rate Plan 데이터:', transformedData)
+          return transformedData
+        }
+        
+        return []
+      } catch (error) {
+        console.error('Supabase 조회 오류:', error)
+        return []
+      }
+    },
+    enabled: !!hotel?.sabre_id,
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+  })
 
   // 이미지 갤러리 열기
   const openImageGallery = () => {
@@ -936,6 +1580,406 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   <div>
                     <span className="font-medium">부가 설명:</span> 기타 상세 정보
                   </div>
+                </div>
+              </div>
+
+              {/* Sabre API 호텔 상세 정보 테이블 */}
+              <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-lg font-semibold text-blue-900 mb-6 flex items-center gap-2">
+                  <span className="text-2xl">🏨</span>
+                  Sabre API 호텔 상세 정보
+                </h4>
+                
+                {sabreLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-3 text-blue-600">
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm">Sabre API에서 호텔 상세 정보를 가져오는 중...</span>
+                    </div>
+                  </div>
+                ) : sabreError ? (
+                  <div className="text-center py-6">
+                    <div className="text-red-500 mb-2">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <p className="text-sm text-red-600 mb-3">Sabre API 연결에 실패했습니다.</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>• 네트워크 연결을 확인해주세요</p>
+                      <p>• 잠시 후 다시 시도해주세요</p>
+                    </div>
+                  </div>
+                ) : sabreHotelInfo ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-blue-200">
+                      <thead>
+                        <tr className="bg-blue-100">
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">구분</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">상세 정보</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* 기본 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">기본 정보</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium w-20">Sabre ID:</span>
+                                <span className="bg-blue-100 px-2 py-1 rounded text-xs">
+                                  {hotel?.sabre_id}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium w-20">호텔명:</span>
+                                <span className="font-semibold">{sabreHotelInfo.HotelName || '정보 없음'}</span>
+                              </div>
+                              {sabreHotelInfo.HotelCode && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">호텔 코드:</span>
+                                  <span>{sabreHotelInfo.HotelCode}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* 주소 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">주소 정보</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              {sabreHotelInfo.Address?.AddressLine && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">주소:</span>
+                                  <span>
+                                    {Array.isArray(sabreHotelInfo.Address.AddressLine) 
+                                      ? sabreHotelInfo.Address.AddressLine.join(', ')
+                                      : sabreHotelInfo.Address.AddressLine
+                                    }
+                                  </span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.Address?.Street && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">도로명:</span>
+                                  <span>{sabreHotelInfo.Address.Street}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.Address?.CityName && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">도시:</span>
+                                  <span>{sabreHotelInfo.Address.CityName}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.Address?.CountryCode && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">국가:</span>
+                                  <span>{sabreHotelInfo.Address.CountryCode}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* 위치 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">위치 정보</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              {sabreHotelInfo.LocationInfo?.CityName && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">도시명:</span>
+                                  <span>{sabreHotelInfo.LocationInfo.CityName}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.LocationInfo?.CountryCode && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">국가 코드:</span>
+                                  <span>{sabreHotelInfo.LocationInfo.CountryCode}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.LocationInfo?.StateCode && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">주/도:</span>
+                                  <span>{sabreHotelInfo.LocationInfo.StateCode}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* 연락처 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">연락처 정보</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              {sabreHotelInfo.ContactInfo?.Phone && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">전화번호:</span>
+                                  <span>{sabreHotelInfo.ContactInfo.Phone}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.ContactInfo?.Fax && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">팩스:</span>
+                                  <span>{sabreHotelInfo.ContactInfo.Fax}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.ContactInfo?.Email && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">이메일:</span>
+                                  <span className="text-blue-600 underline">{sabreHotelInfo.ContactInfo.Email}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* 호텔 등급 및 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">호텔 등급</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              {sabreHotelInfo.HotelRating && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">등급:</span>
+                                  <span className="flex items-center gap-1">
+                                    {Array.from({ length: parseInt(sabreHotelInfo.HotelRating) || 0 }).map((_, i) => (
+                                      <span key={i} className="text-yellow-500">⭐</span>
+                                    ))}
+                                    <span className="ml-2">({sabreHotelInfo.HotelRating}성급)</span>
+                                  </span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.HotelCategory && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">카테고리:</span>
+                                  <span>{sabreHotelInfo.HotelCategory}</span>
+                                </div>
+                              )}
+                              {sabreHotelInfo.ChainCode && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">체인 코드:</span>
+                                  <span className="bg-blue-100 px-2 py-1 rounded text-xs">
+                                    {sabreHotelInfo.ChainCode}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* 시설 정보 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">시설 정보</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="space-y-2">
+                              {sabreHotelInfo.Amenities && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">편의시설:</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {Array.isArray(sabreHotelInfo.Amenities) 
+                                      ? sabreHotelInfo.Amenities.map((amenity: string, index: number) => (
+                                          <span key={index} className="bg-blue-100 px-2 py-1 rounded text-xs">
+                                            {amenity}
+                                          </span>
+                                        ))
+                                      : <span>{sabreHotelInfo.Amenities}</span>
+                                    }
+                                  </div>
+                                </div>
+                              )}
+                              {sabreHotelInfo.Features && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">특징:</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {Array.isArray(sabreHotelInfo.Features)
+                                      ? sabreHotelInfo.Features.map((feature: string, index: number) => (
+                                          <span key={index} className="bg-green-100 px-2 py-1 rounded text-xs text-green-700">
+                                            {feature}
+                                          </span>
+                                        ))
+                                      : <span>{sabreHotelInfo.Features}</span>
+                                    }
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* API 연동 상태 */}
+                        <tr className="hover:bg-blue-50">
+                          <td className="border border-blue-200 px-4 py-3 text-sm font-medium text-blue-800 bg-blue-50">연동 상태</td>
+                          <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium w-20">상태:</span>
+                              <span className="text-green-600 bg-green-100 px-3 py-1 rounded-full text-xs font-medium">
+                                ✓ 실시간 연동
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="text-gray-500 mb-2">
+                      <span className="text-2xl">🔍</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">Sabre API에서 호텔 상세 정보를 찾을 수 없습니다.</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>• Sabre ID: {hotel?.sabre_id}</p>
+                      <p>• 해당 호텔이 Sabre 시스템에 등록되어 있는지 확인해주세요</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    💡 이 정보는 <a href="https://developer.sabre.com/docs/rest_apis/hotel/search/get_hotel_details/reference-documentation" 
+                    target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-800">Sabre Hotel Details API</a>에서 실시간으로 가져온 최신 호텔 정보입니다.
+                  </p>
+                </div>
+              </div>
+
+              {/* Sabre API 기반 객실 타입 및 가격 정보 테이블 */}
+              <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-lg font-semibold text-blue-900 mb-6 flex items-center gap-2">
+                  <span className="text-2xl">🏨</span>
+                  Sabre API 기반 객실 정보 테이블
+                </h4>
+                
+                {ratePlanLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-3 text-blue-600">
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm">Sabre API에서 Rate Plan 정보를 가져오는 중...</span>
+                    </div>
+                  </div>
+                ) : ratePlanError ? (
+                  <div className="text-center py-6">
+                    <div className="text-red-500 mb-2">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <p className="text-sm text-red-600 mb-3">Sabre API Rate Plan 데이터 조회에 실패했습니다.</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>• Sabre API 연결을 확인해주세요</p>
+                      <p>• 호텔의 Rate Plan 정보가 있는지 확인해주세요</p>
+                      <p>• 잠시 후 다시 시도해주세요</p>
+                    </div>
+                  </div>
+                ) : ratePlanCodes && ratePlanCodes.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-blue-200">
+                      <thead>
+                        <tr className="bg-blue-100">
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RateKey</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomType</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomName</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">Description</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">Currency</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">AmountAfterTax</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">AmountBeforeTax</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomTypeCode</th>
+                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RatePlanType</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ratePlanCodes.map((ratePlan: any, index: number) => (
+                          <tr key={index} className="hover:bg-blue-50">
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700 font-mono bg-blue-50">
+                              {ratePlan.RateKey && ratePlan.RateKey !== 'N/A' ? (
+                                ratePlan.RateKey.length > 10 ? 
+                                  `${ratePlan.RateKey.slice(0, 10)}...` : 
+                                  ratePlan.RateKey
+                              ) : 'N/A'}
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700 font-medium">
+                              {ratePlan.RoomType || 'N/A'}
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              {ratePlan.RoomName || 'N/A'}
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.Description || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.Currency || 'KRW'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <div className="font-bold text-lg text-blue-800">
+                                {ratePlan.AmountAfterTax ? 
+                                  parseInt(ratePlan.AmountAfterTax).toLocaleString() : 'N/A'
+                                }
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <div className="font-medium text-blue-800">
+                                {ratePlan.AmountBeforeTax ? 
+                                  parseInt(ratePlan.AmountBeforeTax).toLocaleString() : 'N/A'
+                                }
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.RoomTypeCode || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.RatePlanType || 'N/A'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="text-gray-500 mb-2">
+                      <span className="text-2xl">🏨</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">Sabre API에서 Rate Plan 정보를 찾을 수 없습니다.</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>• Sabre ID: {hotel?.sabre_id}</p>
+                      <p>• 해당 호텔의 Sabre API 연결을 확인해주세요</p>
+                      <p>• Sabre API에 Rate Plan 정보가 있는지 확인해주세요</p>
+                      <p>• 브라우저 개발자 도구 콘솔에서 API 응답을 확인해주세요</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    💡 이 정보는 <strong>Sabre API의 실시간 Rate Plan 데이터</strong>에서 가져온 객실 정보입니다.
+                    <br />
+                    • <strong>RateKey</strong>: 각 요금 플랜의 고유 식별자 (Sabre 시스템 내 고유값)
+                    <br />
+                    • <strong>RoomType</strong>: 객실의 종류 (Standard, Deluxe, Suite 등)
+                    <br />
+                    • <strong>RoomName</strong>: 객실의 상세 명칭
+                    <br />
+                    • <strong>Description</strong>: 객실에 대한 상세 설명
+                    <br />
+                    • <strong>Currency</strong>: 통화 코드 (Sabre API 응답 기준)
+                    <br />
+                    • <strong>AmountAfterTax</strong>: 세후 가격 (실시간 Sabre 가격)
+                    <br />
+                    • <strong>AmountBeforeTax</strong>: 세전 가격 (실시간 Sabre 가격)
+                    <br />
+                    • <strong>RoomTypeCode</strong>: 객실 타입 코드 (Sabre 시스템 코드)
+                    <br />
+                    • <strong>RatePlanType</strong>: 요금 플랜 타입 (패키지, 할인 등)
+                    <br />
+                    • <em>참고: 이 데이터는 Sabre API에서 실시간으로 가져와 표시됩니다</em>
+                  </p>
                 </div>
               </div>
 

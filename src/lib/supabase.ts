@@ -1,5 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
+// RatePlanCode 타입 정의
+export interface RatePlanCode {
+  RateKey: string
+  RoomType: string
+  RoomName: string
+  Description: string
+  Currency: string
+  AmountAfterTax: string
+  AmountBeforeTax?: string
+  RoomTypeCode?: string
+  RatePlanDescription?: string
+  RatePlanType?: string
+  BookingCode?: string
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -114,7 +129,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code: string | null
-          rate_plan_codes: string | null
+          rate_plan_codes: RatePlanCode[] | null
           
           // 타임스탬프
           created_at: string
@@ -207,7 +222,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code?: string | null
-          rate_plan_codes?: string | null
+          rate_plan_codes?: RatePlanCode[] | null
           
           // 타임스탬프
           created_at?: string
@@ -300,7 +315,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code?: string | null
-          rate_plan_codes?: string | null
+          rate_plan_codes?: RatePlanCode[] | null
           
           // 타임스탬프
           created_at?: string
