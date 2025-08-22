@@ -47,21 +47,43 @@ function useSearchResults(query: string) {
 export default function SearchResultsPage() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
+  const checkInParam = searchParams.get('checkIn') || ""
+  const checkOutParam = searchParams.get('checkOut') || ""
+  
   const [searchQuery, setSearchQuery] = useState(query)
+  const [searchDates, setSearchDates] = useState({
+    checkIn: checkInParam,
+    checkOut: checkOutParam
+  })
+  
   const { data: searchResults, isLoading, error } = useSearchResults(searchQuery)
 
-  const handleSearch = (newQuery: string) => {
+  const handleSearch = (newQuery: string, dates?: { checkIn: string; checkOut: string }) => {
     setSearchQuery(newQuery)
-    // URL 업데이트 (새로고침 시에도 검색어 유지)
+    if (dates) {
+      setSearchDates(dates)
+    }
+    
+    // URL 업데이트 (새로고침 시에도 검색어와 날짜 유지)
     const url = new URL(window.location.href)
     url.searchParams.set('q', newQuery)
+    if (dates?.checkIn) url.searchParams.set('checkIn', dates.checkIn)
+    if (dates?.checkOut) url.searchParams.set('checkOut', dates.checkOut)
     window.history.pushState({}, '', url.toString())
   }
 
-  // URL 파라미터 변경 시 검색어 동기화
+  const handleDatesChange = (dates: { checkIn: string; checkOut: string }) => {
+    setSearchDates(dates)
+  }
+
+  // URL 파라미터 변경 시 검색어와 날짜 동기화
   useEffect(() => {
     setSearchQuery(query)
-  }, [query])
+    setSearchDates({
+      checkIn: checkInParam,
+      checkOut: checkOutParam
+    })
+  }, [query, checkInParam, checkOutParam])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -77,7 +99,10 @@ export default function SearchResultsPage() {
               <CommonSearchBar 
                 variant="landing" 
                 onSearch={handleSearch}
+                onDatesChange={handleDatesChange}
                 initialQuery={searchQuery}
+                checkIn={searchDates.checkIn}
+                checkOut={searchDates.checkOut}
               />
             </div>
           </div>
