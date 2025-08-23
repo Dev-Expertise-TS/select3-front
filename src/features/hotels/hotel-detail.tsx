@@ -26,14 +26,19 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // 날짜 상태 관리
   const [searchDates, setSearchDates] = useState(() => {
     const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const twoWeeksLater = new Date(today)
+    twoWeeksLater.setDate(today.getDate() + 14)
+    const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
+    twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
     
     return {
-      checkIn: today.toISOString().split('T')[0],
-      checkOut: tomorrow.toISOString().split('T')[0]
+      checkIn: twoWeeksLater.toISOString().split('T')[0],
+      checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
     }
   })
+  
+  // 검색 버튼을 눌렀는지 추적하는 상태
+  const [hasSearched, setHasSearched] = useState(false)
   
   // slug로 호텔 데이터 조회
   const { data: hotel, isLoading, error } = useHotelBySlug(hotelSlug)
@@ -47,15 +52,23 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     queryFn: async () => {
       if (!hotel?.sabre_id) return null
       
+      // 날짜가 없으면 기본값 사용 (체크인은 오늘, 체크아웃은 2주 뒤)
+      const startDate = searchDates.checkIn || new Date().toISOString().split('T')[0]
+      const endDate = searchDates.checkOut || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      
       try {
         // Sabre Hotel Details API 직접 호출
         const requestBody = {
           HotelCode: hotel.sabre_id.toString(),
           CurrencyCode: 'KRW',
-          StartDate: searchDates.checkIn,
-          EndDate: searchDates.checkOut,
-          Adults: 2
+          StartDate: startDate,
+          EndDate: endDate,
+          Adults: 2,
+          Children: 0,
+          Rooms: 1
         }
+
+        console.log('📤 Sabre Hotel Details API 요청:', requestBody)
 
         const response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
           method: 'POST',
@@ -64,7 +77,26 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           signal: AbortSignal.timeout(15000)
         })
         
-        if (!response.ok) throw new Error('Sabre API 호출 실패')
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Sabre API 응답 오류:', response.status, response.statusText, errorText)
+          
+          // Sabre API 오류 메시지 파싱
+          let userFriendlyMessage = `Sabre API 호출 실패: ${response.status} ${response.statusText}`
+          try {
+            const errorData = JSON.parse(errorText)
+            if (errorData.errors && Array.isArray(errorData.errors)) {
+              const errorMessage = errorData.errors[0]
+              if (errorMessage === 'StartDate는 오늘 이후 날짜여야 합니다.') {
+                userFriendlyMessage = '체크인 날짜는 오늘 이후 날짜이어야 합니다.'
+              }
+            }
+          } catch (parseError) {
+            // JSON 파싱 실패 시 기본 메시지 사용
+          }
+          
+          throw new Error(userFriendlyMessage)
+        }
         
         const result = await response.json()
         if (result.GetHotelDetailsRS?.HotelDetailsInfo?.HotelInfo) {
@@ -76,7 +108,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         return null
       }
     },
-    enabled: !!hotel?.sabre_id,
+    enabled: !!hotel?.sabre_id && hasSearched,
     staleTime: 5 * 60 * 1000, // 5분 캐시
   })
 
@@ -91,16 +123,20 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         return null
       }
       
+      // 날짜가 없으면 기본값 사용 (체크인은 오늘, 체크아웃은 2주 뒤)
+      const startDate = searchDates.checkIn || new Date().toISOString().split('T')[0]
+      const endDate = searchDates.checkOut || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      
       console.log('🚀 Sabre API 호출 시작 - Hotel Details:', hotel.sabre_id)
-      console.log('📅 사용할 날짜:', searchDates)
+      console.log('📅 사용할 날짜:', { startDate, endDate })
       
       try {
         // 1단계: Sabre API 직접 호출 시도
         const requestBody = {
           HotelCode: hotel.sabre_id.toString(),
           CurrencyCode: 'KRW',
-          StartDate: searchDates.checkIn,
-          EndDate: searchDates.checkOut,
+          StartDate: startDate,
+          EndDate: endDate,
           Adults: 2,
           Children: 0,
           Rooms: 1
@@ -117,7 +153,24 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         })
         
         if (!response.ok) {
-          throw new Error(`Sabre API 호출 실패: ${response.status} ${response.statusText}`)
+          const errorText = await response.text()
+          console.error('Sabre API 응답 오류:', response.status, response.statusText, errorText)
+          
+          // Sabre API 오류 메시지 파싱
+          let userFriendlyMessage = `Sabre API 호출 실패: ${response.status} ${response.statusText}`
+          try {
+            const errorData = JSON.parse(errorText)
+            if (errorData.errors && Array.isArray(errorData.errors)) {
+              const errorMessage = errorData.errors[0]
+              if (errorMessage === 'StartDate는 오늘 이후 날짜여야 합니다.') {
+                userFriendlyMessage = '체크인 날짜는 오늘 이후 날짜이어야 합니다.'
+              }
+            }
+          } catch (parseError) {
+            // JSON 파싱 실패 시 기본 메시지 사용
+          }
+          
+          throw new Error(userFriendlyMessage)
         }
         
         const sabreData = await response.json()
@@ -948,7 +1001,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         return []
       }
     },
-    enabled: !!hotel?.sabre_id,
+    enabled: !!hotel?.sabre_id && hasSearched,
     staleTime: 5 * 60 * 1000, // 5분 캐시
     retry: 2, // 재시도 횟수 증가
     retryDelay: 1000, // 재시도 간격 1초
@@ -1627,14 +1680,21 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       {/* Search Bar */}
       <div className="bg-gray-100 py-4">
         <div className="container mx-auto max-w-[1440px] px-4">
-          <CommonSearchBar
-            variant="hotel-detail"
-            location={hotel.city_ko || hotel.city_eng || '도시'}
-            checkIn={searchDates.checkIn}
-            checkOut={searchDates.checkOut}
-            guests="객실 1개, 성인 2명, 어린이 0명"
-            onDatesChange={setSearchDates}
-          />
+                      <CommonSearchBar
+              variant="hotel-detail"
+              location={hotel.city_ko || hotel.city_eng || '도시'}
+              checkIn={searchDates.checkIn}
+              checkOut={searchDates.checkOut}
+              guests={{ rooms: 1, adults: 1, children: 0 }}
+              initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
+              onSearch={(query, dates, guests) => {
+                if (dates) {
+                  setSearchDates(dates)
+                }
+                setHasSearched(true)
+              }}
+              isSabreLoading={sabreLoading || ratePlanLoading}
+            />
         </div>
       </div>
 
@@ -2161,7 +2221,20 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   Sabre API 기반 객실 정보 테이블
                 </h4>
                 
-                {ratePlanLoading ? (
+                {!hasSearched ? (
+                  <div className="text-center py-8">
+                    <div className="text-blue-500 mb-3">
+                      <span className="text-3xl">🔍</span>
+                    </div>
+                    <p className="text-lg font-medium text-blue-800 mb-2">검색을 시작해주세요</p>
+                    <p className="text-sm text-blue-600 mb-4">위의 검색창에서 날짜와 인원을 선택한 후 검색 버튼을 눌러주세요.</p>
+                    <div className="text-xs text-blue-500 space-y-1">
+                      <p>• 체크인/체크아웃 날짜를 선택해주세요</p>
+                      <p>• 객실, 성인, 어린이 수를 설정해주세요</p>
+                      <p>• 검색 버튼을 클릭하면 실시간 객실 정보를 확인할 수 있습니다</p>
+                    </div>
+                  </div>
+                ) : ratePlanLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="flex items-center gap-3 text-blue-600">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>

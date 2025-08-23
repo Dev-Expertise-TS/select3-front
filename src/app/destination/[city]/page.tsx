@@ -116,7 +116,25 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
             </div>
           </div>
 
-          <CommonSearchBar variant="destination" location={cityName} guests="2 adults (1 room)" />
+          <CommonSearchBar 
+            variant="destination" 
+            location={cityName} 
+            guests={{ rooms: 1, adults: 1, children: 0 }}
+            checkIn={(() => {
+              const today = new Date()
+              const twoWeeksLater = new Date(today)
+              twoWeeksLater.setDate(today.getDate() + 14)
+              return twoWeeksLater.toISOString().split('T')[0]
+            })()}
+            checkOut={(() => {
+              const today = new Date()
+              const twoWeeksLater = new Date(today)
+              twoWeeksLater.setDate(today.getDate() + 14)
+              const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
+              twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
+              return twoWeeksLaterPlusOne.toISOString().split('T')[0]
+            })()}
+          />
         </div>
       </div>
 

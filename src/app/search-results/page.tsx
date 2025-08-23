@@ -51,9 +51,25 @@ export default function SearchResultsPage() {
   const checkOutParam = searchParams.get('checkOut') || ""
   
   const [searchQuery, setSearchQuery] = useState(query)
-  const [searchDates, setSearchDates] = useState({
-    checkIn: checkInParam,
-    checkOut: checkOutParam
+  const [searchDates, setSearchDates] = useState(() => {
+    // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
+    if (checkInParam && checkOutParam) {
+      return {
+        checkIn: checkInParam,
+        checkOut: checkOutParam
+      }
+    }
+    
+    const today = new Date()
+    const twoWeeksLater = new Date(today)
+    twoWeeksLater.setDate(today.getDate() + 14)
+    const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
+    twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
+    
+    return {
+      checkIn: twoWeeksLater.toISOString().split('T')[0],
+      checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
+    }
   })
   
   const { data: searchResults, isLoading, error } = useSearchResults(searchQuery)
@@ -79,10 +95,23 @@ export default function SearchResultsPage() {
   // URL 파라미터 변경 시 검색어와 날짜 동기화
   useEffect(() => {
     setSearchQuery(query)
-    setSearchDates({
-      checkIn: checkInParam,
-      checkOut: checkOutParam
-    })
+    
+    // URL 파라미터가 있으면 사용, 없으면 기본값 (오늘과 2주 뒤)
+    if (checkInParam && checkOutParam) {
+      setSearchDates({
+        checkIn: checkInParam,
+        checkOut: checkOutParam
+      })
+    } else {
+      const today = new Date()
+      const twoWeeksLater = new Date(today)
+      twoWeeksLater.setDate(today.getDate() + 14)
+      
+      setSearchDates({
+        checkIn: today.toISOString().split('T')[0],
+        checkOut: twoWeeksLater.toISOString().split('T')[0]
+      })
+    }
   }, [query, checkInParam, checkOutParam])
 
   return (
