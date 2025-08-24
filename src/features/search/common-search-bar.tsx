@@ -198,29 +198,29 @@ export function CommonSearchBar({
     <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 ${className}`}
       style={{ borderColor: '#E6CDB5' }}>
       <div className="flex items-center gap-4">
-        {/* 위치 검색 영역 - 40% 폭 */}
-        <div className="flex items-center gap-2 w-[40%] relative group">
+        {/* 위치 검색 영역 - 30% 폭 */}
+        <div className="flex items-center gap-2 w-[30%] relative group">
           <MapPin className="h-5 w-5 text-gray-600 transition-colors group-focus-within:text-blue-600" />
           <div className="flex-1 relative">
-            <Input
-              type="text"
-              placeholder="어디로 떠날까요?"
-              value={searchQuery}
-              onChange={(e) => {
-                const value = e.target.value
-                setSearchQuery(value)
-                setShowSuggestions(value.length > 0)
-                
-                // 입력값이 변경될 때 부모 컴포넌트에 알림
-                if (onSearch) {
-                  onSearch(value, { checkIn: localCheckIn, checkOut: localCheckOut })
-                }
-              }}
-              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium placeholder:text-gray-400 focus:ring-0 focus:outline-none focus:bg-blue-50/30 rounded-md transition-all duration-200"
-              disabled={isSearching}
-            />
+                         <Input
+               type="text"
+               placeholder="어디로 떠날까요?"
+               value={searchQuery}
+               onChange={(e) => {
+                 const value = e.target.value
+                 setSearchQuery(value)
+                 setShowSuggestions(value.length > 0)
+                 
+                 // 입력값이 변경될 때 부모 컴포넌트에 알림
+                 if (onSearch) {
+                   onSearch(value, { checkIn: localCheckIn, checkOut: localCheckOut })
+                 }
+               }}
+               onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+               className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none focus:bg-blue-50/30 rounded-md transition-all duration-200"
+               disabled={isSearching}
+             />
             {/* 포커스 배경 효과 */}
             <div className="absolute inset-0 bg-blue-50/30 rounded-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none -z-10" />
           </div>

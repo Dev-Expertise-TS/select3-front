@@ -172,22 +172,32 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
       <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              <span className="font-medium">
-                {selectedCheckIn && selectedCheckOut 
-                  ? `${formatDateForDisplay(selectedCheckIn)} - ${formatDateForDisplay(selectedCheckOut)} ${calculateNights()}박`
-                  : selectedCheckIn 
-                    ? `${formatDateForDisplay(selectedCheckIn)} ~ 체크아웃 날짜 선택`
-                    : "체크인 날짜 선택"
-                }
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <span className="font-medium">
+                  {selectedCheckIn && selectedCheckOut 
+                    ? `${formatDateForDisplay(selectedCheckIn)} - ${formatDateForDisplay(selectedCheckOut)} ${calculateNights()}박`
+                    : selectedCheckIn 
+                      ? `${formatDateForDisplay(selectedCheckIn)} ~ 체크아웃 날짜 선택`
+                      : "체크인 날짜 선택"
+                  }
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Users className="h-4 w-4" />
+                <span className="text-sm">{guests || "객실 1개, 성인 2명, 어린이 0명"}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <Users className="h-4 w-4" />
-              <span className="text-sm">{guests || "객실 1개, 성인 2명, 어린이 0명"}</span>
-            </div>
+            {/* 닫기 버튼 */}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              aria-label="닫기"
+            >
+              <span className="text-2xl text-gray-500 hover:text-gray-700">×</span>
+            </button>
           </div>
         </div>
 
