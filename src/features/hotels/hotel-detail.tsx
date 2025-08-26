@@ -13,7 +13,19 @@ import { supabase } from "@/lib/supabase"
 import { generateRoomIntroductionBatch, generateRoomIntroduction, generateTripStyleRoomName, interpretBedType } from "@/lib/openai"
 
 interface HotelDetailProps {
-  hotelSlug: string
+  hotelSlug: string;
+  searchDates?: {
+    checkIn?: string;
+    checkOut?: string;
+  };
+}
+
+interface HotelPromotion {
+  promotion_id: number;
+  promotion: string;
+  promotion_description: string;
+  booking_date: string;
+  check_in_date: string;
 }
 
 export function HotelDetail({ hotelSlug }: HotelDetailProps) {
@@ -49,7 +61,12 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [isGeneratingRoomNames, setIsGeneratingRoomNames] = useState(false)
   const [isGeneratingBedTypes, setIsGeneratingBedTypes] = useState(false)
   
-  // 통합 AI 처리 함수 - 순차적으로 모든 AI 처리를 완료
+  // 프로모션 데이터 상태 관리
+  const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>([])
+  const [isLoadingPromotions, setIsLoadingPromotions] = useState(false)
+  
+  // 통합 AI 처리 함수 - 순차적으로 모든 AI 처리를 완료 (주석 처리됨)
+  /*
   const processAllAI = async (ratePlans: any[], hotelName: string) => {
     console.log('🚀 processAllAI 호출됨 - 모든 AI 처리를 순차적으로 실행:', {
       ratePlanCodesLength: ratePlanCodes?.length,
@@ -208,6 +225,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       console.log('🏁 통합 AI 처리 완료')
     }
   }
+  */
 
   // 베드 타입 해석 함수
   const generateBedTypes = async (ratePlans: any[], hotelName: string) => {
@@ -455,8 +473,78 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // slug로 호텔 데이터 조회
   const { data: hotel, isLoading, error } = useHotelBySlug(hotelSlug)
   
+  // 호텔 프로모션 데이터 조회
+  const fetchHotelPromotions = async (sabreId: number) => {
+    console.log('🎯 fetchHotelPromotions 호출됨:', { sabreId })
+    
+    if (!sabreId) {
+      console.log('⚠️ sabreId가 없음')
+      return []
+    }
+    
+    setIsLoadingPromotions(true)
+    
+    try {
+      // 1단계: select_hotel_promotions_map 테이블에서 promotion_id 조회
+      const { data: promotionMapData, error: mapError } = await supabase
+        .from('select_hotel_promotions_map')
+        .select('promotion_id')
+        .eq('sabre_id', sabreId)
+      
+      if (mapError) {
+        console.error('❌ 프로모션 맵 조회 오류:', mapError)
+        return []
+      }
+      
+      if (!promotionMapData || promotionMapData.length === 0) {
+        console.log('📋 해당 호텔의 프로모션 맵 데이터 없음')
+        return []
+      }
+      
+      const promotionIds = promotionMapData.map(item => item.promotion_id)
+      console.log('📋 조회된 프로모션 ID들:', promotionIds)
+      
+      // 2단계: select_hotel_promotions 테이블에서 프로모션 상세 정보 조회
+      const { data: promotionData, error: promotionError } = await supabase
+        .from('select_hotel_promotions')
+        .select('promotion_id, promotion, promotion_description, booking_date, check_in_date')
+        .in('promotion_id', promotionIds)
+        .order('promotion_id', { ascending: true })
+      
+      if (promotionError) {
+        console.error('❌ 프로모션 상세 정보 조회 오류:', promotionError)
+        return []
+      }
+      
+      if (!promotionData || promotionData.length === 0) {
+        console.log('📋 프로모션 상세 정보 없음')
+        return []
+      }
+      
+      console.log('✅ 프로모션 데이터 조회 완료:', promotionData)
+      return promotionData as HotelPromotion[]
+      
+    } catch (error) {
+      console.error('❌ 프로모션 데이터 조회 중 오류:', error)
+      return []
+    } finally {
+      setIsLoadingPromotions(false)
+    }
+  }
+  
   // 호텔 미디어 이미지 조회
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+  
+  // 호텔 프로모션 데이터 조회
+  useEffect(() => {
+    if (hotel?.sabre_id) {
+      console.log('🎯 호텔 프로모션 데이터 조회 시작:', hotel.sabre_id)
+      fetchHotelPromotions(hotel.sabre_id).then(promotions => {
+        setHotelPromotions(promotions)
+        console.log('💾 프로모션 데이터 상태 업데이트 완료:', promotions.length, '개')
+      })
+    }
+  }, [hotel?.sabre_id])
 
   // Sabre API를 통해 호텔 상세 정보 조회
   const { data: sabreHotelInfo, isLoading: sabreLoading, error: sabreError } = useQuery({
@@ -1335,14 +1423,14 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       
       if (hotel?.name) {
         console.log('✅ hotel.name 조건 충족:', hotel.name)
-        console.log('🚀 통합 AI 처리 시작!')
-        processAllAI(ratePlanCodes, hotel.name)
+        console.log('🚀 통합 AI 처리 시작! (주석 처리됨)')
+        // processAllAI(ratePlanCodes, hotel.name) // AI 처리 비활성화
       } else {
         console.log('⚠️ hotel.name이 없음. hotel 객체:', hotel)
         // hotel.name이 없어도 기본값으로 시도
         const defaultHotelName = hotel?.property_name_ko || hotel?.property_name_en || '호텔'
         console.log('🔄 기본 호텔명으로 시도:', defaultHotelName)
-        processAllAI(ratePlanCodes, defaultHotelName)
+        // processAllAI(ratePlanCodes, defaultHotelName) // AI 처리 비활성화
       }
     } else {
       console.log('⚠️ 객실 소개 생성 조건 미충족:', {
@@ -1842,16 +1930,57 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       {/* Promotion */}
       <div className="bg-gray-100 py-4 mt-1.5">
         <div className="container mx-auto max-w-[1440px] px-4">
-          <div className="bg-blue-600 text-white p-4 rounded-lg">
-            <div className="flex items-center gap-4">
-              <span className="font-medium text-lg">프로모션</span>
-              <div className="flex gap-2">
-                <span className="bg-pink-500 px-3 py-1 rounded text-sm font-medium">% 최대 8,000원 할인</span>
-                <span className="bg-orange-500 px-3 py-1 rounded text-sm font-medium">① 최대 27,882원</span>
-                <span className="bg-pink-500 px-3 py-1 rounded text-sm font-medium">최대 20% 할인</span>
+          {isLoadingPromotions ? (
+            <div className="bg-blue-600 text-white p-6 rounded-lg">
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-lg">프로모션</span>
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span className="text-sm">프로모션 정보를 불러오는 중...</span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : hotelPromotions && hotelPromotions.length > 0 ? (
+            <div className="bg-blue-600 text-white p-6 rounded-lg">
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-lg">프로모션</span>
+                <div className="flex gap-2 flex-wrap items-center">
+                  {hotelPromotions.map((promotion, index) => (
+                    <div key={promotion.promotion_id} className="flex items-center gap-2 min-w-0 flex-shrink-0">
+                      <span className="bg-pink-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                        {promotion.promotion}
+                      </span>
+                      {promotion.promotion_description && (
+                        <span className="bg-orange-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                          {promotion.promotion_description}
+                        </span>
+                      )}
+                      {promotion.booking_date && (
+                        <span className="text-xs text-blue-100 whitespace-nowrap">
+                          예약: ~{new Date(promotion.booking_date).toLocaleDateString('ko-KR')}
+                        </span>
+                      )}
+                      {promotion.check_in_date && (
+                        <span className="text-xs text-blue-100 whitespace-nowrap">
+                          투숙: ~{new Date(promotion.check_in_date).toLocaleDateString('ko-KR')}
+                        </span>
+                      )}
+                                              {index < hotelPromotions.length - 1 && (
+                          <span className="text-blue-200 mx-1">|</span>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-500 text-white p-6 rounded-lg">
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-lg">프로모션</span>
+                <span className="text-sm">현재 진행 중인 프로모션이 없습니다</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2097,40 +2226,19 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         return (
                           <tr key={`rp-${idx}`} className="hover:bg-gray-50">
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                              {isGeneratingRoomNames ? (
-                                <div className="flex items-center space-x-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                                  <span className="text-gray-500">생성 중...</span>
-                                </div>
-                              ) : (
-                                <div className="text-gray-700 font-medium">
-                                  {tripStyleRoomNames.get(roomKey) || '객실명 생성 중...'}
-                                </div>
-                              )}
+                              <div className="text-gray-700 font-medium">
+                                {rp.RoomName || 'N/A'} {/* AI 처리 대신 기본값 사용 */}
+                              </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                              {isGeneratingBedTypes ? (
-                                <div className="flex items-center space-x-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                                  <span className="text-gray-500">해석 중...</span>
-                                </div>
-                              ) : (
-                                <div className="text-gray-700 font-medium">
-                                  {bedTypes.get(roomKey) || '베드 타입 해석 중...'}
-                                </div>
-                              )}
+                              <div className="text-gray-700 font-medium">
+                                베드 정보 없음 {/* AI 처리 대신 기본값 사용 */}
+                              </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                              {isGeneratingIntroductions ? (
-                                <div className="flex items-center space-x-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                  <span className="text-gray-500">생성 중...</span>
-                                </div>
-                              ) : (
-                                <div className="text-gray-700">
-                                  {roomIntroduction}
-                                </div>
-                              )}
+                              <div className="text-gray-700">
+                                {rp.Description || 'N/A'} {/* AI 처리 대신 기본값 사용 */}
+                              </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{roomType}</td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{rp.RoomName || 'N/A'}</td>

@@ -224,22 +224,23 @@ export function HotelCard({
               <div className="mb-3">
                 <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
                 <div className="space-y-2">
-                  {promotions.map((promotion: any, index: number) => (
+                  {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 */}
+                  {promotions.slice(0, 1).map((promotion: any, index: number) => (
                     <div key={index} className="bg-blue-50 p-2 rounded-lg">
-                      <div className="text-xs text-gray-700 mb-1 font-medium">
+                      <div className="text-xs text-gray-700 mb-1 font-medium truncate" title={promotion.promotion}>
                         {promotion.promotion}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         {promotion.booking_date && (
                           <div className="flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            <span>예약일 : ~{formatDate(promotion.booking_date)}</span>
+                            <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">예약일 : ~{formatDate(promotion.booking_date)}</span>
                           </div>
                         )}
                         {promotion.check_in_date && (
                           <div className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            <span>투숙일 : ~{formatDate(promotion.check_in_date)}</span>
+                            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">투숙일 : ~{formatDate(promotion.check_in_date)}</span>
                           </div>
                         )}
                       </div>
