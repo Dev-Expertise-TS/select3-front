@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,180 +16,190 @@ interface CarouselSlide {
   hotelName: string
   location: string
   hotelId: string
+  category: string
+  date: string
+  city: string
+  chain_name_en: string
+  brand_name_en: string
 }
 
 // 기본 carouselSlides (데이터가 없을 때 fallback용)
 const defaultCarouselSlides: CarouselSlide[] = [
   {
     id: 1,
-    title: "Over 900",
-    subtitle: "luxury hotels around the world",
-    description: "Hundreds under $299/night",
+    title: "Your Guide to Tokyo's Finest Luxury Hotels",
+    subtitle: "Premium Experience",
+    description: "Discover the most exclusive accommodations in Japan's capital",
     image: "/park-hyatt-tokyo-city-view.png",
     hotelName: "Park Hyatt Tokyo",
-    location: "Tokyo, Japan",
+    location: "Park Hyatt Tokyo",
     hotelId: "park-hyatt-tokyo",
+    category: "LUXURY",
+    date: "DECEMBER 15, 2024",
+    city: "Tokyo",
+    chain_name_en: "HYATT",
+    brand_name_en: "PARK HYATT",
   },
   {
     id: 2,
-    title: "Premium Benefits",
-    subtitle: "designed for Visa Signature cardholders",
-    description: "Experience luxury with exclusive perks",
+    title: "6 Perfect Places to Experience Luxury in London",
+    subtitle: "Royal Hospitality",
+    description: "Experience world-class service in iconic British destinations",
     image: "/ritz-carlton-laguna-niguel-ocean-view.png",
     hotelName: "The Ritz-Carlton",
-    location: "Laguna Niguel, CA",
-    hotelId: "ritz-carlton-laguna",
+    location: "The Ritz-Carlton",
+    hotelId: "ritz-carlton-london",
+    category: "EXPERIENCE",
+    date: "DECEMBER 15, 2024",
+    city: "London",
+    chain_name_en: "MARRIOTT",
+    brand_name_en: "THE RITZ-CARLTON",
   },
   {
     id: 3,
-    title: "Exceptional Service",
-    subtitle: "at the world's finest properties",
-    description: "Personalized experiences in iconic destinations",
+    title: "10 Summer Safety Tips For Luxury Travelers",
+    subtitle: "Travel Guide",
+    description: "Essential advice for safe and luxurious summer adventures",
     image: "/four-seasons-new-york-luxury-suite.png",
     hotelName: "Four Seasons New York",
-    location: "New York, NY",
+    location: "Four Seasons New York",
     hotelId: "four-seasons-ny",
+    category: "GUIDE",
+    date: "DECEMBER 15, 2024",
+    city: "New York",
+    chain_name_en: "FOUR SEASONS",
+    brand_name_en: "FOUR SEASONS",
   },
   {
     id: 4,
-    title: "Cultural Immersion",
-    subtitle: "with legendary hospitality",
-    description: "Discover authentic luxury in exotic locations",
+    title: "Expert Tips: How To Choose The Perfect Luxury Hotel",
+    subtitle: "Travel Tips",
+    description: "Professional advice for selecting premium accommodations",
     image: "/mandarin-oriental-bangkok-riverside-view.png",
     hotelName: "Mandarin Oriental Bangkok",
-    location: "Bangkok, Thailand",
+    location: "Mandarin Oriental Bangkok",
     hotelId: "mandarin-oriental-bangkok",
+    category: "TIPS",
+    date: "DECEMBER 15, 2024",
+    city: "Bangkok",
+    chain_name_en: "MANDARIN ORIENTAL",
+    brand_name_en: "MANDARIN ORIENTAL",
   },
 ]
 
 export function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const { data: heroImages, isLoading, error } = useHeroImages()
+  const [currentImages, setCurrentImages] = useState<CarouselSlide[]>([])
+  const { data: heroImages, isLoading, error, refetch } = useHeroImages()
 
   // 동적 데이터가 있으면 사용, 없으면 기본 데이터 사용
   const carouselSlides: CarouselSlide[] = Array.isArray(heroImages) && heroImages.length > 0 
     ? heroImages.map((image: HeroImageData, index: number) => ({
         id: index + 1,
-        title: "Premium Luxury",
+        title: "Premium Luxury Experience",
         subtitle: "at the world's finest properties",
         description: "Experience luxury with exclusive perks",
         image: image.media_path,
         hotelName: image.property_name_ko,
         location: image.property_name_en,
         hotelId: image.slug || `hotel-${image.sabre_id}`,
+        category: "LUXURY",
+        date: "DECEMBER 15, 2024",
+        city: image.city,
+        chain_name_en: image.chain_name_en,
+        brand_name_en: image.brand_name_en,
       }))
     : defaultCarouselSlides
 
+  // 이미지 전환 시 새로운 랜덤 이미지 가져오기
+  const refreshImages = useCallback(async () => {
+    if (Array.isArray(heroImages) && heroImages.length > 0) {
+      await refetch()
+    }
+  }, [heroImages, refetch])
+
+  // 슬라이드 변경 시 이미지 새로고침
+  const changeSlide = useCallback((newSlide: number) => {
+    setCurrentSlide(newSlide)
+    // 다음 슬라이드로 이동할 때마다 이미지 새로고침
+    setTimeout(() => {
+      refreshImages()
+    }, 100)
+  }, [refreshImages])
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
+      const nextSlide = (currentSlide + 1) % carouselSlides.length
+      changeSlide(nextSlide)
     }, 5000)
     return () => clearInterval(timer)
-  }, [carouselSlides.length])
+  }, [currentSlide, carouselSlides.length, changeSlide])
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
+    const nextSlideIndex = (currentSlide + 1) % carouselSlides.length
+    changeSlide(nextSlideIndex)
   }
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length)
+    const prevSlideIndex = (currentSlide - 1 + carouselSlides.length) % carouselSlides.length
+    changeSlide(prevSlideIndex)
   }
 
-  const currentSlideData = carouselSlides[currentSlide]
-
   return (
-            <div className="container mx-auto max-w-[1440px] px-4 pt-8">
-      <section className="relative min-h-[40vh] h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh] xl:h-[60vh] max-h-[600px] overflow-hidden rounded-lg">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          {isLoading ? (
-            <div className="w-full h-full bg-gray-300 animate-pulse" />
-          ) : error ? (
-            <div className="w-full h-full bg-gray-400 flex items-center justify-center">
-              <p className="text-gray-600">이미지를 불러올 수 없습니다.</p>
-            </div>
-          ) : (
-            <Image
-              src={currentSlideData.image || "/placeholder.svg"}
-              alt={`${currentSlideData.hotelName} - Premium Hotel Property`}
-              fill
-              priority
-              className="object-cover transition-all duration-1000"
-              onError={(e) => {
-                console.error(`❌ 히어로 이미지 로딩 실패: ${currentSlideData.image}`)
-                const target = e.target as HTMLImageElement
-                target.src = '/placeholder.svg'
-              }}
-            />
-          )}
-          {/* Dark Overlay for text readability */}
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-
-        {/* Content Overlay */}
-        <div className="relative z-10 h-full flex items-center">
-          <div className="px-4 md:px-8">
-            <div className="max-w-2xl text-white">
-              {/* Main Headline */}
-              <div className="mb-8">
-                <h1 className="text-3xl md:text-4xl lg:text-4xl font-bold mb-4">{currentSlideData.title}</h1>
-                <p className="text-base md:text-xl font-light mb-2">{currentSlideData.subtitle}</p>
-                <p className="text-base opacity-90">{currentSlideData.description}</p>
-              </div>
-
-
-
-
-
-              {/* Hotel Info Badge */}
-              <div className="absolute bottom-6 right-8 z-20">
-                <Link href={`/hotel/${currentSlideData.hotelId}`}>
-                  <div className="inline-flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 hover:bg-white/20 transition-colors cursor-pointer group">
-                    <div>
-                      <div className="font-semibold text-sm group-hover:text-blue-200 transition-colors">
-                        {currentSlideData.hotelName}
-                      </div>
-                      <div className="text-xs opacity-80">{currentSlideData.location}</div>
+    <div className="w-full">
+      <section className="relative">
+        {/* 4개의 큰 이미지 카드 그리드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
+          {carouselSlides.map((slide, index) => (
+            <div key={slide.id} className="relative aspect-[4/3] overflow-hidden group cursor-pointer">
+              <Link href={`/hotel/${slide.hotelId}`}>
+                <div className="relative w-full h-full">
+                  {/* Background Image */}
+                  {isLoading ? (
+                    <div className="w-full h-full bg-gray-300 animate-pulse" />
+                  ) : error ? (
+                    <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                      <p className="text-gray-600">이미지를 불러올 수 없습니다.</p>
+                    </div>
+                  ) : (
+                    <Image
+                      src={slide.image || "/placeholder.svg"}
+                      alt={`${slide.hotelName} - Premium Hotel Property`}
+                      fill
+                      priority={index < 2}
+                      className="object-cover transition-all duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
+                        const target = e.target as HTMLImageElement
+                        target.src = '/placeholder.svg'
+                      }}
+                    />
+                  )}
+                  
+                  {/* Dark Overlay for text readability */}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+                  
+                  {/* Content Overlay */}
+                  <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                    {/* Top: Category Badge */}
+                    <div className="flex justify-start">
+                      <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
+                        {slide.chain_name_en}
+                      </span>
+                    </div>
+                    
+                    {/* Bottom: Title and Date */}
+                    <div className="text-white">
+                      <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                        {slide.hotelName}({slide.location})
+                      </h2>
+                      <p className="text-xs opacity-90">{slide.city}</p>
                     </div>
                   </div>
-                </Link>
-              </div>
+                </div>
+              </Link>
             </div>
-          </div>
-        </div>
-
-                            {/* Carousel Controls */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center space-x-4 z-20">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={prevSlide}
-            className="bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 text-white rounded-full"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-
-          {/* Carousel Indicators - integrated with controls */}
-          <div className="flex space-x-3">
-            {carouselSlides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentSlide ? "bg-white w-8" : "bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={nextSlide}
-            className="bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 text-white rounded-full"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          ))}
         </div>
       </section>
     </div>

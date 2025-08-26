@@ -10,6 +10,16 @@ export interface HeroImageData {
   property_name_en: string
   slug: string
   media_path: string
+  city: string
+  chain_name_en: string
+  brand_name_en: string
+}
+
+// 배열에서 랜덤하게 하나의 요소를 선택하는 함수
+function getRandomElement<T>(array: T[]): T | undefined {
+  if (array.length === 0) return undefined
+  const randomIndex = Math.floor(Math.random() * array.length)
+  return array[randomIndex]
 }
 
 // 히어로 이미지 조회 훅
@@ -32,13 +42,31 @@ export function useHeroImages() {
         // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, slug')
+          .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id')
           .in('sabre_id', sabreIds)
         
         if (hotelsError) throw hotelsError
         if (!hotels) return []
         
-        // 3. select_hotel_media에서 해당 sabre_id의 이미지 조회 (sort_order 기준)
+        // 3. hotel_brands에서 brand_id로 브랜드 정보 조회
+        const brandIds = hotels.map(hotel => hotel.brand_id).filter(Boolean)
+        const { data: brandsData, error: brandsError } = await supabase
+          .from('hotel_brands')
+          .select('brand_id, brand_name_en, chain_id')
+          .in('brand_id', brandIds)
+        
+        if (brandsError) throw brandsError
+        
+        // 4. hotel_chains에서 chain_id로 체인 정보 조회
+        const chainIds = brandsData?.map(brand => brand.chain_id).filter(Boolean) || []
+        const { data: chainsData, error: chainsError } = await supabase
+          .from('hotel_chains')
+          .select('chain_id, chain_name_en')
+          .in('chain_id', chainIds)
+        
+        if (chainsError) throw chainsError
+        
+        // 5. select_hotel_media에서 해당 sabre_id의 이미지 조회 (sort_order 기준)
         const { data: mediaData, error: mediaError } = await supabase
           .from('select_hotel_media')
           .select('sabre_id, media_path, sort_order')
@@ -47,15 +75,29 @@ export function useHeroImages() {
         
         if (mediaError) throw mediaError
         
-        // 4. 데이터 조합
+        // 6. 데이터 조합 - 각 호텔마다 이미지를 랜덤하게 선택
         const heroImages: HeroImageData[] = hotels.map(hotel => {
-          const media = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
+          // 해당 호텔의 모든 이미지 찾기
+          const hotelImages = mediaData?.filter(m => m.sabre_id === hotel.sabre_id) || []
+          
+          // 랜덤하게 하나의 이미지 선택
+          const randomMedia = getRandomElement(hotelImages)
+          
+          // 브랜드 정보 찾기
+          const brand = brandsData?.find(b => b.brand_id === hotel.brand_id)
+          
+          // 체인 정보 찾기
+          const chain = chainsData?.find(c => c.chain_id === brand?.chain_id)
+          
           return {
             sabre_id: hotel.sabre_id,
             property_name_ko: hotel.property_name_ko || `호텔 ${hotel.sabre_id}`,
             property_name_en: hotel.property_name_en || 'Luxury Destination',
             slug: hotel.slug || '',
-            media_path: media?.media_path || '/placeholder.svg'
+            media_path: randomMedia?.media_path || '/placeholder.svg',
+            city: hotel.city || 'Unknown',
+            chain_name_en: chain?.chain_name_en || 'LUXURY',
+            brand_name_en: brand?.brand_name_en || 'PREMIUM',
           }
         })
         
@@ -66,6 +108,6 @@ export function useHeroImages() {
       }
     },
     staleTime: 10 * 60 * 1000, // 10분
-    cacheTime: 20 * 60 * 1000, // 20분
+    gcTime: 20 * 60 * 1000, // 20분
   })
 }

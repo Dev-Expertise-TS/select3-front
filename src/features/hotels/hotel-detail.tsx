@@ -703,211 +703,67 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               }
             }
             
-            console.log(`🔍 아이템 ${index} RateKey 추출 시도 (참조 코드 기반):`, {
-              RateKey: item.RateKey,
-              rateKey: item.rateKey,
-              rate_key: item.rate_key,
-              rateCode: item.rateCode,
-              rate_code: item.rate_code,
-              RatePlanCode: item.RatePlanCode,
-              ratePlanCode: item.ratePlanCode,
-              RatePlan: item.RatePlan,
-              ratePlan: item.ratePlan,
-              RateCode: item.RateCode,
-              Rate: item.Rate,
-              rate: item.rate,
-              BookingCode: item.BookingCode,
-              PlanCode: item.PlanCode,
-              Id: item.Id,
-              ID: item.ID,
-              Identifier: item.Identifier
-            })
+            // RoomType 추출
+            const roomType = item.RoomType || item.roomType || item.Type || item.type || 
+                           item.RoomCategory || item.roomCategory || item.Category || item.category || 
+                           item.RoomClass || item.roomClass || item.Class || item.class || 'Standard'
             
-            if (!rateKey) {
-              console.log(`⚠️ 아이템 ${index}에서 RateKey를 찾을 수 없음:`, item)
-              console.log(`🔍 사용 가능한 키들:`, Object.keys(item))
-              console.log(`🔍 모든 값들:`, Object.values(item))
-              
-              // 추가 디버깅: 각 키-값 쌍 출력
-              Object.entries(item).forEach(([key, value]) => {
-                console.log(`  ${key}: ${value} (${typeof value})`)
-              })
-            } else {
-              console.log(`✅ 아이템 ${index}에서 RateKey 발견:`, rateKey)
-            }
+            // RoomName 추출
+            const roomName = item.RoomName || item.roomName || item.Name || item.name || 
+                           item.Title || item.title || item.Label || item.label || roomType
             
-            // RoomType 추출 - 객실 유형 (STD, SUP, DLX, STE 등)
-            const roomType = item.RoomType || item.roomType || item.room_type || item.RoomTypeCode || 
-                           item.roomTypeCode || item.RoomCategory || item.roomCategory || item.RoomClass || item.roomClass
+            // Description 추출
+            const description = item.Description || item.description || item.Desc || item.desc || 
+                              item.Summary || item.summary || item.Overview || item.overview || 
+                              item.Details || item.details || item.Info || item.info || '기본 객실'
             
-            console.log(`🔍 아이템 ${index} RoomType 추출:`, {
-              RoomType: item.RoomType,
-              roomType: item.roomType,
-              room_type: item.room_type,
-              RoomTypeCode: item.RoomTypeCode,
-              roomTypeCode: item.roomTypeCode,
-              RoomCategory: item.RoomCategory,
-              roomCategory: item.roomCategory,
-              RoomClass: item.RoomClass,
-              roomClass: item.roomClass
-            })
-            
-            // RoomName 추출 - 객실 상세 명칭
-            const roomName = item.RoomName || item.roomName || item.room_name || item.RoomDescription || 
-                           item.roomDescription || item.RoomTitle || item.roomTitle || item.RoomLabel || item.roomLabel
-            
-            console.log(`🔍 아이템 ${index} RoomName 추출:`, {
-              RoomName: item.RoomName,
-              roomName: item.roomName,
-              room_name: item.room_name,
-              RoomDescription: item.RoomDescription,
-              roomDescription: item.roomDescription,
-              RoomTitle: item.RoomTitle,
-              roomTitle: item.roomTitle,
-              RoomLabel: item.RoomLabel,
-              roomLabel: item.roomLabel
-            })
-            
-            // Description 추출 - 객실 상세 설명
-            const description = item.Description || item.description || item.Description || item.RatePlanDescription || 
-                              item.ratePlanDescription || item.RateDescription || item.rateDescription || 
-                              item.RoomDescription || item.roomDescription || item.Details || item.details
-            
-            console.log(`🔍 아이템 ${index} Description 추출:`, {
-              Description: item.Description,
-              description: item.description,
-              RatePlanDescription: item.RatePlanDescription,
-              ratePlanDescription: item.ratePlanDescription,
-              RateDescription: item.RateDescription,
-              rateDescription: item.rateDescription,
-              RoomDescription: item.RoomDescription,
-              roomDescription: item.roomDescription,
-              Details: item.Details,
-              details: item.details
-            })
-            
-            // Currency 추출 - 통화 코드
+            // Currency 추출
             const currency = item.Currency || item.currency || item.CurrencyCode || item.currencyCode || 
-                           item.Curr || item.curr || 'KRW'
+                           item.Curr || item.curr || item.Code || item.code || 'KRW'
             
-            console.log(`🔍 아이템 ${index} Currency 추출:`, {
-              Currency: item.Currency,
-              currency: item.currency,
-              CurrencyCode: item.CurrencyCode,
-              currencyCode: item.currencyCode,
-              Curr: item.Curr,
-              curr: item.curr
-            })
+            // AmountAfterTax 추출
+            const amountAfterTax = item.AmountAfterTax || item.amountAfterTax || item.Amount || item.amount || 
+                                 item.Price || item.price || item.Cost || item.cost || 
+                                 item.Total || item.total || item.FinalPrice || item.finalPrice || 
+                                 item.Rate || item.rate || item.Charge || item.charge || '0'
             
-            // AmountAfterTax 추출 - 세후 가격
-            const amountAfterTax = item.AmountAfterTax || item.amountAfterTax || item.amount_after_tax || 
-                                 item.TotalAmount || item.totalAmount || item.Total || item.total || 
-                                 item.Price || item.price || item.Cost || item.cost
+            // AmountBeforeTax 추출
+            const amountBeforeTax = item.AmountBeforeTax || item.amountBeforeTax || item.BaseAmount || item.baseAmount || 
+                                  item.BasePrice || item.basePrice || item.Subtotal || item.subtotal || 
+                                  item.NetAmount || item.netAmount || item.NetPrice || item.netPrice || 
+                                  item.OriginalPrice || item.originalPrice || item.ListPrice || item.listPrice || '0'
             
-            console.log(`🔍 아이템 ${index} AmountAfterTax 추출:`, {
-              AmountAfterTax: item.AmountAfterTax,
-              amountAfterTax: item.amountAfterTax,
-              amount_after_tax: item.amount_after_tax,
-              TotalAmount: item.TotalAmount,
-              totalAmount: item.totalAmount,
-              Total: item.Total,
-              total: item.total,
-              Price: item.Price,
-              price: item.price,
-              Cost: item.Cost,
-              cost: item.cost
-            })
-            
-            // AmountBeforeTax 추출 - 세전 가격
-            const amountBeforeTax = item.AmountBeforeTax || item.amountBeforeTax || item.amount_before_tax || 
-                                  item.BaseAmount || item.baseAmount || item.Base || item.base || 
-                                  item.Subtotal || item.subtotal || item.NetAmount || item.netAmount
-            
-            console.log(`🔍 아이템 ${index} AmountBeforeTax 추출:`, {
-              AmountAfterTax: item.AmountAfterTax,
-              amountAfterTax: item.amountAfterTax,
-              amount_after_tax: item.amount_after_tax,
-              BaseAmount: item.BaseAmount,
-              baseAmount: item.baseAmount,
-              Base: item.Base,
-              base: item.base,
-              Subtotal: item.Subtotal,
-              subtotal: item.subtotal,
-              NetAmount: item.NetAmount,
-              netAmount: item.netAmount
-            })
-            
-            // RoomTypeCode 추출 - 객실 타입 코드
-            const roomTypeCode = item.RoomTypeCode || item.roomTypeCode || item.room_type_code || 
-                               item.RoomCode || item.roomCode || item.TypeCode || item.typeCode || 
-                               item.CategoryCode || item.categoryCode
-            
-            console.log(`🔍 아이템 ${index} RoomTypeCode 추출:`, {
-              RoomTypeCode: item.RoomTypeCode,
-              roomTypeCode: item.roomTypeCode,
-              room_type_code: item.room_type_code,
-              RoomCode: item.RoomCode,
-              roomCode: item.roomCode,
-              TypeCode: item.TypeCode,
-              typeCode: item.typeCode,
-              CategoryCode: item.CategoryCode,
-              categoryCode: item.CategoryCode
-            })
+            // RoomTypeCode 추출
+            const roomTypeCode = item.RoomTypeCode || item.roomTypeCode || item.TypeCode || item.typeCode || 
+                               item.CategoryCode || item.categoryCode || item.ClassCode || item.classCode || 
+                               item.Code || item.code || item.ShortCode || item.shortCode || 'STD'
             
             // RatePlanType 추출 - 요금 플랜 타입
             const ratePlanType = item.RatePlanType || item.ratePlanType || item.rate_plan_type || 
                                item.RateType || item.rateType || item.PlanType || item.planType || 
-                               item.RateCategory || item.rateCategory || item.PricingType || item.pricingType
-            
-            console.log(`🔍 아이템 ${index} RatePlanType 추출:`, {
-              RatePlanType: item.RatePlanType,
-              ratePlanType: item.ratePlanType,
-              rate_plan_type: item.rate_plan_type,
-              RateType: item.RateType,
-              rateType: item.rateType,
-              PlanType: item.PlanType,
-              planType: item.planType,
-              RateCategory: item.RateCategory,
-              rateCategory: item.rateCategory,
-              PricingType: item.PricingType,
-              pricingType: item.pricingType
-            })
+                               item.RateCategory || item.rateCategory || item.PricingType || item.pricingType || 'Standard'
             
             // BookingCode 추출 - 예약 코드
             const bookingCode = item.BookingCode || item.bookingCode || item.booking_code || 
                               item.ReservationCode || item.reservationCode || item.BookCode || item.bookCode || 
-                              item.ConfirmationCode || item.confirmationCode
-            
-            console.log(`🔍 아이템 ${index} BookingCode 추출:`, {
-              BookingCode: item.BookingCode,
-              bookingCode: item.bookingCode,
-              booking_code: item.booking_code,
-              ReservationCode: item.ReservationCode,
-              reservationCode: item.reservationCode,
-              BookCode: item.BookCode,
-              bookCode: item.bookCode,
-              ConfirmationCode: item.ConfirmationCode,
-              confirmationCode: item.confirmationCode
-            })
+                              item.ConfirmationCode || item.confirmationCode || 'STD_001'
             
             // RatePlanDescription 추출 - 요금 플랜 설명
             const ratePlanDescription = item.RatePlanDescription || item.ratePlanDescription || item.rate_plan_description || 
                                       item.RateDescription || item.rateDescription || item.PlanDescription || item.planDescription || 
-                                      item.RateInfo || item.rateInfo || item.PlanInfo || item.planInfo
+                                      item.RateInfo || item.rateInfo || item.PlanInfo || item.planInfo || '기본 요금 플랜'
             
-            console.log(`🔍 아이템 ${index} RatePlanDescription 추출:`, {
-              RatePlanDescription: item.RatePlanDescription,
-              ratePlanDescription: item.ratePlanDescription,
-              rate_plan_description: item.rate_plan_description,
-              RateDescription: item.RateDescription,
-              rateDescription: item.rateDescription,
-              PlanDescription: item.PlanDescription,
-              planDescription: item.planDescription,
-              RateInfo: item.RateInfo,
-              rateInfo: item.rateInfo,
-              PlanInfo: item.PlanInfo,
-              planInfo: item.planInfo
-            })
+            // 추가 컬럼들 추출
+            const rateDescription = item.RateDescription || item.rateDescription || item.RateDesc || item.rateDesc || 'N/A'
+            const planDescription = item.PlanDescription || item.planDescription || item.PlanDesc || item.planDesc || 'N/A'
+            const rateInfo = item.RateInfo || item.rateInfo || item.RateInformation || item.rateInformation || 'N/A'
+            const planInfo = item.PlanInfo || item.planInfo || item.PlanInformation || item.planInformation || 'N/A'
+            const rateCategory = item.RateCategory || item.rateCategory || item.RateCat || item.rateCat || 'N/A'
+            const roomCategory = item.RoomCategory || item.roomCategory || item.RoomCat || item.roomCat || 'N/A'
+            const mealPlan = item.MealPlan || item.mealPlan || item.Meal || item.meal || 'N/A'
+            const cancellationPolicy = item.CancellationPolicy || item.cancellationPolicy || item.CancelPolicy || item.cancelPolicy || 'N/A'
+            const depositRequired = item.DepositRequired || item.depositRequired || item.Deposit || item.deposit || 'N/A'
+            const prepaid = item.Prepaid || item.prepaid || item.Prepay || item.prepay || 'N/A'
             
             const result = {
               RateKey: rateKey || 'N/A',
@@ -920,14 +776,29 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               RoomTypeCode: roomTypeCode || 'N/A',
               RatePlanDescription: ratePlanDescription || 'N/A',
               RatePlanType: ratePlanType || 'N/A',
-              BookingCode: bookingCode || 'N/A'
+              BookingCode: bookingCode || 'N/A',
+              // 추가 컬럼들 - 명시적으로 포함
+              RateDescription: rateDescription,
+              PlanDescription: planDescription,
+              RateInfo: rateInfo,
+              PlanInfo: planInfo,
+              RateCategory: rateCategory,
+              RoomCategory: roomCategory,
+              MealPlan: mealPlan,
+              CancellationPolicy: cancellationPolicy,
+              DepositRequired: depositRequired,
+              Prepaid: prepaid
             }
             
+            // 디버깅을 위해 결과 로그 출력
             console.log(`🔍 아이템 ${index} 최종 변환 결과:`, result)
+            console.log(`🔍 아이템 ${index} 결과 컬럼들:`, Object.keys(result))
             return result
           })
           
           console.log('🔄 변환된 Rate Plan 데이터:', transformedData)
+          console.log('🔍 변환된 데이터의 첫 번째 항목 컬럼들:', transformedData.length > 0 ? Object.keys(transformedData[0]) : '데이터 없음')
+          console.log('🔍 변환된 데이터의 첫 번째 항목:', transformedData.length > 0 ? transformedData[0] : '데이터 없음')
           return transformedData
         }
         
@@ -952,7 +823,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               RoomTypeCode: 'STD',
               RatePlanDescription: '기본 요금 플랜',
               RatePlanType: 'Standard',
-              BookingCode: 'STD_001'
+              BookingCode: 'STD_001',
+              RateDescription: '기본 요금 설명',
+              PlanDescription: '기본 플랜 설명',
+              RateInfo: '기본 요금 정보',
+              PlanInfo: '기본 플랜 정보',
+              RateCategory: 'Standard',
+              RoomCategory: 'Standard',
+              MealPlan: 'Room Only',
+              CancellationPolicy: '24시간 전 취소 가능',
+              DepositRequired: 'No',
+              Prepaid: 'No'
             },
             {
               RateKey: `FALLBACK_${hotel.sabre_id}_002`,
@@ -965,7 +846,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               RoomTypeCode: 'DLX',
               RatePlanDescription: '디럭스 요금 플랜',
               RatePlanType: 'Deluxe',
-              BookingCode: 'DLX_001'
+              BookingCode: 'DLX_001',
+              RateDescription: '디럭스 요금 설명',
+              PlanDescription: '디럭스 플랜 설명',
+              RateInfo: '디럭스 요금 정보',
+              PlanInfo: '디럭스 플랜 정보',
+              RateCategory: 'Deluxe',
+              RoomCategory: 'Deluxe',
+              MealPlan: 'Breakfast Included',
+              CancellationPolicy: '48시간 전 취소 가능',
+              DepositRequired: 'Yes',
+              Prepaid: 'Yes'
             }
           ]
           
@@ -993,7 +884,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               RoomTypeCode: 'STD',
               RatePlanDescription: '기본 요금 플랜',
               RatePlanType: 'Standard',
-              BookingCode: 'STD_001'
+              BookingCode: 'STD_001',
+              RateDescription: '기본 요금 설명 (에러 시)',
+              PlanDescription: '기본 플랜 설명 (에러 시)',
+              RateInfo: '기본 요금 정보 (에러 시)',
+              PlanInfo: '기본 플랜 정보 (에러 시)',
+              RateCategory: 'Standard',
+              RoomCategory: 'Standard',
+              MealPlan: 'Room Only',
+              CancellationPolicy: '24시간 전 취소 가능',
+              DepositRequired: 'No',
+              Prepaid: 'No'
             }
           ]
         }
@@ -1056,6 +957,18 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [showImageDetail])
+
+  const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
+  
+  const copyRateKey = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedRateKeyRow(index)
+      setTimeout(() => setCopiedRateKeyRow(null), 1200)
+    } catch (_e) {
+      // noop
+    }
+  }
 
   // 로딩 상태
   if (isLoading) {
@@ -1713,185 +1626,57 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 <table className="w-full border-collapse border border-gray-200">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">타입</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">뷰</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">베드</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">어메니티</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실 설명</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">포함 서비스</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">추가 서비스</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">부가 설명</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">가격</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실 타입</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실명</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">설명</th>
+                      <th className="border border-gray-200 px-4 py-3 text-right text-sm font-semibold text-gray-700">총 요금</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">통화</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">RATEKEY</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Sample Room Row 1 */}
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="font-medium">퀸룸</div>
-                        <div className="text-xs text-gray-500 mt-1">편안한 퀸 사이즈 침대로 구성된 객실</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>Standard</div>
-                        <div className="text-xs text-gray-500">STD</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>코트야드 뷰</div>
-                        <div className="text-xs text-gray-500">Courtyard</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>퀸 1개</div>
-                        <div className="text-xs text-gray-500">160cm x 200cm</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🛁 욕조</div>
-                          <div className="text-xs">🚿 샤워</div>
-                          <div className="text-xs">❄️ 에어컨</div>
-                          <div className="text-xs">📶 Wi-Fi</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🏨 숙박</div>
-                          <div className="text-xs">🍳 조식 (선택)</div>
-                          <div className="text-xs">🧹 청소</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🚭 금연</div>
-                          <div className="text-xs">🌿 발코니</div>
-                          <div className="text-xs">🅿️ 주차</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="text-xs text-gray-500">
-                          40m², 2층, 엘리베이터 이용 가능, 24시간 프론트 데스크
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="text-right">
-                          <div className="line-through text-gray-400">₩1,200,000</div>
-                          <div className="text-red-600 font-semibold">₩980,000</div>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* Sample Room Row 2 */}
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="font-medium">디럭스 킹룸</div>
-                        <div className="text-xs text-gray-500 mt-1">넓은 공간과 킹 사이즈 침대의 프리미엄 객실</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>Deluxe</div>
-                        <div className="text-xs text-gray-500">DLX</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>시티 뷰</div>
-                        <div className="text-xs text-gray-500">City View</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>킹 1개</div>
-                        <div className="text-xs text-gray-500">180cm x 200cm</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🛁 욕조</div>
-                          <div className="text-xs">🚿 샤워</div>
-                          <div className="text-xs">❄️ 에어컨</div>
-                          <div className="text-xs">📶 Wi-Fi</div>
-                          <div className="text-xs">🛋️ 소파</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🏨 숙박</div>
-                          <div className="text-xs">🍳 조식 포함</div>
-                          <div className="text-xs">🧹 청소</div>
-                          <div className="text-xs">☕ 미니바</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🚭 금연</div>
-                          <div className="text-xs">🌿 발코니</div>
-                          <div className="text-xs">🅿️ 주차</div>
-                          <div className="text-xs">🏊 수영장</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="text-xs text-gray-500">
-                          55m², 5층, 엘리베이터 이용 가능, 24시간 프론트 데스크, 컨시어지 서비스
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="text-right">
-                          <div className="line-through text-gray-400">₩1,500,000</div>
-                          <div className="text-red-600 font-semibold">₩1,250,000</div>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {/* Sample Room Row 3 */}
-                    <tr className="hover:bg-gray-50">
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="font-medium">스위트룸</div>
-                        <div className="text-xs text-gray-500 mt-1">최고급 시설과 넓은 공간의 프리미엄 스위트</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>Suite</div>
-                        <div className="text-xs text-gray-500">SUITE</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>오션 뷰</div>
-                        <div className="text-xs text-gray-500">Ocean View</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div>킹 1개 + 소파베드</div>
-                        <div className="text-xs text-gray-500">180cm x 200cm + 120cm x 200cm</div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🛁 욕조</div>
-                          <div className="text-xs">🚿 샤워</div>
-                          <div className="text-xs">❄️ 에어컨</div>
-                          <div className="text-xs">📶 Wi-Fi</div>
-                          <div className="text-xs">🛋️ 소파</div>
-                          <div className="text-xs">🍽️ 다이닝</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🏨 숙박</div>
-                          <div className="text-xs">🍳 조식 포함</div>
-                          <div className="text-xs">🧹 청소</div>
-                          <div className="text-xs">☕ 미니바</div>
-                          <div className="text-xs">🍷 웰컴 드링크</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div className="text-xs">🚭 금연</div>
-                          <div className="text-xs">🌿 발코니</div>
-                          <div className="text-xs">🅿️ 주차</div>
-                          <div className="text-xs">🏊 수영장</div>
-                          <div className="text-xs">💆 스파</div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
-                        <div className="text-xs text-gray-500">
-                          80m², 8층, 엘리베이터 이용 가능, 24시간 프론트 데스크, 전용 컨시어지, 발코니 테라스
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 px-4 py-3 text-sm text-sm text-gray-700">
-                        <div className="text-right">
-                          <div className="line-through text-gray-400">₩2,200,000</div>
-                          <div className="text-red-600 font-semibold">₩1,850,000</div>
-                        </div>
-                      </td>
-                    </tr>
+                    {Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
+                      ratePlanCodes.map((rp: any, idx: number) => {
+                        const roomType = rp.RoomType || rp.RoomName || 'N/A'
+                        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
+                        const currency = rp.Currency || 'KRW'
+                        const rateKey: string = rp.RateKey || 'N/A'
+                        const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
+                        return (
+                          <tr key={`rp-${idx}`} className="hover:bg-gray-50">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{roomType}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{rp.RoomName || 'N/A'}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{rp.Description || 'N/A'}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-right">
+                              {amount && amount !== 'N/A' && !isNaN(Number(amount)) ? parseInt(String(amount)).toLocaleString() : 'N/A'}
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{currency}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
+                              <button
+                                type="button"
+                                title={typeof rateKey === 'string' ? rateKey : ''}
+                                onClick={() => copyRateKey(String(rateKey), idx)}
+                                className="font-mono underline decoration-dotted hover:text-blue-600"
+                              >
+                                {shortRateKey}
+                              </button>
+                              {copiedRateKeyRow === idx && (
+                                <span className="ml-2 text-xs text-green-600">Copied</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })
+                    ) : (
+                      <tr>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">Standard</td>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500 text-right">0</td>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">KRW</td>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -2255,68 +2040,154 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   </div>
                 ) : ratePlanCodes && ratePlanCodes.length > 0 ? (
                   <div className="overflow-x-auto">
+                    {/* 디버깅 정보 추가 */}
+                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded text-xs">
+                      <p className="font-semibold text-yellow-800 mb-2">🔍 디버깅 정보:</p>
+                      <p className="text-yellow-700">• 데이터 개수: {ratePlanCodes.length}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 컬럼들: {Object.keys(ratePlanCodes[0]).join(', ')}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 데이터: {JSON.stringify(ratePlanCodes[0], null, 2).substring(0, 200)}...</p>
+                    </div>
+                    
                     <table className="w-full border-collapse border border-blue-200">
                       <thead>
                         <tr className="bg-blue-100">
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RateKey</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomType</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomName</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">Description</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">Currency</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">AmountAfterTax</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">AmountBeforeTax</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RoomTypeCode</th>
-                          <th className="border border-blue-200 px-4 py-3 text-left text-sm font-semibold text-blue-900">RatePlanType</th>
+                          {/* 기본 컬럼들 */}
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateKey</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomType</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomName</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Description</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Currency</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountAfterTax</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountBeforeTax</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomTypeCode</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RatePlanDescription</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RatePlanType</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">BookingCode</th>
+                          {/* 추가 컬럼들 */}
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateDescription</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">PlanDescription</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateInfo</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">PlanInfo</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateCategory</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomCategory</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">MealPlan</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">CancellationPolicy</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">DepositRequired</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Prepaid</th>
                         </tr>
                       </thead>
                       <tbody>
                         {ratePlanCodes.map((ratePlan: any, index: number) => (
                           <tr key={index} className="hover:bg-blue-50">
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700 font-mono bg-blue-50">
-                              {ratePlan.RateKey && ratePlan.RateKey !== 'N/A' ? (
-                                ratePlan.RateKey.length > 10 ? 
-                                  `${ratePlan.RateKey.slice(0, 10)}...` : 
-                                  ratePlan.RateKey
-                              ) : 'N/A'}
+                            {/* 기본 컬럼들 */}
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="font-mono bg-blue-50 p-1 rounded">
+                                {ratePlan.RateKey && ratePlan.RateKey !== 'N/A' ? 
+                                  (ratePlan.RateKey.length > 15 ? 
+                                    `${ratePlan.RateKey.slice(0, 15)}...` : 
+                                    ratePlan.RateKey
+                                  ) : 'N/A'}
+                              </div>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700 font-medium">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 font-medium">
                               {ratePlan.RoomType || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               {ratePlan.RoomName || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="max-w-xs">
                                 {ratePlan.Description || 'N/A'}
                               </div>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
                                 {ratePlan.Currency || 'KRW'}
                               </span>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
-                              <div className="font-bold text-lg text-blue-800">
-                                {ratePlan.AmountAfterTax ? 
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="font-bold text-blue-800">
+                                {ratePlan.AmountAfterTax && ratePlan.AmountAfterTax !== 'N/A' ? 
                                   parseInt(ratePlan.AmountAfterTax).toLocaleString() : 'N/A'
                                 }
                               </div>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="font-medium text-blue-800">
-                                {ratePlan.AmountBeforeTax ? 
+                                {ratePlan.AmountBeforeTax && ratePlan.AmountBeforeTax !== 'N/A' ? 
                                   parseInt(ratePlan.AmountBeforeTax).toLocaleString() : 'N/A'
                                 }
                               </div>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
                                 {ratePlan.RoomTypeCode || 'N/A'}
                               </span>
                             </td>
-                            <td className="border border-blue-200 px-4 py-3 text-sm text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.RatePlanDescription || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
                                 {ratePlan.RatePlanType || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.BookingCode || 'N/A'}
+                              </span>
+                            </td>
+                            {/* 추가 컬럼들 */}
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.RateDescription || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.PlanDescription || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.RateInfo || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.PlanInfo || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.RateCategory || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.RoomCategory || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.MealPlan || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <div className="max-w-xs">
+                                {ratePlan.CancellationPolicy || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.DepositRequired || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.Prepaid || 'N/A'}
                               </span>
                             </td>
                           </tr>
