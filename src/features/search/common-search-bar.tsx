@@ -364,10 +364,11 @@ export function CommonSearchBar({
         <GuestSelector
           rooms={localGuests.rooms}
           adults={localGuests.adults}
-          children={localGuests.children}
           onGuestsChange={handleGuestsChange}
           onClose={() => setShowGuestSelector(false)}
-        />
+        >
+          {localGuests.children}
+        </GuestSelector>
       )}
       
       {/* 검색 중 오버레이 (선택사항) */}
