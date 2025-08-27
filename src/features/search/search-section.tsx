@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { CommonSearchBar } from "@/features/search"
 
 export function SearchSection() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [searchDates, setSearchDates] = useState(() => {
     const today = new Date()
     const twoWeeksLater = new Date(today)
@@ -25,19 +27,30 @@ export function SearchSection() {
   })
 
   const handleSearch = (query: string, dates?: { checkIn: string; checkOut: string }, guests?: { rooms: number; adults: number; children: number }) => {
-    if (query.trim()) {
-      // 검색 결과 페이지로 이동 (날짜 및 게스트 정보 포함)
-      const params = new URLSearchParams()
-      params.set('q', query.trim())
-      if (dates?.checkIn) params.set('checkIn', dates.checkIn)
-      if (dates?.checkOut) params.set('checkOut', dates.checkOut)
-      if (guests) {
-        params.set('rooms', guests.rooms.toString())
-        params.set('adults', guests.adults.toString())
-        params.set('children', guests.children.toString())
-      }
-      
-      router.push(`/search-results?${params.toString()}`)
+    const trimmed = query.trim()
+    if (!trimmed) return
+
+    // 목표 URL 구성
+    const params = new URLSearchParams()
+    params.set('q', trimmed)
+    if (dates?.checkIn) params.set('checkIn', dates.checkIn)
+    if (dates?.checkOut) params.set('checkOut', dates.checkOut)
+    if (guests) {
+      params.set('rooms', guests.rooms.toString())
+      params.set('adults', guests.adults.toString())
+      params.set('children', guests.children.toString())
+    }
+    const target = `/search-results?${params.toString()}`
+
+    // 현재 URL과 동일하면 refresh, 다르면 push
+    const currentPath = pathname
+    const currentParams = searchParams?.toString() || ""
+    const isSame = currentPath === "/search-results" && currentParams === params.toString()
+
+    if (isSame) {
+      router.refresh()
+    } else {
+      router.push(target)
     }
   }
 

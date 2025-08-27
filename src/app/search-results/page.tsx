@@ -13,9 +13,9 @@ import { transformSearchResultsToCardData } from '@/lib/hotel-utils'
 const supabase = createClient()
 
 // 검색 결과 조회 훅
-function useSearchResults(query: string) {
+function useSearchResults(query: string, tick: number) {
   return useQuery({
-    queryKey: ['search-results', query],
+    queryKey: ['search-results', query, tick],
     queryFn: async () => {
       if (!query.trim()) return []
       
@@ -51,6 +51,7 @@ export default function SearchResultsPage() {
   const checkOutParam = searchParams.get('checkOut') || ""
   
   const [searchQuery, setSearchQuery] = useState(query)
+  const [refreshTick, setRefreshTick] = useState(0)
   const [searchDates, setSearchDates] = useState(() => {
     // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
     if (checkInParam && checkOutParam) {
@@ -72,13 +73,15 @@ export default function SearchResultsPage() {
     }
   })
   
-  const { data: searchResults, isLoading, error } = useSearchResults(searchQuery)
+  const { data: searchResults, isLoading, error } = useSearchResults(searchQuery, refreshTick)
 
   const handleSearch = (newQuery: string, dates?: { checkIn: string; checkOut: string }) => {
     setSearchQuery(newQuery)
     if (dates) {
       setSearchDates(dates)
     }
+    // 클릭할 때마다 강제 리프레시 트리거
+    setRefreshTick((v) => v + 1)
     
     // URL 업데이트 (새로고침 시에도 검색어와 날짜 유지)
     const url = new URL(window.location.href)
