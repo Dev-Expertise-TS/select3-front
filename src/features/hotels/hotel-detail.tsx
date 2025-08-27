@@ -409,19 +409,20 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     console.log('🔄 객실 소개 생성 시작...')
     
     try {
-      // 3행까지만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
+      // 상위 5개 레코드만 우선 AI 처리 (비용/속도 균형)
+      const roomsToProcess = ratePlans.slice(0, 5)
       const roomInfos = roomsToProcess.map((rp: any) => ({
         roomType: rp.RoomType || rp.RoomName || 'N/A',
         roomName: rp.RoomName || 'N/A',
         description: rp.Description || 'N/A',
+        rateKey: rp.RateKey || 'N/A',
       }))
       
       console.log('📋 변환된 객실 정보:', roomInfos)
       console.log(`🔍 객실 소개 생성 대상: ${roomInfos.length}개 객실 (전체 ${ratePlans.length}개 중 처음 3개)`)
       console.log('🏨 호텔명:', hotelName)
       
-      // 3행까지만 OpenAI API 적용
+      // 상위 5개만 OpenAI API 적용
       console.log('🚀 3행까지만 OpenAI API 적용...')
       const allIntroductions = new Map<string, string>()
       
@@ -431,7 +432,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         
         for (let i = 0; i < roomInfos.length; i++) {
           const room = roomInfos[i]
-          const key = `${room.roomType}-${room.roomName}`
+          const key = `${room.roomType}-${room.roomName}-${room.rateKey}`
           console.log(`🔍 ${i + 1}번째 객실 처리 중:`, room, 'key:', key)
           
           try {
@@ -464,7 +465,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         // API 오류 시 3행까지만 fallback 소개문 생성
         const fallbackIntroductions = new Map<string, string>()
         roomInfos.forEach((room) => {
-          const key = `${room.roomType}-${room.roomName}`
+          const key = `${room.roomType}-${room.roomName}-${room.rateKey}`
           const fallbackIntro = `${hotelName}의 ${room.roomType} ${room.roomName} 객실입니다. ${room.description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
           fallbackIntroductions.set(key, fallbackIntro)
           console.log('🔄 fallback 소개문 생성:', { key, fallbackIntro })
@@ -474,13 +475,14 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       }
     } catch (error) {
       console.error('❌ 객실 소개 생성 오류:', error)
-      // 에러 발생 시 기본 소개문 생성 (3행까지만)
+      // 에러 발생 시 기본 소개문 생성 (상위 5개)
       const fallbackIntroductions = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 3)
+      const roomsToProcess = ratePlans.slice(0, 5)
       roomsToProcess.forEach((rp: any) => {
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
         const roomName = rp.RoomName || 'N/A'
-        const key = `${roomType}-${roomName}`
+        const rateKey = rp.RateKey || 'N/A'
+        const key = `${roomType}-${roomName}-${rateKey}`
         const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${rp.Description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
         fallbackIntroductions.set(key, fallbackIntro)
         console.log('🔄 fallback 소개문 생성:', { key, fallbackIntro })
@@ -2241,7 +2243,8 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         
                         // AI 처리 함수들과 동일한 키 생성 방식 사용
                         const rowKey = `${roomType}-${roomName}`
-                        const roomIntroduction = roomIntroductions.get(rowKey) || 'AI가 객실 소개를 생성 중입니다...'
+                        const introKey = `${roomType}-${roomName}-${rateKey}`
+                        const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
                         
                         // 디버깅을 위한 로그 (첫 번째 행만)
                         if (idx === 0) {
@@ -2293,7 +2296,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                     <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
                                   </div>
                                 ) : (
-                                  roomIntroductions.get(rowKey) || rp.Description || 'N/A'
+                                  roomIntroductions.get(introKey) || rp.Description || 'N/A'
                                 )}
                               </div>
                             </td>
