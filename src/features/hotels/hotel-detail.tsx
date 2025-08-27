@@ -1423,14 +1423,144 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       
       if (hotel?.name) {
         console.log('✅ hotel.name 조건 충족:', hotel.name)
-        console.log('🚀 통합 AI 처리 시작! (주석 처리됨)')
-        // processAllAI(ratePlanCodes, hotel.name) // AI 처리 비활성화
+        console.log('🚀 1~3행 AI 객실 소개 생성 시작!')
+        // 1~3행 레코드에 대해 AI 객실 소개 생성
+        if (ratePlanCodes && ratePlanCodes.length > 0) {
+          const roomsToProcess = ratePlanCodes.slice(0, 3) // 최대 3개 레코드 처리
+          console.log(`🔍 ${roomsToProcess.length}개 레코드 AI 객실 소개 생성 시작`)
+          
+          setIsGeneratingIntroductions(true)
+          
+          // 순차적으로 AI 처리 (각 행별로 즉시 상태 업데이트)
+          const processRoomsSequentially = async () => {
+            const newIntroductions = new Map<string, string>()
+            
+            for (let i = 0; i < roomsToProcess.length; i++) {
+              const room = roomsToProcess[i]
+              const roomType = room.RoomType || room.RoomName || 'N/A'
+              const roomName = room.RoomName || 'N/A'
+              const description = room.Description || 'N/A'
+              
+              // 각 행을 고유하게 구분하는 키 생성 (인덱스 포함)
+              const key = `row-${i}`
+              
+              console.log(`🔍 ${i + 1}번째 레코드 AI 객실 소개 생성 중:`, { 
+                rowIndex: i + 1, 
+                roomType, 
+                roomName, 
+                description,
+                key 
+              })
+              
+              try {
+                const intro = await generateRoomIntroduction({ roomType: '', roomName: '', description }, '') // 호텔명 생략, Description만 참조
+                newIntroductions.set(key, intro)
+                
+                // 각 행 처리 완료 후 즉시 상태 업데이트 (실시간 표시)
+                setRoomIntroductions(prev => new Map(prev).set(key, intro))
+                
+                console.log(`✅ ${i + 1}번째 레코드 AI 객실 소개 생성 완료:`, intro)
+                
+                // API 호출 간격 조절 (rate limiting 방지)
+                if (i < roomsToProcess.length - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 300))
+                }
+              } catch (error) {
+                console.error(`❌ ${i + 1}번째 레코드 AI 객실 소개 생성 실패:`, error)
+                // 에러 발생 시 fallback 생성 (Description만 참조)
+                const fallbackIntro = `${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공하는'} 객실입니다.`
+                newIntroductions.set(key, fallbackIntro)
+                
+                // fallback도 즉시 상태 업데이트
+                setRoomIntroductions(prev => new Map(prev).set(key, fallbackIntro))
+                
+                console.log(`🔄 ${i + 1}번째 레코드 fallback 소개문 사용:`, fallbackIntro)
+              }
+            }
+            
+            console.log('🎉 1~3행 AI 객실 소개 생성 완료!')
+          }
+          
+          processRoomsSequentially()
+            .catch(error => {
+              console.error('❌ 순차 AI 처리 중 오류 발생:', error)
+            })
+            .finally(() => {
+              setIsGeneratingIntroductions(false)
+              console.log('🏁 1~3행 AI 처리 완료')
+            })
+        }
       } else {
         console.log('⚠️ hotel.name이 없음. hotel 객체:', hotel)
         // hotel.name이 없어도 기본값으로 시도
         const defaultHotelName = hotel?.property_name_ko || hotel?.property_name_en || '호텔'
         console.log('🔄 기본 호텔명으로 시도:', defaultHotelName)
-        // processAllAI(ratePlanCodes, defaultHotelName) // AI 처리 비활성화
+        // 기본 호텔명으로도 1~3행 AI 처리
+        if (ratePlanCodes && ratePlanCodes.length > 0) {
+          const roomsToProcess = ratePlanCodes.slice(0, 3) // 최대 3개 레코드 처리
+          console.log(`🔍 ${roomsToProcess.length}개 레코드 AI 객실 소개 생성 시작`)
+          
+          setIsGeneratingIntroductions(true)
+          
+          // 순차적으로 AI 처리 (각 행별로 즉시 상태 업데이트)
+          const processRoomsSequentially = async () => {
+            const newIntroductions = new Map<string, string>()
+            
+            for (let i = 0; i < roomsToProcess.length; i++) {
+              const room = roomsToProcess[i]
+              const roomType = room.RoomType || room.RoomName || 'N/A'
+              const roomName = room.RoomName || 'N/A'
+              const description = room.Description || 'N/A'
+              
+              // 각 행을 고유하게 구분하는 키 생성 (인덱스 포함)
+              const key = `row-${i}`
+              
+              console.log(`🔍 ${i + 1}번째 레코드 AI 객실 소개 생성 중:`, { 
+                rowIndex: i + 1, 
+                roomType, 
+                roomName, 
+                description,
+                key 
+              })
+              
+              try {
+                const intro = await generateRoomIntroduction({ roomType: '', roomName: '', description }, '') // 호텔명 생략, Description만 참조
+                newIntroductions.set(key, intro)
+                
+                // 각 행 처리 완료 후 즉시 상태 업데이트 (실시간 표시)
+                setRoomIntroductions(prev => new Map(prev).set(key, intro))
+                
+                console.log(`✅ ${i + 1}번째 레코드 AI 객실 소개 생성 완료:`, intro)
+                
+                // API 호출 간격 조절 (rate limiting 방지)
+                if (i < roomsToProcess.length - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 300))
+                }
+              } catch (error) {
+                console.error(`❌ ${i + 1}번째 레코드 AI 객실 소개 생성 실패:`, error)
+                // 에러 발생 시 fallback 생성 (Description만 참조)
+                const fallbackIntro = `${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공하는'} 객실입니다.`
+                newIntroductions.set(key, fallbackIntro)
+                
+                // fallback도 즉시 상태 업데이트
+                setRoomIntroductions(prev => new Map(prev).set(key, fallbackIntro))
+                
+                console.log(`🔄 ${i + 1}번째 레코드 fallback 소개문 사용:`, fallbackIntro)
+              }
+            }
+            
+            console.log('🎉 1~3행 AI 객실 소개 생성 완료!')
+          }
+          
+          processRoomsSequentially()
+            .catch(error => {
+              console.error('❌ 순차 AI 처리 중 오류 발생:', error)
+            })
+            .finally(() => {
+              setIsGeneratingIntroductions(false)
+              console.log('🏁 1~3행 AI 처리 완료')
+            })
+        }
       }
     } else {
       console.log('⚠️ 객실 소개 생성 조건 미충족:', {
@@ -2173,7 +2303,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               location={hotel.city_ko || hotel.city_eng || '도시'}
               checkIn={searchDates.checkIn}
               checkOut={searchDates.checkOut}
-              guests={{ rooms: 1, adults: 1, children: 0 }}
+              guests={{ rooms: 1, adults: 2, children: 0 }}
               initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
               onSearch={(query, dates, guests) => {
                 if (dates) {
@@ -2220,8 +2350,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         const currency = rp.Currency || 'KRW'
                         const rateKey: string = rp.RateKey || 'N/A'
                         const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
-                        const roomKey = `${roomType}-${rp.RoomName || 'N/A'}`
-                        const roomIntroduction = roomIntroductions.get(roomKey) || 'AI가 객실 소개를 생성 중입니다...'
+                        
+                        // 각 행을 고유하게 구분하는 키 생성 (인덱스 기반)
+                        const rowKey = `row-${idx}`
+                        const roomIntroduction = roomIntroductions.get(rowKey) || 'AI가 객실 소개를 생성 중입니다...'
                         
                         return (
                           <tr key={`rp-${idx}`} className="hover:bg-gray-50">
@@ -2237,7 +2369,20 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
                               <div className="text-gray-700">
-                                {rp.Description || 'N/A'} {/* AI 처리 대신 기본값 사용 */}
+                                {idx < 3 ? (
+                                  // 1~3행은 AI 객실 소개 표시
+                                  isGeneratingIntroductions ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
+                                    </div>
+                                  ) : (
+                                    roomIntroductions.get(rowKey) || rp.Description || 'N/A'
+                                  )
+                                ) : (
+                                  // 4행부터는 기본 설명 사용
+                                  rp.Description || 'N/A'
+                                )}
                               </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{roomType}</td>

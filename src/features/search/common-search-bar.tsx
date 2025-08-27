@@ -36,7 +36,7 @@ export function CommonSearchBar({
   isSabreLoading = false,
 }: CommonSearchBarProps) {
   // 기본값 설정: undefined나 빈 객체일 때 기본값 사용
-  const defaultGuests = { rooms: 1, adults: 1, children: 0 }
+  const defaultGuests = { rooms: 1, adults: 2, children: 0 }
   const safeGuests = guests || defaultGuests
 
   // 로컬 상태로 날짜 관리
@@ -170,7 +170,8 @@ export function CommonSearchBar({
     setIsSearching(true)
     
     try {
-      const query = initialQuery || location || "후쿠오카"
+      // 사용자가 입력한 검색어를 사용 (빈 값이면 기본값 사용)
+      const query = searchQuery.trim() || initialQuery || location || "후쿠오카"
       const dates = { checkIn: localCheckIn, checkOut: localCheckOut }
       
       // 검색 버튼을 눌렀을 때만 부모에게 날짜 변경 알림 (onDatesChange가 제공된 경우)
@@ -211,10 +212,8 @@ export function CommonSearchBar({
                  setSearchQuery(value)
                  setShowSuggestions(value.length > 0)
                  
-                 // 입력값이 변경될 때 부모 컴포넌트에 알림
-                 if (onSearch) {
-                   onSearch(value, { checkIn: localCheckIn, checkOut: localCheckOut })
-                 }
+                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
+                 // onSearch 호출 제거
                }}
                onFocus={() => setShowSuggestions(searchQuery.length > 0)}
                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}

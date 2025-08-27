@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model || 'gpt-4o',
+        model: model || 'gpt-4o-mini',
         messages,
         max_completion_tokens,
         temperature,
@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
         statusText: response.statusText,
         errorData: errorData,
         requestBody: {
-          model: model || 'gpt-4o',
+          model: model || 'gpt-4o-mini',
           messages: messages,
-          max_tokens,
+          max_completion_tokens,
           temperature,
           stream: false
         }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           error: `OpenAI API 오류: ${response.status}`,
           details: errorData,
           requestInfo: {
-            model: model || 'gpt-4o',
+            model: model || 'gpt-4o-mini',
             messageCount: messages?.length || 0
           }
         },

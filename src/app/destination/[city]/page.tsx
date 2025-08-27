@@ -119,7 +119,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
           <CommonSearchBar 
             variant="destination" 
             location={cityName} 
-            guests={{ rooms: 1, adults: 1, children: 0 }}
+            guests={{ rooms: 1, adults: 2, children: 0 }}
             checkIn={(() => {
               const today = new Date()
               const twoWeeksLater = new Date(today)

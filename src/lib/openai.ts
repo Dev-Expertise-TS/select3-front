@@ -1,3 +1,5 @@
+import { AI_CONFIG, getCurrentModel, formatPrompt } from '@/config/ai-config';
+
 interface RoomInfo {
   roomType: string;
   roomName: string;
@@ -27,12 +29,12 @@ function translateToKorean(text: string): string {
     'Presidential': '프레지덴셜',
     
     // 객실 특징
-    'KING': '킹 사이즈',
-    'QUEEN': '퀸 사이즈',
+    'KING': '킹',
+    'QUEEN': '퀸',
     'TWIN': '트윈',
     'DOUBLE': '더블',
     'SINGLE': '싱글',
-    '1 KING': '킹 사이즈 1개',
+    '1 KING': '킹 1개',
     '2 TWIN': '트윈 2개',
     
     // 편의시설
@@ -69,7 +71,24 @@ function translateToKorean(text: string): string {
     'FREE': '무료',
     'WIRED': '유선',
     'CLUB': '클럽',
-    'AMENITIES': '편의시설'
+    'AMENITIES': '편의시설',
+    
+    // 새로운 번역 규칙 추가
+    'TOWER WING': '타워 윙',
+    'TOWER': '타워',
+    'WING': '윙',
+    'MAX OCC': '최대 수용 인원',
+    'MAX': '최대',
+    'OCC': '수용 인원',
+    '2A2C': '성인 2명, 어린이 2명',
+    '2A': '성인 2명',
+    '2C': '어린이 2명',
+    '1A': '성인 1명',
+    '1C': '어린이 1명',
+    'OR': '또는',
+    'POOLVIEW': '풀뷰',
+    'CITY': '시티',
+    'VIEW': '뷰'
   };
   
   let translatedText = text;
@@ -131,7 +150,14 @@ function forceKoreanTranslation(text: string): string {
       'PLAN': '플랜',
       'RATE': '요금',
       'CODE': '코드',
-      'KEY': '키'
+      'KEY': '키',
+      'TOWER': '타워',
+      'WING': '윙',
+      'MAX': '최대',
+      'OCC': '수용 인원',
+      'OR': '또는',
+      'POOLVIEW': '풀뷰',
+      'CITY': '시티'
     };
     
     return forceTranslations[match] || match;
@@ -144,63 +170,41 @@ function forceKoreanTranslation(text: string): string {
     .replace(/FREE WIRED INTERNET/g, '무료 유선 인터넷')
     .replace(/WI-FI ACCESS/g, 'Wi-Fi 접속')
     .replace(/(\d+) SQM/g, '$1제곱미터')
-    .replace(/(\d+) KING/g, '킹 사이즈 $1개')
-    .replace(/(\d+) TWIN/g, '트윈 $1개');
+    .replace(/(\d+) KING/g, '킹 $1개')
+    .replace(/(\d+) TWIN/g, '트윈 $1개')
+    .replace(/TOWER WING/g, '타워 윙')
+    .replace(/MAX OCC (\d+)A(\d+)C/g, '최대 수용 인원 성인 $1명, 어린이 $2명')
+    .replace(/MAX OCC (\d+)A/g, '최대 수용 인원 성인 $1명')
+    .replace(/(\d+)A(\d+)C/g, '성인 $1명, 어린이 $2명')
+    .replace(/(\d+)A/g, '성인 $1명')
+    .replace(/(\d+)C/g, '어린이 $1명');
   
   console.log(`🔨 강제 한국어 변환: "${text}" → "${result}"`);
   return result;
 }
 
-// Trip.com 스타일 객실명 생성 함수
+// 글로벌 호텔 OTA  스타일 객실명 생성 함수
 export async function generateTripStyleRoomName(roomType: string, roomName: string, description: string, hotelName: string): Promise<string> {
   console.log('🏨 generateTripStyleRoomName 호출됨:', { roomType, roomName, description, hotelName })
   
   try {
-    const systemPrompt = `당신은 Trip.com과 같은 여행사 플랫폼의 호텔 객실명 작명 전문가입니다.
-주어진 객실 정보를 바탕으로 매력적이고 간결한 객실명을 **한국어로만** 작성해주세요.
-
-작성 규칙:
-1. **15자 이내**로 간결하게 작성
-2. Trip.com 스타일의 매력적인 객실명
-3. 객실 타입, 객실명, 설명의 핵심 특징을 반영
-4. 고객이 선택하고 싶게 만드는 표현
-5. **절대 영어를 사용하지 마세요**
-6. **100% 한국어로만 작성**
-
-**Trip.com 스타일 예시:**
-- "디럭스 킹룸" (8자)
-- "프리미엄 스위트" (9자)
-- "오션뷰 디럭스" (9자)
-- "클럽 플로어 킹" (10자)
-- "패밀리 트윈룸" (10자)`;
-
-    const userPrompt = `호텔명: ${hotelName}
-객실 타입: ${roomType}
-객실명: ${roomName}
-설명: ${description}
-
-위 정보를 바탕으로 Trip.com 스타일의 매력적인 객실명을 15자 이내로 작성해주세요.
-
-**중요 요구사항:**
-- 15자 이내로 간결하게
-- Trip.com과 같은 여행사 플랫폼 스타일
-- 객실의 특징과 장점을 부각
-- **절대 영어를 사용하지 마세요**
-- **100% 한국어로만 작성**
-
-**원본 영어 데이터 (참고용):**
-- 객실 타입: ${roomType}
-- 객실명: ${roomName}
-- 설명: ${description}
-
-이 영어 데이터를 한국어로 번역하여 Trip.com 스타일의 객실명을 만들어주세요.`;
+    const systemPrompt = AI_CONFIG.PROMPTS.ROOM_NAME.SYSTEM;
+    
+    const userPrompt = formatPrompt(AI_CONFIG.PROMPTS.ROOM_NAME.USER_TEMPLATE, {
+      hotelName,
+      roomType,
+      roomName,
+      description
+    });
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
-    console.log('📤 Trip.com 스타일 객실명 OpenAI API 요청:', { messages, model: 'gpt-4o' })
+    const currentModel = getCurrentModel();
+    
+    console.log('📤 Trip.com 스타일 객실명 OpenAI API 요청:', { messages, model: currentModel })
 
     const response = await fetch('/api/openai/chat', {
       method: 'POST',
@@ -209,34 +213,34 @@ export async function generateTripStyleRoomName(roomType: string, roomName: stri
       },
       body: JSON.stringify({
         messages,
-        model: 'gpt-4o',
+        model: currentModel,
         max_completion_tokens: 100,
-        temperature: 0.7,
-        stream: false
+        temperature: AI_CONFIG.API.TEMPERATURE,
+        stream: AI_CONFIG.API.STREAM
       }),
     });
 
-    console.log('📥 Trip.com 스타일 객실명 OpenAI API 응답 상태:', response.status, response.statusText)
+    console.log('📥 글로벌 호텔 OTA 스타일 객실명 OpenAI API 응답 상태:', response.status, response.statusText)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('❌ Trip.com 스타일 객실명 OpenAI API 오류 응답:', errorText)
+      console.error('❌ T글로벌 호텔 OTA 스타일 객실명 OpenAI API 오류 응답:', errorText)
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('✅ Trip.com 스타일 객실명 OpenAI API 응답 데이터:', data)
+    console.log('✅ 글로벌 호텔 OTA 스타일 객실명 OpenAI API 응답 데이터:', data)
     
     const content = data.choices?.[0]?.message?.content
-    console.log('📝 생성된 Trip.com 스타일 객실명:', content)
+    console.log('📝 생성된 글로벌 호텔 OTA 스타일 객실명:', content)
     
     // 15자 이내로 제한
     const finalRoomName = content ? content.trim().substring(0, 15) : '객실명 생성 실패';
-    console.log('✂️ 최종 Trip.com 스타일 객실명 (15자 제한):', finalRoomName)
+    console.log('✂️ 최종 글로벌 호텔 OTA 스타일 객실명 (15자 제한):', finalRoomName)
     
     return finalRoomName;
   } catch (error) {
-    console.error('❌ Trip.com 스타일 객실명 생성 오류:', error);
+    console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error);
     // 오류 발생 시 기본 객실명 반환
     const fallback = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실';
     console.log('🔄 fallback 객실명 사용:', fallback)
@@ -249,58 +253,32 @@ export async function interpretBedType(description: string, roomName: string): P
   console.log('🛏️ interpretBedType 호출됨:', { description, roomName })
   
   try {
-    const systemPrompt = `당신은 호텔 객실의 침대 타입을 해석하는 전문가입니다.
-주어진 객실 설명과 객실명을 바탕으로 침대 타입을 **한국어로만** 간결하게 작성해주세요.
-
-작성 규칙:
-1. **10자 이내**로 간결하게 작성
-2. 침대 타입과 개수를 명확하게 표시
-3. **절대 영어를 사용하지 마세요**
-4. **100% 한국어로만 작성**
-
-**침대 타입 예시:**
-- "킹 1개" (5자)
-- "트윈 2개" (5자)
-- "더블 1개" (6자)
-- "킹+트윈" (6자)
-- "킹 1개+소파" (9자)`;
-
-    const userPrompt = `객실명: ${roomName}
-설명: ${description}
-
-위 정보를 바탕으로 침대 타입을 10자 이내로 작성해주세요.
-
-**중요 요구사항:**
-- 10자 이내로 간결하게
-- 침대 타입과 개수를 명확하게
-- **절대 영어를 사용하지 마세요**
-- **100% 한국어로만 작성**
-
-**원본 영어 데이터 (참고용):**
-- 객실명: ${roomName}
-- 설명: ${description}
-
-이 영어 데이터를 한국어로 번역하여 침대 타입을 만들어주세요.`;
+    const systemPrompt = AI_CONFIG.PROMPTS.BED_TYPE.SYSTEM;
+    
+    const userPrompt = formatPrompt(AI_CONFIG.PROMPTS.BED_TYPE.USER_TEMPLATE, {
+      roomName,
+      description
+    });
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
-    console.log('📤 베드 타입 해석 OpenAI API 요청:', { messages, model: 'gpt-4o' })
+    console.log('📤 베드 타입 해석 OpenAI API 요청:', { messages, model: 'gpt-5o' })
 
     const response = await fetch('/api/openai/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages,
-        model: 'gpt-4o',
-        max_completion_tokens: 50,
-        temperature: 0.7,
-        stream: false
-      }),
+              body: JSON.stringify({
+          messages,
+          model: getCurrentModel(),
+          max_completion_tokens: 50,
+          temperature: AI_CONFIG.API.TEMPERATURE,
+          stream: AI_CONFIG.API.STREAM
+        }),
     });
 
     console.log('📥 베드 타입 해석 OpenAI API 응답 상태:', response.status, response.statusText)
@@ -334,73 +312,36 @@ export async function interpretBedType(description: string, roomName: string): P
 export async function generateRoomIntroduction(roomInfo: RoomInfo, hotelName: string): Promise<string> {
   console.log('🔍 generateRoomIntroduction 호출됨:', { roomInfo, hotelName })
   
-  // 입력 데이터 전처리: 영어를 한국어로 변환 (2단계)
-  const processedRoomInfo = {
-    roomType: forceKoreanTranslation(translateToKorean(roomInfo.roomType)),
-    roomName: forceKoreanTranslation(translateToKorean(roomInfo.roomName)),
-    description: forceKoreanTranslation(translateToKorean(roomInfo.description))
-  };
+  // 입력 데이터 전처리: Description만 참조하여 한국어로 변환
+  const processedDescription = forceKoreanTranslation(translateToKorean(roomInfo.description));
   
-  console.log('🔄 전처리된 객실 정보:', processedRoomInfo)
+  console.log('🔄 전처리된 객실 설명:', processedDescription)
   
   try {
-    const systemPrompt = `당신은 호텔 객실 소개 전문가입니다. 
-주어진 객실 정보를 바탕으로 매력적이고 상세한 객실 소개를 **100% 한국어로만** 작성해주세요.
-
-작성 규칙:
-1. 객실 타입, 객실명, 설명을 종합하여 자연스러운 소개문 작성
-2. 호텔의 브랜드 이미지와 일치하는 톤앤매너 사용
-3. 객실의 특징과 장점을 부각
-4. 2-3문장으로 간결하게 작성
-5. 고객이 선택하고 싶게 만드는 매력적인 표현 사용
-
-**절대 금지사항:**
-- 영어 단어나 문구를 절대 사용하지 마세요
-- 원본 영어 텍스트를 그대로 복사하지 마세요
-- 모든 영어는 한국어로 번역하여 사용하세요
-- 최종 결과물에 영어가 하나라도 포함되면 안 됩니다
-
-**한국어 작성 예시:**
-- "Deluxe Room" → "디럭스 룸"
-- "BOOK EARLY AND SAVE" → "얼리버드 할인 혜택"
-- "CLUB AMENITIES" → "클럽 편의시설"
-- "FREE WIRED INTERNET" → "무료 유선 인터넷"`;
-
-    const userPrompt = `호텔명: ${hotelName}
-객실 타입: ${processedRoomInfo.roomType}
-객실명: ${processedRoomInfo.roomName}
-설명: ${processedRoomInfo.description}
-
-위 정보를 바탕으로 객실 소개를 작성해주세요.
-
-**중요 요구사항:**
-- 모든 텍스트는 이미 한국어로 변환되어 제공됩니다
-- 자연스럽고 매력적인 한국어 소개문을 작성해주세요
-- 객실의 특징과 장점을 부각하여 고객이 선택하고 싶게 만들어주세요
-- **절대 영어를 사용하지 마세요**
-- **100% 한국어로만 작성해주세요**
-
-**원본 영어 데이터 (참고용):**
-- 객실 타입: ${roomInfo.roomType}
-- 객실명: ${roomInfo.roomName}
-- 설명: ${roomInfo.description}
-
-이 영어 데이터를 한국어로 번역하여 자연스러운 소개문을 만들어주세요.`;
+    const systemPrompt = AI_CONFIG.PROMPTS.ROOM_INTRODUCTION.SYSTEM;
+    
+    const userPrompt = formatPrompt(AI_CONFIG.PROMPTS.ROOM_INTRODUCTION.USER_TEMPLATE, {
+      hotelName: hotelName || '',
+      description: processedDescription,
+      originalDescription: roomInfo.description
+    });
 
     const messages: OpenAIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ];
 
+    const currentModel = getCurrentModel();
+    
     console.log('📤 OpenAI API 요청:', { 
       messages, 
-      model: 'gpt-4o',
+      model: currentModel,
       requestBody: {
         messages,
-        model: 'gpt-4o',
-        max_completion_tokens: 200,
-        temperature: 0.7,
-        stream: false
+        model: currentModel,
+        max_completion_tokens: AI_CONFIG.API.MAX_TOKENS,
+        temperature: AI_CONFIG.API.TEMPERATURE,
+        stream: AI_CONFIG.API.STREAM
       }
     })
 
@@ -409,13 +350,13 @@ export async function generateRoomIntroduction(roomInfo: RoomInfo, hotelName: st
       headers: {
         'Content-Type': 'application/json',
       },
-              body: JSON.stringify({
-          messages,
-          model: 'gpt-4o',
-          max_completion_tokens: 200,
-          temperature: 0.7,
-          stream: false
-        }),
+      body: JSON.stringify({
+        messages,
+        model: currentModel,
+        max_completion_tokens: AI_CONFIG.API.MAX_TOKENS,
+        temperature: AI_CONFIG.API.TEMPERATURE,
+        stream: AI_CONFIG.API.STREAM
+      }),
     });
 
     console.log('📥 OpenAI API 응답 상태:', response.status, response.statusText)
@@ -432,11 +373,37 @@ export async function generateRoomIntroduction(roomInfo: RoomInfo, hotelName: st
     const content = data.choices?.[0]?.message?.content
     console.log('📝 생성된 소개문:', content)
     
-    return content || '객실 소개를 생성할 수 없습니다.';
+    // AI 응답 후처리: 영어 텍스트나 원본 텍스트가 포함된 경우 강제로 한국어 변환
+    if (content) {
+      let processedContent = content;
+      
+      // 원본 Description이 포함된 경우 제거
+      if (roomInfo.description && content.includes(roomInfo.description)) {
+        console.log('⚠️ 원본 Description이 포함됨, 제거 처리');
+        processedContent = content.replace(roomInfo.description, '');
+      }
+      
+      // 영어 단어가 남아있는 경우 강제 한국어 변환
+      if (/\b[A-Z]{2,}\b/.test(processedContent)) {
+        console.log('⚠️ 영어 단어가 남아있음, 강제 한국어 변환');
+        processedContent = forceKoreanTranslation(processedContent);
+      }
+      
+      // 최종 결과가 너무 짧거나 의미없는 경우 fallback 사용
+      if (processedContent.trim().length < 10) {
+        console.log('⚠️ 생성된 소개문이 너무 짧음, fallback 사용');
+        processedContent = `${roomInfo.description ? forceKoreanTranslation(roomInfo.description) : '편안하고 아늑한 분위기'}의 객실입니다.`;
+      }
+      
+      console.log('🔧 후처리된 최종 소개문:', processedContent);
+      return processedContent;
+    }
+    
+    return '객실 소개를 생성할 수 없습니다.';
   } catch (error) {
     console.error('❌ OpenAI API 호출 오류:', error);
-    // 오류 발생 시 기본 소개문 반환
-    const fallback = `${roomInfo.roomType} ${roomInfo.roomName} 객실입니다. ${roomInfo.description || '편안한 숙박을 제공합니다.'}`;
+    // 오류 발생 시 기본 소개문 반환 (Description만 참조)
+    const fallback = `${roomInfo.description || '편안한 숙박을 제공하는'} 객실입니다.`;
     console.log('🔄 fallback 소개문 사용:', fallback)
     return fallback;
   }

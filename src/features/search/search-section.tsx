@@ -20,7 +20,7 @@ export function SearchSection() {
   })
   const [searchGuests, setSearchGuests] = useState({
     rooms: 1,
-    adults: 1,
+    adults: 2,
     children: 0
   })
 
