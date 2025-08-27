@@ -183,9 +183,9 @@ function forceKoreanTranslation(text: string): string {
   return result;
 }
 
-// 글로벌 호텔 OTA  스타일 객실명 생성 함수
-export async function generateTripStyleRoomName(roomType: string, roomName: string, description: string, hotelName: string): Promise<string> {
-  console.log('🏨 generateTripStyleRoomName 호출됨:', { roomType, roomName, description, hotelName })
+// 글로벌 호텔 OTA 스타일 객실명 생성 함수
+export async function generateGlobalOTAStyleRoomName(roomType: string, roomName: string, description: string, hotelName: string): Promise<string> {
+  console.log('🏨 generateGlobalOTAStyleRoomName 호출됨:', { roomType, roomName, description, hotelName })
   
   try {
     const systemPrompt = AI_CONFIG.PROMPTS.ROOM_NAME.SYSTEM;
@@ -232,11 +232,25 @@ export async function generateTripStyleRoomName(roomType: string, roomName: stri
     const content = data.choices?.[0]?.message?.content
     console.log('📝 추출된 객실 타입:', content)
     
-    // 15자 이내로 제한
-    const finalRoomType = content ? content.trim().substring(0, 15) : '객실 타입 추출 실패';
-    console.log('✂️ 최종 객실 타입 (15자 제한):', finalRoomType)
+    if (content) {
+      // 불필요한 문자 제거 및 정리
+      let cleanedContent = content.trim()
+        .replace(/\([^)]*\)/g, '') // 괄호와 괄호 안의 내용 제거
+        .replace(/\d+자/g, '') // "12자" 같은 글자 수 표시 제거
+        .replace(/\d+개/g, '') // "2개" 같은 개수 표시 제거
+        .replace(/[0-9]/g, '') // 모든 숫자 제거
+        .replace(/[^\w\s가-힣]/g, '') // 특수문자 제거 (한글과 영문, 공백만 유지)
+        .replace(/\s+/g, ' ') // 연속된 공백을 하나로
+        .trim()
+      
+      // 15자 이내로 제한
+      const finalRoomType = cleanedContent.substring(0, 15) || '디럭스';
+      console.log('✂️ 최종 객실 타입 (정리 후):', finalRoomType)
+      
+      return finalRoomType;
+    }
     
-    return finalRoomType;
+    return '디럭스';
   } catch (error) {
     console.error('❌ 객실 타입 추출 오류:', error);
     // 오류 발생 시 기본 객실 타입 반환
@@ -292,11 +306,27 @@ export async function interpretBedType(description: string, roomName: string): P
     const content = data.choices?.[0]?.message?.content
     console.log('📝 생성된 베드 구성:', content)
     
-    // 10자 이내로 제한
-    const finalBedType = content ? content.trim().substring(0, 10) : '베드 구성 해석 실패';
-    console.log('✂️ 최종 베드 구성 (10자 제한):', finalBedType)
+    if (content) {
+      // 불필요한 문자 제거 및 정리
+      let cleanedContent = content.trim()
+        .replace(/\([^)]*\)/g, '') // 괄호와 괄호 안의 내용 제거
+        .replace(/\d+개/g, '') // "2개" 같은 개수 표시 제거
+        .replace(/\d+자/g, '') // "5자" 같은 글자 수 표시 제거
+        .replace(/[0-9]/g, '') // 모든 숫자 제거
+        .replace(/베드/g, '') // "베드" 단어 제거
+        .replace(/침대/g, '') // "침대" 단어 제거
+        .replace(/[^\w\s가-힣]/g, '') // 특수문자 제거 (한글과 영문, 공백만 유지)
+        .replace(/\s+/g, ' ') // 연속된 공백을 하나로
+        .trim()
+      
+      // 8자 이내로 제한
+      const finalBedType = cleanedContent.substring(0, 8) || '킹';
+      console.log('✂️ 최종 베드 구성 (정리 후):', finalBedType)
+      
+      return finalBedType;
+    }
     
-    return finalBedType;
+    return '킹';
   } catch (error) {
     console.error('❌ 베드 구성 해석 오류:', error);
     // 오류 발생 시 기본 베드 구성 반환
