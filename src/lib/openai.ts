@@ -192,8 +192,6 @@ export async function generateTripStyleRoomName(roomType: string, roomName: stri
     
     const userPrompt = formatPrompt(AI_CONFIG.PROMPTS.ROOM_NAME.USER_TEMPLATE, {
       hotelName,
-      roomType,
-      roomName,
       description
     });
 
@@ -204,7 +202,7 @@ export async function generateTripStyleRoomName(roomType: string, roomName: stri
 
     const currentModel = getCurrentModel();
     
-    console.log('📤 Trip.com 스타일 객실명 OpenAI API 요청:', { messages, model: currentModel })
+    console.log('📤 객실 타입 추출 OpenAI API 요청:', { messages, model: currentModel })
 
     const response = await fetch('/api/openai/chat', {
       method: 'POST',
@@ -220,35 +218,35 @@ export async function generateTripStyleRoomName(roomType: string, roomName: stri
       }),
     });
 
-    console.log('📥 글로벌 호텔 OTA 스타일 객실명 OpenAI API 응답 상태:', response.status, response.statusText)
+    console.log('📥 객실 타입 추출 OpenAI API 응답 상태:', response.status, response.statusText)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('❌ T글로벌 호텔 OTA 스타일 객실명 OpenAI API 오류 응답:', errorText)
+      console.error('❌ 객실 타입 추출 OpenAI API 오류 응답:', errorText)
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('✅ 글로벌 호텔 OTA 스타일 객실명 OpenAI API 응답 데이터:', data)
+    console.log('✅ 객실 타입 추출 OpenAI API 응답 데이터:', data)
     
     const content = data.choices?.[0]?.message?.content
-    console.log('📝 생성된 글로벌 호텔 OTA 스타일 객실명:', content)
+    console.log('📝 추출된 객실 타입:', content)
     
     // 15자 이내로 제한
-    const finalRoomName = content ? content.trim().substring(0, 15) : '객실명 생성 실패';
-    console.log('✂️ 최종 글로벌 호텔 OTA 스타일 객실명 (15자 제한):', finalRoomName)
+    const finalRoomType = content ? content.trim().substring(0, 15) : '객실 타입 추출 실패';
+    console.log('✂️ 최종 객실 타입 (15자 제한):', finalRoomType)
     
-    return finalRoomName;
+    return finalRoomType;
   } catch (error) {
-    console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error);
-    // 오류 발생 시 기본 객실명 반환
+    console.error('❌ 객실 타입 추출 오류:', error);
+    // 오류 발생 시 기본 객실 타입 반환
     const fallback = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실';
-    console.log('🔄 fallback 객실명 사용:', fallback)
+    console.log('🔄 fallback 객실 타입 사용:', fallback)
     return fallback;
   }
 }
 
-// 베드 타입 해석 함수
+// 베드 구성 해석 함수
 export async function interpretBedType(description: string, roomName: string): Promise<string> {
   console.log('🛏️ interpretBedType 호출됨:', { description, roomName })
   
@@ -256,7 +254,6 @@ export async function interpretBedType(description: string, roomName: string): P
     const systemPrompt = AI_CONFIG.PROMPTS.BED_TYPE.SYSTEM;
     
     const userPrompt = formatPrompt(AI_CONFIG.PROMPTS.BED_TYPE.USER_TEMPLATE, {
-      roomName,
       description
     });
 
@@ -265,7 +262,7 @@ export async function interpretBedType(description: string, roomName: string): P
       { role: 'user', content: userPrompt }
     ];
 
-    console.log('📤 베드 타입 해석 OpenAI API 요청:', { messages, model: 'gpt-5o' })
+    console.log('📤 베드 구성 해석 OpenAI API 요청:', { messages, model: getCurrentModel() })
 
     const response = await fetch('/api/openai/chat', {
       method: 'POST',
@@ -281,30 +278,30 @@ export async function interpretBedType(description: string, roomName: string): P
         }),
     });
 
-    console.log('📥 베드 타입 해석 OpenAI API 응답 상태:', response.status, response.statusText)
+    console.log('📥 베드 구성 해석 OpenAI API 응답 상태:', response.status, response.statusText)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('❌ 베드 타입 해석 OpenAI API 오류 응답:', errorText)
+      console.error('❌ 베드 구성 해석 OpenAI API 오류 응답:', errorText)
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('✅ 베드 타입 해석 OpenAI API 응답 데이터:', data)
+    console.log('✅ 베드 구성 해석 OpenAI API 응답 데이터:', data)
     
     const content = data.choices?.[0]?.message?.content
-    console.log('📝 생성된 베드 타입:', content)
+    console.log('📝 생성된 베드 구성:', content)
     
     // 10자 이내로 제한
-    const finalBedType = content ? content.trim().substring(0, 10) : '베드 타입 해석 실패';
-    console.log('✂️ 최종 베드 타입 (10자 제한):', finalBedType)
+    const finalBedType = content ? content.trim().substring(0, 10) : '베드 구성 해석 실패';
+    console.log('✂️ 최종 베드 구성 (10자 제한):', finalBedType)
     
     return finalBedType;
   } catch (error) {
-    console.error('❌ 베드 타입 해석 오류:', error);
-    // 오류 발생 시 기본 베드 타입 반환
-    const fallback = '베드 정보 없음';
-    console.log('🔄 fallback 베드 타입 사용:', fallback)
+    console.error('❌ 베드 구성 해석 오류:', error);
+    // 오류 발생 시 기본 베드 구성 반환
+    const fallback = '정보 없음';
+    console.log('🔄 fallback 베드 구성 사용:', fallback)
     return fallback;
   }
 }

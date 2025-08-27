@@ -70,11 +70,13 @@ export function Header() {
               ))}
             </nav>
 
+            {/* 로그인/회원가입 버튼 - 주석 처리됨
             <div className="hidden lg:flex items-center space-x-4">
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                 로그인 / 회원가입
               </Button>
             </div>
+            */}
 
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="lg:hidden">
@@ -97,9 +99,11 @@ export function Header() {
                       </Link>
                     ))}
                   </nav>
+                  {/* 로그인/회원가입 버튼 - 주석 처리됨
                   <div className="mt-8 space-y-4">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">로그인 / 회원가입</Button>
                   </div>
+                  */}
                 </div>
               </SheetContent>
             </Sheet>

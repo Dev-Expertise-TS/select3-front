@@ -1424,11 +1424,14 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       if (hotel?.name) {
         console.log('✅ hotel.name 조건 충족:', hotel.name)
         console.log('🚀 1~3행 AI 객실 소개 생성 시작!')
-        // 1~3행 레코드에 대해 AI 객실 소개 생성
+        // 1~3행 레코드에 대해 통합 AI 처리
         if (ratePlanCodes && ratePlanCodes.length > 0) {
           const roomsToProcess = ratePlanCodes.slice(0, 3) // 최대 3개 레코드 처리
-          console.log(`🔍 ${roomsToProcess.length}개 레코드 AI 객실 소개 생성 시작`)
+          console.log(`🔍 ${roomsToProcess.length}개 레코드 통합 AI 처리 시작`)
           
+          // 모든 AI 처리 상태를 true로 설정
+          setIsGeneratingRoomNames(true)
+          setIsGeneratingBedTypes(true)
           setIsGeneratingIntroductions(true)
           
           // 순차적으로 AI 처리 (각 행별로 즉시 상태 업데이트)
@@ -1444,7 +1447,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               // 각 행을 고유하게 구분하는 키 생성 (인덱스 포함)
               const key = `row-${i}`
               
-              console.log(`🔍 ${i + 1}번째 레코드 AI 객실 소개 생성 중:`, { 
+              console.log(`🔍 ${i + 1}번째 레코드 통합 AI 처리 중:`, { 
                 rowIndex: i + 1, 
                 roomType, 
                 roomName, 
@@ -1453,32 +1456,46 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               })
               
               try {
-                const intro = await generateRoomIntroduction({ roomType: '', roomName: '', description }, '') // 호텔명 생략, Description만 참조
+                // 1. 객실 타입 추출
+                console.log(`🔄 ${i + 1}번째 레코드 객실 타입 추출 시작`)
+                const roomTypeResult = await generateTripStyleRoomName(roomType, roomName, description, hotel?.name || '호텔')
+                setTripStyleRoomNames(prev => new Map(prev).set(key, roomTypeResult))
+                console.log(`✅ ${i + 1}번째 레코드 객실 타입 추출 완료:`, roomTypeResult)
+                
+                // 2. 베드 타입 해석
+                console.log(`🔄 ${i + 1}번째 레코드 베드 타입 해석 시작`)
+                const bedTypeResult = await interpretBedType(description, '')
+                setBedTypes(prev => new Map(prev).set(key, bedTypeResult))
+                console.log(`✅ ${i + 1}번째 레코드 베드 타입 해석 완료:`, bedTypeResult)
+                
+                // 3. 객실 소개 생성
+                console.log(`🔄 ${i + 1}번째 레코드 객실 소개 생성 시작`)
+                const intro = await generateRoomIntroduction({ roomType: '', roomName: '', description }, hotel?.name || '호텔')
                 newIntroductions.set(key, intro)
-                
-                // 각 행 처리 완료 후 즉시 상태 업데이트 (실시간 표시)
                 setRoomIntroductions(prev => new Map(prev).set(key, intro))
-                
                 console.log(`✅ ${i + 1}번째 레코드 AI 객실 소개 생성 완료:`, intro)
                 
                 // API 호출 간격 조절 (rate limiting 방지)
                 if (i < roomsToProcess.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 300))
+                  await new Promise(resolve => setTimeout(resolve, 500))
                 }
               } catch (error) {
-                console.error(`❌ ${i + 1}번째 레코드 AI 객실 소개 생성 실패:`, error)
-                // 에러 발생 시 fallback 생성 (Description만 참조)
-                const fallbackIntro = `${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공하는'} 객실입니다.`
-                newIntroductions.set(key, fallbackIntro)
+                console.error(`❌ ${i + 1}번째 레코드 AI 처리 실패:`, error)
                 
-                // fallback도 즉시 상태 업데이트
+                // 에러 발생 시 fallback 생성
+                const fallbackRoomType = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
+                const fallbackBedType = '정보 없음'
+                const fallbackIntro = `${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공하는'} 객실입니다.`
+                
+                setTripStyleRoomNames(prev => new Map(prev).set(key, fallbackRoomType))
+                setBedTypes(prev => new Map(prev).set(key, fallbackBedType))
                 setRoomIntroductions(prev => new Map(prev).set(key, fallbackIntro))
                 
-                console.log(`🔄 ${i + 1}번째 레코드 fallback 소개문 사용:`, fallbackIntro)
+                console.log(`🔄 ${i + 1}번째 레코드 fallback 데이터 사용:`, { fallbackRoomType, fallbackBedType, fallbackIntro })
               }
             }
             
-            console.log('🎉 1~3행 AI 객실 소개 생성 완료!')
+            console.log('🎉 1~3행 통합 AI 처리 완료!')
           }
           
           processRoomsSequentially()
@@ -1486,8 +1503,11 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               console.error('❌ 순차 AI 처리 중 오류 발생:', error)
             })
             .finally(() => {
+              // 모든 AI 처리 상태를 false로 설정
+              setIsGeneratingRoomNames(false)
+              setIsGeneratingBedTypes(false)
               setIsGeneratingIntroductions(false)
-              console.log('🏁 1~3행 AI 처리 완료')
+              console.log('🏁 1~3행 통합 AI 처리 완료')
             })
         }
       } else {
@@ -2295,24 +2315,24 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-gray-100 py-4">
+      {/* Search Bar - Sticky */}
+      <div className="sticky top-16 z-40 bg-gray-100 py-4">
         <div className="container mx-auto max-w-[1440px] px-4">
-                      <CommonSearchBar
-              variant="hotel-detail"
-              location={hotel.city_ko || hotel.city_eng || '도시'}
-              checkIn={searchDates.checkIn}
-              checkOut={searchDates.checkOut}
-              guests={{ rooms: 1, adults: 2, children: 0 }}
-              initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
-              onSearch={(query, dates, guests) => {
-                if (dates) {
-                  setSearchDates(dates)
-                }
-                setHasSearched(true)
-              }}
-              isSabreLoading={sabreLoading || ratePlanLoading}
-            />
+          <CommonSearchBar
+            variant="hotel-detail"
+            location={hotel.city_ko || hotel.city_eng || '도시'}
+            checkIn={searchDates.checkIn}
+            checkOut={searchDates.checkOut}
+            guests={{ rooms: 1, adults: 2, children: 0 }}
+            initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
+            onSearch={(query, dates, guests) => {
+              if (dates) {
+                setSearchDates(dates)
+              }
+              setHasSearched(true)
+            }}
+            isSabreLoading={sabreLoading || ratePlanLoading}
+          />
         </div>
       </div>
 
@@ -2359,12 +2379,38 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                           <tr key={`rp-${idx}`} className="hover:bg-gray-50">
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
                               <div className="text-gray-700 font-medium">
-                                {rp.RoomName || 'N/A'} {/* AI 처리 대신 기본값 사용 */}
+                                {idx < 3 ? (
+                                  // 1~3행은 AI 추출 객실 타입 표시
+                                  isGeneratingRoomNames ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
+                                    </div>
+                                  ) : (
+                                    tripStyleRoomNames.get(rowKey) || '정보 없음'
+                                  )
+                                ) : (
+                                  // 4행부터는 기본값 사용
+                                  '정보 없음'
+                                )}
                               </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
                               <div className="text-gray-700 font-medium">
-                                베드 정보 없음 {/* AI 처리 대신 기본값 사용 */}
+                                {idx < 3 ? (
+                                  // 1~3행은 AI 베드 구성 표시
+                                  isGeneratingBedTypes ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500">AI가 베드 구성을 해석 중입니다...</span>
+                                    </div>
+                                  ) : (
+                                    bedTypes.get(rowKey) || '정보 없음'
+                                  )
+                                ) : (
+                                  // 4행부터는 기본값 사용
+                                  '정보 없음'
+                                )}
                               </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
@@ -2430,10 +2476,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-600">
                   <div>
-                    <span className="font-medium">객실명:</span> AI가 생성한 Trip.com 스타일 객실명
+                    <span className="font-medium">객실 타입:</span> AI가 Description에서 추출한 객실 타입
                   </div>
                   <div>
-                    <span className="font-medium">베드:</span> AI가 해석한 침대 타입과 개수
+                    <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
                   </div>
                   <div>
                     <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
