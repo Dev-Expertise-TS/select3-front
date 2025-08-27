@@ -2217,9 +2217,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실명</th>
                       <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">베드</th>
                       <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실 소개</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">RoomType</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">RoomName</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">RoomType</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">RoomName</th>
+                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">Description</th>
                       <th className="border border-gray-200 px-4 py-3 text-right text-sm font-semibold text-gray-700">총 요금</th>
                       <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">통화</th>
                       <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">RATEKEY</th>
@@ -2293,9 +2293,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                 )}
                               </div>
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{roomType}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{rp.RoomName || 'N/A'}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{rp.Description || 'N/A'}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{roomType}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{rp.RoomName || 'N/A'}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{rp.Description || 'N/A'}</td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-right">
                               {amount && amount !== 'N/A' && !isNaN(Number(amount)) ? parseInt(String(amount)).toLocaleString() : 'N/A'}
                             </td>
@@ -2708,9 +2708,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         <tr className="bg-blue-100">
                           {/* 기본 컬럼들 */}
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateKey</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomType</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomName</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Description</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">RoomType</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">RoomName</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">Description</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Currency</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountAfterTax</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountBeforeTax</th>
@@ -2744,13 +2744,13 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                   ) : 'N/A'}
                               </div>
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 font-medium">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 font-medium hidden">
                               {ratePlan.RoomType || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 hidden">
                               {ratePlan.RoomName || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 hidden">
                               <div className="max-w-xs">
                                 {ratePlan.Description || 'N/A'}
                               </div>
