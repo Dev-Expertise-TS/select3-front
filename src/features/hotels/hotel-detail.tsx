@@ -496,6 +496,13 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // slug로 호텔 데이터 조회
   const { data: hotel, isLoading, error } = useHotelBySlug(hotelSlug)
   
+  // 페이지 렌더링/리프레시 시 자동으로 검색 실행 상태로 전환 (테이블 데이터 자동 로드)
+  useEffect(() => {
+    if (hotel?.sabre_id && !hasSearched) {
+      setHasSearched(true)
+    }
+  }, [hotel?.sabre_id, hasSearched])
+  
   // 호텔 프로모션 데이터 조회
   const fetchHotelPromotions = async (sabreId: number) => {
     console.log('🎯 fetchHotelPromotions 호출됨:', { sabreId })
@@ -2211,18 +2218,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               
               {/* Table */}
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200">
+                <table className="w-full border-collapse border border-gray-200 text-sm">
                   <thead>
                     <tr className="bg-gray-200">
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실명</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">베드</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">객실 소개</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">RoomType</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">RoomName</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hidden">Description</th>
-                      <th className="border border-gray-200 px-4 py-3 text-right text-sm font-semibold text-gray-700">총 요금</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">통화</th>
-                      <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">RATEKEY</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px]">객실명</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2256,8 +2260,8 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         }
                         
                         return (
-                          <tr key={`rp-${idx}`} className="hover:bg-gray-50">
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
+                          <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px]">
                               <div className="text-gray-700 font-medium">
                                 {isGeneratingRoomNames ? (
                                   <div className="flex items-center space-x-2">
@@ -2269,7 +2273,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                 )}
                               </div>
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
                               <div className="text-gray-700 font-medium">
                                 {isGeneratingBedTypes ? (
                                   <div className="flex items-center space-x-2">
@@ -2281,7 +2285,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                 )}
                               </div>
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
                               <div className="text-gray-700">
                                 {isGeneratingIntroductions ? (
                                   <div className="flex items-center space-x-2">
@@ -2293,14 +2297,11 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                 )}
                               </div>
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{roomType}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{rp.RoomName || 'N/A'}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 hidden">{rp.Description || 'N/A'}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-right">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
                               {amount && amount !== 'N/A' && !isNaN(Number(amount)) ? parseInt(String(amount)).toLocaleString() : 'N/A'}
                             </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">{currency}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700">
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
                               <button
                                 type="button"
                                 title={typeof rateKey === 'string' ? rateKey : ''}
@@ -2321,9 +2322,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터가 없습니다</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">Standard</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500 text-right">0</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">KRW</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
@@ -2708,9 +2706,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         <tr className="bg-blue-100">
                           {/* 기본 컬럼들 */}
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateKey</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">RoomType</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">RoomName</th>
-                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px] hidden">Description</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomType</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomName</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Description</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Currency</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountAfterTax</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountBeforeTax</th>
@@ -2744,13 +2742,13 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                   ) : 'N/A'}
                               </div>
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 font-medium hidden">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 font-medium">
                               {ratePlan.RoomType || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 hidden">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               {ratePlan.RoomName || 'N/A'}
                             </td>
-                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700 hidden">
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="max-w-xs">
                                 {ratePlan.Description || 'N/A'}
                               </div>
