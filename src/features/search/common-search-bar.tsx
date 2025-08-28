@@ -7,6 +7,9 @@ import { MapPin, Calendar, Loader2, Users } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import { GuestSelector } from "@/components/ui/guest-selector"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { generateSlug } from "@/lib/hotel-utils"
 
 interface CommonSearchBarProps {
   variant?: "landing" | "hotel-detail" | "destination"
@@ -35,6 +38,8 @@ export function CommonSearchBar({
   initialQuery = "",
   isSabreLoading = false,
 }: CommonSearchBarProps) {
+  const router = useRouter()
+  const supabase = createClient()
   // 기본값 설정: undefined나 빈 객체일 때 기본값 사용
   const defaultGuests = { rooms: 1, adults: 2, children: 0 }
   const safeGuests = guests || defaultGuests
@@ -48,6 +53,37 @@ export function CommonSearchBar({
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialQuery || "")
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
+  const [hotelSuggestions, setHotelSuggestions] = useState<Array<{
+    slug: string
+    sabre_id: number
+    property_name_ko: string | null
+    property_name_en: string | null
+    city?: string | null
+  }>>([])
+  const [highlightIndex, setHighlightIndex] = useState<number>(-1)
+  const [selectedHotel, setSelectedHotel] = useState<{
+    slug?: string | null
+    sabre_id: number
+    name: string
+  } | null>(null)
+
+  // 입력어 하이라이트 유틸
+  const highlightText = (text: string, q: string) => {
+    if (!q) return text
+    const idx = text.toLowerCase().indexOf(q.toLowerCase())
+    if (idx === -1) return text
+    const before = text.slice(0, idx)
+    const match = text.slice(idx, idx + q.length)
+    const after = text.slice(idx + q.length)
+    return (
+      <>
+        {before}
+        <span className="font-semibold text-blue-700">{match}</span>
+        {after}
+      </>
+    )
+  }
 
   // 기본 날짜 설정 (2주 뒤와 2주 뒤 + 1일)
   useEffect(() => {
@@ -132,22 +168,70 @@ export function CommonSearchBar({
     return diffDays > 0 ? diffDays : 1
   }
 
-  // 자동완성 제안 데이터
-  const getSuggestions = (query: string) => {
-    if (!query) return []
-    
-    const suggestions = [
-      { type: 'city', icon: '📍', text: '다낭', subtext: '베트남' },
-      { type: 'accommodation', icon: '🔍', text: '다낭 숙소', tag: '5등급' },
-      { type: 'accommodation', icon: '🔍', text: '다낭 숙소', tag: '출장에 적합한' },
-      { type: 'attraction', icon: '🏁', text: '미케 비치', subtext: '베트남, 다낭' },
-      { type: 'airport', icon: '✈️', text: '다낭 국제공항(DAD)', subtext: '베트남, 다낭' }
-    ]
-    
-    return suggestions.filter(suggestion => 
-      suggestion.text.toLowerCase().includes(query.toLowerCase()) ||
-      suggestion.subtext?.toLowerCase().includes(query.toLowerCase())
-    )
+  // 입력어 기반 호텔 자동완성 (Supabase)
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (!q) {
+      setHotelSuggestions([])
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        setIsSuggesting(true)
+        const { data, error } = await supabase
+          .from('select_hotels')
+          .select('slug,sabre_id,property_name_ko,property_name_en,city')
+          .or(`property_name_ko.ilike.%${q}%,property_name_en.ilike.%${q}%,city.ilike.%${q}%`)
+          .order('sabre_id', { ascending: true })
+          .limit(20)
+        if (error) throw error
+        if (!cancelled) {
+          setHotelSuggestions(data || [])
+        }
+      } catch (e) {
+        console.error('자동완성 조회 오류:', e)
+        if (!cancelled) setHotelSuggestions([])
+      } finally {
+        if (!cancelled) setIsSuggesting(false)
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [searchQuery, supabase])
+
+  // 키보드 네비게이션
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightIndex((prev) => {
+        const next = prev + 1
+        return next >= hotelSuggestions.length ? 0 : next
+      })
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightIndex((prev) => {
+        const next = prev - 1
+        return next < 0 ? Math.max(hotelSuggestions.length - 1, 0) : next
+      })
+    } else if (e.key === 'Enter') {
+      if (highlightIndex >= 0 && highlightIndex < hotelSuggestions.length) {
+        const h = hotelSuggestions[highlightIndex]
+        const primary = h.property_name_ko || h.property_name_en || '-'
+        setSearchQuery(primary)
+        setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+        setShowSuggestions(false)
+        setHighlightIndex(-1)
+      } else {
+        // 하이라이트가 없으면 일반 검색 실행 (Enter키는 검색 버튼 동작으로 간주)
+        handleSearch()
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
   }
 
   // 게스트 정보 표시 텍스트 생성
@@ -179,12 +263,18 @@ export function CommonSearchBar({
         onDatesChange(dates)
       }
       
-      // onSearch가 Promise를 반환하는 경우를 대비한 처리
-      if (onSearch) {
-        const result = onSearch(query, dates, localGuests)
-        // Promise인 경우 await, 아닌 경우 즉시 로딩 해제
-        if (result && typeof result.then === 'function') {
-          await result
+      // 선택된 호텔이 있으면 상세 페이지로 이동, 없으면 검색 결과로
+      if (selectedHotel) {
+        const params = new URLSearchParams()
+        if (localCheckIn) params.set('checkIn', localCheckIn)
+        if (localCheckOut) params.set('checkOut', localCheckOut)
+        params.set('sabreId', String(selectedHotel.sabre_id))
+        const slug = selectedHotel.slug || generateSlug(selectedHotel.name)
+        router.push(`/hotel/${slug}?${params.toString()}`)
+      } else if (onSearch) {
+        const result = onSearch(query, dates, localGuests) as unknown
+        if (typeof (result as any)?.then === 'function') {
+          await (result as Promise<any>)
         }
       }
     } catch (error) {
@@ -210,6 +300,7 @@ export function CommonSearchBar({
                onChange={(e) => {
                  const value = e.target.value
                  setSearchQuery(value)
+                 setSelectedHotel(null)
                  setShowSuggestions(value.length > 0)
                  
                  // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
@@ -217,6 +308,7 @@ export function CommonSearchBar({
                }}
                onFocus={() => setShowSuggestions(searchQuery.length > 0)}
                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+               onKeyDown={onKeyDown}
                className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none focus:bg-blue-50/30 rounded-md transition-all duration-200"
                disabled={isSearching}
              />
@@ -232,6 +324,7 @@ export function CommonSearchBar({
               )}
               onClick={() => {
                 setSearchQuery("")
+                setSelectedHotel(null)
                 setShowSuggestions(false)
                 if (onSearch) {
                   onSearch("", { checkIn: localCheckIn, checkOut: localCheckOut })
@@ -243,35 +336,43 @@ export function CommonSearchBar({
             </button>
           )}
           
-          {/* 자동완성 제안 목록 */}
+          {/* 자동완성 제안 목록 (호텔) */}
           {showSuggestions && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto">
-              {getSuggestions(searchQuery).map((suggestion, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  onClick={() => {
-                    setSearchQuery(suggestion.text)
-                    setShowSuggestions(false)
-                    if (onSearch) {
-                      onSearch(suggestion.text, { checkIn: localCheckIn, checkOut: localCheckOut })
-                    }
-                  }}
-                >
-                  <span className="text-lg">{suggestion.icon}</span>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{suggestion.text}</div>
-                    {suggestion.subtext && (
-                      <div className="text-sm text-gray-500">{suggestion.subtext}</div>
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
+              {isSuggesting && hotelSuggestions.length === 0 && (
+                <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
+              )}
+              {!isSuggesting && hotelSuggestions.length === 0 && (
+                <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
+              )}
+              {hotelSuggestions.map((h, idx) => {
+                const primary = h.property_name_ko || h.property_name_en || '-'
+                const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''
+                return (
+                  <div
+                    key={`${h.slug || h.sabre_id}`}
+                    className={cn(
+                      "flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0",
+                      highlightIndex === idx && "bg-gray-50"
                     )}
+                    onClick={() => {
+                      setSearchQuery(primary)
+                      setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                      setShowSuggestions(false)
+                      setHighlightIndex(-1)
+                    }}
+                  >
+                    <span className="text-lg">🏨</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{highlightText(primary, searchQuery)}</div>
+                      {secondary && (
+                        <div className="text-sm text-gray-500 truncate">{highlightText(secondary, searchQuery)}</div>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400">#{h.sabre_id}</span>
                   </div>
-                  {suggestion.tag && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                      {suggestion.tag}
-                    </span>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

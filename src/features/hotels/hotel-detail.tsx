@@ -2,11 +2,12 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
 import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
-import { useHotelBySlug, useHotelMedia } from "@/hooks/use-hotels"
+import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
 import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
@@ -36,6 +37,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [showImageDetail, setShowImageDetail] = useState(false)
   const [selectedDetailImage, setSelectedDetailImage] = useState(0)
   
+  // URL 쿼리 파라미터에서 날짜 읽기
+  const searchParams = useSearchParams()
+
   // 날짜 상태 관리
   const [searchDates, setSearchDates] = useState(() => {
     const today = new Date()
@@ -49,6 +53,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
     }
   })
+  
+  // URL로부터 checkIn/checkOut이 오면 초기화
+  useEffect(() => {
+    const ci = searchParams?.get('checkIn') || ''
+    const co = searchParams?.get('checkOut') || ''
+    if (ci && co) {
+      setSearchDates({ checkIn: ci, checkOut: co })
+    }
+  }, [searchParams])
   
   // 검색 버튼을 눌렀는지 추적하는 상태
   const [hasSearched, setHasSearched] = useState(false)
@@ -495,8 +508,13 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     }
   }
   
-  // slug로 호텔 데이터 조회
-  const { data: hotel, isLoading, error } = useHotelBySlug(hotelSlug)
+  // URL에서 sabreId 읽기
+  const sabreIdParam = Number(searchParams?.get('sabreId') || 0)
+
+  // 호텔 데이터 조회: sabreId 우선, 없으면 slug
+  const { data: hotelBySlug, isLoading, error } = useHotelBySlug(hotelSlug)
+  const { data: hotelById } = useHotel(sabreIdParam)
+  const hotel = hotelById || hotelBySlug
   
   // 페이지 렌더링/리프레시 시 자동으로 검색 실행 상태로 전환 (테이블 데이터 자동 로드)
   useEffect(() => {
@@ -1950,61 +1968,56 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       )}
 
       {/* Promotion */}
-      <div className="bg-gray-100 py-4 mt-1.5">
-        <div className="container mx-auto max-w-[1440px] px-4">
-          {isLoadingPromotions ? (
-            <div className="bg-blue-600 text-white p-6 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-lg">프로모션</span>
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span className="text-sm">프로모션 정보를 불러오는 중...</span>
+      {(isLoadingPromotions || (hotelPromotions && hotelPromotions.length > 0)) && (
+        <div className="bg-gray-100 py-4 mt-1.5">
+          <div className="container mx-auto max-w-[1440px] px-4">
+            {isLoadingPromotions ? (
+              <div className="bg-blue-600 text-white p-6 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <span className="font-medium text-lg">프로모션</span>
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span className="text-sm">프로모션 정보를 불러오는 중...</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : hotelPromotions && hotelPromotions.length > 0 ? (
-            <div className="bg-blue-600 text-white p-6 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-lg">프로모션</span>
-                <div className="flex gap-2 flex-wrap items-center">
-                  {hotelPromotions.map((promotion, index) => (
-                    <div key={promotion.promotion_id} className="flex items-center gap-2 min-w-0 flex-shrink-0">
-                      <span className="bg-pink-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
-                        {promotion.promotion}
-                      </span>
-                      {promotion.promotion_description && (
-                        <span className="bg-orange-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
-                          {promotion.promotion_description}
+            ) : (
+              <div className="bg-blue-600 text-white p-6 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <span className="font-medium text-lg">프로모션</span>
+                  <div className="flex gap-2 flex-wrap items-center">
+                    {hotelPromotions.map((promotion, index) => (
+                      <div key={promotion.promotion_id} className="flex items-center gap-2 min-w-0 flex-shrink-0">
+                        <span className="bg-pink-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                          {promotion.promotion}
                         </span>
-                      )}
-                      {promotion.booking_date && (
-                        <span className="text-xs text-blue-100 whitespace-nowrap">
-                          예약: ~{new Date(promotion.booking_date).toLocaleDateString('ko-KR')}
-                        </span>
-                      )}
-                      {promotion.check_in_date && (
-                        <span className="text-xs text-blue-100 whitespace-nowrap">
-                          투숙: ~{new Date(promotion.check_in_date).toLocaleDateString('ko-KR')}
-                        </span>
-                      )}
-                                              {index < hotelPromotions.length - 1 && (
+                        {promotion.promotion_description && (
+                          <span className="bg-orange-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                            {promotion.promotion_description}
+                          </span>
+                        )}
+                        {promotion.booking_date && (
+                          <span className="text-xs text-blue-100 whitespace-nowrap">
+                            예약: ~{new Date(promotion.booking_date).toLocaleDateString('ko-KR')}
+                          </span>
+                        )}
+                        {promotion.check_in_date && (
+                          <span className="text-xs text-blue-100 whitespace-nowrap">
+                            투숙: ~{new Date(promotion.check_in_date).toLocaleDateString('ko-KR')}
+                          </span>
+                        )}
+                        {index < hotelPromotions.length - 1 && (
                           <span className="text-blue-200 mx-1">|</span>
                         )}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-gray-500 text-white p-6 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-lg">프로모션</span>
-                <span className="text-sm">현재 진행 중인 프로모션이 없습니다</span>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-gray-100 py-4">
         <div className="container mx-auto max-w-[1440px] px-4">
