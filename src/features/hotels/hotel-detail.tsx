@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
 import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
 import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -53,7 +53,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
     }
   })
-  
   // URL로부터 checkIn/checkOut이 오면 초기화
   useEffect(() => {
     const ci = searchParams?.get('checkIn') || ''
@@ -584,6 +583,90 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   
   // 호텔 미디어 이미지 조회
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+  
+  // sabre_hotels 테이블에서 property_details 조회 (select_hotels의 fallback으로 사용)
+  const { data: sabreHotelDetails } = useQuery({
+    queryKey: ['sabre-hotel-property-details', hotel?.sabre_id],
+    queryFn: async () => {
+      if (!hotel?.sabre_id) return null
+      try {
+        const { data, error } = await supabase
+          .from('sabre_hotels')
+          .select('property_details')
+          .eq('sabre_id', hotel.sabre_id)
+          .single()
+        if (error) {
+          console.warn('sabre_hotels.property_details 조회 오류 (fallback용):', error)
+          return null
+        }
+        console.log('🔎 sabre_hotels.property_details 조회 결과 (fallback용):', data)
+        return data
+      } catch (e) {
+        console.warn('sabre_hotels.property_details 조회 예외 (fallback용):', e)
+        return null
+      }
+    },
+    enabled: !!hotel?.sabre_id,
+    staleTime: 5 * 60 * 1000,
+  })
+  
+  // 호텔 소개 HTML 결정 (select_hotels > sabre_hotels 순서로 변경, select_hotels 우선)
+  const introHtml = useMemo(() => {
+    const rawSelect = hotel?.property_details as unknown
+    const rawSabre = (sabreHotelDetails as any)?.property_details
+
+    const normalizeHtml = (v: unknown): string | null => {
+      if (!v) return null
+      // 1) 문자열
+      if (typeof v === 'string') {
+        const t = v.trim()
+        return t.length > 0 ? t : null
+      }
+      // 2) 배열 -> 문자열 합치기
+      if (Array.isArray(v)) {
+        const joined = v.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n')
+        return joined.trim().length > 0 ? joined : null
+      }
+      // 3) 객체 -> 흔한 필드 우선, 없으면 전체를 문자열화
+      if (typeof v === 'object') {
+        const obj = v as Record<string, unknown>
+        const candidates = [
+          obj.html,
+          obj.content,
+          obj.description,
+          obj.details,
+        ]
+        for (const c of candidates) {
+          if (typeof c === 'string' && c.trim().length > 0) return c
+          if (Array.isArray(c)) {
+            const joined = c.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n')
+            if (joined.trim().length > 0) return joined
+          }
+        }
+        try {
+          const s = JSON.stringify(v)
+          return s && s !== '{}' ? s : null
+        } catch {
+          return null
+        }
+      }
+      return null
+    }
+
+    // select_hotels 우선, sabre_hotels는 fallback
+    const selectHtml = normalizeHtml(rawSelect)
+    const sabreHtml = normalizeHtml(rawSabre)
+    const chosen = selectHtml || sabreHtml
+
+    console.log('🧩 호텔 소개 선택 값 (select_hotels 우선):', {
+      selectType: typeof rawSelect,
+      sabreType: typeof rawSabre,
+      selectLen: selectHtml?.length || 0,
+      sabreLen: sabreHtml?.length || 0,
+      picked: selectHtml ? 'select_hotels' : (sabreHtml ? 'sabre_hotels' : 'none')
+    })
+    return chosen || null
+  }, [hotel?.property_details, sabreHotelDetails])
   
   // 호텔 프로모션 데이터 조회
   useEffect(() => {
@@ -2043,7 +2126,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                     : "text-gray-600 hover:text-blue-600"
                 }`}
               >
-                호텔 소개
+                호텔 상세 정보
               </button>
               <button
                 onClick={() => setActiveTab("transportation")}
@@ -2111,18 +2194,95 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             {activeTab === "introduction" && (
               <div className="space-y-4">
                 <div className="prose max-w-none">
-                  <h4 className="text-lg font-semibold mb-3">{hotel.property_name_ko || '호텔'} 소개</h4>
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    {hotel.property_description || `${hotel.property_name_ko || '호텔'}에 대한 상세한 정보가 제공되지 않았습니다.`}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold mb-2">위치</h5>
+                  <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <span>🏨</span>
+                    {hotel.property_name_ko || '호텔'} 상세 정보
+                  </h4>
+                  
+                  {/* Property Details 표시 */}
+                  {introHtml ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                      <h5 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <span>📋</span>
+                        호텔 상세 정보 (property_details)
+                      </h5>
+                      <div
+                        className="text-gray-700 leading-relaxed whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{ __html: introHtml }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                      <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span>📋</span>
+                        호텔 상세 정보 (property_details)
+                      </h5>
+                      <p className="text-gray-600">
+                        {hotel.property_description || `${hotel.property_name_ko || '호텔'}의 상세 정보가 아직 제공되지 않았습니다.`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 기본 정보 카드들 */}
+                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>🏷️</span>
+                    기본 정보
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>📍</span>
+                        위치
+                      </h6>
                       <p className="text-sm text-gray-600">{hotel.city_ko || hotel.city_eng || '위치 정보 없음'}</p>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold mb-2">체인</h5>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>🏢</span>
+                        체인
+                      </h6>
                       <p className="text-sm text-gray-600">{hotel.chain_ko || hotel.chain_eng || '체인 정보 없음'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>⭐</span>
+                        등급
+                      </h6>
+                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                        {hotel.rating ? (
+                          <>
+                            {[...Array(hotel.rating)].map((_, i) => (
+                              <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            ))}
+                            <span className="ml-1">({hotel.rating}성급)</span>
+                          </>
+                        ) : (
+                          '등급 정보 없음'
+                        )}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>🏷️</span>
+                        브랜드
+                      </h6>
+                      <p className="text-sm text-gray-600">{hotel.brand_ko || hotel.brand_eng || '브랜드 정보 없음'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>🔢</span>
+                        Sabre ID
+                      </h6>
+                      <p className="text-sm text-gray-600 font-mono">{hotel.sabre_id || '정보 없음'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
+                        <span>📝</span>
+                        설명
+                      </h6>
+                      <p className="text-sm text-gray-600">
+                        {hotel.property_description ? '설명 있음' : '설명 없음'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2303,13 +2463,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
                               <div className="text-gray-700">
-                                {isGeneratingIntroductions ? (
+                                {roomIntroductions.has(introKey) ? (
+                                  roomIntroduction
+                                ) : isGeneratingIntroductions ? (
                                   <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                                     <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
                                   </div>
                                 ) : (
-                                  roomIntroductions.get(introKey) || rp.Description || 'N/A'
+                                  rp.Description || 'N/A'
                                 )}
                               </div>
                             </td>

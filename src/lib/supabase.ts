@@ -73,7 +73,7 @@ export type Database = {
           
           // 링크 및 상세 정보
           link: string | null
-          property_details: string
+          property_details: string | null
           
           // 이미지 정보
           image_1: string
@@ -166,7 +166,7 @@ export type Database = {
           
           // 링크 및 상세 정보
           link?: string | null
-          property_details?: string
+          property_details?: string | null
           
           // 이미지 정보
           image_1?: string
@@ -259,7 +259,7 @@ export type Database = {
           
           // 링크 및 상세 정보
           link?: string | null
-          property_details?: string
+          property_details?: string | null
           
           // 이미지 정보
           image_1?: string
