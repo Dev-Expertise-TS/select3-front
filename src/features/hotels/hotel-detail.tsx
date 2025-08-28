@@ -2194,97 +2194,24 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             {activeTab === "introduction" && (
               <div className="space-y-4">
                 <div className="prose max-w-none">
-                  <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <span>🏨</span>
-                    {hotel.property_name_ko || '호텔'} 상세 정보
-                  </h4>
                   
                   {/* Property Details 표시 */}
                   {introHtml ? (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-                      <h5 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                        <span>📋</span>
-                        호텔 상세 정보 (property_details)
-                      </h5>
+                    <div className="max-w-[70%] mx-auto mb-6">
                       <div
-                        className="text-gray-700 leading-relaxed whitespace-pre-wrap"
+                        className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
                         dangerouslySetInnerHTML={{ __html: introHtml }}
                       />
                     </div>
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-                      <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <span>📋</span>
-                        호텔 상세 정보 (property_details)
-                      </h5>
-                      <p className="text-gray-600">
+                    <div className="max-w-[70%] mx-auto mb-6">
+                      <p className="text-gray-700 leading-relaxed">
                         {hotel.property_description || `${hotel.property_name_ko || '호텔'}의 상세 정보가 아직 제공되지 않았습니다.`}
                       </p>
                     </div>
                   )}
 
-                  {/* 기본 정보 카드들 */}
-                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <span>🏷️</span>
-                    기본 정보
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>📍</span>
-                        위치
-                      </h6>
-                      <p className="text-sm text-gray-600">{hotel.city_ko || hotel.city_eng || '위치 정보 없음'}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>🏢</span>
-                        체인
-                      </h6>
-                      <p className="text-sm text-gray-600">{hotel.chain_ko || hotel.chain_eng || '체인 정보 없음'}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>⭐</span>
-                        등급
-                      </h6>
-                      <p className="text-sm text-gray-600 flex items-center gap-1">
-                        {hotel.rating ? (
-                          <>
-                            {[...Array(hotel.rating)].map((_, i) => (
-                              <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            ))}
-                            <span className="ml-1">({hotel.rating}성급)</span>
-                          </>
-                        ) : (
-                          '등급 정보 없음'
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>🏷️</span>
-                        브랜드
-                      </h6>
-                      <p className="text-sm text-gray-600">{hotel.brand_ko || hotel.brand_eng || '브랜드 정보 없음'}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>🔢</span>
-                        Sabre ID
-                      </h6>
-                      <p className="text-sm text-gray-600 font-mono">{hotel.sabre_id || '정보 없음'}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h6 className="font-semibold mb-2 text-gray-800 flex items-center gap-2">
-                        <span>📝</span>
-                        설명
-                      </h6>
-                      <p className="text-sm text-gray-600">
-                        {hotel.property_description ? '설명 있음' : '설명 없음'}
-                      </p>
-                    </div>
-                  </div>
+
                 </div>
               </div>
             )}
