@@ -67,6 +67,7 @@ export function CommonSearchBar({
     sabre_id: number
     name: string
   } | null>(null)
+  const [suggestionError, setSuggestionError] = useState<string | null>(null)
 
   // 입력어 하이라이트 유틸
   const highlightText = (text: string, q: string) => {
@@ -173,25 +174,81 @@ export function CommonSearchBar({
     const q = searchQuery.trim()
     if (!q) {
       setHotelSuggestions([])
+      setSuggestionError(null)
       return
     }
     let cancelled = false
     const timer = setTimeout(async () => {
       try {
         setIsSuggesting(true)
-        const { data, error } = await supabase
-          .from('select_hotels')
-          .select('slug,sabre_id,property_name_ko,property_name_en,city')
-          .or(`property_name_ko.ilike.%${q}%,property_name_en.ilike.%${q}%,city.ilike.%${q}%`)
-          .order('sabre_id', { ascending: true })
-          .limit(20)
-        if (error) throw error
+        setSuggestionError(null)
+        
+        // 쿼리 최적화: 개별 쿼리로 분리하여 or() 문제 해결
+        const queries = [
+          supabase
+            .from('select_hotels')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .ilike('property_name_ko', `%${q}%`)
+            .limit(10),
+          supabase
+            .from('select_hotels')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .ilike('property_name_en', `%${q}%`)
+            .limit(10),
+          supabase
+            .from('select_hotels')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .ilike('city', `%${q}%`)
+            .limit(10)
+        ]
+        
+        const results = await Promise.all(queries)
+        const allHotels: Array<{
+          slug: string
+          sabre_id: number
+          property_name_ko: string | null
+          property_name_en: string | null
+          city?: string | null
+        }> = []
+        
+        // 결과 병합 및 중복 제거
+        results.forEach((result, index) => {
+          if (result.error) {
+            console.error(`쿼리 ${index + 1} 오류:`, result.error)
+            return
+          }
+          if (result.data) {
+            allHotels.push(...result.data)
+          }
+        })
+        
+        // 중복 제거 (sabre_id 기준)
+        const uniqueHotels = allHotels.filter((hotel, index, self) => 
+          index === self.findIndex(h => h.sabre_id === hotel.sabre_id)
+        )
+        
+        // 정렬 및 제한
+        const sortedHotels = uniqueHotels
+          .sort((a, b) => a.sabre_id - b.sabre_id)
+          .slice(0, 20)
+        
         if (!cancelled) {
-          setHotelSuggestions(data || [])
+          setHotelSuggestions(sortedHotels)
         }
       } catch (e) {
-        console.error('자동완성 조회 오류:', e)
-        if (!cancelled) setHotelSuggestions([])
+        // 상세한 오류 정보 로깅
+        console.error('자동완성 조회 오류 상세:', {
+          error: e,
+          message: e instanceof Error ? e.message : String(e),
+          stack: e instanceof Error ? e.stack : undefined,
+          query: q,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!cancelled) {
+          setHotelSuggestions([])
+          setSuggestionError('자동완성 기능에 일시적인 문제가 발생했습니다.')
+        }
       } finally {
         if (!cancelled) setIsSuggesting(false)
       }
@@ -251,6 +308,8 @@ export function CommonSearchBar({
   const handleSearch = async () => {
     if (isSearching) return // 이미 검색 중이면 중복 실행 방지
     
+    // 검색 시 오류 상태 초기화
+    setSuggestionError(null)
     setIsSearching(true)
     
     try {
@@ -342,8 +401,28 @@ export function CommonSearchBar({
               {isSuggesting && hotelSuggestions.length === 0 && (
                 <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
               )}
-              {!isSuggesting && hotelSuggestions.length === 0 && (
+              {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
                 <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
+              )}
+              {suggestionError && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
+                  <div className="flex items-center justify-between">
+                    <span>⚠️ {suggestionError}</span>
+                    <button
+                      onClick={() => {
+                        setSuggestionError(null)
+                        // 검색어가 있으면 자동으로 재시도
+                        if (searchQuery.trim()) {
+                          const event = { target: { value: searchQuery } } as React.ChangeEvent<HTMLInputElement>
+                          setSearchQuery(searchQuery)
+                        }
+                      }}
+                      className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+                    >
+                      재시도
+                    </button>
+                  </div>
+                </div>
               )}
               {hotelSuggestions.map((h, idx) => {
                 const primary = h.property_name_ko || h.property_name_en || '-'
