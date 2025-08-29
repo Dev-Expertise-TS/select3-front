@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/features/scroll-to-top"
 import { BenefitsSection } from "@/features/benefits-section"
 import { PromotionSection } from "@/features/promotion-section"
 import { TrendingDestinationsSection } from "@/features/destinations"
+import { BrandProgramSection } from "@/features/brands"
 
 export default function HomePage() {
   return (
@@ -19,6 +20,7 @@ export default function HomePage() {
         <SearchSection />
         <BenefitsSection />
         <PromotionSection />
+        <BrandProgramSection />
         <TrendingDestinationsSection />
         <HotelGrid />
       </main>

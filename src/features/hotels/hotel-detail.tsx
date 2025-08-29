@@ -1616,6 +1616,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   }, [showImageDetail])
 
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
+  const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
   
   const copyRateKey = async (text: string, index: number) => {
     try {
@@ -2142,51 +2143,110 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
 
             {/* Tab Content */}
             {activeTab === "benefits" && (
-              <div className="space-y-3">
-                <h4 className="text-base font-medium text-gray-700 mb-4">예약 시 제공되는 혜택</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <Utensils className="h-3 w-3 text-blue-600" />
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-base font-medium text-gray-700 mb-4">예약 시 제공되는 혜택</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Utensils className="h-3 w-3 text-blue-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">2인 조식 무료 제공</div>
                     </div>
-                    <div className="text-xs text-gray-700">2인 조식 무료 제공</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <span className="text-green-600 font-semibold text-xs">$</span>
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <span className="text-green-600 font-semibold text-xs">$</span>
+                      </div>
+                      <div className="text-xs text-gray-700">100$ 상당의 식음료 크레딧</div>
                     </div>
-                    <div className="text-xs text-gray-700">100$ 상당의 식음료 크레딧</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-purple-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="h-3 w-3 text-purple-600" />
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-purple-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="h-3 w-3 text-purple-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">얼리 체크인, 레이트 체크아웃 (현장 가능시)</div>
                     </div>
-                    <div className="text-xs text-gray-700">얼리 체크인, 레이트 체크아웃 (현장 가능시)</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <Bed className="h-3 w-3 text-indigo-600" />
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Bed className="h-3 w-3 text-indigo-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">객실 무료 업그레이드 (현장 가능시)</div>
                     </div>
-                    <div className="text-xs text-gray-700">객실 무료 업그레이드 (현장 가능시)</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-amber-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <Star className="h-3 w-3 text-amber-600" />
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-amber-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Star className="h-3 w-3 text-amber-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">글로벌 체인 멤버십 포인트 적립</div>
                     </div>
-                    <div className="text-xs text-gray-700">글로벌 체인 멤버십 포인트 적립</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-slate-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <Shield className="h-3 w-3 text-slate-600" />
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-slate-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <Shield className="h-3 w-3 text-slate-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">투숙 후 호텔에서 체크아웃 시 결제</div>
                     </div>
-                    <div className="text-xs text-gray-700">투숙 후 호텔에서 체크아웃 시 결제</div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="w-6 h-6 bg-rose-50 rounded-md flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="h-3 w-3 text-rose-600" />
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                      <div className="w-6 h-6 bg-rose-50 rounded-md flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="h-3 w-3 text-rose-600" />
+                      </div>
+                      <div className="text-xs text-gray-700">전문 컨시어지를 통한 1:1 프라이빗 상담 예약</div>
                     </div>
-                    <div className="text-xs text-gray-700">전문 컨시어지를 통한 1:1 프라이빗 상담 예약</div>
                   </div>
+                </div>
+
+                                 {/* 호텔 상세 정보 섹션 */}
+                 <div className="border-t border-gray-200 pt-6">
+                   <div className="mb-4">
+                     <h4 className="text-base font-medium text-gray-700">호텔 상세 정보</h4>
+                   </div>
+                  
+                                     {/* 접힌 상태 - 미리보기 */}
+                   {!isHotelInfoExpanded && introHtml && (
+                     <div className="max-w-[70%] mx-auto">
+                       <div 
+                         className="text-gray-600 text-sm leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto line-clamp-3"
+                         dangerouslySetInnerHTML={{ __html: introHtml }}
+                       />
+                     </div>
+                   )}
+                   
+                   {/* 펼쳐진 상태 - 전체 내용 */}
+                   {isHotelInfoExpanded && (
+                     <div className="max-w-[70%] mx-auto">
+                       {introHtml ? (
+                         <div 
+                           className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
+                           dangerouslySetInnerHTML={{ __html: introHtml }}
+                         />
+                       ) : (
+                         <p className="text-gray-700 leading-relaxed">
+                           {hotel.property_description || `${hotel.property_name_ko || '호텔'}의 상세 정보가 아직 제공되지 않았습니다.`}
+                         </p>
+                       )}
+                     </div>
+                   )}
+                   
+                   {/* 버튼 - 하단 가운데 */}
+                   <div className="text-center mt-6">
+                     <button
+                       onClick={() => setIsHotelInfoExpanded(!isHotelInfoExpanded)}
+                       className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
+                     >
+                       {isHotelInfoExpanded ? (
+                         <>
+                           <span>호텔정보 접기</span>
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                           </svg>
+                         </>
+                       ) : (
+                         <>
+                           <span>호텔정보 더보기</span>
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                           </svg>
+                         </>
+                       )}
+                     </button>
+                   </div>
                 </div>
               </div>
             )}

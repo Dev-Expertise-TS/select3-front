@@ -146,7 +146,7 @@ export function HotelCardGridSection({
   ...gridProps
 }: HotelCardGridSectionProps) {
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-16 bg-gray-50">
               <div className="container mx-auto max-w-[1440px] px-4">
         {/* 헤더 */}
         {(title || subtitle) && (
