@@ -173,11 +173,7 @@ async function searchAllHotelsRealTime(searchKeyword: string): Promise<SabreHote
         }
       })
       
-      // 충분한 결과 확보시 조기 종료
-      if (matchedHotels.length >= 20) {
-        console.log(`🎯 실시간 검색 조기 종료: ${matchedHotels.length}개 결과 확보`)
-        break
-      }
+      // 모든 호텔을 검색하도록 조기 종료 로직 제거
       
       // API 부하 방지
       if (i + batchSize < EXPANDED_HOTEL_CODES.length) {

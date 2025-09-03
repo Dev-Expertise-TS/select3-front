@@ -23,7 +23,6 @@ function useSearchResults(query: string, tick: number) {
         .from('select_hotels')
         .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%,city_ko.ilike.%${query}%,city_en.ilike.%${query}%`)
-        .limit(20)
       
       if (error) throw error
       if (!data) return []

@@ -187,7 +187,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <Users className="h-4 w-4" />
-                <span className="text-sm">{guests || "객실 1개, 성인 2명, 어린이 0명"}</span>
+                <span className="text-sm">{guests || "객실 1개, 성인 2명"}</span>
               </div>
             </div>
             {/* 닫기 버튼 */}

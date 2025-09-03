@@ -86,7 +86,6 @@ export function useHotelSearch(query: string) {
         .from('select_hotels')
         .select('*')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
-        .limit(20)
       
       if (error) throw error
       return data

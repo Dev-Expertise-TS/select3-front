@@ -698,7 +698,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           startDate: startDate,
           endDate: endDate,
           adults: 2,
-          children: 0,
           rooms: 1
         }
 
@@ -773,7 +772,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             startDate: startDate,
             endDate: endDate,
             adults: 2,
-            children: 0,
             rooms: 1
           }),
           signal: AbortSignal.timeout(30000)
@@ -2139,6 +2137,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               >
                 위치 및 교통
               </button>
+              <button
+                onClick={() => setActiveTab("reviews")}
+                className={`flex items-center gap-2 pb-3 font-semibold ${
+                  activeTab === "reviews"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-blue-600"
+                }`}
+              >
+                <span className="text-xl">⭐</span>
+                리뷰 평가 분석
+              </button>
             </div>
 
             {/* Tab Content */}
@@ -2282,68 +2291,18 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
 
             {activeTab === "transportation" && (
               <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Car className="h-5 w-5 text-blue-600" />
-                    교통편 안내
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-blue-900 mb-2">📍 위치 정보</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>도시</span>
-                          <span className="text-blue-600 font-medium">{hotel.city_ko || hotel.city_eng || '정보 없음'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>주소</span>
-                          <span className="text-blue-600 font-medium">{hotel.property_address || '정보 없음'}</span>
-                        </div>
-                      </div>
-                    </div>
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-2">📍</div>
+                  <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
+                </div>
+              </div>
+            )}
 
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-green-900 mb-2">🏨 호텔 정보</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>체인</span>
-                          <span className="text-green-600 font-medium">{hotel.chain_ko || hotel.chain_eng || '정보 없음'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>브랜드</span>
-                          <span className="text-blue-600 font-medium">{hotel.brand_ko || hotel.brand_eng || '정보 없음'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-orange-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-orange-900 mb-2">⭐ 등급</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>호텔 등급</span>
-                          <span className="text-orange-600 font-medium">{hotel.rating || '정보 없음'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>카테고리</span>
-                          <span className="text-orange-600 font-medium">{hotel.category || '정보 없음'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-semibold text-gray-900 mb-2">ℹ️ 추가 정보</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>설명</span>
-                          <span className="text-gray-600 font-medium">{hotel.property_description ? '있음' : '없음'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>이미지</span>
-                          <span className="text-gray-600 font-medium">{hotel.image ? '있음' : '없음'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            {activeTab === "reviews" && (
+              <div className="space-y-6">
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-2">⭐</div>
+                  <p className="text-gray-500">리뷰 평가 분석이 준비 중입니다.</p>
                 </div>
               </div>
             )}
@@ -2359,7 +2318,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             location={hotel.city_ko || hotel.city_eng || '도시'}
             checkIn={searchDates.checkIn}
             checkOut={searchDates.checkOut}
-            guests={{ rooms: 1, adults: 2, children: 0 }}
+            guests={{ rooms: 1, adults: 2 }}
             initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
             onSearch={(query, dates, guests) => {
               if (dates) {

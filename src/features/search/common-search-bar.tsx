@@ -16,10 +16,10 @@ interface CommonSearchBarProps {
   location?: string
   checkIn?: string
   checkOut?: string
-  guests?: { rooms: number; adults: number; children: number }
-  onSearch?: (query: string, dates?: { checkIn: string; checkOut: string }, guests?: { rooms: number; adults: number; children: number }) => void
+  guests?: { rooms: number; adults: number }
+  onSearch?: (query: string, dates?: { checkIn: string; checkOut: string }, guests?: { rooms: number; adults: number }) => void
   onDatesChange?: (dates: { checkIn: string; checkOut: string }) => void
-  onGuestsChange?: (guests: { rooms: number; adults: number; children: number }) => void
+  onGuestsChange?: (guests: { rooms: number; adults: number }) => void
   className?: string
   initialQuery?: string
   isSabreLoading?: boolean
@@ -41,7 +41,7 @@ export function CommonSearchBar({
   const router = useRouter()
   const supabase = createClient()
   // 기본값 설정: undefined나 빈 객체일 때 기본값 사용
-  const defaultGuests = { rooms: 1, adults: 2, children: 0 }
+  const defaultGuests = { rooms: 1, adults: 2 }
   const safeGuests = guests || defaultGuests
 
   // 로컬 상태로 날짜 관리
@@ -139,7 +139,7 @@ export function CommonSearchBar({
   }
 
   // 게스트 변경 핸들러
-  const handleGuestsChange = (guests: { rooms: number; adults: number; children: number }) => {
+  const handleGuestsChange = (guests: { rooms: number; adults: number }) => {
     setLocalGuests(guests)
     
     // 부모 컴포넌트에 알림
@@ -188,18 +188,15 @@ export function CommonSearchBar({
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .ilike('property_name_ko', `%${q}%`)
-            .limit(10),
+            .ilike('property_name_ko', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .ilike('property_name_en', `%${q}%`)
-            .limit(10),
+            .ilike('property_name_en', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
             .ilike('city', `%${q}%`)
-            .limit(10)
         ]
         
         const results = await Promise.all(queries)
@@ -227,10 +224,9 @@ export function CommonSearchBar({
           index === self.findIndex(h => h.sabre_id === hotel.sabre_id)
         )
         
-        // 정렬 및 제한
+        // 정렬
         const sortedHotels = uniqueHotels
           .sort((a, b) => a.sabre_id - b.sabre_id)
-          .slice(0, 20)
         
         if (!cancelled) {
           setHotelSuggestions(sortedHotels)
@@ -293,15 +289,14 @@ export function CommonSearchBar({
 
   // 게스트 정보 표시 텍스트 생성
   const getGuestDisplayText = () => {
-    // 기본값 설정: 객실 1, 성인 1, 어린이 0
+    // 기본값 설정: 객실 1, 성인 2
     const safeRooms = localGuests?.rooms || 1
-    const safeAdults = localGuests?.adults || 1
-    const safeChildren = localGuests?.children || 0
+    const safeAdults = localGuests?.adults || 2
     
     if (variant === "destination") {
       return `${safeAdults} adults (${safeRooms} room)`
     }
-    return `객실 ${safeRooms}개, 성인 ${safeAdults}명, 어린이 ${safeChildren}명`
+    return `객실 ${safeRooms}개, 성인 ${safeAdults}명`
   }
 
   // 검색 핸들러
@@ -545,9 +540,7 @@ export function CommonSearchBar({
           adults={localGuests.adults}
           onGuestsChange={handleGuestsChange}
           onClose={() => setShowGuestSelector(false)}
-        >
-          {localGuests.children}
-        </GuestSelector>
+        />
       )}
       
       {/* 검색 중 오버레이 (선택사항) */}

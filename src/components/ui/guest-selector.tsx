@@ -8,35 +8,29 @@ import { cn } from "@/lib/utils"
 interface GuestSelectorProps {
   rooms: number
   adults: number
-  children: number
-  onGuestsChange: (guests: { rooms: number; adults: number; children: number }) => void
+  onGuestsChange: (guests: { rooms: number; adults: number }) => void
   onClose: () => void
 }
 
-export function GuestSelector({ rooms, adults, children, onGuestsChange, onClose }: GuestSelectorProps) {
-  // 기본값 설정: 객실 1, 성인 1, 어린이 0
+export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestSelectorProps) {
+  // 기본값 설정: 객실 1, 성인 2
   const defaultRooms = rooms || 1
-  const defaultAdults = adults || 1
-  const defaultChildren = children || 0
+  const defaultAdults = adults || 2
   
   const [localRooms, setLocalRooms] = useState(defaultRooms)
   const [localAdults, setLocalAdults] = useState(defaultAdults)
-  const [localChildren, setLocalChildren] = useState(defaultChildren)
 
   // props가 변경되면 로컬 상태 업데이트
   useEffect(() => {
     setLocalRooms(defaultRooms)
     setLocalAdults(defaultAdults)
-    setLocalChildren(defaultChildren)
-  }, [defaultRooms, defaultAdults, defaultChildren])
+  }, [defaultRooms, defaultAdults])
 
   // 최소/최대 값 제한
   const MIN_ROOMS = 1
   const MAX_ROOMS = 5
   const MIN_ADULTS = 1
   const MAX_ADULTS = 10
-  const MIN_CHILDREN = 0
-  const MAX_CHILDREN = 8
 
   // 객실 수 변경 핸들러
   const handleRoomsChange = (increment: number) => {
@@ -55,27 +49,20 @@ export function GuestSelector({ rooms, adults, children, onGuestsChange, onClose
     }
   }
 
-  // 어린이 수 변경 핸들러
-  const handleChildrenChange = (increment: number) => {
-    const newChildren = localChildren + increment
-    if (newChildren >= MIN_CHILDREN && newChildren <= MAX_CHILDREN) {
-      setLocalChildren(newChildren)
-    }
-  }
+
 
   // 확인 버튼 핸들러
   const handleConfirm = () => {
     onGuestsChange({
       rooms: localRooms,
-      adults: localAdults,
-      children: localChildren
+      adults: localAdults
     })
     onClose()
   }
 
   // 한국어 표시 텍스트 생성
   const getDisplayText = () => {
-    return `객실 ${localRooms}개, 성인 ${localAdults}명, 어린이 ${localChildren}명`
+    return `객실 ${localRooms}개, 성인 ${localAdults}명`
   }
 
   // 버튼 비활성화 상태 확인
@@ -83,8 +70,6 @@ export function GuestSelector({ rooms, adults, children, onGuestsChange, onClose
   const isRoomsMaxDisabled = localRooms >= MAX_ROOMS
   const isAdultsMinDisabled = localAdults <= MIN_ADULTS
   const isAdultsMaxDisabled = localAdults >= MAX_ADULTS
-  const isChildrenMinDisabled = localChildren <= MIN_CHILDREN
-  const isChildrenMaxDisabled = localChildren >= MAX_CHILDREN
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -173,41 +158,7 @@ export function GuestSelector({ rooms, adults, children, onGuestsChange, onClose
             </div>
           </div>
 
-          {/* 어린이 선택 */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="text-lg font-medium text-gray-900">어린이 만 17세 이하</h3>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChildrenChange(-1)}
-                disabled={isChildrenMinDisabled}
-                className={cn(
-                  "h-8 w-8 p-0 rounded-full",
-                  isChildrenMinDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
-                {localChildren}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleChildrenChange(1)}
-                disabled={isChildrenMaxDisabled}
-                className={cn(
-                  "h-8 w-8 p-0 rounded-full",
-                  isChildrenMaxDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+
         </div>
 
         {/* 확인 버튼 */}
