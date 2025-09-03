@@ -1,6 +1,10 @@
 'use client'
 
 import { HotelCard, HotelCardData, HotelCardProps } from "./hotel-card"
+import { HotelCardGrid3 } from "./hotel-card-grid-3"
+import { HotelCardGrid4 } from "./hotel-card-grid-4"
+import { HotelCardGridSection3 } from "./hotel-card-grid-3"
+import { HotelCardGridSection4 } from "./hotel-card-grid-4"
 import { cn } from "@/lib/utils"
 
 // 호텔 카드 그리드 Props 타입 정의
@@ -21,6 +25,7 @@ export interface HotelCardGridProps {
   emptyMessage?: string
   loading?: boolean
   skeletonCount?: number
+  hotelCount?: 3 | 4 // 호텔 개수 설정 (기본값: 4)
 }
 
 // 호텔 카드 그리드 컴포넌트
@@ -40,81 +45,50 @@ export function HotelCardGrid({
   contentClassName,
   emptyMessage = "표시할 호텔이 없습니다.",
   loading = false,
-  skeletonCount = 4
+  skeletonCount = 4,
+  hotelCount = 4
 }: HotelCardGridProps) {
-  // 그리드 컬럼 클래스
-  const gridColumnsClasses = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 md:grid-cols-2",
-    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-    5: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
-    6: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
-  }
-
-  // 그리드 간격 클래스
-  const gridGapClasses = {
-    sm: "gap-3",
-    md: "gap-6",
-    lg: "gap-8",
-    xl: "gap-10"
-  }
-
-  // 스켈레톤 로딩 컴포넌트
-  const SkeletonCard = () => (
-    <div className="animate-pulse">
-      <div className="bg-gray-200 rounded-xl h-80"></div>
-    </div>
-  )
-
-  // 로딩 중일 때
-  if (loading) {
+  // 호텔 개수에 따라 적절한 컴포넌트 렌더링
+  if (hotelCount === 3) {
     return (
-      <div className={cn(
-        "grid",
-        gridColumnsClasses[columns],
-        gridGapClasses[gap],
-        className
-      )}>
-        {Array.from({ length: skeletonCount }).map((_, index) => (
-          <SkeletonCard key={index} />
-        ))}
-      </div>
+      <HotelCardGrid3
+        hotels={hotels}
+        variant={variant}
+        gap={gap}
+        showBenefits={showBenefits}
+        showRating={showRating}
+        showPrice={showPrice}
+        showBadge={showBadge}
+        showPromotionBadge={showPromotionBadge}
+        className={className}
+        cardClassName={cardClassName}
+        imageClassName={imageClassName}
+        contentClassName={contentClassName}
+        emptyMessage={emptyMessage}
+        loading={loading}
+        skeletonCount={skeletonCount}
+      />
     )
   }
-
-  // 호텔이 없을 때
-  if (!hotels || hotels.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 text-lg">{emptyMessage}</div>
-      </div>
-    )
-  }
-
+  
   return (
-    <div className={cn(
-      "grid",
-      gridColumnsClasses[columns],
-      gridGapClasses[gap],
-      className
-    )}>
-      {hotels.map((hotel) => (
-        <HotelCard
-          key={hotel.sabre_id}
-          hotel={hotel}
-          variant={variant}
-          showBenefits={showBenefits}
-          showRating={showRating}
-          showPrice={showPrice}
-          showBadge={showBadge}
-          showPromotionBadge={showPromotionBadge}
-          className={cardClassName}
-          imageClassName={imageClassName}
-          contentClassName={contentClassName}
-        />
-      ))}
-    </div>
+    <HotelCardGrid4
+      hotels={hotels}
+      variant={variant}
+      gap={gap}
+      showBenefits={showBenefits}
+      showRating={showRating}
+      showPrice={showPrice}
+      showBadge={showBadge}
+      showPromotionBadge={showPromotionBadge}
+      className={className}
+      cardClassName={cardClassName}
+      imageClassName={imageClassName}
+      contentClassName={contentClassName}
+      emptyMessage={emptyMessage}
+      loading={loading}
+      skeletonCount={skeletonCount}
+    />
   )
 }
 
@@ -143,83 +117,41 @@ export function HotelCardGridSection({
   viewAllHref,
   onViewAllClick,
   error,
+  hotelCount = 4,
   ...gridProps
 }: HotelCardGridSectionProps) {
+  // 호텔 개수에 따라 적절한 섹션 컴포넌트 렌더링
+  if (hotelCount === 3) {
+    return (
+      <HotelCardGridSection3
+        title={title}
+        subtitle={subtitle}
+        titleClassName={titleClassName}
+        subtitleClassName={subtitleClassName}
+        headerClassName={headerClassName}
+        showViewAll={showViewAll}
+        viewAllText={viewAllText}
+        viewAllHref={viewAllHref}
+        onViewAllClick={onViewAllClick}
+        error={error}
+        {...gridProps}
+      />
+    )
+  }
+  
   return (
-    <section className="py-16 bg-gray-50">
-              <div className="container mx-auto max-w-[1440px] px-4">
-        {/* 헤더 */}
-        {(title || subtitle) && (
-          <div className={cn(
-            "text-center mb-12",
-            headerClassName
-          )}>
-            {title && (
-              <h2 className={cn(
-                "text-3xl md:text-4xl font-bold text-gray-900 mb-4",
-                titleClassName
-              )}>
-                {title}
-              </h2>
-            )}
-            {subtitle && (
-              <p className={cn(
-                "text-lg text-gray-600",
-                subtitleClassName
-              )}>
-                {subtitle}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* 에러 처리 */}
-        {error && (
-          <div className="text-center text-red-600 mb-8">
-            정보를 불러오는 중 오류가 발생했습니다.
-          </div>
-        )}
-
-        {/* 호텔 카드 그리드 */}
-        <HotelCardGrid {...gridProps} />
-
-        {/* 전체 보기 버튼 */}
-        {showViewAll && (
-          <div className="text-center mt-12">
-            {viewAllHref ? (
-              <a
-                href={viewAllHref}
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
-              >
-                {viewAllText}
-                <svg
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </a>
-            ) : (
-              <button
-                onClick={onViewAllClick}
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
-              >
-                {viewAllText}
-                <svg
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
+    <HotelCardGridSection4
+      title={title}
+      subtitle={subtitle}
+      titleClassName={titleClassName}
+      subtitleClassName={subtitleClassName}
+      headerClassName={headerClassName}
+      showViewAll={showViewAll}
+      viewAllText={viewAllText}
+      viewAllHref={viewAllHref}
+      onViewAllClick={onViewAllClick}
+      error={error}
+      {...gridProps}
+    />
   )
 }

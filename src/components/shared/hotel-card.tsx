@@ -87,7 +87,7 @@ export function HotelCard({
   return (
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0",
+        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 h-[480px] flex flex-col",
         variantClasses[variant],
         className
       )}>
@@ -145,7 +145,7 @@ export function HotelCard({
 
         {/* 콘텐츠 영역 */}
         <CardContent className={cn(
-          "px-4 pt-1 pb-4",
+          "px-4 pt-1 pb-4 flex-1 flex flex-col",
           contentClassName
         )}>
           {/* 호텔 기본 정보 */}
@@ -220,17 +220,17 @@ export function HotelCard({
 
           {/* 프로모션 정보 */}
           {variant === 'promotion' && Array.isArray(promotions) && promotions.length > 0 && (
-            <div className="border-t pt-3 mt-3">
-              <div className="mb-3">
+            <div className="border-t pt-3 mt-3 flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col">
                 <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
-                <div className="space-y-2">
+                <div className="flex-1 flex flex-col justify-center">
                   {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 */}
                   {promotions.slice(0, 1).map((promotion: any, index: number) => (
-                    <div key={index} className="bg-blue-50 p-2 rounded-lg">
-                      <div className="text-xs text-gray-700 mb-1 font-medium truncate" title={promotion.promotion}>
+                    <div key={index} className="bg-blue-50 p-2 rounded-lg h-[60px] flex flex-col">
+                      <div className="text-xs text-gray-700 mb-1 font-medium line-clamp-2 h-[32px] flex items-center" title={promotion.promotion}>
                         {promotion.promotion}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-auto">
                         {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -252,7 +252,7 @@ export function HotelCard({
           )}
 
           {/* 액션 영역 */}
-          <div className="border-t pt-3 mt-3">
+          <div className="border-t pt-3 mt-auto">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 {variant !== 'promotion' && (

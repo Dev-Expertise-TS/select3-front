@@ -19,7 +19,7 @@ export default function HomePage() {
         <Hero />
         <SearchSection />
         <BenefitsSection />
-        <PromotionSection />
+        <PromotionSection hotelCount={3} />
         <BrandProgramSection />
         <TrendingDestinationsSection />
         <HotelGrid />

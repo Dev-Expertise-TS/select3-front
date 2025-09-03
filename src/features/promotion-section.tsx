@@ -8,9 +8,9 @@ import { transformHotelsToCardData } from '@/lib/hotel-utils'
 const supabase = createClient()
 
 // 프로모션 호텔 데이터 조회 훅
-export function usePromotionHotels() {
+export function usePromotionHotels(hotelCount: number = 4) {
   return useQuery({
-    queryKey: ['promotion-hotels'],
+    queryKey: ['promotion-hotels', hotelCount],
     queryFn: async () => {
       // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회
       const { data: featureSlots, error: featureError } = await supabase
@@ -28,7 +28,7 @@ export function usePromotionHotels() {
         .from('select_hotels')
         .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
         .in('sabre_id', sabreIds)
-        .limit(4)
+        .limit(hotelCount)
       
       if (hotelsError) throw hotelsError
       if (!hotels) return []
@@ -49,8 +49,12 @@ export function usePromotionHotels() {
   })
 }
 
-export function PromotionSection() {
-  const { data: promotionHotels, isLoading, error } = usePromotionHotels()
+interface PromotionSectionProps {
+  hotelCount?: 3 | 4 // 호텔 개수 설정 (기본값: 4)
+}
+
+export function PromotionSection({ hotelCount = 4 }: PromotionSectionProps) {
+  const { data: promotionHotels, isLoading, error } = usePromotionHotels(hotelCount)
 
   return (
     <HotelCardGridSection
@@ -58,7 +62,6 @@ export function PromotionSection() {
       title="Hotel & Resorts"
       subtitle="프로모션 진행 중인 호텔 & 리조트"
       variant="promotion"
-      columns={4}
       gap="md"
       showBenefits={true}
       showRating={false}
@@ -66,9 +69,10 @@ export function PromotionSection() {
       showBadge={false}
       showPromotionBadge={true}
       loading={isLoading}
-      skeletonCount={4}
+      skeletonCount={hotelCount}
       emptyMessage="현재 진행 중인 프로모션이 없습니다."
       error={error}
+      hotelCount={hotelCount}
     />
   )
 }
