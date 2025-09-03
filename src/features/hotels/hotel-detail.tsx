@@ -263,9 +263,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     try {
       const bedTypeMap = new Map<string, string>()
       
-      // 3행까지만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
-      console.log(`🔍 베드 타입 해석 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 처음 3개)`)
+      // 첫 번째 행 1개만 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 1)
+      console.log(`🔍 베드 타입 해석 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
@@ -300,9 +300,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       
     } catch (error) {
       console.error('❌ 베드 타입 해석 오류:', error)
-      // 에러 발생 시 기본 베드 타입 생성 (3행까지만)
+      // 에러 발생 시 기본 베드 타입 생성 (첫 번째 행만)
       const fallbackTypes = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 3)
+      const roomsToProcess = ratePlans.slice(0, 1)
       roomsToProcess.forEach((rp: any) => {
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
         const roomName = rp.RoomName || 'N/A'
@@ -343,9 +343,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     try {
       const roomNames = new Map<string, string>()
       
-      // 3행까지만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
-      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 처음 3개)`)
+      // 첫 번째 행 1개만 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 1)
+      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
@@ -421,8 +421,8 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     console.log('🔄 객실 소개 생성 시작...')
     
     try {
-      // 상위 5개 레코드만 우선 AI 처리 (비용/속도 균형)
-      const roomsToProcess = ratePlans.slice(0, 5)
+      // 첫 번째 행 1개만 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 1)
       const roomInfos = roomsToProcess.map((rp: any) => ({
         roomType: rp.RoomType || rp.RoomName || 'N/A',
         roomName: rp.RoomName || 'N/A',
@@ -431,15 +431,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       }))
       
       console.log('📋 변환된 객실 정보:', roomInfos)
-      console.log(`🔍 객실 소개 생성 대상: ${roomInfos.length}개 객실 (전체 ${ratePlans.length}개 중 처음 3개)`)
+      console.log(`🔍 객실 소개 생성 대상: ${roomInfos.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
       console.log('🏨 호텔명:', hotelName)
       
-      // 상위 5개만 OpenAI API 적용
-      console.log('🚀 3행까지만 OpenAI API 적용...')
+      // 첫 번째 행만 OpenAI API 적용
+      console.log('🚀 첫 번째 행만 OpenAI API 적용...')
       const allIntroductions = new Map<string, string>()
       
       try {
-        // 3행에 대해서만 OpenAI API 호출 (배치 처리)
+        // 첫 번째 행에 대해서만 OpenAI API 호출
         console.log('📋 처리할 객실 수:', roomInfos.length)
         
         for (let i = 0; i < roomInfos.length; i++) {
@@ -474,7 +474,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         console.log('💾 상태 업데이트 완료')
       } catch (apiError) {
         console.error('❌ OpenAI API 배치 처리 중 오류:', apiError)
-        // API 오류 시 3행까지만 fallback 소개문 생성
+        // API 오류 시 첫 번째 행만 fallback 소개문 생성
         const fallbackIntroductions = new Map<string, string>()
         roomInfos.forEach((room) => {
           const key = `${room.roomType}-${room.roomName}-${room.rateKey}`
@@ -487,9 +487,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       }
     } catch (error) {
       console.error('❌ 객실 소개 생성 오류:', error)
-      // 에러 발생 시 기본 소개문 생성 (상위 5개)
+      // 에러 발생 시 기본 소개문 생성 (첫 번째 행만)
       const fallbackIntroductions = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 5)
+      const roomsToProcess = ratePlans.slice(0, 1)
       roomsToProcess.forEach((rp: any) => {
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
         const roomName = rp.RoomName || 'N/A'
@@ -2389,7 +2389,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                           <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px]">
                               <div className="text-gray-700 font-medium">
-                                {isGeneratingRoomNames ? (
+                                {isGeneratingRoomNames && idx === 0 ? (
                                   <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                                     <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
@@ -2401,7 +2401,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
                               <div className="text-gray-700 font-medium">
-                                {isGeneratingBedTypes ? (
+                                {isGeneratingBedTypes && idx === 0 ? (
                                   <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                                     <span className="text-gray-500">AI가 베드 구성을 해석 중입니다...</span>
@@ -2415,7 +2415,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                               <div className="text-gray-700">
                                 {roomIntroductions.has(introKey) ? (
                                   roomIntroduction
-                                ) : isGeneratingIntroductions ? (
+                                ) : isGeneratingIntroductions && idx === 0 ? (
                                   <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                                     <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
