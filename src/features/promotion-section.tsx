@@ -55,7 +55,7 @@ export function PromotionSection() {
   return (
     <HotelCardGridSection
       hotels={promotionHotels || []}
-      title="Promotion"
+      title="Hotel & Resorts"
       subtitle="프로모션 진행 중인 호텔 & 리조트"
       variant="promotion"
       columns={4}

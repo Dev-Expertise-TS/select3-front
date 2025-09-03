@@ -1984,48 +1984,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               {/* Right Section - Information Sidebar */}
               <div className="w-80 border-l border-gray-200 p-6 overflow-y-auto">
                 <div className="space-y-6">
-                  {/* Title */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      [숙소 100배 즐기기]
-                    </h3>
-                  </div>
 
-                  {/* Benefit List */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                      </div>
-                      <span className="text-sm text-gray-700">대중교통(260m 거리)</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                      </div>
-                      <span className="text-sm text-gray-700">공항 이동 교통편 서비스</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MapPin className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <span className="text-sm text-gray-700">
-                        {hotel.city_ko || hotel.city_eng || '도시'}의 중심지에 위치
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                        </svg>
-                      </div>
-                      <span className="text-sm text-gray-700">무료 Wi-Fi (모든 객실)</span>
-                    </div>
-                  </div>
 
                   {/* Promotional Text */}
                   <div className="space-y-2">
