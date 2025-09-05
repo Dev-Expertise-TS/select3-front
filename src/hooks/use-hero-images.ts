@@ -39,10 +39,10 @@ export function useHeroImages() {
         
         const sabreIds = featureSlots.map(slot => slot.sabre_id)
         
-        // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
+        // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회 (image_1 포함)
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id')
+          .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id, image_1')
           .in('sabre_id', sabreIds)
         
         if (hotelsError) throw hotelsError
@@ -66,22 +66,8 @@ export function useHeroImages() {
         
         if (chainsError) throw chainsError
         
-        // 5. select_hotel_media에서 해당 sabre_id의 이미지 조회 (sort_order 기준)
-        const { data: mediaData, error: mediaError } = await supabase
-          .from('select_hotel_media')
-          .select('sabre_id, media_path, sort_order')
-          .in('sabre_id', sabreIds)
-          .order('sort_order', { ascending: true })
-        
-        if (mediaError) throw mediaError
-        
-        // 6. 데이터 조합 - 각 호텔마다 이미지를 랜덤하게 선택
+        // 5. 데이터 조합 - 각 호텔마다 image_1 사용
         const heroImages: HeroImageData[] = hotels.map(hotel => {
-          // 해당 호텔의 모든 이미지 찾기
-          const hotelImages = mediaData?.filter(m => m.sabre_id === hotel.sabre_id) || []
-          
-          // 랜덤하게 하나의 이미지 선택
-          const randomMedia = getRandomElement(hotelImages)
           
           // 브랜드 정보 찾기
           const brand = brandsData?.find(b => b.brand_id === hotel.brand_id)
@@ -94,7 +80,7 @@ export function useHeroImages() {
             property_name_ko: hotel.property_name_ko || `호텔 ${hotel.sabre_id}`,
             property_name_en: hotel.property_name_en || 'Luxury Destination',
             slug: hotel.slug || '',
-            media_path: randomMedia?.media_path || '/placeholder.svg',
+            media_path: hotel.image_1 || '/placeholder.svg',
             city: hotel.city || 'Unknown',
             chain_name_en: chain?.chain_name_en || 'LUXURY',
             brand_name_en: brand?.brand_name_en || 'PREMIUM',

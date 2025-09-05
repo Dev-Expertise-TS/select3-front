@@ -27,7 +27,7 @@ export function useHotel(sabreId: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*')
+        .select('*, image_1, image_2, image_3, image_4, image_5')
         .eq('sabre_id', sabreId)
         .single()
       
@@ -46,7 +46,7 @@ export function useHotelBySlug(slug: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*')
+        .select('*, image_1, image_2, image_3, image_4, image_5')
         .eq('slug', slug)
         .single()
       

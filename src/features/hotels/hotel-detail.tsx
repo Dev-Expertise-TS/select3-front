@@ -36,6 +36,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [showImageDetail, setShowImageDetail] = useState(false)
   const [selectedDetailImage, setSelectedDetailImage] = useState(0)
+  const [originalSelectedImage, setOriginalSelectedImage] = useState(0) // 원래 선택된 이미지 인덱스 저장
   
   // URL 쿼리 파라미터에서 날짜 읽기
   const searchParams = useSearchParams()
@@ -581,8 +582,67 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     }
   }
   
-  // 호텔 미디어 이미지 조회
+  // 호텔 미디어 이미지 조회 (기존 방식)
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+  
+  // select_hotels 테이블의 이미지 컬럼들을 사용한 이미지 배열 생성
+  const hotelImages = useMemo(() => {
+    if (!hotel) return []
+    
+    const images = []
+    
+    // image_1을 가장 큰 그리드에 사용하기 위해 첫 번째로 추가
+    if (hotel.image_1) {
+      images.push({
+        id: 'image_1',
+        media_path: hotel.image_1,
+        alt: `${hotel.property_name_ko} - 메인 이미지`,
+        isMain: true
+      })
+    }
+    
+    // 나머지 이미지들 추가
+    if (hotel.image_2) {
+      images.push({
+        id: 'image_2',
+        media_path: hotel.image_2,
+        alt: `${hotel.property_name_ko} - 갤러리 이미지 2`,
+        isMain: false
+      })
+    }
+    
+    if (hotel.image_3) {
+      images.push({
+        id: 'image_3',
+        media_path: hotel.image_3,
+        alt: `${hotel.property_name_ko} - 갤러리 이미지 3`,
+        isMain: false
+      })
+    }
+    
+    if (hotel.image_4) {
+      images.push({
+        id: 'image_4',
+        media_path: hotel.image_4,
+        alt: `${hotel.property_name_ko} - 갤러리 이미지 4`,
+        isMain: false
+      })
+    }
+    
+    if (hotel.image_5) {
+      images.push({
+        id: 'image_5',
+        media_path: hotel.image_5,
+        alt: `${hotel.property_name_ko} - 갤러리 이미지 5`,
+        isMain: false
+      })
+    }
+    
+    return images
+  }, [hotel])
+  
+  // 이미지 데이터 우선순위: select_hotels 이미지 > hotel_media
+  const displayImages = hotelImages.length > 0 ? hotelImages : hotelMedia
   
   // sabre_hotels 테이블에서 property_details 조회 (select_hotels의 fallback으로 사용)
   const { data: sabreHotelDetails } = useQuery({
@@ -1572,10 +1632,12 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // 이미지 갤러리 닫기
   const closeImageGallery = () => {
     setShowImageGallery(false)
+    setSelectedImage(originalSelectedImage) // 원래 선택된 이미지로 되돌리기
   }
 
   // 이미지 상세 보기 열기
   const openImageDetail = (index: number) => {
+    setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
     setSelectedDetailImage(index)
     setShowImageDetail(true)
   }
@@ -1583,16 +1645,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // 이미지 상세 보기 닫기
   const closeImageDetail = () => {
     setShowImageDetail(false)
+    setSelectedImage(originalSelectedImage) // 원래 선택된 이미지로 되돌리기
   }
 
   // 이전 이미지
   const prevImage = () => {
-    setSelectedDetailImage((prev) => (prev === 0 ? hotelMedia.length - 1 : prev - 1))
+    setSelectedDetailImage((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1))
   }
 
   // 다음 이미지
   const nextImage = () => {
-    setSelectedDetailImage((prev) => (prev === hotelMedia.length - 1 ? 0 : prev + 1))
+    setSelectedDetailImage((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1))
   }
 
   // 키보드 이벤트 처리
@@ -1711,12 +1774,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             <div className="flex gap-2 h-[400px] rounded-lg overflow-hidden">
               <div
                 className="w-[60%] relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100"
-                onClick={() => openImageGallery()}
+                onClick={() => {
+                  setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
+                  openImageGallery()
+                }}
               >
-                {hotelMedia.length > 0 ? (
+                {displayImages.length > 0 ? (
                   <Image
-                    src={hotelMedia[selectedImage]?.media_path || hotelMedia[0]?.media_path}
-                    alt={hotel.property_name_ko || '호텔 이미지'}
+                    src={displayImages[selectedImage]?.media_path || displayImages[0]?.media_path}
+                    alt={displayImages[selectedImage]?.alt || displayImages[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                     fill
                     className="object-cover"
                   />
@@ -1730,42 +1796,44 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 )}
               </div>
               <div className="w-[40%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
-                {/* 호텔 미디어 이미지가 있는 경우 순차적으로 표시 */}
-                {hotelMedia.length > 0 ? (
+                {/* 호텔 이미지가 있는 경우 순차적으로 표시 */}
+                {displayImages.length > 0 ? (
                   <>
-                    {hotelMedia.slice(1, 5).map((media, index) => (
+                    {displayImages.slice(1, 5).map((media, index) => (
                       <div
                         key={media.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden"
                         onClick={() => {
+                          setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
                           setSelectedImage(index + 1)
                           openImageGallery()
                         }}
                       >
                         <Image
                           src={media.media_path}
-                          alt={`Gallery ${index + 2}`}
+                          alt={media.alt || `Gallery ${index + 2}`}
                           fill
                           className="object-cover"
                         />
-                        {index === 3 && hotelMedia.length > 5 && (
+                        {index === 3 && displayImages.length > 5 && (
                           <div 
                             className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation()
+                              setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
                               openImageGallery()
                             }}
                           >
                             <div className="text-white text-center">
                               <div className="text-lg font-bold">사진 모두보기</div>
-                              <div className="text-sm">({hotelMedia.length}장)</div>
+                              <div className="text-sm">({displayImages.length}장)</div>
                             </div>
                           </div>
                         )}
                       </div>
                     ))}
                     {/* 5개 미만인 경우 빈 썸네일 표시 */}
-                    {hotelMedia.length < 5 && Array.from({ length: 5 - hotelMedia.length }).map((_, index) => (
+                    {displayImages.length < 5 && Array.from({ length: 5 - displayImages.length }).map((_, index) => (
                       <div key={`empty-${index}`} className="bg-gray-100 rounded-lg flex items-center justify-center">
                         <div className="text-center text-gray-500">
                           <div className="text-lg mb-1">📷</div>
@@ -1844,7 +1912,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 슬라이드쇼
               </button>
               <button className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-2 whitespace-nowrap">
-                전체({hotelMedia.length})
+                전체({displayImages.length})
               </button>
               <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
                 동영상(0)
@@ -1872,7 +1940,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               <div className="flex-1 p-6 overflow-y-auto">
                 {!showImageDetail ? (
                   <div className="grid grid-cols-3 gap-4">
-                    {hotelMedia.map((media, index) => (
+                    {displayImages.map((media, index) => (
                       <div 
                         key={media.id} 
                         className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
@@ -1880,19 +1948,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       >
                         <Image
                           src={media.media_path}
-                          alt={`Gallery ${index + 1}`}
+                          alt={media.alt || `Gallery ${index + 1}`}
                           fill
                           className="object-cover transition-transform group-hover:scale-105"
                         />
-                        {index === 0 && (
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
-                              <svg className="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     ))}
 
@@ -1910,16 +1969,16 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         <span>갤러리로 돌아가기</span>
                       </button>
                       <div className="text-sm text-gray-500">
-                        {selectedDetailImage + 1} / {hotelMedia.length}
+                        {selectedDetailImage + 1} / {displayImages.length}
                       </div>
                     </div>
 
                     {/* Main Image */}
                     <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-100">
-                      {hotelMedia.length > 0 ? (
+                      {displayImages.length > 0 ? (
                         <Image
-                          src={hotelMedia[selectedDetailImage]?.media_path}
-                          alt={`Detail ${selectedDetailImage + 1}`}
+                          src={displayImages[selectedDetailImage]?.media_path}
+                          alt={displayImages[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
                           fill
                           className="object-contain"
                         />
@@ -1934,7 +1993,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                     </div>
 
                     {/* Navigation Controls */}
-                    {hotelMedia.length > 1 && (
+                    {displayImages.length > 1 && (
                       <div className="flex items-center justify-between mt-4">
                         <button
                           onClick={prevImage}
@@ -1954,10 +2013,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                     )}
 
                     {/* Thumbnail Navigation */}
-                    {hotelMedia.length > 1 && (
+                    {displayImages.length > 1 && (
                       <div className="mt-4">
                         <div className="flex gap-2 overflow-x-auto pb-2">
-                          {hotelMedia.map((media, index) => (
+                          {displayImages.map((media, index) => (
                             <button
                               key={media.id}
                               onClick={() => setSelectedDetailImage(index)}
@@ -1967,7 +2026,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             >
                               <Image
                                 src={media.media_path}
-                                alt={`Thumbnail ${index + 1}`}
+                                alt={media.alt || `Thumbnail ${index + 1}`}
                                 width={80}
                                 height={80}
                                 className="w-full h-full object-cover"

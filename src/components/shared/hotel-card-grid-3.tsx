@@ -2,12 +2,13 @@
 
 import { HotelCard, HotelCardData, HotelCardProps } from "./hotel-card"
 import { cn } from "@/lib/utils"
+import { HOTEL_CARD_CONFIG, HOTEL_GRID_CONFIG, type CardVariant, type GridGap } from "@/config/layout"
 
 // 호텔 카드 그리드 Props 타입 정의
 export interface HotelCardGrid3Props {
   hotels: HotelCardData[]
-  variant?: 'default' | 'featured' | 'compact' | 'promotion'
-  gap?: 'sm' | 'md' | 'lg' | 'xl'
+  variant?: CardVariant
+  gap?: GridGap
   showBenefits?: boolean
   showRating?: boolean
   showPrice?: boolean
@@ -26,7 +27,7 @@ export interface HotelCardGrid3Props {
 export function HotelCardGrid3({
   hotels,
   variant = 'default',
-  gap = 'md',
+  gap = HOTEL_GRID_CONFIG.DEFAULT_GAP,
   showBenefits = true,
   showRating = false,
   showPrice = false,
@@ -38,10 +39,10 @@ export function HotelCardGrid3({
   contentClassName,
   emptyMessage = "표시할 호텔이 없습니다.",
   loading = false,
-  skeletonCount = 3
+  skeletonCount = HOTEL_GRID_CONFIG.THREE_GRID_SKELETON_COUNT
 }: HotelCardGrid3Props) {
   // 3개 컬럼 그리드 클래스
-  const gridColumnsClasses = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+  const gridColumnsClasses = HOTEL_CARD_CONFIG.GRID_COLUMNS.THREE
 
   // 그리드 간격 클래스
   const gridGapClasses = {

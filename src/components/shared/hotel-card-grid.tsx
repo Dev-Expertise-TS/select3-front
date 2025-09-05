@@ -6,13 +6,14 @@ import { HotelCardGrid4 } from "./hotel-card-grid-4"
 import { HotelCardGridSection3 } from "./hotel-card-grid-3"
 import { HotelCardGridSection4 } from "./hotel-card-grid-4"
 import { cn } from "@/lib/utils"
+import { HOTEL_GRID_CONFIG, type HotelCount, type GridColumns, type GridGap } from "@/config/layout"
 
 // 호텔 카드 그리드 Props 타입 정의
 export interface HotelCardGridProps {
   hotels: HotelCardData[]
   variant?: 'default' | 'featured' | 'compact' | 'promotion'
-  columns?: 1 | 2 | 3 | 4 | 5 | 6
-  gap?: 'sm' | 'md' | 'lg' | 'xl'
+  columns?: GridColumns
+  gap?: GridGap
   showBenefits?: boolean
   showRating?: boolean
   showPrice?: boolean
@@ -25,15 +26,15 @@ export interface HotelCardGridProps {
   emptyMessage?: string
   loading?: boolean
   skeletonCount?: number
-  hotelCount?: 3 | 4 // 호텔 개수 설정 (기본값: 4)
+  hotelCount?: HotelCount // 호텔 개수 설정
 }
 
 // 호텔 카드 그리드 컴포넌트
 export function HotelCardGrid({
   hotels,
   variant = 'default',
-  columns = 4,
-  gap = 'md',
+  columns = HOTEL_GRID_CONFIG.DEFAULT_COLUMNS,
+  gap = HOTEL_GRID_CONFIG.DEFAULT_GAP,
   showBenefits = true,
   showRating = false,
   showPrice = false,
@@ -45,8 +46,8 @@ export function HotelCardGrid({
   contentClassName,
   emptyMessage = "표시할 호텔이 없습니다.",
   loading = false,
-  skeletonCount = 4,
-  hotelCount = 4
+  skeletonCount = HOTEL_GRID_CONFIG.DEFAULT_SKELETON_COUNT,
+  hotelCount = HOTEL_GRID_CONFIG.DEFAULT_COLUMNS
 }: HotelCardGridProps) {
   // 호텔 개수에 따라 적절한 컴포넌트 렌더링
   if (hotelCount === 3) {
@@ -117,7 +118,7 @@ export function HotelCardGridSection({
   viewAllHref,
   onViewAllClick,
   error,
-  hotelCount = 4,
+  hotelCount = HOTEL_GRID_CONFIG.DEFAULT_COLUMNS,
   ...gridProps
 }: HotelCardGridSectionProps) {
   // 호텔 개수에 따라 적절한 섹션 컴포넌트 렌더링

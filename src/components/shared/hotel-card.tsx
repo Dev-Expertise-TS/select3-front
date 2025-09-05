@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin, Coffee, Star, Badge, Calendar, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
+import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 
 // 호텔 데이터 타입 정의
 export interface HotelCardData {
@@ -27,7 +28,7 @@ export interface HotelCardData {
 // 호텔 카드 Props 타입 정의
 export interface HotelCardProps {
   hotel: HotelCardData
-  variant?: 'default' | 'featured' | 'compact' | 'promotion'
+  variant?: CardVariant
   showBenefits?: boolean
   showRating?: boolean
   showPrice?: boolean
@@ -76,18 +77,19 @@ export function HotelCard({
     promotion: "border border-gray-200 bg-white shadow-lg hover:shadow-xl"
   }
 
-  // 이미지 aspect ratio 클래스
+    // 이미지 aspect ratio 클래스
   const imageAspectClasses = {
-    default: "aspect-[4/3] h-48",
-    featured: "aspect-[4/3] h-52",
-    compact: "aspect-[3/2] h-40",
-    promotion: "aspect-[4/3] h-48"
+    default: HOTEL_CARD_CONFIG.IMAGE_ASPECT.DEFAULT,
+    featured: HOTEL_CARD_CONFIG.IMAGE_ASPECT.FEATURED, 
+    compact: HOTEL_CARD_CONFIG.IMAGE_ASPECT.COMPACT,
+    promotion: HOTEL_CARD_CONFIG.IMAGE_ASPECT.PROMOTION
   }
 
   return (
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 h-[480px] flex flex-col",
+        "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col",
+        `h-[${HOTEL_CARD_CONFIG.HEIGHT.DEFAULT}px]`,
         variantClasses[variant],
         className
       )}>
@@ -226,8 +228,8 @@ export function HotelCard({
                 <div className="flex-1 flex flex-col justify-center">
                   {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 */}
                   {promotions.slice(0, 1).map((promotion: any, index: number) => (
-                    <div key={index} className="bg-blue-50 p-2 rounded-lg h-[60px] flex flex-col">
-                      <div className="text-xs text-gray-700 mb-1 font-medium line-clamp-2 h-[32px] flex items-center" title={promotion.promotion}>
+                    <div key={index} className="bg-blue-50 p-2 rounded-lg flex flex-col" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.HEIGHT}px` }}>
+                      <div className="text-xs text-gray-700 mb-1 font-medium line-clamp-2 flex items-center" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.TEXT_HEIGHT}px` }} title={promotion.promotion}>
                         {promotion.promotion}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-500 mt-auto">

@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { HotelCardGridSection } from '@/components/shared/hotel-card-grid'
 import { transformHotelsToCardData } from '@/lib/hotel-utils'
+import { PROMOTION_CONFIG, type HotelCount } from '@/config/layout'
 
 const supabase = createClient()
 
 // 프로모션 호텔 데이터 조회 훅
-export function usePromotionHotels(hotelCount: number = 4) {
+export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_HOTEL_COUNT) {
   return useQuery({
     queryKey: ['promotion-hotels', hotelCount],
     queryFn: async () => {
@@ -45,15 +46,15 @@ export function usePromotionHotels(hotelCount: number = 4) {
       // 4. 데이터 변환
       return transformHotelsToCardData(hotels, mediaData, true)
     },
-    staleTime: 5 * 60 * 1000, // 5분
+    staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })
 }
 
 interface PromotionSectionProps {
-  hotelCount?: 3 | 4 // 호텔 개수 설정 (기본값: 4)
+  hotelCount?: HotelCount // 호텔 개수 설정
 }
 
-export function PromotionSection({ hotelCount = 4 }: PromotionSectionProps) {
+export function PromotionSection({ hotelCount = PROMOTION_CONFIG.DEFAULT_HOTEL_COUNT }: PromotionSectionProps) {
   const { data: promotionHotels, isLoading, error } = usePromotionHotels(hotelCount)
 
   return (
