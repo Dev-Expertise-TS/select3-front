@@ -37,6 +37,7 @@ export interface HotelCardProps {
   className?: string
   imageClassName?: string
   contentClassName?: string
+  isThreeGrid?: boolean // 3개 그리드 여부
 }
 
 // 호텔 카드 컴포넌트
@@ -50,7 +51,8 @@ export function HotelCard({
   showPromotionBadge = false,
   className,
   imageClassName,
-  contentClassName
+  contentClassName,
+  isThreeGrid = false
 }: HotelCardProps) {
   // 프로모션 정보 조회
   const { data: promotions } = useHotelPromotion(hotel.sabre_id)
@@ -84,6 +86,15 @@ export function HotelCard({
     compact: HOTEL_CARD_CONFIG.IMAGE_ASPECT.COMPACT,
     promotion: HOTEL_CARD_CONFIG.IMAGE_ASPECT.PROMOTION
   }
+  
+  // 디버깅: isThreeGrid 값 확인
+  console.log('HotelCard Debug:', { 
+    sabre_id: hotel.sabre_id, 
+    isThreeGrid, 
+    variant,
+    imageClass: isThreeGrid ? HOTEL_CARD_CONFIG.IMAGE_ASPECT.THREE_GRID : imageAspectClasses[variant],
+    height: isThreeGrid ? 'h-72 (288px)' : 'default height'
+  })
 
   return (
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
@@ -96,7 +107,7 @@ export function HotelCard({
         {/* 이미지 영역 */}
         <div className={cn(
           "relative overflow-hidden w-full",
-          imageAspectClasses[variant],
+          isThreeGrid ? HOTEL_CARD_CONFIG.IMAGE_ASPECT.THREE_GRID : imageAspectClasses[variant],
           imageClassName
         )}>
                       <Image

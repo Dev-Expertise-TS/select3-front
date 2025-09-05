@@ -82,10 +82,10 @@ async function getChainHotels(chainSlug: string) {
   const brandIdStrings = brandIds.map(id => String(id))
   console.log(`[ Server ] 브랜드 ID들: ${brandIds.join(', ')}`)
   
-  // 4. select_hotels에서 해당 brand_id를 가진 호텔들 조회
+  // 4. select_hotels에서 해당 brand_id를 가진 호텔들 조회 (image_1 포함)
   const { data: hotels, error: hotelsError } = await supabase
     .from('select_hotels')
-    .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, brand_id, slug')
+    .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, brand_id, slug, image_1')
     .in('brand_id', brandIdStrings)
   
   console.log(`[ Server ] select_hotels 조회 결과:`, { data: hotels, error: hotelsError })
@@ -135,7 +135,7 @@ export default async function ChainPage({ params }: ChainPageProps) {
     nameKo: hotel.property_name_ko,
     location: hotel.city_ko || hotel.city_en || hotel.city,
     address: hotel.property_address,
-    image: "/placeholder.svg", // 기본 이미지 사용
+    image: hotel.image_1 || "/placeholder.svg", // image_1 사용
     brand: chainRow.chain_name_en,
     chain: chainRow.chain_name_en, // 체인 정보 추가
     rating: 0,

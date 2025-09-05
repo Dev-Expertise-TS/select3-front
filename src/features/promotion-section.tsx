@@ -24,27 +24,18 @@ export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       
       const sabreIds = featureSlots.map(slot => slot.sabre_id)
       
-      // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
+      // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회 (image_1 포함)
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
+        .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
         .in('sabre_id', sabreIds)
         .limit(hotelCount)
       
       if (hotelsError) throw hotelsError
       if (!hotels) return []
       
-      // 3. select_hotel_media에서 해당 sabre_id의 이미지 조회 (is_primary 대신 sort_order 기준)
-      const { data: mediaData, error: mediaError } = await supabase
-        .from('select_hotel_media')
-        .select('sabre_id, media_path, sort_order')
-        .in('sabre_id', sabreIds)
-        .order('sort_order', { ascending: true })
-      
-      if (mediaError) throw mediaError
-      
-      // 4. 데이터 변환
-      return transformHotelsToCardData(hotels, mediaData, true)
+      // 3. 데이터 변환 (image_1 직접 사용)
+      return transformHotelsToCardData(hotels, undefined, true)
     },
     staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })

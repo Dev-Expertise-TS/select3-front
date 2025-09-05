@@ -21,7 +21,8 @@ export const HOTEL_CARD_CONFIG = {
     DEFAULT: "aspect-[4/3] h-48",
     FEATURED: "aspect-[4/3] h-52", 
     COMPACT: "aspect-[3/2] h-40",
-    PROMOTION: "aspect-[4/3] h-48"
+    PROMOTION: "aspect-[4/3] h-48",
+    THREE_GRID: "aspect-[4/3] h-72" // 3개 그리드 전용 높이 30% 증가 (h-56 → h-72)
   },
   
   // 그리드 컬럼 설정

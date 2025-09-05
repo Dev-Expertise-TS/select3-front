@@ -174,24 +174,25 @@ export function HeroCarousel4() {
                     />
                   )}
                   
-                  {/* Dark Overlay for text readability */}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-                  
                   {/* Content Overlay */}
-                  <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                  <div className="absolute inset-0 flex flex-col justify-between">
                     {/* Top: Category Badge */}
-                    <div className="flex justify-start">
+                    <div className="flex justify-start p-4">
                       <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
                         {slide.chain_name_en}
                       </span>
                     </div>
                     
-                    {/* Bottom: Title and Date */}
-                    <div className="text-white">
-                      <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
-                        {slide.hotelName}({slide.location})
-                      </h2>
-                      <p className="text-xs opacity-90">{slide.city}</p>
+                    {/* Bottom: Title and Date with dark overlay only for text area */}
+                    <div className="relative">
+                      {/* Dark overlay only for bottom text area - full width and height with no margins */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+                      <div className="relative text-white p-4">
+                        <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                          {slide.hotelName}({slide.location})
+                        </h2>
+                        <p className="text-xs opacity-90">{slide.city}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

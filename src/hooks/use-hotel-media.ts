@@ -22,20 +22,19 @@ export function useHotelMedia(sabreId: string | null) {
   })
 }
 
-// 호텔 메인 이미지 조회
+// 호텔 메인 이미지 조회 (image_1 사용)
 export function useHotelMainImage(sabreId: string | null) {
   return useQuery({
     queryKey: ['hotel-main-image', sabreId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('select_hotel_media')
-        .select('*')
+        .from('select_hotels')
+        .select('sabre_id, image_1')
         .eq('sabre_id', sabreId)
-        .eq('is_primary', true)
         .single()
       
       if (error) throw error
-      return data
+      return data ? { media_path: data.image_1 } : null
     },
     enabled: !!sabreId,
     staleTime: 10 * 60 * 1000, // 10분

@@ -10,7 +10,7 @@ export function useHotels() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*')
+        .select('*, image_1, image_2, image_3, image_4, image_5')
         .limit(50)
       
       if (error) throw error
@@ -84,7 +84,7 @@ export function useHotelSearch(query: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*')
+        .select('*, image_1, image_2, image_3, image_4, image_5')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
       
       if (error) throw error

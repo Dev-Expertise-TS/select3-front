@@ -68,6 +68,8 @@ export function HotelCardGrid({
         emptyMessage={emptyMessage}
         loading={loading}
         skeletonCount={skeletonCount}
+        isThreeGrid={true}
+        hotelCount={hotelCount}
       />
     )
   }
@@ -135,6 +137,8 @@ export function HotelCardGridSection({
         viewAllHref={viewAllHref}
         onViewAllClick={onViewAllClick}
         error={error}
+        isThreeGrid={true}
+        hotelCount={hotelCount}
         {...gridProps}
       />
     )

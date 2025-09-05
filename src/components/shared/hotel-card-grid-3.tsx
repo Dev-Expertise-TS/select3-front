@@ -21,6 +21,8 @@ export interface HotelCardGrid3Props {
   emptyMessage?: string
   loading?: boolean
   skeletonCount?: number
+  isThreeGrid?: boolean
+  hotelCount?: number
 }
 
 // 호텔 카드 그리드 3개 컴포넌트
@@ -39,7 +41,9 @@ export function HotelCardGrid3({
   contentClassName,
   emptyMessage = "표시할 호텔이 없습니다.",
   loading = false,
-  skeletonCount = HOTEL_GRID_CONFIG.THREE_GRID_SKELETON_COUNT
+  skeletonCount = HOTEL_GRID_CONFIG.THREE_GRID_SKELETON_COUNT,
+  isThreeGrid = true,
+  hotelCount = 3
 }: HotelCardGrid3Props) {
   // 3개 컬럼 그리드 클래스
   const gridColumnsClasses = HOTEL_CARD_CONFIG.GRID_COLUMNS.THREE
@@ -104,6 +108,7 @@ export function HotelCardGrid3({
           className={cardClassName}
           imageClassName={imageClassName}
           contentClassName={contentClassName}
+          isThreeGrid={hotelCount === 3}
         />
       ))}
     </div>
@@ -122,6 +127,8 @@ export interface HotelCardGridSection3Props extends HotelCardGrid3Props {
   viewAllHref?: string
   onViewAllClick?: () => void
   error?: Error | null
+  isThreeGrid?: boolean
+  hotelCount?: number
 }
 
 export function HotelCardGridSection3({
@@ -135,6 +142,8 @@ export function HotelCardGridSection3({
   viewAllHref,
   onViewAllClick,
   error,
+  isThreeGrid = true,
+  hotelCount = 3,
   ...gridProps
 }: HotelCardGridSection3Props) {
   return (
@@ -173,7 +182,7 @@ export function HotelCardGridSection3({
         )}
 
         {/* 호텔 카드 그리드 */}
-        <HotelCardGrid3 {...gridProps} />
+        <HotelCardGrid3 {...gridProps} isThreeGrid={true} hotelCount={hotelCount} />
 
         {/* 전체 보기 버튼 */}
         {showViewAll && (
