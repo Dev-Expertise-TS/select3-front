@@ -849,7 +849,50 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         }
         
         const sabreData = result.data
-        console.log('✅ Rate Plans API 응답 성공:', sabreData)
+        console.log('✅ Rate Plans API 응답 성공:', {
+          dataType: typeof sabreData,
+          isArray: Array.isArray(sabreData),
+          length: Array.isArray(sabreData) ? sabreData.length : 'Not an array',
+          keys: sabreData ? Object.keys(sabreData) : 'No data',
+          fullData: sabreData
+        })
+        
+        // Sabre API 응답에서 뷰 관련 정보 검색
+        const searchForViewInfo = (obj: any, path: string = ''): any[] => {
+          const viewInfo: any[] = []
+          
+          if (!obj || typeof obj !== 'object') return viewInfo
+          
+          for (const [key, value] of Object.entries(obj)) {
+            const currentPath = path ? `${path}.${key}` : key
+            
+            // 뷰 관련 키워드가 포함된 필드 검색
+            if (key.toLowerCase().includes('view') || 
+                key.toLowerCase().includes('outlook') ||
+                key.toLowerCase().includes('scenic') ||
+                key.toLowerCase().includes('ocean') ||
+                key.toLowerCase().includes('city') ||
+                key.toLowerCase().includes('garden') ||
+                key.toLowerCase().includes('mountain')) {
+              viewInfo.push({
+                path: currentPath,
+                key: key,
+                value: value,
+                type: typeof value
+              })
+            }
+            
+            // 중첩된 객체 재귀 검색
+            if (value && typeof value === 'object') {
+              viewInfo.push(...searchForViewInfo(value, currentPath))
+            }
+          }
+          
+          return viewInfo
+        }
+        
+        const viewInfo = searchForViewInfo(sabreData)
+        console.log('🔍 Sabre API 응답에서 발견된 뷰 관련 정보:', viewInfo)
         
         // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
         const deepGet = (obj: unknown, keys: string[]): unknown => {
@@ -1387,6 +1430,161 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             const roomName = item.RoomName || item.roomName || item.Name || item.name || 
                            item.Title || item.title || item.Label || item.label || roomType
             
+            // RoomViewDescription 추출 - 모든 가능한 필드명 검사
+            const roomViewDescription = item.RoomViewDescription || item.roomViewDescription || 
+                                      item.ViewDescription || item.viewDescription || 
+                                      item.View || item.view || 
+                                      item.RoomView || item.roomView ||
+                                      item.RoomViewType || item.roomViewType ||
+                                      item.ViewType || item.viewType ||
+                                      item.ViewCategory || item.viewCategory ||
+                                      item.RoomViewCategory || item.roomViewCategory ||
+                                      item.ViewInfo || item.viewInfo ||
+                                      item.RoomViewInfo || item.roomViewInfo ||
+                                      item.ViewDetails || item.viewDetails ||
+                                      item.RoomViewDetails || item.roomViewDetails ||
+                                      item.ViewName || item.viewName ||
+                                      item.RoomViewName || item.roomViewName ||
+                                      item.ViewCode || item.viewCode ||
+                                      item.RoomViewCode || item.roomViewCode ||
+                                      item.ViewText || item.viewText ||
+                                      item.RoomViewText || item.roomViewText ||
+                                      item.ViewLabel || item.viewLabel ||
+                                      item.RoomViewLabel || item.roomViewLabel ||
+                                      item.ViewValue || item.viewValue ||
+                                      item.RoomViewValue || item.roomViewValue ||
+                                      // 추가 가능한 필드명들
+                                      item.Outlook || item.outlook ||
+                                      item.ScenicView || item.scenicView ||
+                                      item.OceanView || item.oceanView ||
+                                      item.CityView || item.cityView ||
+                                      item.GardenView || item.gardenView ||
+                                      item.MountainView || item.mountainView ||
+                                      item.PoolView || item.poolView ||
+                                      item.StreetView || item.streetView ||
+                                      item.CourtyardView || item.courtyardView ||
+                                      item.PartialView || item.partialView ||
+                                      item.NoView || item.noView ||
+                                      item.ViewTypeCode || item.viewTypeCode ||
+                                      item.ViewCategoryCode || item.viewCategoryCode ||
+                                      item.RoomViewCode || item.roomViewCode ||
+                                      item.ViewCode || item.viewCode ||
+                                      item.ViewTypeDescription || item.viewTypeDescription ||
+                                      item.RoomViewTypeDescription || item.roomViewTypeDescription ||
+                                      // 중첩된 객체에서 추출 시도
+                                      (item.RoomInfo && item.RoomInfo.View) ||
+                                      (item.RoomInfo && item.RoomInfo.RoomView) ||
+                                      (item.RoomInfo && item.RoomInfo.ViewDescription) ||
+                                      (item.RoomDetails && item.RoomDetails.View) ||
+                                      (item.RoomDetails && item.RoomDetails.RoomView) ||
+                                      (item.RoomDetails && item.RoomDetails.ViewDescription) ||
+                                      (item.RatePlan && item.RatePlan.View) ||
+                                      (item.RatePlan && item.RatePlan.RoomView) ||
+                                      (item.RatePlan && item.RatePlan.ViewDescription) ||
+                                      // Description에서 뷰 정보 추출 시도
+                                      (() => {
+                                        const desc = item.Description || item.description || ''
+                                        if (typeof desc === 'string') {
+                                          // 뷰 관련 키워드가 포함된 경우 추출
+                                          const viewKeywords = ['ocean', 'city', 'garden', 'mountain', 'pool', 'street', 'courtyard', 'partial', 'view', 'outlook', 'scenic']
+                                          const foundKeyword = viewKeywords.find(keyword => 
+                                            desc.toLowerCase().includes(keyword)
+                                          )
+                                          if (foundKeyword) {
+                                            // 해당 키워드 주변의 텍스트 추출
+                                            const keywordIndex = desc.toLowerCase().indexOf(foundKeyword)
+                                            const start = Math.max(0, keywordIndex - 10)
+                                            const end = Math.min(desc.length, keywordIndex + foundKeyword.length + 10)
+                                            return desc.substring(start, end).trim()
+                                          }
+                                        }
+                                        return null
+                                      })() ||
+                                      'N/A'
+            
+            // RoomViewDescription 디버깅 로그 - 모든 필드 검사
+            console.log(`🔍 RoomViewDescription 디버깅 - 아이템 ${index}:`, {
+              originalItem: item,
+              // 기본 필드들
+              RoomViewDescription: item.RoomViewDescription,
+              roomViewDescription: item.roomViewDescription,
+              ViewDescription: item.ViewDescription,
+              viewDescription: item.viewDescription,
+              View: item.View,
+              view: item.view,
+              RoomView: item.RoomView,
+              roomView: item.roomView,
+              // 확장된 필드들
+              RoomViewType: item.RoomViewType,
+              ViewType: item.ViewType,
+              ViewCategory: item.ViewCategory,
+              RoomViewCategory: item.RoomViewCategory,
+              ViewInfo: item.ViewInfo,
+              RoomViewInfo: item.RoomViewInfo,
+              ViewDetails: item.ViewDetails,
+              RoomViewDetails: item.RoomViewDetails,
+              ViewName: item.ViewName,
+              RoomViewName: item.RoomViewName,
+              ViewCode: item.ViewCode,
+              RoomViewCode: item.RoomViewCode,
+              ViewText: item.ViewText,
+              RoomViewText: item.RoomViewText,
+              ViewLabel: item.ViewLabel,
+              RoomViewLabel: item.RoomViewLabel,
+              ViewValue: item.ViewValue,
+              RoomViewValue: item.RoomViewValue,
+              finalRoomViewDescription: roomViewDescription,
+              allKeys: Object.keys(item),
+              // Description에서 뷰 정보 추출 결과
+              descriptionViewExtraction: (() => {
+                const desc = item.Description || item.description || ''
+                if (typeof desc === 'string') {
+                  const viewKeywords = ['ocean', 'city', 'garden', 'mountain', 'pool', 'street', 'courtyard', 'partial', 'view', 'outlook', 'scenic']
+                  const foundKeyword = viewKeywords.find(keyword => 
+                    desc.toLowerCase().includes(keyword)
+                  )
+                  if (foundKeyword) {
+                    const keywordIndex = desc.toLowerCase().indexOf(foundKeyword)
+                    const start = Math.max(0, keywordIndex - 10)
+                    const end = Math.min(desc.length, keywordIndex + foundKeyword.length + 10)
+                    return {
+                      foundKeyword,
+                      extractedText: desc.substring(start, end).trim(),
+                      fullDescription: desc
+                    }
+                  }
+                }
+                return null
+              })(),
+              // View 관련 모든 필드 검사
+              viewRelatedFields: Object.keys(item).filter(key => 
+                key.toLowerCase().includes('view') || 
+                key.toLowerCase().includes('roomview') ||
+                key.toLowerCase().includes('outlook') ||
+                key.toLowerCase().includes('scenic') ||
+                key.toLowerCase().includes('ocean') ||
+                key.toLowerCase().includes('city') ||
+                key.toLowerCase().includes('garden') ||
+                key.toLowerCase().includes('mountain')
+              ),
+              // 모든 필드 값 출력 (View 관련)
+              viewFieldValues: Object.keys(item)
+                .filter(key => 
+                  key.toLowerCase().includes('view') || 
+                  key.toLowerCase().includes('roomview') ||
+                  key.toLowerCase().includes('outlook') ||
+                  key.toLowerCase().includes('scenic') ||
+                  key.toLowerCase().includes('ocean') ||
+                  key.toLowerCase().includes('city') ||
+                  key.toLowerCase().includes('garden') ||
+                  key.toLowerCase().includes('mountain')
+                )
+                .reduce((acc, key) => {
+                  acc[key] = item[key];
+                  return acc;
+                }, {} as any)
+            })
+            
             // Description 추출
             const description = item.Description || item.description || item.Desc || item.desc || 
                               item.Summary || item.summary || item.Overview || item.overview || 
@@ -1444,6 +1642,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               RateKey: rateKey || 'N/A',
               RoomType: roomType || 'N/A',
               RoomName: roomName || 'N/A',
+              RoomViewDescription: roomViewDescription || 'N/A',
               Description: description || 'N/A',
               Currency: currency || 'KRW',
               AmountAfterTax: amountAfterTax || 'N/A',
@@ -2365,6 +2564,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   <thead>
                     <tr className="bg-gray-200">
                       <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px]">객실명</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">View</th>
                       <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
                       <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
                       <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
@@ -2419,6 +2619,11 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
                               <div className="text-gray-700 font-medium">
+                                {rp.RoomViewDescription || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
+                              <div className="text-gray-700 font-medium">
                                 {isGeneratingBedTypes && idx === 0 ? (
                                   <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -2465,6 +2670,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       })
                     ) : (
                       <tr>
+                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
                         <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터가 없습니다</td>
@@ -2844,6 +3050,26 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       <p className="font-semibold text-yellow-800 mb-2">🔍 디버깅 정보:</p>
                       <p className="text-yellow-700">• 데이터 개수: {ratePlanCodes.length}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 컬럼들: {Object.keys(ratePlanCodes[0]).join(', ')}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 RoomViewDescription: {ratePlanCodes[0]?.RoomViewDescription || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewDescription: {ratePlanCodes[0]?.ViewDescription || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 View: {ratePlanCodes[0]?.View || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 RoomView: {ratePlanCodes[0]?.RoomView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewType: {ratePlanCodes[0]?.ViewType || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewCategory: {ratePlanCodes[0]?.ViewCategory || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewInfo: {ratePlanCodes[0]?.ViewInfo || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewName: {ratePlanCodes[0]?.ViewName || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewCode: {ratePlanCodes[0]?.ViewCode || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 Outlook: {ratePlanCodes[0]?.Outlook || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 OceanView: {ratePlanCodes[0]?.OceanView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 CityView: {ratePlanCodes[0]?.CityView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 GardenView: {ratePlanCodes[0]?.GardenView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 MountainView: {ratePlanCodes[0]?.MountainView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 PoolView: {ratePlanCodes[0]?.PoolView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 StreetView: {ratePlanCodes[0]?.StreetView || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewTypeCode: {ratePlanCodes[0]?.ViewTypeCode || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewCategoryCode: {ratePlanCodes[0]?.ViewCategoryCode || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 ViewTypeDescription: {ratePlanCodes[0]?.ViewTypeDescription || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 RoomViewTypeDescription: {ratePlanCodes[0]?.RoomViewTypeDescription || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 데이터: {JSON.stringify(ratePlanCodes[0], null, 2).substring(0, 200)}...</p>
                     </div>
                     
@@ -2854,6 +3080,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RateKey</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomType</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">RoomName</th>
+                          <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">View</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Description</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">Currency</th>
                           <th className="border border-blue-200 px-2 py-2 text-left text-xs font-semibold text-blue-900 min-w-[120px]">AmountAfterTax</th>
@@ -2893,6 +3120,11 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               {ratePlan.RoomName || 'N/A'}
+                            </td>
+                            <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
+                              <span className="bg-blue-100 px-2 py-1 rounded text-xs font-medium">
+                                {ratePlan.RoomViewDescription || 'N/A'}
+                              </span>
                             </td>
                             <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="max-w-xs">

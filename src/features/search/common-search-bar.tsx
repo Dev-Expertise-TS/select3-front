@@ -151,9 +151,9 @@ export function CommonSearchBar({
   // 날짜 포맷팅 함수 (YYYY-MM-DD → 한국어 표시)
   const formatDateForDisplay = (dateStr: string) => {
     if (!dateStr) return ""
-    const date = new Date(dateStr)
-    const month = date.getMonth() + 1
-    const day = date.getDate()
+    // YYYY-MM-DD 형식을 직접 파싱하여 시간대 문제 방지
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day) // month는 0부터 시작
     const weekdays = ['일', '월', '화', '수', '목', '금', '토']
     const weekday = weekdays[date.getDay()]
     return `${month}월 ${day}일(${weekday})`
@@ -162,8 +162,11 @@ export function CommonSearchBar({
   // 숙박 일수 계산
   const calculateNights = () => {
     if (!localCheckIn || !localCheckOut) return 0
-    const checkInDate = new Date(localCheckIn)
-    const checkOutDate = new Date(localCheckOut)
+    // YYYY-MM-DD 형식을 직접 파싱하여 시간대 문제 방지
+    const [checkInYear, checkInMonth, checkInDay] = localCheckIn.split('-').map(Number)
+    const [checkOutYear, checkOutMonth, checkOutDay] = localCheckOut.split('-').map(Number)
+    const checkInDate = new Date(checkInYear, checkInMonth - 1, checkInDay)
+    const checkOutDate = new Date(checkOutYear, checkOutMonth - 1, checkOutDay)
     const diffTime = checkOutDate.getTime() - checkInDate.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays > 0 ? diffDays : 1

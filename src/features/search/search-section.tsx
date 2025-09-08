@@ -15,9 +15,17 @@ export function SearchSection() {
     const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
     twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
     
+    // 로컬 시간 기준으로 날짜 문자열 생성
+    const formatDateToLocalString = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
     return {
-      checkIn: twoWeeksLater.toISOString().split('T')[0],
-      checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
+      checkIn: formatDateToLocalString(twoWeeksLater),
+      checkOut: formatDateToLocalString(twoWeeksLaterPlusOne)
     }
   })
   const [searchGuests, setSearchGuests] = useState({

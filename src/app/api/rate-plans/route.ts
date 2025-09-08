@@ -78,6 +78,19 @@ export async function POST(request: NextRequest) {
     
     const result = await response.json()
     
+    // Sabre API 응답 구조 디버깅
+    console.log('📥 Sabre Rate Plans API 응답:', {
+      responseStatus: response.status,
+      responseHeaders: Object.fromEntries(response.headers.entries()),
+      resultKeys: result ? Object.keys(result) : 'No result',
+      resultType: typeof result,
+      resultLength: Array.isArray(result) ? result.length : 'Not an array',
+      firstItem: Array.isArray(result) && result.length > 0 ? {
+        keys: Object.keys(result[0]),
+        sampleData: result[0]
+      } : 'No items'
+    })
+    
     return NextResponse.json<RatePlansResponse>(
       {
         success: true,
