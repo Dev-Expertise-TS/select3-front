@@ -6,6 +6,7 @@ import { BrandHotelCard } from "@/components/shared/brand-hotel-card"
 import { ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { generateSlug } from "@/lib/hotel-utils"
 
 interface Hotel {
   id: number
@@ -18,6 +19,7 @@ interface Hotel {
   price: string
   brand?: string
   chain?: string
+  slug?: string // slug 정보 추가
   benefits: Array<{
     icon: any
     text: string
@@ -30,9 +32,11 @@ interface Hotel {
   }
 }
 
-// 링크 경로 생성 함수
+// 링크 경로 생성 함수 (검색 컴포넌트와 동일한 로직)
 function makeHotelHref(hotel: Hotel) {
-  return `/hotel/hotel-${hotel.id}`
+  // 데이터베이스의 실제 slug가 있으면 사용, 없으면 호텔명으로 생성
+  const slug = hotel.slug || generateSlug(hotel.nameKo || hotel.name)
+  return `/hotel/${slug}`
 }
 
 interface BrandHotelsClientProps {

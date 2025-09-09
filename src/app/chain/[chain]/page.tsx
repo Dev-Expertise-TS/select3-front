@@ -138,6 +138,7 @@ export default async function ChainPage({ params }: ChainPageProps) {
     image: hotel.image_1 || "/placeholder.svg", // image_1 사용
     brand: chainRow.chain_name_en,
     chain: chainRow.chain_name_en, // 체인 정보 추가
+    slug: hotel.slug, // slug 정보 추가
     rating: 0,
     price: "₩0",
     benefits: [],
