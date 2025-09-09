@@ -1,18 +1,29 @@
 "use client"
 
+// Next.js
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+
+// React
+import { useState, useMemo, useEffect } from "react"
+
+// External libraries
+import { useQuery } from "@tanstack/react-query"
+import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed, X, ChevronLeft, ChevronRight } from "lucide-react"
+
+// Components
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
-import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState, useMemo } from "react"
+
+// Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
-import { useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+
+// Utils & Services
 import { supabase } from "@/lib/supabase"
 import { generateRoomIntroductionBatch, generateRoomIntroduction, generateGlobalOTAStyleRoomName, interpretBedType } from "@/lib/openai"
 
+// Types
 interface HotelDetailProps {
   hotelSlug: string;
   initialHotel?: any; // 서버에서 전달받은 초기 호텔 데이터
@@ -30,19 +41,25 @@ interface HotelPromotion {
   check_in_date: string;
 }
 
+interface SearchDates {
+  checkIn: string;
+  checkOut: string;
+}
+
 export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
+  // URL 쿼리 파라미터
+  const searchParams = useSearchParams()
+
+  // UI 상태 관리
   const [selectedImage, setSelectedImage] = useState(0)
   const [activeTab, setActiveTab] = useState("benefits")
   const [showImageGallery, setShowImageGallery] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [showImageDetail, setShowImageDetail] = useState(false)
   const [selectedDetailImage, setSelectedDetailImage] = useState(0)
-  const [originalSelectedImage, setOriginalSelectedImage] = useState(0) // 원래 선택된 이미지 인덱스 저장
-  
-  // URL 쿼리 파라미터에서 날짜 읽기
-  const searchParams = useSearchParams()
+  const [originalSelectedImage, setOriginalSelectedImage] = useState(0)
 
-  // 날짜 상태 관리
+  // 검색 관련 상태
   const [searchDates, setSearchDates] = useState(() => {
     const today = new Date()
     const twoWeeksLater = new Date(today)
@@ -55,6 +72,18 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
     }
   })
+  const [hasSearched, setHasSearched] = useState(false)
+
+  // AI 처리 상태 관리
+  const [roomIntroductions, setRoomIntroductions] = useState<Map<string, string>>(new Map())
+  const [globalOTAStyleRoomNames, setGlobalOTAStyleRoomNames] = useState<Map<string, string>>(new Map())
+  const [bedTypes, setBedTypes] = useState<Map<string, string>>(new Map())
+  const [isGeneratingIntroductions, setIsGeneratingIntroductions] = useState(false)
+  const [isGeneratingRoomNames, setIsGeneratingRoomNames] = useState(false)
+  const [isGeneratingBedTypes, setIsGeneratingBedTypes] = useState(false)
+  const [currentProcessingRow, setCurrentProcessingRow] = useState<number>(-1)
+  const [hasProcessedAI, setHasProcessedAI] = useState(false)
+
   // URL로부터 checkIn/checkOut이 오면 초기화
   useEffect(() => {
     const ci = searchParams?.get('checkIn') || ''
@@ -63,190 +92,30 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       setSearchDates({ checkIn: ci, checkOut: co })
     }
   }, [searchParams])
-  
-  // 검색 버튼을 눌렀는지 추적하는 상태
-  const [hasSearched, setHasSearched] = useState(false)
-  
-  // 객실 소개 상태 관리
-  const [roomIntroductions, setRoomIntroductions] = useState<Map<string, string>>(new Map())
-  const [globalOTAStyleRoomNames, setGlobalOTAStyleRoomNames] = useState<Map<string, string>>(new Map())
-  const [bedTypes, setBedTypes] = useState<Map<string, string>>(new Map())
-  const [isGeneratingIntroductions, setIsGeneratingIntroductions] = useState(false)
-  const [isGeneratingRoomNames, setIsGeneratingRoomNames] = useState(false)
-  const [isGeneratingBedTypes, setIsGeneratingBedTypes] = useState(false)
-  
-  // 현재 처리 중인 행 번호 추적
-  const [currentProcessingRow, setCurrentProcessingRow] = useState<number>(-1)
-  
-  // AI 처리가 한 번만 실행되도록 하는 플래그
-  const [hasProcessedAI, setHasProcessedAI] = useState(false)
-  
+
   // 프로모션 데이터 상태 관리
   const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>([])
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(false)
-  
-  // 통합 AI 처리 함수 - 순차적으로 모든 AI 처리를 완료 (주석 처리됨)
-  /*
-  const processAllAI = async (ratePlans: any[], hotelName: string) => {
-    console.log('🚀 processAllAI 호출됨 - 모든 AI 처리를 순차적으로 실행:', {
-      ratePlanCodesLength: ratePlanCodes?.length,
-      ratePlanCodes: ratePlanCodes,
-      hotelName: hotelName
-    })
-    
-    if (!ratePlanCodes || ratePlanCodes.length === 0) {
-      console.log('⚠️ ratePlanCodes가 비어있음')
-      return
-    }
-    
-    if (!hotelName) {
-      console.log('⚠️ hotelName이 비어있음')
-      return
-    }
-    
-    // 모든 로딩 상태를 true로 설정
-    setIsGeneratingRoomNames(true)
-    setIsGeneratingBedTypes(true)
-    setIsGeneratingIntroductions(true)
-    
-    console.log('🔄 통합 AI 처리 시작...')
-    
-    try {
-      // 1단계: 글로벌 호텔 OTA 스타일 객실명 생성
-      console.log('📋 1단계: 글로벌 호텔 OTA 스타일 객실명 생성 시작')
-      const roomNames = new Map<string, string>()
-      
-      for (let i = 0; i < ratePlanCodes.length; i++) {
-        const rp = ratePlanCodes[i]
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const key = `${roomType}-${roomName}`
-        
-        console.log(`🔍 ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 중:`, { roomType, roomName, description })
-        
-        try {
-          const otaStyleName = await generateGlobalOTAStyleRoomName(roomType, roomName, description, hotelName)
-          roomNames.set(key, otaStyleName)
-          console.log(`✅ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 완료:`, otaStyleName)
-        } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 실패:`, roomError)
-          const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
-          roomNames.set(key, fallbackName)
-          console.log(`🔄 ${i + 1}번째 객실 fallback 객실명 사용:`, fallbackName)
-        }
-        
-        // API 호출 간격 조절
-        if (i < ratePlanCodes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-        }
-      }
-      
-      setGlobalOTAStyleRoomNames(roomNames)
-      console.log('✅ 1단계 완료: 글로벌 호텔 OTA 스타일 객실명')
-      
-      // 2단계: 베드 타입 해석
-      console.log('📋 2단계: 베드 타입 해석 시작')
-      const bedTypeMap = new Map<string, string>()
-      
-      for (let i = 0; i < ratePlanCodes.length; i++) {
-        const rp = ratePlanCodes[i]
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const key = `${roomType}-${roomName}`
-        
-        console.log(`🔍 ${i + 1}번째 객실 베드 타입 해석 중:`, { roomType, roomName, description })
-        
-        try {
-          const bedType = await interpretBedType(description, roomName)
-          bedTypeMap.set(key, bedType)
-          console.log(`✅ ${i + 1}번째 객실 베드 타입 해석 완료:`, bedType)
-        } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 베드 타입 해석 실패:`, roomError)
-          const fallbackType = '베드 정보 없음'
-          bedTypeMap.set(key, fallbackType)
-          console.log(`🔄 ${i + 1}번째 객실 fallback 베드 타입 사용:`, fallbackType)
-        }
-        
-        // API 호출 간격 조절
-        if (i < ratePlanCodes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-        }
-      }
-      
-      setBedTypes(bedTypeMap)
-      console.log('✅ 2단계 완료: 베드 타입 해석')
-      
-      // 3단계: 객실 소개 생성
-      console.log('📋 3단계: 객실 소개 생성 시작')
-      const introductions = new Map<string, string>()
-      
-      for (let i = 0; i < ratePlanCodes.length; i++) {
-        const rp = ratePlanCodes[i]
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const key = `${roomType}-${roomName}`
-        
-        console.log(`🔍 ${i + 1}번째 객실 소개 생성 중:`, { roomType, roomName, description })
-        
-        try {
-          const roomInfo = { roomType, roomName, description }
-          const intro = await generateRoomIntroduction(roomInfo, hotelName)
-          introductions.set(key, intro)
-          console.log(`✅ ${i + 1}번째 객실 소개 생성 완료:`, intro)
-        } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 소개 생성 실패:`, roomError)
-          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-          introductions.set(key, fallbackIntro)
-          console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용:`, fallbackIntro)
-        }
-        
-        // API 호출 간격 조절
-        if (i < ratePlanCodes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-        }
-      }
-      
-      setRoomIntroductions(introductions)
-      console.log('✅ 3단계 완료: 객실 소개 생성')
-      
-      console.log('🎉 모든 AI 처리 완료!')
-      
-    } catch (error) {
-      console.error('❌ 통합 AI 처리 오류:', error)
-      // 에러 발생 시 모든 fallback 생성
-      const fallbackNames = new Map<string, string>()
-      const fallbackTypes = new Map<string, string>()
-      const fallbackIntros = new Map<string, string>()
-      
-      ratePlanCodes.forEach((rp: any) => {
-        const key = `${rp.RoomType || rp.RoomName || 'N/A'}-${rp.RoomName || 'N/A'}`
-        const fallbackName = rp.RoomType && rp.RoomType !== 'N/A' ? rp.RoomType.substring(0, 15) : '객실'
-        const fallbackType = '베드 정보 없음'
-        const fallbackIntro = `${hotelName}의 ${rp.RoomType || rp.RoomName || 'N/A'} ${rp.RoomName || 'N/A'} 객실입니다. ${rp.Description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-        
-        fallbackNames.set(key, fallbackName)
-        fallbackTypes.set(key, fallbackType)
-        fallbackIntros.set(key, fallbackIntro)
-      })
-      
-      setGlobalOTAStyleRoomNames(fallbackNames)
-      setBedTypes(fallbackTypes)
-      setRoomIntroductions(fallbackIntros)
-      console.log('🔄 모든 fallback 데이터 생성 완료')
-      
-    } finally {
-      // 모든 로딩 상태를 false로 설정
-      setIsGeneratingRoomNames(false)
-      setIsGeneratingBedTypes(false)
-      setIsGeneratingIntroductions(false)
-      console.log('🏁 통합 AI 처리 완료')
-    }
-  }
-  */
 
+  // 이미지 preloading을 위한 상태
+  const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())
+
+  // ===== 유틸리티 함수들 =====
+  const preloadImage = (src: string) => {
+    if (preloadedImages.has(src)) return Promise.resolve(null)
+    
+    return new Promise<HTMLImageElement | null>((resolve, reject) => {
+      const img = new window.Image()
+      img.onload = () => {
+        setPreloadedImages(prev => new Set([...prev, src]))
+        resolve(img)
+      }
+      img.onerror = reject
+      img.src = src
+    })
+  }
+
+  // ===== AI 처리 함수들 =====
   // 객실 소개 AI 생성 함수 (1행씩 순차 처리)
   const generateRoomIntroductionsSequential = async (ratePlans: any[], hotelName: string) => {
     console.log('🏨 generateRoomIntroductionsSequential 호출됨:', {
@@ -576,8 +445,8 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       setHasSearched(true)
     }
   }, [hotel?.sabre_id, hasSearched])
-  
-  // 호텔 프로모션 데이터 조회
+
+  // ===== 프로모션 관련 함수들 =====
   const fetchHotelPromotions = async (sabreId: number) => {
     console.log('🎯 fetchHotelPromotions 호출됨:', { sabreId })
     
@@ -697,6 +566,40 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   
   // 이미지 데이터 우선순위: select_hotels 이미지 > hotel_media
   const displayImages = hotelImages.length > 0 ? hotelImages : hotelMedia
+  
+  // 이미지 preloading useEffect
+  useEffect(() => {
+    if (displayImages.length > 0) {
+      // 첫 번째 이미지는 priority로 이미 로드되므로, 2-4번째 이미지를 preload
+      const imagesToPreload = displayImages.slice(1, 4)
+      imagesToPreload.forEach((media, index) => {
+        if (media.media_path) {
+          preloadImage(media.media_path).catch(error => {
+            console.warn(`이미지 preload 실패 (${index + 2}번째):`, error)
+          })
+        }
+      })
+    }
+  }, [displayImages])
+
+  // 모달이 열릴 때 body 스크롤 막기
+  useEffect(() => {
+    if (showImageGallery || showImageDetail) {
+      // body 스크롤 막기
+      document.body.style.overflow = 'hidden'
+      document.body.style.paddingRight = '0px' // 스크롤바 너비만큼 패딩 추가하지 않음
+    } else {
+      // body 스크롤 복원
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+
+    // cleanup function
+    return () => {
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+  }, [showImageGallery, showImageDetail])
   
   // sabre_hotels 테이블에서 property_details 조회 (select_hotels의 fallback으로 사용)
   const { data: sabreHotelDetails } = useQuery({
@@ -1240,7 +1143,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // 검색 후 ratePlanCodes가 로드되면 AI 처리 함수들 자동 실행
 
-  // 이미지 갤러리 닫기
+  // ===== UI 이벤트 핸들러들 =====
   const closeImageGallery = () => {
     setShowImageGallery(false)
     setSelectedImage(originalSelectedImage) // 원래 선택된 이미지로 되돌리기
@@ -1248,7 +1151,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // 이미지 상세 보기 열기
   const openImageDetail = (index: number) => {
-    setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
+    setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장           
     setSelectedDetailImage(index)
     setShowImageDetail(true)
   }
@@ -1272,20 +1175,24 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   // 키보드 이벤트 처리
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!showImageDetail) return
-      
       if (e.key === 'Escape') {
-        closeImageDetail()
-      } else if (e.key === 'ArrowLeft') {
-        prevImage()
-      } else if (e.key === 'ArrowRight') {
-        nextImage()
+        if (showImageGallery) {
+          closeImageGallery()
+        } else if (showImageDetail) {
+          closeImageDetail()
+        }
+      } else if (showImageDetail) {
+        if (e.key === 'ArrowLeft') {
+          prevImage()
+        } else if (e.key === 'ArrowRight') {
+          nextImage()
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [showImageDetail])
+  }, [showImageGallery, showImageDetail])
 
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
   const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
@@ -1391,12 +1298,33 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                 }}
               >
                 {displayImages.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    {/* 로딩 스켈레톤 */}
+                    {!preloadedImages.has(displayImages[selectedImage]?.media_path || displayImages[0]?.media_path) && (
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                        <div className="text-gray-400">
+                          <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                          <div className="text-sm">이미지 로딩 중...</div>
+                        </div>
+                      </div>
+                    )}
                   <Image
                     src={displayImages[selectedImage]?.media_path || displayImages[0]?.media_path}
                     alt={displayImages[selectedImage]?.alt || displayImages[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-opacity duration-300"
+                    priority={selectedImage === 0}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 60vw"
+                    onLoad={() => console.log('메인 이미지 로드 완료')}
+                    onError={(e) => {
+                      console.error('메인 이미지 로드 실패:', e);
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
                   />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="text-center text-gray-500">
@@ -1424,7 +1352,17 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                           src={media.media_path}
                           alt={media.alt || `Gallery ${index + 2}`}
                           fill
-                          className="object-cover"
+                          className="object-cover transition-opacity duration-300"
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
+                          loading={index < 2 ? "eager" : "lazy"}
+                          onLoad={() => console.log(`썸네일 ${index + 2} 로드 완료`)}
+                          onError={(e) => {
+                            console.error(`썸네일 ${index + 2} 로드 실패:`, e);
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                          }}
                         />
                         {index === 3 && displayImages.length > 5 && (
                           <div 
@@ -1491,8 +1429,18 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
       {/* Image Gallery Modal */}
       {showImageGallery && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-[90vh] max-h-[800px] overflow-hidden">
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeImageGallery()
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-[90vh] max-h-[800px] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Top Header Bar */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center gap-4">
@@ -1561,7 +1509,17 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                           src={media.media_path}
                           alt={media.alt || `Gallery ${index + 1}`}
                           fill
-                          className="object-cover transition-transform group-hover:scale-105"
+                          className="object-cover transition-all duration-300 group-hover:scale-105"
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                          loading="lazy"
+                          onLoad={() => console.log(`갤러리 이미지 ${index + 1} 로드 완료`)}
+                          onError={(e) => {
+                            console.error(`갤러리 이미지 ${index + 1} 로드 실패:`, e);
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                          }}
                         />
                       </div>
                     ))}
@@ -1970,142 +1928,163 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">객실 타입별 요금 상세</h3>
               
-              {/* 데이터가 있을 때만 테이블 표시 */}
-              {Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
+              {/* API 조회 완료 후 데이터 상태에 따라 표시 */}
+              {sabreLoading ? (
+                /* API 조회 중일 때 로딩 표시 */
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">해당 일자와 인원에 맞는 객실 요금을 조회 중입니다.</span>
+                  </div>
+                </div>
+              ) : sabreError ? (
+                /* API 오류 시 오류 메시지 표시 */
+                <div className="text-center py-6">
+                  <div className="text-red-500 mb-2">
+                    <span className="text-2xl">⚠️</span>
+                  </div>
+                  <p className="text-sm text-red-600 mb-3">객실 정보 조회에 실패했습니다.</p>
+                  <div className="text-xs text-gray-500">
+                    <p>• Sabre API 연결을 확인해주세요</p>
+                    <p>• 호텔의 Rate Plan 정보가 있는지 확인해주세요</p>
+                    <p>• 잠시 후 다시 시도해주세요</p>
+                  </div>
+                </div>
+              ) : Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
                 <>
-                  {/* Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-200 text-sm">
-                      <thead>
-                        <tr className="bg-gray-200">
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-200 text-sm">
+                  <thead>
+                    <tr className="bg-gray-200">
                           <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
                           <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
+                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                         {ratePlanCodes.map((rp: any, idx: number) => {
-                          const roomType = rp.RoomType || rp.RoomName || 'N/A'
-                          const roomName = rp.RoomName || 'N/A'
-                          const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
-                          const currency = rp.Currency || 'KRW'
-                          const rateKey: string = rp.RateKey || 'N/A'
-                          const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
-                          
-                          // AI 처리 함수들과 동일한 키 생성 방식 사용
-                          const rowKey = `${roomType}-${roomName}`
-                          const introKey = `${roomType}-${roomName}-${rateKey}`
-                          const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
-                          
-                          // 디버깅을 위한 로그 (첫 번째 행만)
-                          if (idx === 0) {
-                            console.log('🔍 테이블 렌더링 디버깅:', {
-                              idx,
-                              roomType,
-                              roomName,
-                              rowKey,
-                              globalOTAStyleRoomName: globalOTAStyleRoomNames.get(rowKey),
-                              bedType: bedTypes.get(rowKey),
-                              roomIntroduction: roomIntroductions.get(rowKey),
-                              allGlobalOTAStyleKeys: Array.from(globalOTAStyleRoomNames.keys()),
-                              allBedTypeKeys: Array.from(bedTypes.keys()),
-                              allIntroductionKeys: Array.from(roomIntroductions.keys())
-                            })
-                          }
-                          
-                          return (
-                            <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                        const roomType = rp.RoomType || rp.RoomName || 'N/A'
+                        const roomName = rp.RoomName || 'N/A'
+                        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
+                        const currency = rp.Currency || 'KRW'
+                        const rateKey: string = rp.RateKey || 'N/A'
+                        const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
+                        
+                        // AI 처리 함수들과 동일한 키 생성 방식 사용
+                        const rowKey = `${roomType}-${roomName}`
+                        const introKey = `${roomType}-${roomName}-${rateKey}`
+                        const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
+                        
+                        // 디버깅을 위한 로그 (첫 번째 행만)
+                        if (idx === 0) {
+                          console.log('🔍 테이블 렌더링 디버깅:', {
+                            idx,
+                            roomType,
+                            roomName,
+                            rowKey,
+                            globalOTAStyleRoomName: globalOTAStyleRoomNames.get(rowKey),
+                            bedType: bedTypes.get(rowKey),
+                            roomIntroduction: roomIntroductions.get(rowKey),
+                            allGlobalOTAStyleKeys: Array.from(globalOTAStyleRoomNames.keys()),
+                            allBedTypeKeys: Array.from(bedTypes.keys()),
+                            allIntroductionKeys: Array.from(roomIntroductions.keys())
+                          })
+                        }
+                        
+                        return (
+                          <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
                               <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px] hidden">
-                                <div className="text-gray-700 font-medium">
+                              <div className="text-gray-700 font-medium">
                                   {isGeneratingRoomNames && idx === 0 ? (
-                                    <div className="flex items-center space-x-2">
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                      <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
-                                    </div>
-                                  ) : (
-                                    globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
-                                  )}
-                                </div>
-                              </td>
+                                  <div className="flex items-center space-x-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                    <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
+                                  </div>
+                                ) : (
+                                  globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
+                                )}
+                              </div>
+                            </td>
                               <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px] hidden">
                                 <div className="text-gray-700 font-medium">
                                   {rp.RoomViewDescription || 'N/A'}
-                                </div>
-                              </td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
-                                <div className="text-gray-700 font-medium">
+                              </div>
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
+                              <div className="text-gray-700 font-medium">
                                   {extractBedTypeFromDescription(rp.Description || 'N/A')}
-                                </div>
-                              </td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
-                                <div className="text-gray-700">
-                                  {roomIntroductions.has(introKey) ? (
-                                    roomIntroduction
+                              </div>
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
+                              <div className="text-gray-700">
+                                {roomIntroductions.has(introKey) ? (
+                                  roomIntroduction
                                   ) : isGeneratingIntroductions && currentProcessingRow === idx ? (
-                                    <div className="flex items-center space-x-2">
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                      <span className="text-gray-500 text-xs">AI 처리 중...</span>
-                                    </div>
-                                  ) : (
-                                    rp.Description || 'N/A'
-                                  )}
-                                </div>
-                              </td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500 text-xs">AI 가 객실 소개 설명을 준비 중입니다.</span>
+                                  </div>
+                                ) : (
+                                  rp.Description || 'N/A'
+                                )}
+                              </div>
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
                                 {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
                                   `${parseInt(String(amount)).toLocaleString()}` : 
                                   <span className="text-red-500">요금 정보 없음</span>
                                 }
-                              </td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                                <button
-                                  type="button"
-                                  title={typeof rateKey === 'string' ? rateKey : ''}
-                                  onClick={() => copyRateKey(String(rateKey), idx)}
-                                  className="font-mono underline decoration-dotted hover:text-blue-600"
-                                >
-                                  {shortRateKey}
-                                </button>
-                                {copiedRateKeyRow === idx && (
-                                  <span className="ml-2 text-xs text-green-600">Copied</span>
-                                )}
-                              </td>
-                            </tr>
-                          )
+                            </td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
+                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                              <button
+                                type="button"
+                                title={typeof rateKey === 'string' ? rateKey : ''}
+                                onClick={() => copyRateKey(String(rateKey), idx)}
+                                className="font-mono underline decoration-dotted hover:text-blue-600"
+                              >
+                                {shortRateKey}
+                              </button>
+                              {copiedRateKeyRow === idx && (
+                                <span className="ml-2 text-xs text-green-600">Copied</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
                         })}
-                        </tbody>
-                    </table>
-                  </div>
+                  </tbody>
+                </table>
+              </div>
 
-                  {/* Table Legend */}
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
+              {/* Table Legend */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-600">
-                      <div>
-                        <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
-                      </div>
-                      <div>
-                        <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
-                      </div>
-                      <div>
-                        <span className="font-medium">총 요금:</span> 세금 포함 최종 요금
-                      </div>
-                      <div>
-                        <span className="font-medium">통화:</span> 요금 단위
-                      </div>
-                      <div>
-                        <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
-                      </div>
-                    </div>
+                  <div>
+                    <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
                   </div>
+                  <div>
+                    <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
+                  </div>
+                  <div>
+                    <span className="font-medium">총 요금:</span> 세금 포함 최종 요금
+                  </div>
+                  <div>
+                    <span className="font-medium">통화:</span> 요금 단위
+                  </div>
+                  <div>
+                    <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
+                  </div>
+                </div>
+              </div>
                 </>
               ) : (
-                /* 데이터가 없을 때 표시할 메시지 */
+                /* API 조회 완료 후 데이터가 없을 때 표시할 메시지 */
                 <div className="text-center py-12">
                   <div className="mb-6">
                     <div className="text-6xl mb-4">🏨</div>
@@ -2115,7 +2094,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                     <p className="text-gray-600 mb-6">
                       호텔 전문 컨시어지 상담이나 전화를 해주시면 상세히 안내해 드리겠습니다.
                     </p>
-                  </div>
+              </div>
                   
                   {/* 상담하기 버튼 */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
