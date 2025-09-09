@@ -15,6 +15,7 @@ import { generateRoomIntroductionBatch, generateRoomIntroduction, generateGlobal
 
 interface HotelDetailProps {
   hotelSlug: string;
+  initialHotel?: any; // 서버에서 전달받은 초기 호텔 데이터
   searchDates?: {
     checkIn?: string;
     checkOut?: string;
@@ -29,7 +30,7 @@ interface HotelPromotion {
   check_in_date: string;
 }
 
-export function HotelDetail({ hotelSlug }: HotelDetailProps) {
+export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [activeTab, setActiveTab] = useState("benefits")
   const [showImageGallery, setShowImageGallery] = useState(false)
@@ -564,10 +565,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   // URL에서 sabreId 읽기
   const sabreIdParam = Number(searchParams?.get('sabreId') || 0)
 
-  // 호텔 데이터 조회: sabreId 우선, 없으면 slug
+  // 호텔 데이터 조회: 초기 데이터 우선, 없으면 클라이언트에서 조회
   const { data: hotelBySlug, isLoading, error } = useHotelBySlug(hotelSlug)
   const { data: hotelById } = useHotel(sabreIdParam)
-  const hotel = hotelById || hotelBySlug
+  const hotel = initialHotel || hotelById || hotelBySlug
   
   // 페이지 렌더링/리프레시 시 자동으로 검색 실행 상태로 전환 (테이블 데이터 자동 로드)
   useEffect(() => {

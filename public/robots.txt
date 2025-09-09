@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# 호텔 상세 페이지는 크롤링 허용
+Allow: /hotel/
+
+# 관리자 페이지는 크롤링 차단
+Disallow: /admin/
+
+# API 경로는 크롤링 차단
+Disallow: /api/
+
+# 사이트맵 위치
+Sitemap: https://select-hotels.com/sitemap.xml
