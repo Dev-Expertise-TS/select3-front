@@ -1,5 +1,4 @@
-import Image from "next/image"
-import Link from "next/link"
+import { BrandCard } from "@/components/shared/brand-card"
 
 interface HotelChain {
   chain_id: number
@@ -37,21 +36,21 @@ interface HotelChain {
 async function getHotelChains() {
   // /public/brand-image 폴더의 이미지들을 사용하여 브랜드 카드 구성
   const brandCards: HotelChain[] = [
-    { chain_id: 1, chain_name_en: 'Marriott International', slug: 'marriott-international', logo_path: '/brand-image/marriott.avif' },
-    { chain_id: 2, chain_name_en: 'Aman Resorts', slug: 'aman-resorts-international', logo_path: '/brand-image/aman.avif' },
-    { chain_id: 3, chain_name_en: 'Hyatt Hotels', slug: 'hyatt-hotels-corporation', logo_path: '/brand-image/hyatt.avif' },
-    { chain_id: 4, chain_name_en: 'IHG Hotels', slug: 'intercontinental-hotels-group-ihg', logo_path: '/brand-image/ihg.avif' },
-    { chain_id: 5, chain_name_en: 'Accor Hotels', slug: 'accor-hotels', logo_path: '/brand-image/accor.avif' },
-    { chain_id: 6, chain_name_en: 'Hilton Worldwide', slug: 'hilton-hotels-resorts-hilton-worldwide-holdings-inc', logo_path: '/brand-image/hilton.avif' },
-    { chain_id: 7, chain_name_en: 'Shangri-La Hotels', slug: 'shangri-la-hotels-and-resorts', logo_path: '/brand-image/shangri-la.avif' },
-    { chain_id: 8, chain_name_en: 'Mandarin Oriental', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
-    { chain_id: 9, chain_name_en: 'Capella Hotels', slug: 'capella-hotels', logo_path: '/brand-image/capella.avif' },
-    { chain_id: 10, chain_name_en: 'Pan Pacific', slug: 'pan-pacific', logo_path: '/brand-image/pan-pacific.avif' },
-    { chain_id: 11, chain_name_en: 'Virtuoso', slug: 'virtuoso', logo_path: '/brand-image/virtuoso.avif' },
-    { chain_id: 12, chain_name_en: 'Platinum', slug: 'platinum', logo_path: '/brand-image/platinum.avif' },
-    { chain_id: 13, chain_name_en: 'Bravo', slug: 'bravos', logo_path: '/brand-image/bravos.avif' },
-    { chain_id: 14, chain_name_en: 'Heavens Portfolio', slug: 'heavens-portfolio', logo_path: '/brand-image/heavens-portfolio.avif' },
-    { chain_id: 15, chain_name_en: 'LW', slug: 'lw', logo_path: '/brand-image/LW.avif' },
+    { chain_id: 1, chain_name_en: 'Marriott International', chain_name_kr: '메리어트 인터내셔널', slug: 'marriott-international', logo_path: '/brand-image/marriott.avif' },
+    { chain_id: 2, chain_name_en: 'Aman Resorts', chain_name_kr: '아만 리조트', slug: 'aman-resorts-international', logo_path: '/brand-image/aman.avif' },
+    { chain_id: 3, chain_name_en: 'Hyatt Hotels', chain_name_kr: '하이어트 호텔', slug: 'hyatt-hotels-corporation', logo_path: '/brand-image/hyatt.avif' },
+    { chain_id: 4, chain_name_en: 'IHG Hotels', chain_name_kr: 'IHG 호텔', slug: 'intercontinental-hotels-group-ihg', logo_path: '/brand-image/ihg.avif' },
+    { chain_id: 5, chain_name_en: 'Accor Hotels', chain_name_kr: '아코르 호텔', slug: 'accor-hotels', logo_path: '/brand-image/accor.avif' },
+    { chain_id: 6, chain_name_en: 'Hilton Worldwide', chain_name_kr: '힐튼 월드와이드', slug: 'hilton-hotels-resorts-hilton-worldwide-holdings-inc', logo_path: '/brand-image/hilton.avif' },
+    { chain_id: 7, chain_name_en: 'Shangri-La Hotels', chain_name_kr: '샹그릴라 호텔', slug: 'shangri-la-hotels-and-resorts', logo_path: '/brand-image/shangri-la.avif' },
+    { chain_id: 8, chain_name_en: 'Mandarin Oriental', chain_name_kr: '만다린 오리엔탈', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
+    { chain_id: 9, chain_name_en: 'Capella Hotels', chain_name_kr: '카펠라 호텔', slug: 'capella-hotels', logo_path: '/brand-image/capella.avif' },
+    { chain_id: 10, chain_name_en: 'Pan Pacific', chain_name_kr: '팬 퍼시픽', slug: 'pan-pacific', logo_path: '/brand-image/pan-pacific.avif' },
+    { chain_id: 11, chain_name_en: 'Virtuoso', chain_name_kr: '버츄오소', slug: 'virtuoso', logo_path: '/brand-image/virtuoso.avif' },
+    { chain_id: 12, chain_name_en: 'Platinum', chain_name_kr: '플래티넘', slug: 'platinum', logo_path: '/brand-image/platinum.avif' },
+    { chain_id: 13, chain_name_en: 'Bravo', chain_name_kr: '브라보', slug: 'bravos', logo_path: '/brand-image/bravos.avif' },
+    { chain_id: 14, chain_name_en: 'Heavens Portfolio', chain_name_kr: '헤븐스 포트폴리오', slug: 'heavens-portfolio', logo_path: '/brand-image/heavens-portfolio.avif' },
+    { chain_id: 15, chain_name_en: 'LW', chain_name_kr: 'LW', slug: 'lw', logo_path: '/brand-image/LW.avif' },
   ]
   
   return brandCards
@@ -70,16 +69,14 @@ export async function BrandProgramSection() {
 
         <div className="grid grid-cols-3 md:grid-cols-5 gap-6">
           {chains.map((chain) => (
-            <Link key={chain.chain_id} href={`/chain/${chain.slug}`}>
-              <div className="bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer overflow-hidden aspect-[4/3] relative">
-                <Image
-                  src={chain.logo_path || "/placeholder.svg"}
-                  alt={chain.chain_name_en}
-                  fill
-                  className="object-contain transition-all duration-300 group-hover:scale-105"
-                />
-              </div>
-            </Link>
+            <BrandCard
+              key={chain.chain_id}
+              chainId={chain.chain_id}
+              chainName={chain.chain_name_en}
+              chainNameKr={chain.chain_name_kr}
+              slug={chain.slug}
+              logoPath={chain.logo_path || "/placeholder.svg"}
+            />
           ))}
         </div>
       </div>

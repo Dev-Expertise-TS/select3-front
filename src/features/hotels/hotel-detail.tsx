@@ -74,6 +74,12 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   const [isGeneratingRoomNames, setIsGeneratingRoomNames] = useState(false)
   const [isGeneratingBedTypes, setIsGeneratingBedTypes] = useState(false)
   
+  // 현재 처리 중인 행 번호 추적
+  const [currentProcessingRow, setCurrentProcessingRow] = useState<number>(-1)
+  
+  // AI 처리가 한 번만 실행되도록 하는 플래그
+  const [hasProcessedAI, setHasProcessedAI] = useState(false)
+  
   // 프로모션 데이터 상태 관리
   const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>([])
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(false)
@@ -240,9 +246,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
   }
   */
 
-  // 베드 타입 해석 함수
-  const generateBedTypes = async (ratePlans: any[], hotelName: string) => {
-    console.log('🛏️ generateBedTypes 호출됨:', {
+  // 객실 소개 AI 생성 함수 (1행씩 순차 처리)
+  const generateRoomIntroductionsSequential = async (ratePlans: any[], hotelName: string) => {
+    console.log('🏨 generateRoomIntroductionsSequential 호출됨:', {
       ratePlansLength: ratePlans?.length,
       ratePlans: ratePlans,
       hotelName: hotelName
@@ -258,65 +264,76 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       return
     }
     
-    setIsGeneratingBedTypes(true)
-    console.log('🔄 베드 타입 해석 시작...')
+    // 이미 처리 중이면 중복 실행 방지
+    if (isGeneratingIntroductions) {
+      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지')
+      return
+    }
+    
+    setIsGeneratingIntroductions(true)
+    setCurrentProcessingRow(-1) // 초기화
+    console.log('🔄 객실 소개 AI 생성 시작 (1행씩 순차 처리)...')
     
     try {
-      const bedTypeMap = new Map<string, string>()
-      
-      // 첫 번째 행 1개만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 1)
-      console.log(`🔍 베드 타입 해석 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
+      // 1번째부터 3번째 행까지 순차적으로 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 3)
+      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
         const roomName = rp.RoomName || 'N/A'
         const description = rp.Description || 'N/A'
-        const key = `${roomType}-${roomName}`
+        const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
         
-        console.log(`🔍 ${i + 1}번째 객실 베드 타입 해석 중:`, { roomType, roomName, description, key })
+        // 현재 처리 중인 행 번호 업데이트
+        setCurrentProcessingRow(i)
+        console.log(`🔍 ${i + 1}번째 객실 소개 생성 중:`, { roomType, roomName, description, introKey, currentRow: i })
         
         try {
-          const bedType = await interpretBedType(description, roomName)
-          bedTypeMap.set(key, bedType)
-          console.log(`✅ ${i + 1}번째 객실 베드 타입 해석 완료:`, bedType, 'key:', key)
+          const intro = await generateRoomIntroduction({
+            roomType: roomType,
+            roomName: roomName,
+            description: description
+          }, hotelName)
+          
+          // 즉시 상태 업데이트 (1행씩 표시)
+          setRoomIntroductions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(introKey, intro)
+            return newMap
+          })
+          
+          console.log(`✅ ${i + 1}번째 객실 소개 생성 완료 및 즉시 표시:`, intro, 'key:', introKey)
           
           // API 호출 간격 조절 (rate limiting 방지)
           if (i < roomsToProcess.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 300))
+            await new Promise(resolve => setTimeout(resolve, 500))
           }
         } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 베드 타입 해석 실패:`, roomError)
+          console.error(`❌ ${i + 1}번째 객실 소개 생성 실패:`, roomError)
           // 개별 객실 실패 시 fallback 사용
-          const fallbackType = '베드 정보 없음'
-          bedTypeMap.set(key, fallbackType)
-          console.log(`🔄 ${i + 1}번째 객실 fallback 베드 타입 사용:`, fallbackType, 'key:', key)
+          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
+          
+          // 즉시 상태 업데이트 (fallback도 1행씩 표시)
+          setRoomIntroductions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(introKey, fallbackIntro)
+            return newMap
+          })
+          
+          console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용 및 즉시 표시:`, fallbackIntro, 'key:', introKey)
         }
       }
       
-      console.log('✅ 생성된 베드 타입:', bedTypeMap)
-      setBedTypes(bedTypeMap)
-      console.log('💾 베드 타입 상태 업데이트 완료')
+      console.log('✅ 모든 객실 소개 순차 처리 완료')
       
     } catch (error) {
-      console.error('❌ 베드 타입 해석 오류:', error)
-      // 에러 발생 시 기본 베드 타입 생성 (첫 번째 행만)
-      const fallbackTypes = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 1)
-      roomsToProcess.forEach((rp: any) => {
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const key = `${roomType}-${roomName}`
-        const fallbackType = '베드 정보 없음'
-        fallbackTypes.set(key, fallbackType)
-        console.log('🔄 fallback 베드 타입 생성:', { key, fallbackType })
-      })
-      console.log('🔄 fallback 베드 타입 전체:', fallbackTypes)
-      setBedTypes(fallbackTypes)
+      console.error('❌ 객실 소개 AI 생성 중 오류 발생:', error)
     } finally {
-      setIsGeneratingBedTypes(false)
-      console.log('🏁 베드 타입 해석 완료')
+      setIsGeneratingIntroductions(false)
+      setCurrentProcessingRow(-1) // 처리 완료 후 초기화
+      console.log('🏁 객실 소개 AI 생성 완료')
     }
   }
 
@@ -338,15 +355,21 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       return
     }
     
+    // 이미 처리 중이면 중복 실행 방지
+    if (isGeneratingRoomNames) {
+      console.log('⚠️ 이미 객실명 생성 중이므로 중복 실행 방지')
+      return
+    }
+    
     setIsGeneratingRoomNames(true)
     console.log('🔄 글로벌 호텔 OTA 스타일 객실명 생성 시작...')
     
     try {
       const roomNames = new Map<string, string>()
       
-      // 첫 번째 행 1개만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 1)
-      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
+      // 1번째부터 3번째 행까지 순차적으로 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 3)
+      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
@@ -359,8 +382,15 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         
         try {
           const otaStyleName = await generateGlobalOTAStyleRoomName(roomType, roomName, description, hotelName)
-          roomNames.set(key, otaStyleName)
-          console.log(`✅ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 완료:`, otaStyleName, 'key:', key)
+          
+          // 즉시 상태 업데이트 (1행씩 표시)
+          setGlobalOTAStyleRoomNames(prev => {
+            const newMap = new Map(prev)
+            newMap.set(key, otaStyleName)
+            return newMap
+          })
+          
+          console.log(`✅ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 완료 및 즉시 표시:`, otaStyleName, 'key:', key)
           
           // API 호출 간격 조절 (rate limiting 방지)
           if (i < roomsToProcess.length - 1) {
@@ -370,14 +400,19 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           console.error(`❌ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 실패:`, roomError)
           // 개별 객실 실패 시 fallback 사용
           const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
-          roomNames.set(key, fallbackName)
-          console.log(`🔄 ${i + 1}번째 객실 fallback 객실명 사용:`, fallbackName, 'key:', key)
+          
+          // 즉시 상태 업데이트 (fallback도 1행씩 표시)
+          setGlobalOTAStyleRoomNames(prev => {
+            const newMap = new Map(prev)
+            newMap.set(key, fallbackName)
+            return newMap
+          })
+          
+          console.log(`🔄 ${i + 1}번째 객실 fallback 객실명 사용 및 즉시 표시:`, fallbackName, 'key:', key)
         }
       }
       
-      console.log('✅ 생성된 글로벌 호텔 OTA 스타일 객실명:', roomNames)
-      setGlobalOTAStyleRoomNames(roomNames)
-      console.log('💾 글로벌 호텔 OTA 스타일 객실명 상태 업데이트 완료')
+      console.log('✅ 모든 객실명 순차 처리 완료')
       
     } catch (error) {
       console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error)
@@ -418,68 +453,86 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       return
     }
     
+    // 이미 처리 중이면 중복 실행 방지
+    if (isGeneratingIntroductions) {
+      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지')
+      return
+    }
+    
     setIsGeneratingIntroductions(true)
     console.log('🔄 객실 소개 생성 시작...')
     
     try {
-      // 첫 번째 행 1개만 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 1)
-      const roomInfos = roomsToProcess.map((rp: any) => ({
-        roomType: rp.RoomType || rp.RoomName || 'N/A',
-        roomName: rp.RoomName || 'N/A',
-        description: rp.Description || 'N/A',
-        rateKey: rp.RateKey || 'N/A',
-      }))
+      // 1번째부터 3번째 행까지 1행씩 순차적으로 AI 처리
+      const roomsToProcess = ratePlans.slice(0, 3)
       
-      console.log('📋 변환된 객실 정보:', roomInfos)
-      console.log(`🔍 객실 소개 생성 대상: ${roomInfos.length}개 객실 (전체 ${ratePlans.length}개 중 첫 번째 행만)`)
+      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
       console.log('🏨 호텔명:', hotelName)
       
-      // 첫 번째 행만 OpenAI API 적용
-      console.log('🚀 첫 번째 행만 OpenAI API 적용...')
-      const allIntroductions = new Map<string, string>()
+      // 1행씩 순차적으로 OpenAI API 적용하고 즉시 표시
+      console.log('🚀 1행씩 순차적으로 OpenAI API 적용 및 즉시 표시...')
       
       try {
-        // 첫 번째 행에 대해서만 OpenAI API 호출
-        console.log('📋 처리할 객실 수:', roomInfos.length)
+        // 1행씩 순차적으로 OpenAI API 호출
+        console.log('📋 처리할 객실 수:', roomsToProcess.length)
         
-        for (let i = 0; i < roomInfos.length; i++) {
-          const room = roomInfos[i]
-          const key = `${room.roomType}-${room.roomName}-${room.rateKey}`
-          console.log(`🔍 ${i + 1}번째 객실 처리 중:`, room, 'key:', key)
+        for (let i = 0; i < roomsToProcess.length; i++) {
+          const rp = roomsToProcess[i]
+          const roomType = rp.RoomType || rp.RoomName || 'N/A'
+          const roomName = rp.RoomName || 'N/A'
+          const description = rp.Description || 'N/A'
+          const rateKey = rp.RateKey || 'N/A'
+          const key = `${roomType}-${roomName}-${rateKey}`
+          
+          console.log(`🔍 ${i + 1}번째 객실 처리 중:`, { roomType, roomName, description, rateKey, key })
           
           try {
-            const intro = await generateRoomIntroduction(room, hotelName)
-            allIntroductions.set(key, intro)
-            console.log(`✅ ${i + 1}번째 객실 AI 소개문 생성 완료:`, intro, 'key:', key)
+            const intro = await generateRoomIntroduction({
+              roomType: roomType,
+              roomName: roomName,
+              description: description
+            }, hotelName)
+            
+            // 즉시 상태 업데이트 (1행씩 표시)
+            setRoomIntroductions(prev => {
+              const newMap = new Map(prev)
+              newMap.set(key, intro)
+              return newMap
+            })
+            
+            console.log(`✅ ${i + 1}번째 객실 AI 소개문 생성 완료 및 즉시 표시:`, intro, 'key:', key)
             
             // API 호출 간격 조절 (rate limiting 방지)
-            if (i < roomInfos.length - 1) {
+            if (i < roomsToProcess.length - 1) {
               await new Promise(resolve => setTimeout(resolve, 500))
             }
           } catch (roomError) {
             console.error(`❌ ${i + 1}번째 객실 AI 소개문 생성 실패:`, roomError)
             // 개별 객실 실패 시 fallback 사용
-            const fallbackIntro = `${hotelName}의 ${room.roomType} ${room.roomName} 객실입니다. ${room.description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-            allIntroductions.set(key, fallbackIntro)
-            console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용:`, fallbackIntro, 'key:', key)
+            const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
+            
+            // 즉시 상태 업데이트 (fallback도 1행씩 표시)
+            setRoomIntroductions(prev => {
+              const newMap = new Map(prev)
+              newMap.set(key, fallbackIntro)
+              return newMap
+            })
+            
+            console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용 및 즉시 표시:`, fallbackIntro, 'key:', key)
           }
         }
         
-        const introductions = allIntroductions
-        
-        console.log('✅ 생성된 객실 소개:', introductions)
-        console.log('📊 소개문 개수:', introductions.size)
-        
-        setRoomIntroductions(introductions)
-        console.log('💾 상태 업데이트 완료')
+        console.log('✅ 모든 객실 소개문 순차 처리 완료')
       } catch (apiError) {
-        console.error('❌ OpenAI API 배치 처리 중 오류:', apiError)
-        // API 오류 시 첫 번째 행만 fallback 소개문 생성
+        console.error('❌ OpenAI API 순차 처리 중 오류:', apiError)
+        // API 오류 시 3행까지 fallback 소개문 생성
         const fallbackIntroductions = new Map<string, string>()
-        roomInfos.forEach((room) => {
-          const key = `${room.roomType}-${room.roomName}-${room.rateKey}`
-          const fallbackIntro = `${hotelName}의 ${room.roomType} ${room.roomName} 객실입니다. ${room.description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
+        roomsToProcess.forEach((rp: any) => {
+          const roomType = rp.RoomType || rp.RoomName || 'N/A'
+          const roomName = rp.RoomName || 'N/A'
+          const rateKey = rp.RateKey || 'N/A'
+          const key = `${roomType}-${roomName}-${rateKey}`
+          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${rp.Description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
           fallbackIntroductions.set(key, fallbackIntro)
           console.log('🔄 fallback 소개문 생성:', { key, fallbackIntro })
         })
@@ -488,9 +541,9 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       }
     } catch (error) {
       console.error('❌ 객실 소개 생성 오류:', error)
-      // 에러 발생 시 기본 소개문 생성 (첫 번째 행만)
+      // 에러 발생 시 기본 소개문 생성 (3행까지만)
       const fallbackIntroductions = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 1)
+      const roomsToProcess = ratePlans.slice(0, 3)
       roomsToProcess.forEach((rp: any) => {
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
         const roomName = rp.RoomName || 'N/A'
@@ -739,8 +792,6 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     }
   }, [hotel?.sabre_id])
 
-
-
   // Sabre API를 통해 호텔 상세 정보 조회
   const { data: sabreData, isLoading: sabreLoading, error: sabreError } = useQuery({
     queryKey: ['sabre-hotel-details', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut],
@@ -835,6 +886,58 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
     extractedRatePlanCodes: ratePlanCodes,
     ratePlanCodesLength: ratePlanCodes?.length
   })
+
+  // 베드 타입 추출 함수 (객실 소개 데이터에서)
+  const extractBedTypeFromDescription = (description: string): string => {
+    if (!description || description === 'N/A') return '정보 없음'
+    
+    // 베드 타입 키워드 매칭
+    const bedKeywords = [
+      { keyword: 'KING BED', type: '킹 베드' },
+      { keyword: 'TWIN BED', type: '트윈 베드' },
+      { keyword: 'DOUBLE BED', type: '더블 베드' },
+      { keyword: 'SINGLE BED', type: '싱글 베드' },
+      { keyword: 'QUEEN BED', type: '퀸 베드' },
+      { keyword: 'KING', type: '킹 베드' },
+      { keyword: 'TWIN', type: '트윈 베드' },
+      { keyword: 'DOUBLE', type: '더블 베드' },
+      { keyword: 'SINGLE', type: '싱글 베드' },
+      { keyword: 'QUEEN', type: '퀸 베드' },
+      { keyword: '1 KING', type: '킹 베드 1개' },
+      { keyword: '2 TWIN', type: '트윈 베드 2개' },
+      { keyword: '1 DOUBLE', type: '더블 베드 1개' },
+      { keyword: '1 SINGLE', type: '싱글 베드 1개' },
+      { keyword: '1 QUEEN', type: '퀸 베드 1개' }
+    ]
+    
+    const upperDescription = description.toUpperCase()
+    
+    for (const { keyword, type } of bedKeywords) {
+      if (upperDescription.includes(keyword)) {
+        return type
+      }
+    }
+    
+    return '베드 정보 없음'
+  }
+
+  // ratePlanCodes가 변경될 때 AI 처리 함수들 호출 (한 번만)
+  useEffect(() => {
+    if (ratePlanCodes && ratePlanCodes.length > 0 && hotel?.property_name_ko && !hasProcessedAI) {
+      console.log('🚀 ratePlanCodes 변경 감지, AI 처리 함수들 호출 시작 (한 번만):', {
+        ratePlanCodesLength: ratePlanCodes.length,
+        hotelName: hotel.property_name_ko,
+        hasProcessedAI: hasProcessedAI
+      })
+      
+      // AI 처리 플래그 설정
+      setHasProcessedAI(true)
+      
+      // AI 처리 함수들 호출 (객실 소개만 순차 처리)
+      generateGlobalOTAStyleRoomNames(ratePlanCodes, hotel.property_name_ko)
+      generateRoomIntroductionsSequential(ratePlanCodes, hotel.property_name_ko)
+    }
+  }, [ratePlanCodes, hotel?.property_name_ko, hasProcessedAI])
 
   // Rate Plan 데이터 추출 함수
   function extractRatePlansFromSabreData(sabreData: any): any[] {
@@ -1031,16 +1134,16 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                   BookingCode: bookingCode,
                   originalData: p
                 })
-                
-                ratePlans.push({
-                  RateKey: rateKey,
+            
+            ratePlans.push({
+              RateKey: rateKey,
                   RoomType: roomType,
                   RoomName: roomName,
                   Description: description,
               RoomViewDescription: roomViewDescription,
-                  Currency: currency,
-                  AmountAfterTax: amountAfterTax,
-                  AmountBeforeTax: amountBeforeTax,
+              Currency: currency,
+              AmountAfterTax: amountAfterTax,
+              AmountBeforeTax: amountBeforeTax,
                   RoomTypeCode: roomTypeCode,
                   BookingCode: bookingCode,
               // 원본 데이터도 보존
@@ -1127,7 +1230,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       console.log('✅ 6차 경로: Rooms 정보 발견:', roomsNode4)
       const result = extractRatePlansFromRooms(roomsNode4, deepGet)
       console.log('✅ 6차 경로 결과:', result)
-      return result
+            return result
     }
     
         console.log('❌ 모든 경로에서 Rate Plan 데이터를 찾을 수 없음')
@@ -1866,167 +1969,188 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">객실 타입별 요금 상세</h3>
               
-              {/* Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200 text-sm">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px]">객실명</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">View</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
-                      ratePlanCodes.map((rp: any, idx: number) => {
-                        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-                        const roomName = rp.RoomName || 'N/A'
-                        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
-                        const currency = rp.Currency || 'KRW'
-                        const rateKey: string = rp.RateKey || 'N/A'
-                        const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
-                        
-                        // AI 처리 함수들과 동일한 키 생성 방식 사용
-                        const rowKey = `${roomType}-${roomName}`
-                        const introKey = `${roomType}-${roomName}-${rateKey}`
-                        const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
-                        
-                        // 디버깅을 위한 로그 (첫 번째 행만)
-                        if (idx === 0) {
-                          console.log('🔍 테이블 렌더링 디버깅:', {
-                            idx,
-                            roomType,
-                            roomName,
-                            rowKey,
-                            globalOTAStyleRoomName: globalOTAStyleRoomNames.get(rowKey),
-                            bedType: bedTypes.get(rowKey),
-                            roomIntroduction: roomIntroductions.get(rowKey),
-                            allGlobalOTAStyleKeys: Array.from(globalOTAStyleRoomNames.keys()),
-                            allBedTypeKeys: Array.from(bedTypes.keys()),
-                            allIntroductionKeys: Array.from(roomIntroductions.keys())
-                          })
-                        }
-                        
-                        return (
-                          <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px]">
-                              <div className="text-gray-700 font-medium">
-                                {isGeneratingRoomNames && idx === 0 ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                    <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
-                                  </div>
-                                ) : (
-                                  globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
+              {/* 데이터가 있을 때만 테이블 표시 */}
+              {Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
+                <>
+                  {/* Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-200 text-sm">
+                      <thead>
+                        <tr className="bg-gray-200">
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
+                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ratePlanCodes.map((rp: any, idx: number) => {
+                          const roomType = rp.RoomType || rp.RoomName || 'N/A'
+                          const roomName = rp.RoomName || 'N/A'
+                          const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
+                          const currency = rp.Currency || 'KRW'
+                          const rateKey: string = rp.RateKey || 'N/A'
+                          const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
+                          
+                          // AI 처리 함수들과 동일한 키 생성 방식 사용
+                          const rowKey = `${roomType}-${roomName}`
+                          const introKey = `${roomType}-${roomName}-${rateKey}`
+                          const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
+                          
+                          // 디버깅을 위한 로그 (첫 번째 행만)
+                          if (idx === 0) {
+                            console.log('🔍 테이블 렌더링 디버깅:', {
+                              idx,
+                              roomType,
+                              roomName,
+                              rowKey,
+                              globalOTAStyleRoomName: globalOTAStyleRoomNames.get(rowKey),
+                              bedType: bedTypes.get(rowKey),
+                              roomIntroduction: roomIntroductions.get(rowKey),
+                              allGlobalOTAStyleKeys: Array.from(globalOTAStyleRoomNames.keys()),
+                              allBedTypeKeys: Array.from(bedTypes.keys()),
+                              allIntroductionKeys: Array.from(roomIntroductions.keys())
+                            })
+                          }
+                          
+                          return (
+                            <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px] hidden">
+                                <div className="text-gray-700 font-medium">
+                                  {isGeneratingRoomNames && idx === 0 ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
+                                    </div>
+                                  ) : (
+                                    globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
+                                  )}
+                                </div>
+                              </td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px] hidden">
+                                <div className="text-gray-700 font-medium">
+                                  {rp.RoomViewDescription || 'N/A'}
+                                </div>
+                              </td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
+                                <div className="text-gray-700 font-medium">
+                                  {extractBedTypeFromDescription(rp.Description || 'N/A')}
+                                </div>
+                              </td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
+                                <div className="text-gray-700">
+                                  {roomIntroductions.has(introKey) ? (
+                                    roomIntroduction
+                                  ) : isGeneratingIntroductions && currentProcessingRow === idx ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                      <span className="text-gray-500 text-xs">AI 처리 중...</span>
+                                    </div>
+                                  ) : (
+                                    rp.Description || 'N/A'
+                                  )}
+                                </div>
+                              </td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                                {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
+                                  `${parseInt(String(amount)).toLocaleString()}` : 
+                                  <span className="text-red-500">요금 정보 없음</span>
+                                }
+                              </td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
+                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                                <button
+                                  type="button"
+                                  title={typeof rateKey === 'string' ? rateKey : ''}
+                                  onClick={() => copyRateKey(String(rateKey), idx)}
+                                  className="font-mono underline decoration-dotted hover:text-blue-600"
+                                >
+                                  {shortRateKey}
+                                </button>
+                                {copiedRateKeyRow === idx && (
+                                  <span className="ml-2 text-xs text-green-600">Copied</span>
                                 )}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
-                              <div className="text-gray-700 font-medium">
-                                {rp.RoomViewDescription || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
-                              <div className="text-gray-700 font-medium">
-                                {isGeneratingBedTypes && idx === 0 ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                    <span className="text-gray-500">AI가 베드 구성을 해석 중입니다...</span>
-                                  </div>
-                                ) : (
-                                  bedTypes.get(rowKey) || '정보 없음'
-                                )}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
-                              <div className="text-gray-700">
-                                {roomIntroductions.has(introKey) ? (
-                                  roomIntroduction
-                                ) : isGeneratingIntroductions && idx === 0 ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                    <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
-                                  </div>
-                                ) : (
-                                  rp.Description || 'N/A'
-                                )}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                              {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
-                                `${parseInt(String(amount)).toLocaleString()} ${currency}` : 
-                                <span className="text-red-500">요금 정보 없음</span>
-                              }
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                              <button
-                                type="button"
-                                title={typeof rateKey === 'string' ? rateKey : ''}
-                                onClick={() => copyRateKey(String(rateKey), idx)}
-                                className="font-mono underline decoration-dotted hover:text-blue-600"
-                              >
-                                {shortRateKey}
-                              </button>
-                              {copiedRateKeyRow === idx && (
-                                <span className="ml-2 text-xs text-green-600">Copied</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })
-                    ) : (
-                      <tr>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터 없음</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">데이터가 없습니다</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500 text-right">0</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">KRW</td>
-                        <td className="border border-gray-200 px-4 py-3 text-sm text-gray-500">N/A</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                        </tbody>
+                    </table>
+                  </div>
 
-              {/* Table Legend */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-600">
-                  <div>
-                    <span className="font-medium">객실명:</span> AI가 글로벌 호텔 OTA 스타일로 생성한 객실명
+                  {/* Table Legend */}
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-600">
+                      <div>
+                        <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
+                      </div>
+                      <div>
+                        <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
+                      </div>
+                      <div>
+                        <span className="font-medium">총 요금:</span> 세금 포함 최종 요금
+                      </div>
+                      <div>
+                        <span className="font-medium">통화:</span> 요금 단위
+                      </div>
+                      <div>
+                        <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
+                </>
+              ) : (
+                /* 데이터가 없을 때 표시할 메시지 */
+                <div className="text-center py-12">
+                  <div className="mb-6">
+                    <div className="text-6xl mb-4">🏨</div>
+                    <h4 className="text-xl font-semibold text-gray-700 mb-4">
+                      해당 일자에 예약 가능한 객실이 조회되지 않습니다.
+                    </h4>
+                    <p className="text-gray-600 mb-6">
+                      호텔 전문 컨시어지 상담이나 전화를 해주시면 상세히 안내해 드리겠습니다.
+                    </p>
                   </div>
-                  <div>
-                    <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
+                  
+                  {/* 상담하기 버튼 */}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <button 
+                      onClick={() => {
+                        // 전화 걸기
+                        window.open('tel:1588-0000', '_self')
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      전화 상담
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        // 카카오톡 상담 (예시)
+                        window.open('https://pf.kakao.com/_your_kakao_channel', '_blank')
+                      }}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C6.486 3 2 6.262 2 10.2c0 2.4 1.6 4.5 4 5.8V21l3.5-2c.5.1 1 .1 1.5.1 5.514 0 10-3.262 10-7.2S17.514 3 12 3z"/>
+                      </svg>
+                      카카오톡 상담
+                    </button>
                   </div>
-                  <div>
-                    <span className="font-medium">RoomType:</span> 객실 등급과 코드
-                  </div>
-                  <div>
-                    <span className="font-medium">RoomName:</span> 객실의 정확한 이름
-                  </div>
-                  <div>
-                    <span className="font-medium">Description:</span> 객실에 대한 상세 정보
-                  </div>
-                  <div>
-                    <span className="font-medium">총 요금:</span> 세금 포함 최종 요금
-                  </div>
-                  <div>
-                    <span className="font-medium">통화:</span> 요금 단위
-                  </div>
-                  <div>
-                    <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
+                  
+                  <div className="mt-6 text-sm text-gray-500">
+                    <p>상담 시간: 평일 09:00 - 18:00</p>
+                    <p>전화: 1588-0000</p>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Sabre API 호텔 상세 정보 테이블 */}
               <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
