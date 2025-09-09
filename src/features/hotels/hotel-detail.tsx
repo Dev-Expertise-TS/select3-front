@@ -742,7 +742,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
 
 
   // Sabre API를 통해 호텔 상세 정보 조회
-  const { data: sabreHotelInfo, isLoading: sabreLoading, error: sabreError } = useQuery({
+  const { data: sabreData, isLoading: sabreLoading, error: sabreError } = useQuery({
     queryKey: ['sabre-hotel-details', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut],
     queryFn: async () => {
       if (!hotel?.sabre_id) return null
@@ -752,13 +752,40 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
       const endDate = searchDates.checkOut || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       
       try {
+        // rate_plan_code 파싱 (JSON 문자열 또는 배열 형태)
+        let requestRatePlanCodes: string[] = []
+        
+        if (hotel?.rate_plan_code) {
+          try {
+            // JSON 문자열인 경우 파싱
+            if (typeof hotel.rate_plan_code === 'string') {
+              const parsed = JSON.parse(hotel.rate_plan_code)
+              requestRatePlanCodes = Array.isArray(parsed) ? parsed : [parsed]
+            } else if (Array.isArray(hotel.rate_plan_code)) {
+              requestRatePlanCodes = hotel.rate_plan_code
+            } else {
+              requestRatePlanCodes = [String(hotel.rate_plan_code)]
+            }
+          } catch (parseError) {
+            console.warn('rate_plan_code 파싱 실패, 기본값 사용:', parseError)
+            requestRatePlanCodes = []
+          }
+        }
+        
+        console.log('🔍 호텔 rate_plan_code 정보:', {
+          raw: hotel?.rate_plan_code,
+          parsed: requestRatePlanCodes,
+          type: typeof hotel?.rate_plan_code
+        })
+        
         // 내부 API 라우트 호출
         const requestBody = {
           hotelCode: hotel.sabre_id.toString(),
           startDate: startDate,
           endDate: endDate,
           adults: 2,
-          rooms: 1
+          rooms: 1,
+          ratePlanCodes: requestRatePlanCodes.length > 0 ? requestRatePlanCodes : undefined
         }
 
         console.log('📤 Hotel Details API 요청:', requestBody)
@@ -777,8 +804,12 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
         }
         
         const result = await response.json()
-        if (result.success && result.data?.GetHotelDetailsRS?.HotelDetailsInfo?.HotelInfo) {
-          return result.data.GetHotelDetailsRS.HotelDetailsInfo.HotelInfo
+        if (result.success && result.data?.GetHotelDetailsRS) {
+          // HotelInfo와 Rate Plan 데이터를 모두 반환
+          return {
+            hotelInfo: result.data.GetHotelDetailsRS.HotelDetailsInfo?.HotelInfo,
+            ratePlans: result.data.GetHotelDetailsRS // Rate Plan 데이터는 전체 응답에서 추출
+          }
         }
         return null
       } catch (error) {
@@ -792,109 +823,37 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
 
 
 
-  // Sabre API에서 Rate Plan 데이터 조회 및 처리
-  const { data: ratePlanCodes, isLoading: ratePlanLoading, error: ratePlanError } = useQuery({
-    queryKey: ['sabre-rate-plans', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut],
-    queryFn: async () => {
-      if (!hotel?.sabre_id) {
-        console.log('⚠️ hotel.sabre_id가 없음')
-        return null
-      }
-      
-      // 날짜가 없으면 기본값 사용 (체크인은 오늘, 체크아웃은 2주 뒤)
-      const startDate = searchDates.checkIn || new Date().toISOString().split('T')[0]
-      const endDate = searchDates.checkOut || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      
-      console.log('🚀 Sabre API 호출 시작 - Hotel Details:', hotel.sabre_id)
-      console.log('📅 사용할 날짜:', { startDate, endDate })
-      
-      try {
-        // 1단계: Sabre API 직접 호출 시도
-        const requestBody = {
-          HotelCode: hotel.sabre_id.toString(),
-          CurrencyCode: 'KRW',
-          StartDate: startDate,
-          EndDate: endDate,
-          Adults: 2,
-          Children: 0,
-          Rooms: 1
-        }
-        
-        console.log('📤 Sabre API 요청 데이터:', requestBody)
-        
-        const response = await fetch('/api/hotel-details', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            hotelCode: hotel.sabre_id.toString(),
-            startDate: startDate,
-            endDate: endDate,
-            adults: 2,
-            rooms: 1
-          }),
-          signal: AbortSignal.timeout(30000)
-        })
-        
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('Hotel Details API 응답 오류:', response.status, response.statusText, errorData)
-          throw new Error(errorData.error || `API 호출 실패: ${response.status} ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        if (!result.success) {
-          throw new Error(result.error || 'Hotel Details API 호출 실패')
-        }
-        
-        const sabreData = result.data
-        console.log('✅ Rate Plans API 응답 성공:', {
-          dataType: typeof sabreData,
-          isArray: Array.isArray(sabreData),
-          length: Array.isArray(sabreData) ? sabreData.length : 'Not an array',
-          keys: sabreData ? Object.keys(sabreData) : 'No data',
-          fullData: sabreData
-        })
-        
-        // Sabre API 응답에서 뷰 관련 정보 검색
-        const searchForViewInfo = (obj: any, path: string = ''): any[] => {
-          const viewInfo: any[] = []
-          
-          if (!obj || typeof obj !== 'object') return viewInfo
-          
-          for (const [key, value] of Object.entries(obj)) {
-            const currentPath = path ? `${path}.${key}` : key
-            
-            // 뷰 관련 키워드가 포함된 필드 검색
-            if (key.toLowerCase().includes('view') || 
-                key.toLowerCase().includes('outlook') ||
-                key.toLowerCase().includes('scenic') ||
-                key.toLowerCase().includes('ocean') ||
-                key.toLowerCase().includes('city') ||
-                key.toLowerCase().includes('garden') ||
-                key.toLowerCase().includes('mountain')) {
-              viewInfo.push({
-                path: currentPath,
-                key: key,
-                value: value,
-                type: typeof value
-              })
-            }
-            
-            // 중첩된 객체 재귀 검색
-            if (value && typeof value === 'object') {
-              viewInfo.push(...searchForViewInfo(value, currentPath))
-            }
-          }
-          
-          return viewInfo
-        }
-        
-        const viewInfo = searchForViewInfo(sabreData)
-        console.log('🔍 Sabre API 응답에서 발견된 뷰 관련 정보:', viewInfo)
-        
-        // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
+  // sabreData에서 hotelInfo와 ratePlans 분리
+  const sabreHotelInfo = sabreData?.hotelInfo
+  const ratePlanCodes = sabreData?.ratePlans ? extractRatePlansFromSabreData(sabreData.ratePlans) : null
+  
+  // 디버깅 로그 추가
+  console.log('🔍 Sabre API 응답 데이터:', {
+    sabreData: sabreData,
+    sabreHotelInfo: sabreHotelInfo,
+    ratePlans: sabreData?.ratePlans,
+    extractedRatePlanCodes: ratePlanCodes,
+    ratePlanCodesLength: ratePlanCodes?.length
+  })
+
+  // Rate Plan 데이터 추출 함수
+  function extractRatePlansFromSabreData(sabreData: any): any[] {
+    console.log('🔍 extractRatePlansFromSabreData 호출됨:', sabreData)
+    if (!sabreData) {
+      console.log('❌ sabreData가 없음')
+      return []
+    }
+    
+    // Sabre API 응답 구조 전체 분석
+    console.log('🔍 Sabre API 응답 구조 분석:', {
+      topLevelKeys: Object.keys(sabreData),
+      hotelDetailsInfo: sabreData.HotelDetailsInfo ? Object.keys(sabreData.HotelDetailsInfo) : '없음',
+      hotelRateInfo: sabreData.HotelDetailsInfo?.HotelRateInfo ? Object.keys(sabreData.HotelDetailsInfo.HotelRateInfo) : '없음',
+      rooms: sabreData.HotelDetailsInfo?.HotelRateInfo?.Rooms ? Object.keys(sabreData.HotelDetailsInfo.HotelRateInfo.Rooms) : '없음',
+      ratePlans: sabreData.HotelDetailsInfo?.RatePlans ? Object.keys(sabreData.HotelDetailsInfo.RatePlans) : '없음'
+    })
+    
+    // deepGet 유틸리티 함수
         const deepGet = (obj: unknown, keys: string[]): unknown => {
           let cur: unknown = obj
           for (const key of keys) {
@@ -907,13 +866,18 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
           return cur
         }
         
-        // Rooms에서 Rate Plan 정보 추출하는 헬퍼 함수
+    // Rooms에서 Rate Plan 정보 추출
         const extractRatePlansFromRooms = (roomsNode: unknown, deepGetFn: (obj: unknown, keys: string[]) => unknown): any[] => {
+          console.log('🔍 extractRatePlansFromRooms 호출됨:', roomsNode)
           const roomArray: unknown[] = Array.isArray(roomsNode) ? roomsNode : [roomsNode]
           const ratePlans: any[] = []
           
-          for (const room of roomArray) {
-            const r = room as Record<string, unknown>
+          console.log('🔍 처리할 Room 개수:', roomArray.length)
+          
+          for (let i = 0; i < roomArray.length; i++) {
+            const room = roomArray[i]
+            const r = room as any
+            console.log(`🔍 ${i + 1}번째 Room 처리 중:`, r)
             
             // Room 기본 정보 추출
             const rt = deepGetFn(r, ['RoomType'])
@@ -926,907 +890,251 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               (typeof (descSrc as unknown[])[0] === 'string' ? (descSrc as unknown[])[0] as string : '') : 
               (typeof descSrc === 'string' ? descSrc as string : '')
             
+        // RoomViewDescription 추출 (다양한 경로 시도)
+        let roomViewDescription = null
+        roomViewDescription = deepGetFn(r, ['RoomViewDescription']) || r.RoomViewDescription
+        if (!roomViewDescription) { roomViewDescription = deepGetFn(r, ['Room', 'RoomViewDescription']) }
+        if (!roomViewDescription && Array.isArray(r.Room)) { 
+          roomViewDescription = r.Room.find((roomItem: any) => roomItem.RoomViewDescription)?.RoomViewDescription 
+        }
+        if (!roomViewDescription && r.RatePlans && r.RatePlans.RatePlan) {
+          const ratePlanArray = Array.isArray(r.RatePlans.RatePlan) ? r.RatePlans.RatePlan : [r.RatePlans.RatePlan]
+          roomViewDescription = ratePlanArray.find((rp: any) => rp.RoomViewDescription)?.RoomViewDescription
+        }
+        if (!roomViewDescription) { roomViewDescription = 'N/A' }
+            
             // RatePlans 정보 추출
             const plansNode = deepGetFn(r, ['RatePlans', 'RatePlan'])
+            console.log(`🔍 ${i + 1}번째 Room의 RatePlans 정보:`, plansNode)
             if (plansNode) {
               const plans: unknown[] = Array.isArray(plansNode) ? plansNode : [plansNode]
+              console.log(`🔍 ${i + 1}번째 Room의 RatePlan 개수:`, plans.length)
               
               for (const plan of plans) {
                 const p = plan as Record<string, unknown>
                 
-                // RateKey 추출 - 핵심 부분
-                const rateKeyVal = deepGetFn(p, ['RateKey'])
-                const rateKey: string = typeof rateKeyVal === 'string' ? rateKeyVal : ''
+            // RateKey 추출 (다양한 경로 시도)
+                const rateKey: string = (() => {
+                  // 다양한 경로에서 RateKey 추출
+                  const paths = [
+                    ['RateKey'],
+                    ['RatePlanCode'],
+                    ['BookingCode'],
+                    ['RateCode'],
+                    ['PlanCode'],
+                    ['Code'],
+                    ['Id']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'string' && v) return v
+                  }
+                  return ''
+                })()
                 
-                // 기타 요금 정보 추출
+                // 기타 요금 정보 추출 (다양한 경로 시도)
                 const currency: string = (() => {
-                  const v = deepGetFn(p, ['ConvertedRateInfo', 'CurrencyCode'])
-                  return typeof v === 'string' ? v : ''
+                  // 다양한 경로에서 통화 정보 추출
+                  const paths = [
+                    ['ConvertedRateInfo', 'CurrencyCode'],
+                    ['RateInfo', 'CurrencyCode'],
+                    ['CurrencyCode'],
+                    ['Currency']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'string' && v) return v
+                  }
+                  return 'KRW' // 기본값
                 })()
                 
-                const amountAfterTax = (() => {
-                  const v = deepGetFn(p, ['ConvertedRateInfo', 'AmountAfterTax'])
-                  if (typeof v === 'number') return v
-                  if (typeof v === 'string') {
-                    const parsed = parseFloat(v)
-                    return isNaN(parsed) ? '' : parsed
+            const amountAfterTax: number = (() => {
+                  // 다양한 경로에서 세후 요금 추출
+                  const paths = [
+                    ['ConvertedRateInfo', 'AmountAfterTax'],
+                    ['RateInfo', 'AmountAfterTax'],
+                    ['AmountAfterTax'],
+                    ['TotalAmount'],
+                    ['Amount'],
+                    ['Price']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'number' && v > 0) return v
+                    if (typeof v === 'string' && v && !isNaN(Number(v))) return Number(v)
+                  }
+                  return 0
+            })()
+            
+            const amountBeforeTax: number = (() => {
+                  // 다양한 경로에서 세전 요금 추출
+                  const paths = [
+                    ['ConvertedRateInfo', 'AmountBeforeTax'],
+                    ['RateInfo', 'AmountBeforeTax'],
+                    ['AmountBeforeTax'],
+                    ['BaseAmount'],
+                    ['SubTotal']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'number' && v > 0) return v
+                    if (typeof v === 'string' && v && !isNaN(Number(v))) return Number(v)
+                  }
+                  return 0
+                })()
+                
+                // RoomTypeCode와 BookingCode 추출
+                const roomTypeCode: string = (() => {
+                  const paths = [
+                    ['RoomTypeCode'],
+                    ['RoomCode'],
+                    ['TypeCode'],
+                    ['Room', 'RoomTypeCode'],
+                    ['Room', 'Code']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'string' && v) return v
                   }
                   return ''
                 })()
                 
-                const amountBeforeTax = (() => {
-                  const v = deepGetFn(p, ['ConvertedRateInfo', 'AmountBeforeTax'])
-                  if (typeof v === 'number') return v
-                  if (typeof v === 'string') {
-                    const parsed = parseFloat(v)
-                    return isNaN(parsed) ? '' : parsed
+                const bookingCode: string = (() => {
+                  const paths = [
+                    ['BookingCode'],
+                    ['RatePlanCode'],
+                    ['PlanCode'],
+                    ['Code'],
+                    ['Id']
+                  ]
+                  
+                  for (const path of paths) {
+                    const v = deepGetFn(p, path)
+                    if (typeof v === 'string' && v) return v
                   }
-                  return ''
+                  return rateKey // RateKey를 기본값으로 사용
                 })()
                 
-                const ratePlanType = (() => {
-                  const v = deepGetFn(p, ['RatePlanType'])
-                  return typeof v === 'string' ? v : ''
-                })()
-                
-                const roomTypeCode = (() => {
-                  const v = deepGetFn(r, ['RoomTypeCode'])
-                  return typeof v === 'string' ? v : ''
-                })()
-                
-                const ratePlanDescription = (() => {
-                  const v = deepGetFn(p, ['RatePlanDescription'])
-                  return typeof v === 'string' ? v : ''
-                })()
+                // 디버깅 로그 추가
+                console.log('Rate Plan 추출 결과:', {
+                  RateKey: rateKey,
+                  RoomType: roomType,
+                  Currency: currency,
+                  AmountAfterTax: amountAfterTax,
+                  AmountBeforeTax: amountBeforeTax,
+                  RoomTypeCode: roomTypeCode,
+                  BookingCode: bookingCode,
+                  originalData: p
+                })
                 
                 ratePlans.push({
                   RateKey: rateKey,
                   RoomType: roomType,
                   RoomName: roomName,
                   Description: description,
+              RoomViewDescription: roomViewDescription,
                   Currency: currency,
                   AmountAfterTax: amountAfterTax,
                   AmountBeforeTax: amountBeforeTax,
                   RoomTypeCode: roomTypeCode,
-                  RatePlanType: ratePlanType,
-                  RatePlanDescription: ratePlanDescription
+                  BookingCode: bookingCode,
+              // 원본 데이터도 보존
+              _original: p
                 })
               }
             }
           }
           
+          console.log('🔍 extractRatePlansFromRooms 최종 결과:', ratePlans)
           return ratePlans
         }
-        
-        // 직접적인 Rate Plan 정보 추출하는 헬퍼 함수
-        const extractRatePlansDirect = (ratePlansNode: unknown, deepGetFn: (obj: unknown, keys: string[]) => unknown): any[] => {
-          const plans: unknown[] = Array.isArray(ratePlansNode) ? ratePlansNode : [ratePlansNode]
-          const ratePlans: any[] = []
-          
-          for (const plan of plans) {
-            const p = plan as Record<string, unknown>
-            
-            const rateKeyVal = deepGetFn(p, ['RateKey'])
-            const rateKey: string = typeof rateKeyVal === 'string' ? rateKeyVal : ''
-            
-            const currency = deepGetFn(p, ['ConvertedRateInfo', 'CurrencyCode']) || 'KRW'
-            const amountAfterTax = deepGetFn(p, ['ConvertedRateInfo', 'AmountAfterTax']) || ''
-            const amountBeforeTax = deepGetFn(p, ['ConvertedRateInfo', 'AmountBeforeTax']) || ''
-            const ratePlanType = deepGetFn(p, ['RatePlanType']) || ''
-            const ratePlanDescription = deepGetFn(p, ['RatePlanDescription']) || ''
-            
-            ratePlans.push({
-              RateKey: rateKey,
-              RoomType: '',
-              RoomName: '',
-              Description: '',
-              Currency: currency,
-              AmountAfterTax: amountAfterTax,
-              AmountBeforeTax: amountBeforeTax,
-              RoomTypeCode: '',
-              RatePlanType: ratePlanType,
-              RatePlanDescription: ratePlanDescription
-            })
-          }
-          
-          return ratePlans
-        }
-        
-        // 전체 응답에서 RateKey 패턴을 검색하는 헬퍼 함수
-        const searchRateKeysInResponse = (response: unknown, deepGetFn: (obj: unknown, keys: string[]) => unknown): any[] => {
-          const ratePlans: any[] = []
-          
-          // 재귀적으로 객체를 탐색하여 RateKey를 찾는 함수
-          const findRateKeys = (obj: unknown, path: string[] = []): void => {
-            if (!obj || typeof obj !== 'object') return
-            
-            if (Array.isArray(obj)) {
-              obj.forEach((item, index) => findRateKeys(item, [...path, index.toString()]))
-            } else {
-              const objKeys = Object.keys(obj as Record<string, unknown>)
-              for (const key of objKeys) {
-                const value = (obj as Record<string, unknown>)[key]
-                
-                // RateKey를 찾았을 때
-                if (key === 'RateKey' && typeof value === 'string' && value.trim() !== '') {
-                  console.log(`🔍 RateKey 발견 경로: ${path.join('.')}.${key} = ${value}`)
-                  
-                  // 해당 객체에서 추가 정보 추출 시도
-                  const parentObj = obj as Record<string, unknown>
-                  const currency = parentObj.Currency || parentObj.currency || 'KRW'
-                  const amount = parentObj.Amount || parentObj.amount || parentObj.Price || parentObj.price || ''
-                  const description = parentObj.Description || parentObj.description || ''
-                  
-                  ratePlans.push({
-                    RateKey: value,
-                    RoomType: '',
-                    RoomName: '',
-                    Description: description,
-                    Currency: currency,
-                    AmountAfterTax: amount,
-                    AmountBeforeTax: amount,
-                    RoomTypeCode: '',
-                    RatePlanType: '',
-                    RatePlanDescription: ''
-                  })
-                }
-                
-                // 중첩된 객체 계속 탐색
-                if (value && typeof value === 'object') {
-                  findRateKeys(value, [...path, key])
-                }
-              }
-            }
-          }
-          
-          findRateKeys(response)
-          return ratePlans
-        }
-        
-        // Sabre API 응답 구조에서 Rate Plan 정보 추출 - 다양한 경로 시도
-        console.log('🔍 Sabre API 응답 구조 분석:', sabreData)
-        
-        let allRatePlans: any[] = []
         
         // 1차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan
-        const roomsNode = deepGet(sabreData, ['GetHotelDetailsRS', 'HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room'])
+    const roomsNode = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room'])
         if (roomsNode) {
           console.log('✅ 1차 경로: Rooms 정보 발견:', roomsNode)
-          allRatePlans = extractRatePlansFromRooms(roomsNode, deepGet)
+          const result = extractRatePlansFromRooms(roomsNode, deepGet)
+          console.log('✅ 1차 경로 결과:', result)
+          return result
         }
         
         // 2차 경로: GetHotelDetailsRS > HotelDetailsInfo > RatePlans > RatePlan
-        if (allRatePlans.length === 0) {
-          const ratePlansNode = deepGet(sabreData, ['GetHotelDetailsRS', 'HotelDetailsInfo', 'RatePlans', 'RatePlan'])
+    const ratePlansNode = deepGet(sabreData, ['HotelDetailsInfo', 'RatePlans', 'RatePlan'])
           if (ratePlansNode) {
             console.log('✅ 2차 경로: RatePlans 정보 발견:', ratePlansNode)
-            allRatePlans = extractRatePlansDirect(ratePlansNode, deepGet)
-          }
-        }
-        
-        // 3차 경로: GetHotelDetailsRS > RatePlans > RatePlan
-        if (allRatePlans.length === 0) {
-          const topRatePlansNode = deepGet(sabreData, ['GetHotelDetailsRS', 'RatePlans', 'RatePlan'])
-          if (topRatePlansNode) {
-            console.log('✅ 3차 경로: 최상위 RatePlans 정보 발견:', topRatePlansNode)
-            allRatePlans = extractRatePlansDirect(topRatePlansNode, deepGet)
-          }
-        }
-        
-        // 4차 경로: 응답 전체에서 RateKey 패턴 검색
-        if (allRatePlans.length === 0) {
-          console.log('🔍 4차 경로: 전체 응답에서 RateKey 패턴 검색')
-          allRatePlans = searchRateKeysInResponse(sabreData, deepGet)
-        }
-        
-        if (allRatePlans.length > 0) {
-          console.log('✅ Sabre API에서 Rate Plan 데이터 추출 성공:', allRatePlans)
-          return allRatePlans
-        } else {
-          console.log('⚠️ Sabre API에서 Rate Plan 데이터를 찾을 수 없음')
-        }
-        
-        // 2단계: Supabase 호텔 데이터에서 rate_code나 rate_plan_codes 사용 (fallback)
-        console.log('🔄 Supabase fallback 데이터 조회 시작')
-        
-        let ratePlanData: any[] = []
-        
-        // 호텔의 Supabase 데이터 가져오기 (fallback)
-        const { data: supabaseHotel, error: supabaseError } = await supabase
-          .from('select_hotels')
-          .select('rate_code, rate_plan_codes')
-          .eq('sabre_id', hotel.sabre_id)
-          .single()
-        
-        if (supabaseError) {
-          console.log('❌ Supabase 호텔 데이터 조회 실패:', supabaseError)
-        } else {
-          console.log('✅ Supabase 호텔 데이터 조회 성공:', supabaseHotel)
-        }
-        
-        if (supabaseHotel?.rate_code && supabaseHotel.rate_code !== '') {
-          console.log('✅ rate_code 필드에서 데이터 발견:', supabaseHotel.rate_code)
-          console.log('🔍 rate_code 타입:', typeof supabaseHotel.rate_code)
-          
-          try {
-            let parsedData = null
-            
-            if (typeof supabaseHotel.rate_code === 'string') {
-              if (supabaseHotel.rate_code.startsWith('{') || supabaseHotel.rate_code.startsWith('[')) {
-                parsedData = JSON.parse(supabaseHotel.rate_code)
-                console.log('✅ rate_code JSON 파싱 성공:', parsedData)
-              } else {
-                console.log('📝 rate_code가 JSON 형식이 아님, 원본 데이터 사용')
-                parsedData = supabaseHotel.rate_code
-              }
-            } else {
-              parsedData = supabaseHotel.rate_code
-            }
-            
-            if (Array.isArray(parsedData)) {
-              console.log('✅ 배열 형태의 데이터 발견')
-              ratePlanData = parsedData
-            } else if (parsedData && typeof parsedData === 'object') {
-              console.log('✅ 객체 형태의 데이터 발견')
-              console.log('🔍 객체 키들:', Object.keys(parsedData))
-              
-              let foundRatePlans = null
-              
-              // 1차 경로: 일반적인 RatePlan 구조들
-              if (parsedData.RatePlans && Array.isArray(parsedData.RatePlans)) {
-                console.log('✅ RatePlans 배열 발견')
-                foundRatePlans = parsedData.RatePlans
-              } else if (parsedData.ratePlans && Array.isArray(parsedData.ratePlans)) {
-                console.log('✅ ratePlans 배열 발견')
-                foundRatePlans = parsedData.ratePlans
-              } else if (parsedData.RatePlanCode && Array.isArray(parsedData.RatePlanCode)) {
-                console.log('✅ RatePlanCode 배열 발견')
-                foundRatePlans = parsedData.RatePlanCode
-              } else if (parsedData.ratePlanCode && Array.isArray(parsedData.ratePlanCode)) {
-                console.log('✅ ratePlanCode 배열 발견')
-                foundRatePlans = parsedData.ratePlanCode
-              }
-              
-              // 2차 경로: Room 구조들
-              if (!foundRatePlans) {
-                if (parsedData.Rooms && Array.isArray(parsedData.Rooms)) {
-                  console.log('✅ Rooms 배열 발견')
-                  foundRatePlans = parsedData.Rooms
-                } else if (parsedData.rooms && Array.isArray(parsedData.rooms)) {
-                  console.log('✅ rooms 배열 발견')
-                  foundRatePlans = parsedData.rooms
-                } else if (parsedData.Room && Array.isArray(parsedData.Room)) {
-                  console.log('✅ Room 배열 발견')
-                  foundRatePlans = parsedData.Room
-                } else if (parsedData.room && Array.isArray(parsedData.room)) {
-                  console.log('✅ room 배열 발견')
-                  foundRatePlans = parsedData.room
-                }
-              }
-              
-              // 3차 경로: 다른 가능한 구조들
-              if (!foundRatePlans) {
-                if (parsedData.Rates && Array.isArray(parsedData.Rates)) {
-                  console.log('✅ Rates 배열 발견')
-                  foundRatePlans = parsedData.Rates
-                } else if (parsedData.rates && Array.isArray(parsedData.rates)) {
-                  console.log('✅ rates 배열 발견')
-                  foundRatePlans = parsedData.rates
-                } else if (parsedData.RoomRates && Array.isArray(parsedData.RoomRates)) {
-                  console.log('✅ RoomRates 배열 발견')
-                  foundRatePlans = parsedData.RoomRates
-                } else if (parsedData.roomRates && Array.isArray(parsedData.roomRates)) {
-                  console.log('✅ roomRates 배열 발견')
-                  foundRatePlans = parsedData.roomRates
-                }
-              }
-              
-              // 3-1차 경로: 추가 구조들
-              if (!foundRatePlans) {
-                if (parsedData.RoomTypes && Array.isArray(parsedData.RoomTypes)) {
-                  console.log('✅ RoomTypes 배열 발견')
-                  foundRatePlans = parsedData.RoomTypes
-                } else if (parsedData.roomTypes && Array.isArray(parsedData.roomTypes)) {
-                  console.log('✅ roomTypes 배열 발견')
-                  foundRatePlans = parsedData.RoomTypes
-                } else if (parsedData.Packages && Array.isArray(parsedData.Packages)) {
-                  console.log('✅ Packages 배열 발견')
-                  foundRatePlans = parsedData.Packages
-                } else if (parsedData.packages && Array.isArray(parsedData.packages)) {
-                  console.log('✅ packages 배열 발견')
-                  foundRatePlans = parsedData.packages
-                } else if (parsedData.Offers && Array.isArray(parsedData.Offers)) {
-                  console.log('✅ Offers 배열 발견')
-                  foundRatePlans = parsedData.Offers
-                } else if (parsedData.offers && Array.isArray(parsedData.offers)) {
-                  console.log('✅ offers 배열 발견')
-                  foundRatePlans = parsedData.offers
-                }
-              }
-              
-              // 3-2차 경로: 일반적인 배열 구조들
-              if (!foundRatePlans) {
-                // 모든 키에서 배열을 찾기
-                const arrayKeys = Object.keys(parsedData).filter(key => 
-                  Array.isArray(parsedData[key]) && parsedData[key].length > 0
-                )
-                if (arrayKeys.length > 0) {
-                  console.log('✅ 배열 형태의 키들 발견:', arrayKeys)
-                  // 첫 번째 배열 사용
-                  foundRatePlans = parsedData[arrayKeys[0]]
-                  console.log(`✅ ${arrayKeys[0]} 배열 사용:`, foundRatePlans)
-                }
-              }
-              
-              if (foundRatePlans) {
-                ratePlanData = foundRatePlans
-              } else {
-                console.log('✅ 단일 객체를 배열로 변환')
-                ratePlanData = [parsedData]
-              }
-            } else {
-              console.log('✅ 단일 값을 배열로 변환')
-              ratePlanData = [parsedData]
-            }
-            
-            console.log('🔍 최종 ratePlanData:', ratePlanData)
-          } catch (parseError) {
-            console.log('❌ rate_code 파싱 실패:', parseError)
-            console.log('📝 원본 rate_code 데이터:', supabaseHotel.rate_code)
-            // 파싱 실패 시 원본 데이터를 그대로 사용
-            ratePlanData = [supabaseHotel.rate_code]
-          }
-        } else if (supabaseHotel?.rate_plan_codes && supabaseHotel.rate_plan_codes !== '') {
-          console.log('✅ rate_plan_codes 필드에서 데이터 발견:', supabaseHotel.rate_plan_codes)
-          console.log('🔍 rate_plan_codes 타입:', typeof supabaseHotel.rate_plan_codes)
-          
-          try {
-            let parsedData = null
-            
-            if (typeof supabaseHotel.rate_plan_codes === 'string') {
-              if (supabaseHotel.rate_plan_codes.startsWith('{') || supabaseHotel.rate_plan_codes.startsWith('[')) {
-                parsedData = JSON.parse(supabaseHotel.rate_plan_codes)
-                console.log('✅ rate_plan_codes JSON 파싱 성공:', parsedData)
-              } else {
-                console.log('📝 rate_plan_codes가 JSON 형식이 아님, 원본 데이터 사용')
-                parsedData = supabaseHotel.rate_plan_codes
-              }
-            } else {
-              parsedData = supabaseHotel.rate_plan_codes
-            }
-            
-            if (Array.isArray(parsedData)) {
-              console.log('✅ rate_plan_codes 배열 형태의 데이터 발견')
-              ratePlanData = parsedData
-            } else if (parsedData && typeof parsedData === 'object') {
-              console.log('✅ rate_plan_codes 객체 형태의 데이터 발견')
-              console.log('🔍 rate_plan_codes 객체 키들:', Object.keys(parsedData))
-              
-              // rate_plan_codes에서도 다양한 구조 탐색
-              let foundRatePlans = null
-              
-              if (parsedData.RatePlanCodes && Array.isArray(parsedData.RatePlanCodes)) {
-                console.log('✅ rate_plan_codes에서 RatePlanCodes 배열 발견')
-                foundRatePlans = parsedData.RatePlanCodes
-              } else if (parsedData.ratePlanCodes && Array.isArray(parsedData.ratePlanCodes)) {
-                console.log('✅ rate_plan_codes에서 ratePlanCodes 배열 발견')
-                foundRatePlans = parsedData.ratePlanCodes
-              } else if (parsedData.RatePlanCode && Array.isArray(parsedData.RatePlanCode)) {
-                console.log('✅ rate_plan_codes에서 RatePlanCode 배열 발견')
-                foundRatePlans = parsedData.RatePlanCode
-              } else if (parsedData.ratePlanCode && Array.isArray(parsedData.ratePlanCode)) {
-                console.log('✅ rate_plan_codes에서 ratePlanCode 배열 발견')
-                foundRatePlans = parsedData.ratePlanCode
-              } else if (parsedData.Rates && Array.isArray(parsedData.Rates)) {
-                console.log('✅ rate_plan_codes에서 Rates 배열 발견')
-                foundRatePlans = parsedData.Rates
-              } else if (parsedData.rates && Array.isArray(parsedData.rates)) {
-                console.log('✅ rate_plan_codes에서 rates 배열 발견')
-                foundRatePlans = parsedData.rates
-              }
-              
-              if (foundRatePlans) {
-                ratePlanData = foundRatePlans
-              } else {
-                console.log('✅ rate_plan_codes 단일 객체를 배열로 변환')
-                ratePlanData = [parsedData]
-              }
-            } else {
-              console.log('✅ rate_plan_codes 단일 값을 배열로 변환')
-              ratePlanData = [parsedData]
-            }
-            
-            console.log('🔍 rate_plan_codes 최종 ratePlanData:', ratePlanData)
-          } catch (parseError) {
-            console.log('❌ rate_plan_codes 파싱 실패:', parseError)
-            console.log('📝 원본 rate_plan_codes 데이터:', supabaseHotel.rate_plan_codes)
-            ratePlanData = [supabaseHotel.rate_plan_codes]
-          }
-        }
-        
-        // 3단계: 데이터 변환 로직 - ratePlanData를 표준 형식으로 변환
-        if (ratePlanData && ratePlanData.length > 0) {
-          console.log('🔄 ratePlanData 변환 시작:', ratePlanData)
-          
-          const transformedData = ratePlanData.map((item: any, index: number) => {
-            console.log(`🔍 아이템 ${index} 변환 시작:`, item)
-            
-            // 기본값 설정
-            let rateKey = null
-            
-            // deepGet 유틸리티 함수로 중첩된 객체에서 값 추출
-            const deepGet = (obj: unknown, keys: string[]): unknown => {
-              let cur: unknown = obj
-              for (const key of keys) {
-                if (cur && typeof cur === 'object' && Object.prototype.hasOwnProperty.call(cur as object, key)) {
-                  cur = (cur as Record<string, unknown>)[key]
-                } else {
-                  return undefined
-                }
-              }
-              return cur
-            }
-            
-            // 1차: 직접적인 RateKey 필드들
-            rateKey = deepGet(item, ['RateKey']) || deepGet(item, ['rateKey']) || deepGet(item, ['rate_key'])
-            
-            // 2차: RatePlans > RatePlan > RateKey 구조 (참조 코드와 동일)
-            if (!rateKey) {
-              rateKey = deepGet(item, ['RatePlans', 'RatePlan', 'RateKey'])
-            }
-            
-            // 3차: ConvertedRateInfo > RateKey 구조 (참조 코드와 동일)
-            if (!rateKey) {
-              rateKey = deepGet(item, ['ConvertedRateInfo', 'RateKey'])
-            }
-            
-            // 4차: Room > RatePlans > RatePlan > RateKey 구조 (참조 코드와 동일)
-            if (!rateKey) {
-              rateKey = deepGet(item, ['Room', 'RatePlans', 'RatePlan', 'RateKey'])
-            }
-            
-            // 5차: HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan > RateKey 구조
-            if (!rateKey) {
-              rateKey = deepGet(item, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room', 'RatePlans', 'RatePlan', 'RateKey'])
-            }
-            
-            // 6차: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan > RateKey 구조
-            if (!rateKey) {
-              rateKey = deepGet(item, ['GetHotelDetailsRS', 'HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room', 'RatePlans', 'RatePlan', 'RateKey'])
-            }
-            
-            // 7차: 다른 가능한 경로들
-            if (!rateKey) {
-              rateKey = deepGet(item, ['RatePlan', 'RateKey']) || 
-                       deepGet(item, ['ratePlan', 'rateKey']) ||
-                       deepGet(item, ['Plan', 'RateKey']) ||
-                       deepGet(item, ['plan', 'rateKey'])
-            }
-            
-            // 8차: 일반적인 필드들 (폴백)
-            if (!rateKey) {
-              rateKey = item.RateKey || item.rateKey || item.rate_key || item.rateCode || item.rate_code || 
-                       item.RatePlanCode || item.ratePlanCode || item.RatePlan || item.ratePlan ||
-                       item.RateCode || item.rate_code || item.Rate || item.rate
-            }
-            
-            // 9차: 첫 번째 비어있지 않은 문자열 값 사용 (최후 수단)
-            if (!rateKey) {
-              const firstStringValue = Object.values(item).find(value => 
-                typeof value === 'string' && value.trim() !== '' && value !== 'null' && value !== 'undefined'
-              )
-              if (firstStringValue) {
-                rateKey = firstStringValue
-                console.log(`🔍 첫 번째 문자열 값에서 RateKey 발견:`, firstStringValue)
-              }
-            }
-            
-            // RoomType 추출
-            const roomType = item.RoomType || item.roomType || item.Type || item.type || 
-                           item.RoomCategory || item.roomCategory || item.Category || item.category || 
-                           item.RoomClass || item.roomClass || item.Class || item.class || 'Standard'
-            
-            // RoomName 추출
-            const roomName = item.RoomName || item.roomName || item.Name || item.name || 
-                           item.Title || item.title || item.Label || item.label || roomType
-            
-            // RoomViewDescription 추출 - 모든 가능한 필드명 검사
-            const roomViewDescription = item.RoomViewDescription || item.roomViewDescription || 
-                                      item.ViewDescription || item.viewDescription || 
-                                      item.View || item.view || 
-                                      item.RoomView || item.roomView ||
-                                      item.RoomViewType || item.roomViewType ||
-                                      item.ViewType || item.viewType ||
-                                      item.ViewCategory || item.viewCategory ||
-                                      item.RoomViewCategory || item.roomViewCategory ||
-                                      item.ViewInfo || item.viewInfo ||
-                                      item.RoomViewInfo || item.roomViewInfo ||
-                                      item.ViewDetails || item.viewDetails ||
-                                      item.RoomViewDetails || item.roomViewDetails ||
-                                      item.ViewName || item.viewName ||
-                                      item.RoomViewName || item.roomViewName ||
-                                      item.ViewCode || item.viewCode ||
-                                      item.RoomViewCode || item.roomViewCode ||
-                                      item.ViewText || item.viewText ||
-                                      item.RoomViewText || item.roomViewText ||
-                                      item.ViewLabel || item.viewLabel ||
-                                      item.RoomViewLabel || item.roomViewLabel ||
-                                      item.ViewValue || item.viewValue ||
-                                      item.RoomViewValue || item.roomViewValue ||
-                                      // 추가 가능한 필드명들
-                                      item.Outlook || item.outlook ||
-                                      item.ScenicView || item.scenicView ||
-                                      item.OceanView || item.oceanView ||
-                                      item.CityView || item.cityView ||
-                                      item.GardenView || item.gardenView ||
-                                      item.MountainView || item.mountainView ||
-                                      item.PoolView || item.poolView ||
-                                      item.StreetView || item.streetView ||
-                                      item.CourtyardView || item.courtyardView ||
-                                      item.PartialView || item.partialView ||
-                                      item.NoView || item.noView ||
-                                      item.ViewTypeCode || item.viewTypeCode ||
-                                      item.ViewCategoryCode || item.viewCategoryCode ||
-                                      item.RoomViewCode || item.roomViewCode ||
-                                      item.ViewCode || item.viewCode ||
-                                      item.ViewTypeDescription || item.viewTypeDescription ||
-                                      item.RoomViewTypeDescription || item.roomViewTypeDescription ||
-                                      // 중첩된 객체에서 추출 시도
-                                      (item.RoomInfo && item.RoomInfo.View) ||
-                                      (item.RoomInfo && item.RoomInfo.RoomView) ||
-                                      (item.RoomInfo && item.RoomInfo.ViewDescription) ||
-                                      (item.RoomDetails && item.RoomDetails.View) ||
-                                      (item.RoomDetails && item.RoomDetails.RoomView) ||
-                                      (item.RoomDetails && item.RoomDetails.ViewDescription) ||
-                                      (item.RatePlan && item.RatePlan.View) ||
-                                      (item.RatePlan && item.RatePlan.RoomView) ||
-                                      (item.RatePlan && item.RatePlan.ViewDescription) ||
-                                      // Description에서 뷰 정보 추출 시도
-                                      (() => {
-                                        const desc = item.Description || item.description || ''
-                                        if (typeof desc === 'string') {
-                                          // 뷰 관련 키워드가 포함된 경우 추출
-                                          const viewKeywords = ['ocean', 'city', 'garden', 'mountain', 'pool', 'street', 'courtyard', 'partial', 'view', 'outlook', 'scenic']
-                                          const foundKeyword = viewKeywords.find(keyword => 
-                                            desc.toLowerCase().includes(keyword)
-                                          )
-                                          if (foundKeyword) {
-                                            // 해당 키워드 주변의 텍스트 추출
-                                            const keywordIndex = desc.toLowerCase().indexOf(foundKeyword)
-                                            const start = Math.max(0, keywordIndex - 10)
-                                            const end = Math.min(desc.length, keywordIndex + foundKeyword.length + 10)
-                                            return desc.substring(start, end).trim()
-                                          }
-                                        }
-                                        return null
-                                      })() ||
-                                      'N/A'
-            
-            // RoomViewDescription 디버깅 로그 - 모든 필드 검사
-            console.log(`🔍 RoomViewDescription 디버깅 - 아이템 ${index}:`, {
-              originalItem: item,
-              // 기본 필드들
-              RoomViewDescription: item.RoomViewDescription,
-              roomViewDescription: item.roomViewDescription,
-              ViewDescription: item.ViewDescription,
-              viewDescription: item.viewDescription,
-              View: item.View,
-              view: item.view,
-              RoomView: item.RoomView,
-              roomView: item.roomView,
-              // 확장된 필드들
-              RoomViewType: item.RoomViewType,
-              ViewType: item.ViewType,
-              ViewCategory: item.ViewCategory,
-              RoomViewCategory: item.RoomViewCategory,
-              ViewInfo: item.ViewInfo,
-              RoomViewInfo: item.RoomViewInfo,
-              ViewDetails: item.ViewDetails,
-              RoomViewDetails: item.RoomViewDetails,
-              ViewName: item.ViewName,
-              RoomViewName: item.RoomViewName,
-              ViewCode: item.ViewCode,
-              RoomViewCode: item.RoomViewCode,
-              ViewText: item.ViewText,
-              RoomViewText: item.RoomViewText,
-              ViewLabel: item.ViewLabel,
-              RoomViewLabel: item.RoomViewLabel,
-              ViewValue: item.ViewValue,
-              RoomViewValue: item.RoomViewValue,
-              finalRoomViewDescription: roomViewDescription,
-              allKeys: Object.keys(item),
-              // Description에서 뷰 정보 추출 결과
-              descriptionViewExtraction: (() => {
-                const desc = item.Description || item.description || ''
-                if (typeof desc === 'string') {
-                  const viewKeywords = ['ocean', 'city', 'garden', 'mountain', 'pool', 'street', 'courtyard', 'partial', 'view', 'outlook', 'scenic']
-                  const foundKeyword = viewKeywords.find(keyword => 
-                    desc.toLowerCase().includes(keyword)
-                  )
-                  if (foundKeyword) {
-                    const keywordIndex = desc.toLowerCase().indexOf(foundKeyword)
-                    const start = Math.max(0, keywordIndex - 10)
-                    const end = Math.min(desc.length, keywordIndex + foundKeyword.length + 10)
-                    return {
-                      foundKeyword,
-                      extractedText: desc.substring(start, end).trim(),
-                      fullDescription: desc
-                    }
-                  }
-                }
-                return null
-              })(),
-              // View 관련 모든 필드 검사
-              viewRelatedFields: Object.keys(item).filter(key => 
-                key.toLowerCase().includes('view') || 
-                key.toLowerCase().includes('roomview') ||
-                key.toLowerCase().includes('outlook') ||
-                key.toLowerCase().includes('scenic') ||
-                key.toLowerCase().includes('ocean') ||
-                key.toLowerCase().includes('city') ||
-                key.toLowerCase().includes('garden') ||
-                key.toLowerCase().includes('mountain')
-              ),
-              // 모든 필드 값 출력 (View 관련)
-              viewFieldValues: Object.keys(item)
-                .filter(key => 
-                  key.toLowerCase().includes('view') || 
-                  key.toLowerCase().includes('roomview') ||
-                  key.toLowerCase().includes('outlook') ||
-                  key.toLowerCase().includes('scenic') ||
-                  key.toLowerCase().includes('ocean') ||
-                  key.toLowerCase().includes('city') ||
-                  key.toLowerCase().includes('garden') ||
-                  key.toLowerCase().includes('mountain')
-                )
-                .reduce((acc, key) => {
-                  acc[key] = item[key];
-                  return acc;
-                }, {} as any)
-            })
-            
-            // Description 추출
-            const description = item.Description || item.description || item.Desc || item.desc || 
-                              item.Summary || item.summary || item.Overview || item.overview || 
-                              item.Details || item.details || item.Info || item.info || '기본 객실'
-            
-            // Currency 추출
-            const currency = item.Currency || item.currency || item.CurrencyCode || item.currencyCode || 
-                           item.Curr || item.curr || item.Code || item.code || 'KRW'
-            
-            // AmountAfterTax 추출
-            const amountAfterTax = item.AmountAfterTax || item.amountAfterTax || item.Amount || item.amount || 
-                                 item.Price || item.price || item.Cost || item.cost || 
-                                 item.Total || item.total || item.FinalPrice || item.finalPrice || 
-                                 item.Rate || item.rate || item.Charge || item.charge || '0'
-            
-            // AmountBeforeTax 추출
-            const amountBeforeTax = item.AmountBeforeTax || item.amountBeforeTax || item.BaseAmount || item.baseAmount || 
-                                  item.BasePrice || item.basePrice || item.Subtotal || item.subtotal || 
-                                  item.NetAmount || item.netAmount || item.NetPrice || item.netPrice || 
-                                  item.OriginalPrice || item.originalPrice || item.ListPrice || item.listPrice || '0'
-            
-            // RoomTypeCode 추출
-            const roomTypeCode = item.RoomTypeCode || item.roomTypeCode || item.TypeCode || item.typeCode || 
-                               item.CategoryCode || item.categoryCode || item.ClassCode || item.classCode || 
-                               item.Code || item.code || item.ShortCode || item.shortCode || 'STD'
-            
-            // RatePlanType 추출 - 요금 플랜 타입
-            const ratePlanType = item.RatePlanType || item.ratePlanType || item.rate_plan_type || 
-                               item.RateType || item.rateType || item.PlanType || item.planType || 
-                               item.RateCategory || item.rateCategory || item.PricingType || item.pricingType || 'Standard'
-            
-            // BookingCode 추출 - 예약 코드
-            const bookingCode = item.BookingCode || item.bookingCode || item.booking_code || 
-                              item.ReservationCode || item.reservationCode || item.BookCode || item.bookCode || 
-                              item.ConfirmationCode || item.confirmationCode || 'STD_001'
-            
-            // RatePlanDescription 추출 - 요금 플랜 설명
-            const ratePlanDescription = item.RatePlanDescription || item.ratePlanDescription || item.rate_plan_description || 
-                                      item.RateDescription || item.rateDescription || item.PlanDescription || item.planDescription || 
-                                      item.RateInfo || item.rateInfo || item.PlanInfo || item.planInfo || '기본 요금 플랜'
-            
-            // 추가 컬럼들 추출
-            const rateDescription = item.RateDescription || item.rateDescription || item.RateDesc || item.rateDesc || 'N/A'
-            const planDescription = item.PlanDescription || item.planDescription || item.PlanDesc || item.planDesc || 'N/A'
-            const rateInfo = item.RateInfo || item.rateInfo || item.RateInformation || item.rateInformation || 'N/A'
-            const planInfo = item.PlanInfo || item.planInfo || item.PlanInformation || item.planInformation || 'N/A'
-            const rateCategory = item.RateCategory || item.rateCategory || item.RateCat || item.rateCat || 'N/A'
-            const roomCategory = item.RoomCategory || item.roomCategory || item.RoomCat || item.roomCat || 'N/A'
-            const mealPlan = item.MealPlan || item.mealPlan || item.Meal || item.meal || 'N/A'
-            const cancellationPolicy = item.CancellationPolicy || item.cancellationPolicy || item.CancelPolicy || item.cancelPolicy || 'N/A'
-            const depositRequired = item.DepositRequired || item.depositRequired || item.Deposit || item.deposit || 'N/A'
-            const prepaid = item.Prepaid || item.prepaid || item.Prepay || item.prepay || 'N/A'
-            
-            const result = {
-              RateKey: rateKey || 'N/A',
-              RoomType: roomType || 'N/A',
-              RoomName: roomName || 'N/A',
-              RoomViewDescription: roomViewDescription || 'N/A',
-              Description: description || 'N/A',
-              Currency: currency || 'KRW',
-              AmountAfterTax: amountAfterTax || 'N/A',
-              AmountBeforeTax: amountBeforeTax || 'N/A',
-              RoomTypeCode: roomTypeCode || 'N/A',
-              RatePlanDescription: ratePlanDescription || 'N/A',
-              RatePlanType: ratePlanType || 'N/A',
-              BookingCode: bookingCode || 'N/A',
-              // 추가 컬럼들 - 명시적으로 포함
-              RateDescription: rateDescription,
-              PlanDescription: planDescription,
-              RateInfo: rateInfo,
-              PlanInfo: planInfo,
-              RateCategory: rateCategory,
-              RoomCategory: roomCategory,
-              MealPlan: mealPlan,
-              CancellationPolicy: cancellationPolicy,
-              DepositRequired: depositRequired,
-              Prepaid: prepaid
-            }
-            
-            // 디버깅을 위해 결과 로그 출력
-            console.log(`🔍 아이템 ${index} 최종 변환 결과:`, result)
-            console.log(`🔍 아이템 ${index} 결과 컬럼들:`, Object.keys(result))
-            return result
-          })
-          
-          console.log('🔄 변환된 Rate Plan 데이터:', transformedData)
-          console.log('🔍 변환된 데이터의 첫 번째 항목 컬럼들:', transformedData.length > 0 ? Object.keys(transformedData[0]) : '데이터 없음')
-          console.log('🔍 변환된 데이터의 첫 번째 항목:', transformedData.length > 0 ? transformedData[0] : '데이터 없음')
-          return transformedData
-        }
-        
-        // 4단계: 최종 fallback - 기본 데이터 생성
-        console.log('⚠️ 모든 데이터 소스에서 Rate Plan 정보를 찾을 수 없음')
-        console.log('🔄 기본 Rate Plan 데이터 생성 (Sabre ID: ' + hotel.sabre_id + ')')
-        
-        // Sabre ID 90에 대한 특별 처리
-        if (hotel.sabre_id === 90) {
-          console.log('🔍 Sabre ID 90에 대한 특별 처리 시작')
-          
-          // 기본 객실 정보 생성
-          const fallbackData = [
-            {
-              RateKey: `FALLBACK_${hotel.sabre_id}_001`,
-              RoomType: 'Standard',
-              RoomName: 'Standard Room',
-              Description: '기본 객실 (Sabre ID 90)',
-              Currency: 'KRW',
-              AmountAfterTax: '150000',
-              AmountBeforeTax: '136364',
-              RoomTypeCode: 'STD',
-              RatePlanDescription: '기본 요금 플랜',
-              RatePlanType: 'Standard',
-              BookingCode: 'STD_001',
-              RateDescription: '기본 요금 설명',
-              PlanDescription: '기본 플랜 설명',
-              RateInfo: '기본 요금 정보',
-              PlanInfo: '기본 플랜 정보',
-              RateCategory: 'Standard',
-              RoomCategory: 'Standard',
-              MealPlan: 'Room Only',
-              CancellationPolicy: '24시간 전 취소 가능',
-              DepositRequired: 'No',
-              Prepaid: 'No'
-            },
-            {
-              RateKey: `FALLBACK_${hotel.sabre_id}_002`,
-              RoomType: 'Deluxe',
-              RoomName: 'Deluxe Room',
-              Description: '디럭스 객실 (Sabre ID 90)',
-              Currency: 'KRW',
-              AmountAfterTax: '200000',
-              AmountBeforeTax: '181818',
-              RoomTypeCode: 'DLX',
-              RatePlanDescription: '디럭스 요금 플랜',
-              RatePlanType: 'Deluxe',
-              BookingCode: 'DLX_001',
-              RateDescription: '디럭스 요금 설명',
-              PlanDescription: '디럭스 플랜 설명',
-              RateInfo: '디럭스 요금 정보',
-              PlanInfo: '디럭스 플랜 정보',
-              RateCategory: 'Deluxe',
-              RoomCategory: 'Deluxe',
-              MealPlan: 'Breakfast Included',
-              CancellationPolicy: '48시간 전 취소 가능',
-              DepositRequired: 'Yes',
-              Prepaid: 'Yes'
-            }
-          ]
-          
-          console.log('✅ Sabre ID 90을 위한 fallback 데이터 생성:', fallbackData)
-          return fallbackData
-        }
-        
-        // 기본 반환값
+      const plans: unknown[] = Array.isArray(ratePlansNode) ? ratePlansNode : [ratePlansNode]
+      const result = plans.map((plan: any) => ({
+        RateKey: plan.RateKey || '',
+        RoomType: plan.RoomType || '',
+        RoomName: plan.RoomName || '',
+        Description: plan.Description || '',
+        RoomViewDescription: plan.RoomViewDescription || 'N/A',
+        Currency: plan.Currency || '',
+        AmountAfterTax: plan.AmountAfterTax || 0,
+        AmountBeforeTax: plan.AmountBeforeTax || 0,
+        _original: plan
+      }))
+      console.log('✅ 2차 경로 결과:', result)
+      return result
+    }
+    
+    // 3차 경로: GetHotelDetailsRS > HotelDetailsInfo > Rooms > Room > RatePlans > RatePlan
+    const roomsNode2 = deepGet(sabreData, ['HotelDetailsInfo', 'Rooms', 'Room'])
+    if (roomsNode2) {
+      console.log('✅ 3차 경로: Rooms 정보 발견:', roomsNode2)
+      const result = extractRatePlansFromRooms(roomsNode2, deepGet)
+      console.log('✅ 3차 경로 결과:', result)
+      return result
+    }
+    
+    // 4차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > RatePlans > RatePlan
+    const ratePlansNode2 = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'RatePlans', 'RatePlan'])
+    if (ratePlansNode2) {
+      console.log('✅ 4차 경로: RatePlans 정보 발견:', ratePlansNode2)
+      const plans: unknown[] = Array.isArray(ratePlansNode2) ? ratePlansNode2 : [ratePlansNode2]
+      const result = plans.map((plan: any) => ({
+        RateKey: plan.RateKey || '',
+        RoomType: plan.RoomType || '',
+        RoomName: plan.RoomName || '',
+        Description: plan.Description || '',
+        RoomViewDescription: plan.RoomViewDescription || 'N/A',
+        Currency: plan.Currency || '',
+        AmountAfterTax: plan.AmountAfterTax || 0,
+        AmountBeforeTax: plan.AmountBeforeTax || 0,
+        _original: plan
+      }))
+      console.log('✅ 4차 경로 결과:', result)
+      return result
+    }
+    
+    // 5차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms
+    const roomsNode3 = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms'])
+    if (roomsNode3) {
+      console.log('✅ 5차 경로: Rooms 정보 발견:', roomsNode3)
+      const result = extractRatePlansFromRooms(roomsNode3, deepGet)
+      console.log('✅ 5차 경로 결과:', result)
+      return result
+    }
+    
+    // 6차 경로: GetHotelDetailsRS > HotelDetailsInfo > Rooms
+    const roomsNode4 = deepGet(sabreData, ['HotelDetailsInfo', 'Rooms'])
+    if (roomsNode4) {
+      console.log('✅ 6차 경로: Rooms 정보 발견:', roomsNode4)
+      const result = extractRatePlansFromRooms(roomsNode4, deepGet)
+      console.log('✅ 6차 경로 결과:', result)
+      return result
+    }
+    
+        console.log('❌ 모든 경로에서 Rate Plan 데이터를 찾을 수 없음')
         return []
-      } catch (error) {
-        console.error('❌ Rate Plan 데이터 조회 중 오류:', error)
-        
-        // 에러 발생 시에도 Sabre ID 90에 대한 fallback 제공
-        if (hotel?.sabre_id === 90) {
-          console.log('🔄 에러 발생 시 Sabre ID 90 fallback 데이터 제공')
-          return [
-            {
-              RateKey: `ERROR_FALLBACK_${hotel.sabre_id}_001`,
-              RoomType: 'Standard',
-              RoomName: 'Standard Room',
-              Description: '기본 객실 (에러 발생 시 fallback)',
-              Currency: 'KRW',
-              AmountAfterTax: '150000',
-              AmountBeforeTax: '136364',
-              RoomTypeCode: 'STD',
-              RatePlanDescription: '기본 요금 플랜',
-              RatePlanType: 'Standard',
-              BookingCode: 'STD_001',
-              RateDescription: '기본 요금 설명 (에러 시)',
-              PlanDescription: '기본 플랜 설명 (에러 시)',
-              RateInfo: '기본 요금 정보 (에러 시)',
-              PlanInfo: '기본 플랜 정보 (에러 시)',
-              RateCategory: 'Standard',
-              RoomCategory: 'Standard',
-              MealPlan: 'Room Only',
-              CancellationPolicy: '24시간 전 취소 가능',
-              DepositRequired: 'No',
-              Prepaid: 'No'
-            }
-          ]
-        }
-        
-        return []
-      }
-    },
-    enabled: !!hotel?.sabre_id && hasSearched,
-    staleTime: 5 * 60 * 1000, // 5분 캐시
-    retry: 2, // 재시도 횟수 증가
-    retryDelay: 1000, // 재시도 간격 1초
-  })
+  }
 
   // 검색 후 ratePlanCodes가 로드되면 AI 처리 함수들 자동 실행
-  useEffect(() => {
-    if (hasSearched && ratePlanCodes && Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 && hotel?.property_name_ko) {
-      console.log('🚀 검색 완료 후 AI 처리 함수들 자동 실행:', {
-        hasSearched,
-        ratePlanCodesLength: ratePlanCodes.length,
-        hotelName: hotel.property_name_ko
-      })
-      
-      // 모든 AI 처리 함수들을 순차적으로 실행
-      const runAllAIProcessing = async () => {
-        try {
-          // 1. 글로벌 호텔 OTA 스타일 객실명 생성
-          await generateGlobalOTAStyleRoomNames(ratePlanCodes, hotel.property_name_ko)
-          
-          // 2. 베드 타입 해석
-          await generateBedTypes(ratePlanCodes, hotel.property_name_ko)
-          
-          // 3. 객실 소개 생성
-          await generateRoomIntroductions(ratePlanCodes, hotel.property_name_ko)
-          
-          console.log('🎉 모든 AI 처리 완료!')
-        } catch (error) {
-          console.error('❌ AI 처리 중 오류:', error)
-        }
-      }
-      
-      runAllAIProcessing()
-    } else {
-      console.log('⚠️ AI 처리 조건 미충족:', {
-        hasSearched,
-        hasRatePlanCodes: !!ratePlanCodes,
-        isArray: Array.isArray(ratePlanCodes),
-        length: ratePlanCodes?.length,
-        hotelName: hotel?.property_name_ko,
-        ratePlanCodesType: typeof ratePlanCodes
-      })
-    }
-  }, [hasSearched, ratePlanCodes, hotel?.property_name_ko])
-
-  // 이미지 갤러리 열기
-  const openImageGallery = () => {
-    setShowImageGallery(true)
-    setGalleryIndex(0)
-  }
 
   // 이미지 갤러리 닫기
   const closeImageGallery = () => {
@@ -1975,7 +1283,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 className="w-[60%] relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100"
                 onClick={() => {
                   setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
-                  openImageGallery()
+                  setShowImageGallery(true)
                 }}
               >
                 {displayImages.length > 0 ? (
@@ -2005,7 +1313,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                         onClick={() => {
                           setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
                           setSelectedImage(index + 1)
-                          openImageGallery()
+                          setShowImageGallery(true)
                         }}
                       >
                         <Image
@@ -2020,7 +1328,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             onClick={(e) => {
                               e.stopPropagation()
                               setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
-                              openImageGallery()
+                              setShowImageGallery(true)
                             }}
                           >
                             <div className="text-white text-center">
@@ -2511,8 +1819,8 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                 <div className="text-center py-12">
                   <div className="text-gray-400 text-lg mb-2">📍</div>
                   <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
-                </div>
-              </div>
+                        </div>
+                        </div>
             )}
 
             {activeTab === "reviews" && (
@@ -2543,7 +1851,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
               }
               setHasSearched(true)
             }}
-            isSabreLoading={sabreLoading || ratePlanLoading}
+            isSabreLoading={sabreLoading}
           />
         </div>
       </div>
@@ -2649,7 +1957,10 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                               </div>
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                              {amount && amount !== 'N/A' && !isNaN(Number(amount)) ? parseInt(String(amount)).toLocaleString() : 'N/A'}
+                              {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
+                                `${parseInt(String(amount)).toLocaleString()} ${currency}` : 
+                                <span className="text-red-500">요금 정보 없음</span>
+                              }
                             </td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
                             <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
@@ -2771,6 +2082,32 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                                 <div className="flex items-center gap-3">
                                   <span className="font-medium w-20">호텔 코드:</span>
                                   <span>{sabreHotelInfo.HotelCode}</span>
+                                </div>
+                              )}
+                              {hotel?.rate_plan_code && (
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium w-20">Rate Plan Code:</span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {(() => {
+                                      try {
+                                        const codes = typeof hotel.rate_plan_code === 'string' 
+                                          ? JSON.parse(hotel.rate_plan_code) 
+                                          : hotel.rate_plan_code
+                                        const codeArray = Array.isArray(codes) ? codes : [codes]
+                                        return codeArray.map((code: string, index: number) => (
+                                          <span key={index} className="bg-green-100 px-2 py-1 rounded text-xs font-mono">
+                                            {code}
+                                          </span>
+                                        ))
+                                      } catch {
+                                        return (
+                                          <span className="bg-green-100 px-2 py-1 rounded text-xs font-mono">
+                                            {String(hotel.rate_plan_code)}
+                                          </span>
+                                        )
+                                      }
+                                    })()}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -3024,14 +2361,14 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       <p>• 검색 버튼을 클릭하면 실시간 객실 정보를 확인할 수 있습니다</p>
                     </div>
                   </div>
-                ) : ratePlanLoading ? (
+                ) : sabreLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="flex items-center gap-3 text-blue-600">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-sm">Sabre API에서 Rate Plan 정보를 가져오는 중...</span>
                     </div>
                   </div>
-                ) : ratePlanError ? (
+                ) : sabreError ? (
                   <div className="text-center py-6">
                     <div className="text-red-500 mb-2">
                       <span className="text-2xl">⚠️</span>
@@ -3051,6 +2388,7 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       <p className="text-yellow-700">• 데이터 개수: {ratePlanCodes.length}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 컬럼들: {Object.keys(ratePlanCodes[0]).join(', ')}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 RoomViewDescription: {ratePlanCodes[0]?.RoomViewDescription || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 Room.RoomViewDescription: {ratePlanCodes[0]?.Room?.RoomViewDescription || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 ViewDescription: {ratePlanCodes[0]?.ViewDescription || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 View: {ratePlanCodes[0]?.View || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 RoomView: {ratePlanCodes[0]?.RoomView || 'N/A'}</p>
@@ -3059,17 +2397,8 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                       <p className="text-yellow-700">• 첫 번째 항목 ViewInfo: {ratePlanCodes[0]?.ViewInfo || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 ViewName: {ratePlanCodes[0]?.ViewName || 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 ViewCode: {ratePlanCodes[0]?.ViewCode || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 Outlook: {ratePlanCodes[0]?.Outlook || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 OceanView: {ratePlanCodes[0]?.OceanView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 CityView: {ratePlanCodes[0]?.CityView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 GardenView: {ratePlanCodes[0]?.GardenView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 MountainView: {ratePlanCodes[0]?.MountainView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 PoolView: {ratePlanCodes[0]?.PoolView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 StreetView: {ratePlanCodes[0]?.StreetView || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 ViewTypeCode: {ratePlanCodes[0]?.ViewTypeCode || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 ViewCategoryCode: {ratePlanCodes[0]?.ViewCategoryCode || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 ViewTypeDescription: {ratePlanCodes[0]?.ViewTypeDescription || 'N/A'}</p>
-                      <p className="text-yellow-700">• 첫 번째 항목 RoomViewTypeDescription: {ratePlanCodes[0]?.RoomViewTypeDescription || 'N/A'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 Room 객체 존재: {ratePlanCodes[0]?.Room ? 'Yes' : 'No'}</p>
+                      <p className="text-yellow-700">• 첫 번째 항목 Room 객체 키들: {ratePlanCodes[0]?.Room ? Object.keys(ratePlanCodes[0].Room).join(', ') : 'N/A'}</p>
                       <p className="text-yellow-700">• 첫 번째 항목 데이터: {JSON.stringify(ratePlanCodes[0], null, 2).substring(0, 200)}...</p>
                     </div>
                     
@@ -3138,15 +2467,17 @@ export function HotelDetail({ hotelSlug }: HotelDetailProps) {
                             </td>
                             <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="font-bold text-blue-800">
-                                {ratePlan.AmountAfterTax && ratePlan.AmountAfterTax !== 'N/A' ? 
-                                  parseInt(ratePlan.AmountAfterTax).toLocaleString() : 'N/A'
+                                {ratePlan.AmountAfterTax && ratePlan.AmountAfterTax > 0 ? 
+                                  `${ratePlan.AmountAfterTax.toLocaleString()} ${ratePlan.Currency || 'KRW'}` : 
+                                  <span className="text-red-500">요금 정보 없음</span>
                                 }
                               </div>
                             </td>
                             <td className="border border-blue-200 px-2 py-2 text-xs text-blue-700">
                               <div className="font-medium text-blue-800">
-                                {ratePlan.AmountBeforeTax && ratePlan.AmountBeforeTax !== 'N/A' ? 
-                                  parseInt(ratePlan.AmountBeforeTax).toLocaleString() : 'N/A'
+                                {ratePlan.AmountBeforeTax && ratePlan.AmountBeforeTax > 0 ? 
+                                  `${ratePlan.AmountBeforeTax.toLocaleString()} ${ratePlan.Currency || 'KRW'}` : 
+                                  <span className="text-red-500">요금 정보 없음</span>
                                 }
                               </div>
                             </td>

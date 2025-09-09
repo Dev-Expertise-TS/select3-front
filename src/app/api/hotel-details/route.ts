@@ -7,6 +7,7 @@ interface HotelDetailsRequest {
   adults?: number
   children?: number
   rooms?: number
+  ratePlanCodes?: string[]
 }
 
 interface HotelDetailsResponse {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const requestBody = {
+    const requestBody: any = {
       HotelCode: body.hotelCode.toString(),
       CurrencyCode: 'KRW',
       StartDate: body.startDate,
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
       Adults: body.adults || 2,
       Children: body.children || 0,
       Rooms: body.rooms || 1
+    }
+    
+    // ratePlanCodes가 있으면 추가
+    if (body.ratePlanCodes && body.ratePlanCodes.length > 0) {
+      requestBody.RatePlanCode = body.ratePlanCodes
+      requestBody.ExactMatchOnly = true
     }
 
     console.log('📤 Sabre Hotel Details API 요청:', requestBody)

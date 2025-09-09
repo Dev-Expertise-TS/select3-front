@@ -129,7 +129,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code: string | null
-          rate_plan_codes: RatePlanCode[] | null
+          rate_plan_code: string | null
           
           // 타임스탬프
           created_at: string
@@ -222,7 +222,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code?: string | null
-          rate_plan_codes?: RatePlanCode[] | null
+          rate_plan_code?: string | null
           
           // 타임스탬프
           created_at?: string
@@ -315,7 +315,7 @@ export type Database = {
           
           // 요금제 정보
           rate_code?: string | null
-          rate_plan_codes?: RatePlanCode[] | null
+          rate_plan_code?: string | null
           
           // 타임스탬프
           created_at?: string
