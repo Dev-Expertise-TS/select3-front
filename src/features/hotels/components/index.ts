@@ -1,0 +1,5 @@
+export { ImageGallery } from './ImageGallery'
+export { HotelPromotion } from './HotelPromotion'
+export { HotelTabs } from './HotelTabs'
+export { HotelInfo } from './HotelInfo'
+export { RoomRatesTable } from './RoomRatesTable'

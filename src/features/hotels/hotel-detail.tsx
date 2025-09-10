@@ -1,7 +1,6 @@
 "use client"
 
 // Next.js
-import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
@@ -10,18 +9,23 @@ import { useState, useMemo, useEffect } from "react"
 
 // External libraries
 import { useQuery } from "@tanstack/react-query"
-import { Star, MapPin, MessageCircle, Car, Utensils, Heart, ArrowLeft, Shield, Bed, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 // Components
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
+import { ImageGallery } from "./components/ImageGallery"
+import { HotelPromotion } from "./components/HotelPromotion"
+import { HotelTabs } from "./components/HotelTabs"
+import { HotelInfo } from "./components/HotelInfo"
+import { RoomRatesTable } from "./components/RoomRatesTable"
 
 // Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
+import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
 
 // Utils & Services
 import { supabase } from "@/lib/supabase"
-import { generateRoomIntroductionBatch, generateRoomIntroduction, generateGlobalOTAStyleRoomName, interpretBedType } from "@/lib/openai"
 
 // Types
 interface HotelDetailProps {
@@ -52,11 +56,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // UI 상태 관리
   const [selectedImage, setSelectedImage] = useState(0)
-  const [activeTab, setActiveTab] = useState("benefits")
   const [showImageGallery, setShowImageGallery] = useState(false)
-  const [galleryIndex, setGalleryIndex] = useState(0)
-  const [showImageDetail, setShowImageDetail] = useState(false)
-  const [selectedDetailImage, setSelectedDetailImage] = useState(0)
   const [originalSelectedImage, setOriginalSelectedImage] = useState(0)
 
   // 검색 관련 상태
@@ -74,15 +74,19 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   })
   const [hasSearched, setHasSearched] = useState(false)
 
-  // AI 처리 상태 관리
-  const [roomIntroductions, setRoomIntroductions] = useState<Map<string, string>>(new Map())
-  const [globalOTAStyleRoomNames, setGlobalOTAStyleRoomNames] = useState<Map<string, string>>(new Map())
-  const [bedTypes, setBedTypes] = useState<Map<string, string>>(new Map())
-  const [isGeneratingIntroductions, setIsGeneratingIntroductions] = useState(false)
-  const [isGeneratingRoomNames, setIsGeneratingRoomNames] = useState(false)
-  const [isGeneratingBedTypes, setIsGeneratingBedTypes] = useState(false)
-  const [currentProcessingRow, setCurrentProcessingRow] = useState<number>(-1)
-  const [hasProcessedAI, setHasProcessedAI] = useState(false)
+  // AI 처리 훅 사용
+  const {
+    roomIntroductions,
+    globalOTAStyleRoomNames,
+    bedTypes,
+    isGeneratingIntroductions,
+    isGeneratingRoomNames,
+    isGeneratingBedTypes,
+    currentProcessingRow,
+    hasProcessedAI,
+    processRatePlans,
+    setHasProcessedAI
+  } = useRoomAIProcessing()
 
   // URL로부터 checkIn/checkOut이 오면 초기화
   useEffect(() => {
@@ -115,321 +119,6 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     })
   }
 
-  // ===== AI 처리 함수들 =====
-  // 객실 소개 AI 생성 함수 (1행씩 순차 처리)
-  const generateRoomIntroductionsSequential = async (ratePlans: any[], hotelName: string) => {
-    console.log('🏨 generateRoomIntroductionsSequential 호출됨:', {
-      ratePlansLength: ratePlans?.length,
-      ratePlans: ratePlans,
-      hotelName: hotelName
-    })
-    
-    if (!ratePlans || ratePlans.length === 0) {
-      console.log('⚠️ ratePlans가 비어있음')
-      return
-    }
-    
-    if (!hotelName) {
-      console.log('⚠️ hotelName이 비어있음')
-      return
-    }
-    
-    // 이미 처리 중이면 중복 실행 방지
-    if (isGeneratingIntroductions) {
-      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지')
-      return
-    }
-    
-    setIsGeneratingIntroductions(true)
-    setCurrentProcessingRow(-1) // 초기화
-    console.log('🔄 객실 소개 AI 생성 시작 (1행씩 순차 처리)...')
-    
-    try {
-      // 1번째부터 3번째 행까지 순차적으로 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
-      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
-      
-      for (let i = 0; i < roomsToProcess.length; i++) {
-        const rp = roomsToProcess[i]
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
-        
-        // 현재 처리 중인 행 번호 업데이트
-        setCurrentProcessingRow(i)
-        console.log(`🔍 ${i + 1}번째 객실 소개 생성 중:`, { roomType, roomName, description, introKey, currentRow: i })
-        
-        try {
-          const intro = await generateRoomIntroduction({
-            roomType: roomType,
-            roomName: roomName,
-            description: description
-          }, hotelName)
-          
-          // 즉시 상태 업데이트 (1행씩 표시)
-          setRoomIntroductions(prev => {
-            const newMap = new Map(prev)
-            newMap.set(introKey, intro)
-            return newMap
-          })
-          
-          console.log(`✅ ${i + 1}번째 객실 소개 생성 완료 및 즉시 표시:`, intro, 'key:', introKey)
-          
-          // API 호출 간격 조절 (rate limiting 방지)
-          if (i < roomsToProcess.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500))
-          }
-        } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 소개 생성 실패:`, roomError)
-          // 개별 객실 실패 시 fallback 사용
-          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-          
-          // 즉시 상태 업데이트 (fallback도 1행씩 표시)
-          setRoomIntroductions(prev => {
-            const newMap = new Map(prev)
-            newMap.set(introKey, fallbackIntro)
-            return newMap
-          })
-          
-          console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용 및 즉시 표시:`, fallbackIntro, 'key:', introKey)
-        }
-      }
-      
-      console.log('✅ 모든 객실 소개 순차 처리 완료')
-      
-    } catch (error) {
-      console.error('❌ 객실 소개 AI 생성 중 오류 발생:', error)
-    } finally {
-      setIsGeneratingIntroductions(false)
-      setCurrentProcessingRow(-1) // 처리 완료 후 초기화
-      console.log('🏁 객실 소개 AI 생성 완료')
-    }
-  }
-
-  // 글로벌 호텔 OTA 스타일 객실명 생성 함수
-  const generateGlobalOTAStyleRoomNames = async (ratePlans: any[], hotelName: string) => {
-    console.log('🏨 generateGlobalOTAStyleRoomNames 호출됨:', {
-      ratePlansLength: ratePlans?.length,
-      ratePlans: ratePlans,
-      hotelName: hotelName
-    })
-    
-    if (!ratePlans || ratePlans.length === 0) {
-      console.log('⚠️ ratePlans가 비어있음')
-      return
-    }
-    
-    if (!hotelName) {
-      console.log('⚠️ hotelName이 비어있음')
-      return
-    }
-    
-    // 이미 처리 중이면 중복 실행 방지
-    if (isGeneratingRoomNames) {
-      console.log('⚠️ 이미 객실명 생성 중이므로 중복 실행 방지')
-      return
-    }
-    
-    setIsGeneratingRoomNames(true)
-    console.log('🔄 글로벌 호텔 OTA 스타일 객실명 생성 시작...')
-    
-    try {
-      const roomNames = new Map<string, string>()
-      
-      // 1번째부터 3번째 행까지 순차적으로 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
-      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
-      
-      for (let i = 0; i < roomsToProcess.length; i++) {
-        const rp = roomsToProcess[i]
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const key = `${roomType}-${roomName}`
-        
-        console.log(`🔍 ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 중:`, { roomType, roomName, description, key })
-        
-        try {
-          const otaStyleName = await generateGlobalOTAStyleRoomName(roomType, roomName, description, hotelName)
-          
-          // 즉시 상태 업데이트 (1행씩 표시)
-          setGlobalOTAStyleRoomNames(prev => {
-            const newMap = new Map(prev)
-            newMap.set(key, otaStyleName)
-            return newMap
-          })
-          
-          console.log(`✅ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 완료 및 즉시 표시:`, otaStyleName, 'key:', key)
-          
-          // API 호출 간격 조절 (rate limiting 방지)
-          if (i < roomsToProcess.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 300))
-          }
-        } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 실패:`, roomError)
-          // 개별 객실 실패 시 fallback 사용
-          const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
-          
-          // 즉시 상태 업데이트 (fallback도 1행씩 표시)
-          setGlobalOTAStyleRoomNames(prev => {
-            const newMap = new Map(prev)
-            newMap.set(key, fallbackName)
-            return newMap
-          })
-          
-          console.log(`🔄 ${i + 1}번째 객실 fallback 객실명 사용 및 즉시 표시:`, fallbackName, 'key:', key)
-        }
-      }
-      
-      console.log('✅ 모든 객실명 순차 처리 완료')
-      
-    } catch (error) {
-      console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error)
-      // 에러 발생 시 기본 객실명 생성 (3행까지만)
-      const fallbackNames = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 3)
-      roomsToProcess.forEach((rp: any) => {
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const key = `${roomType}-${roomName}`
-        const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
-        fallbackNames.set(key, fallbackName)
-        console.log('🔄 fallback 객실명 생성:', { key, fallbackName })
-      })
-      console.log('🔄 fallback 객실명 전체:', fallbackNames)
-      setGlobalOTAStyleRoomNames(fallbackNames)
-    } finally {
-      setIsGeneratingRoomNames(false)
-      console.log('🏁 글로벌 호텔 OTA 스타일 객실명 생성 완료')
-    }
-  }
-
-  // 객실 소개 생성 함수
-  const generateRoomIntroductions = async (ratePlans: any[], hotelName: string) => {
-    console.log('🔍 generateRoomIntroductions 호출됨:', { 
-      ratePlansLength: ratePlans?.length, 
-      ratePlans: ratePlans,
-      hotelName: hotelName 
-    })
-    
-    if (!ratePlans || ratePlans.length === 0) {
-      console.log('⚠️ ratePlans가 비어있음')
-      return
-    }
-    
-    if (!hotelName) {
-      console.log('⚠️ hotelName이 비어있음')
-      return
-    }
-    
-    // 이미 처리 중이면 중복 실행 방지
-    if (isGeneratingIntroductions) {
-      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지')
-      return
-    }
-    
-    setIsGeneratingIntroductions(true)
-    console.log('🔄 객실 소개 생성 시작...')
-    
-    try {
-      // 1번째부터 3번째 행까지 1행씩 순차적으로 AI 처리
-      const roomsToProcess = ratePlans.slice(0, 3)
-      
-      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개 중 1-3번째 행)`)
-      console.log('🏨 호텔명:', hotelName)
-      
-      // 1행씩 순차적으로 OpenAI API 적용하고 즉시 표시
-      console.log('🚀 1행씩 순차적으로 OpenAI API 적용 및 즉시 표시...')
-      
-      try {
-        // 1행씩 순차적으로 OpenAI API 호출
-        console.log('📋 처리할 객실 수:', roomsToProcess.length)
-        
-        for (let i = 0; i < roomsToProcess.length; i++) {
-          const rp = roomsToProcess[i]
-          const roomType = rp.RoomType || rp.RoomName || 'N/A'
-          const roomName = rp.RoomName || 'N/A'
-          const description = rp.Description || 'N/A'
-          const rateKey = rp.RateKey || 'N/A'
-          const key = `${roomType}-${roomName}-${rateKey}`
-          
-          console.log(`🔍 ${i + 1}번째 객실 처리 중:`, { roomType, roomName, description, rateKey, key })
-          
-          try {
-            const intro = await generateRoomIntroduction({
-              roomType: roomType,
-              roomName: roomName,
-              description: description
-            }, hotelName)
-            
-            // 즉시 상태 업데이트 (1행씩 표시)
-            setRoomIntroductions(prev => {
-              const newMap = new Map(prev)
-              newMap.set(key, intro)
-              return newMap
-            })
-            
-            console.log(`✅ ${i + 1}번째 객실 AI 소개문 생성 완료 및 즉시 표시:`, intro, 'key:', key)
-            
-            // API 호출 간격 조절 (rate limiting 방지)
-            if (i < roomsToProcess.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500))
-            }
-          } catch (roomError) {
-            console.error(`❌ ${i + 1}번째 객실 AI 소개문 생성 실패:`, roomError)
-            // 개별 객실 실패 시 fallback 사용
-            const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-            
-            // 즉시 상태 업데이트 (fallback도 1행씩 표시)
-            setRoomIntroductions(prev => {
-              const newMap = new Map(prev)
-              newMap.set(key, fallbackIntro)
-              return newMap
-            })
-            
-            console.log(`🔄 ${i + 1}번째 객실 fallback 소개문 사용 및 즉시 표시:`, fallbackIntro, 'key:', key)
-          }
-        }
-        
-        console.log('✅ 모든 객실 소개문 순차 처리 완료')
-      } catch (apiError) {
-        console.error('❌ OpenAI API 순차 처리 중 오류:', apiError)
-        // API 오류 시 3행까지 fallback 소개문 생성
-        const fallbackIntroductions = new Map<string, string>()
-        roomsToProcess.forEach((rp: any) => {
-          const roomType = rp.RoomType || rp.RoomName || 'N/A'
-          const roomName = rp.RoomName || 'N/A'
-          const rateKey = rp.RateKey || 'N/A'
-          const key = `${roomType}-${roomName}-${rateKey}`
-          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${rp.Description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-          fallbackIntroductions.set(key, fallbackIntro)
-          console.log('🔄 fallback 소개문 생성:', { key, fallbackIntro })
-        })
-        console.log('🔄 fallback 소개문 전체:', fallbackIntroductions)
-        setRoomIntroductions(fallbackIntroductions)
-      }
-    } catch (error) {
-      console.error('❌ 객실 소개 생성 오류:', error)
-      // 에러 발생 시 기본 소개문 생성 (3행까지만)
-      const fallbackIntroductions = new Map<string, string>()
-      const roomsToProcess = ratePlans.slice(0, 3)
-      roomsToProcess.forEach((rp: any) => {
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const rateKey = rp.RateKey || 'N/A'
-        const key = `${roomType}-${roomName}-${rateKey}`
-        const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${rp.Description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
-        fallbackIntroductions.set(key, fallbackIntro)
-        console.log('🔄 fallback 소개문 생성:', { key, fallbackIntro })
-      })
-      console.log('🔄 fallback 소개문 전체:', fallbackIntroductions)
-      setRoomIntroductions(fallbackIntroductions)
-    } finally {
-      setIsGeneratingIntroductions(false)
-      console.log('🏁 객실 소개 생성 완료')
-    }
-  }
   
   // URL에서 sabreId 읽기
   const sabreIdParam = Number(searchParams?.get('sabreId') || 0)
@@ -584,7 +273,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // 모달이 열릴 때 body 스크롤 막기
   useEffect(() => {
-    if (showImageGallery || showImageDetail) {
+    if (showImageGallery) {
       // body 스크롤 막기
       document.body.style.overflow = 'hidden'
       document.body.style.paddingRight = '0px' // 스크롤바 너비만큼 패딩 추가하지 않음
@@ -599,7 +288,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       document.body.style.overflow = 'unset'
       document.body.style.paddingRight = '0px'
     }
-  }, [showImageGallery, showImageDetail])
+  }, [showImageGallery])
   
   // sabre_hotels 테이블에서 property_details 조회 (select_hotels의 fallback으로 사용)
   const { data: sabreHotelDetails } = useQuery({
@@ -791,57 +480,13 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     ratePlanCodesLength: ratePlanCodes?.length
   })
 
-  // 베드 타입 추출 함수 (객실 소개 데이터에서)
-  const extractBedTypeFromDescription = (description: string): string => {
-    if (!description || description === 'N/A') return '정보 없음'
-    
-    // 베드 타입 키워드 매칭
-    const bedKeywords = [
-      { keyword: 'KING BED', type: '킹 베드' },
-      { keyword: 'TWIN BED', type: '트윈 베드' },
-      { keyword: 'DOUBLE BED', type: '더블 베드' },
-      { keyword: 'SINGLE BED', type: '싱글 베드' },
-      { keyword: 'QUEEN BED', type: '퀸 베드' },
-      { keyword: 'KING', type: '킹 베드' },
-      { keyword: 'TWIN', type: '트윈 베드' },
-      { keyword: 'DOUBLE', type: '더블 베드' },
-      { keyword: 'SINGLE', type: '싱글 베드' },
-      { keyword: 'QUEEN', type: '퀸 베드' },
-      { keyword: '1 KING', type: '킹 베드 1개' },
-      { keyword: '2 TWIN', type: '트윈 베드 2개' },
-      { keyword: '1 DOUBLE', type: '더블 베드 1개' },
-      { keyword: '1 SINGLE', type: '싱글 베드 1개' },
-      { keyword: '1 QUEEN', type: '퀸 베드 1개' }
-    ]
-    
-    const upperDescription = description.toUpperCase()
-    
-    for (const { keyword, type } of bedKeywords) {
-      if (upperDescription.includes(keyword)) {
-        return type
-      }
-    }
-    
-    return '베드 정보 없음'
-  }
 
   // ratePlanCodes가 변경될 때 AI 처리 함수들 호출 (한 번만)
   useEffect(() => {
-    if (ratePlanCodes && ratePlanCodes.length > 0 && hotel?.property_name_ko && !hasProcessedAI) {
-      console.log('🚀 ratePlanCodes 변경 감지, AI 처리 함수들 호출 시작 (한 번만):', {
-        ratePlanCodesLength: ratePlanCodes.length,
-        hotelName: hotel.property_name_ko,
-        hasProcessedAI: hasProcessedAI
-      })
-      
-      // AI 처리 플래그 설정
-      setHasProcessedAI(true)
-      
-      // AI 처리 함수들 호출 (객실 소개만 순차 처리)
-      generateGlobalOTAStyleRoomNames(ratePlanCodes, hotel.property_name_ko)
-      generateRoomIntroductionsSequential(ratePlanCodes, hotel.property_name_ko)
+    if (ratePlanCodes && ratePlanCodes.length > 0 && hotel?.property_name_ko) {
+      processRatePlans(ratePlanCodes, hotel.property_name_ko)
     }
-  }, [ratePlanCodes, hotel?.property_name_ko, hasProcessedAI])
+  }, [ratePlanCodes, hotel?.property_name_ko, processRatePlans])
 
   // Rate Plan 데이터 추출 함수
   function extractRatePlansFromSabreData(sabreData: any): any[] {
@@ -1149,62 +794,13 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     setSelectedImage(originalSelectedImage) // 원래 선택된 이미지로 되돌리기
   }
 
-  // 이미지 상세 보기 열기
-  const openImageDetail = (index: number) => {
-    setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장           
-    setSelectedDetailImage(index)
-    setShowImageDetail(true)
+  const openImageGallery = () => {
+    setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
+    setShowImageGallery(true)
   }
 
-  // 이미지 상세 보기 닫기
-  const closeImageDetail = () => {
-    setShowImageDetail(false)
-    setSelectedImage(originalSelectedImage) // 원래 선택된 이미지로 되돌리기
-  }
-
-  // 이전 이미지
-  const prevImage = () => {
-    setSelectedDetailImage((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1))
-  }
-
-  // 다음 이미지
-  const nextImage = () => {
-    setSelectedDetailImage((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1))
-  }
-
-  // 키보드 이벤트 처리
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showImageGallery) {
-          closeImageGallery()
-        } else if (showImageDetail) {
-          closeImageDetail()
-        }
-      } else if (showImageDetail) {
-        if (e.key === 'ArrowLeft') {
-          prevImage()
-        } else if (e.key === 'ArrowRight') {
-          nextImage()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [showImageGallery, showImageDetail])
-
-  const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
-  const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
-  
-  const copyRateKey = async (text: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedRateKeyRow(index)
-      setTimeout(() => setCopiedRateKeyRow(null), 1200)
-    } catch (_e) {
-      // noop
-    }
+  const handleImageSelect = (index: number) => {
+    setSelectedImage(index)
   }
 
   // 로딩 상태
@@ -1255,647 +851,38 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         </div>
       </div>
 
-      {/* Combined Hotel Info Header and Image Gallery */}
-      <div className="bg-gray-100 py-1.5">
-        <div className="container mx-auto max-w-[1440px] px-4">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            {/* Hotel Info Header */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>
-                  {hotel.property_name_en && (
-                    <span className="text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
-                  )}
-                  <div className="flex items-center">
-                    {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-orange-400 text-orange-400" />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm">{hotel.property_address || '주소 정보 없음'}</span>
-                  <Link href="#" className="text-blue-600 text-sm hover:underline ml-2">
-                    지도에서 호텔보기
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500">
-                  <Heart className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Image Gallery */}
-            <div className="flex gap-2 h-[400px] rounded-lg overflow-hidden">
-              <div
-                className="w-[60%] relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100"
-                onClick={() => {
-                  setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
-                  setShowImageGallery(true)
-                }}
-              >
-                {displayImages.length > 0 ? (
-                  <div className="relative w-full h-full">
-                    {/* 로딩 스켈레톤 */}
-                    {!preloadedImages.has(displayImages[selectedImage]?.media_path || displayImages[0]?.media_path) && (
-                      <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-                        <div className="text-gray-400">
-                          <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
-                          <div className="text-sm">이미지 로딩 중...</div>
-                        </div>
-                      </div>
-                    )}
-                  <Image
-                    src={displayImages[selectedImage]?.media_path || displayImages[0]?.media_path}
-                    alt={displayImages[selectedImage]?.alt || displayImages[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
-                    fill
-                    className="object-cover transition-opacity duration-300"
-                    priority={selectedImage === 0}
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 60vw"
-                    onLoad={() => console.log('메인 이미지 로드 완료')}
-                    onError={(e) => {
-                      console.error('메인 이미지 로드 실패:', e);
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <div className="text-2xl mb-2">📷</div>
-                      <div className="text-sm font-medium">No Image</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="w-[40%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
-                {/* 호텔 이미지가 있는 경우 순차적으로 표시 */}
-                {displayImages.length > 0 ? (
-                  <>
-                    {displayImages.slice(1, 5).map((media, index) => (
-                      <div
-                        key={media.id}
-                        className="relative group cursor-pointer rounded-lg overflow-hidden"
-                        onClick={() => {
-                          setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
-                          setSelectedImage(index + 1)
-                          setShowImageGallery(true)
-                        }}
-                      >
-                        <Image
-                          src={media.media_path}
-                          alt={media.alt || `Gallery ${index + 2}`}
-                          fill
-                          className="object-cover transition-opacity duration-300"
-                          placeholder="blur"
-                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
-                          loading={index < 2 ? "eager" : "lazy"}
-                          onLoad={() => console.log(`썸네일 ${index + 2} 로드 완료`)}
-                          onError={(e) => {
-                            console.error(`썸네일 ${index + 2} 로드 실패:`, e);
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.svg';
-                          }}
-                        />
-                        {index === 3 && displayImages.length > 5 && (
-                          <div 
-                            className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOriginalSelectedImage(selectedImage) // 현재 선택된 이미지 인덱스 저장
-                              setShowImageGallery(true)
-                            }}
-                          >
-                            <div className="text-white text-center">
-                              <div className="text-lg font-bold">사진 모두보기</div>
-                              <div className="text-sm">({displayImages.length}장)</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {/* 5개 미만인 경우 빈 썸네일 표시 */}
-                    {displayImages.length < 5 && Array.from({ length: 5 - displayImages.length }).map((_, index) => (
-                      <div key={`empty-${index}`} className="bg-gray-100 rounded-lg flex items-center justify-center">
-                        <div className="text-center text-gray-500">
-                          <div className="text-lg mb-1">📷</div>
-                          <div className="text-xs font-medium">No Image</div>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <div className="text-lg mb-1">📷</div>
-                        <div className="text-xs font-medium">No Image</div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <div className="text-lg mb-1">📷</div>
-                        <div className="text-xs font-medium">No Image</div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <div className="text-lg mb-1">📷</div>
-                        <div className="text-xs font-medium">No Image</div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <div className="text-lg mb-1">📷</div>
-                        <div className="text-xs font-medium">No Image</div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-
-          </div>
-        </div>
-      </div>
+      {/* Hotel Info and Image Gallery */}
+      <HotelInfo
+        hotel={hotel}
+        images={displayImages}
+        selectedImage={selectedImage}
+        onImageSelect={handleImageSelect}
+        onGalleryOpen={openImageGallery}
+        preloadedImages={preloadedImages}
+      />
 
       {/* Image Gallery Modal */}
-      {showImageGallery && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeImageGallery()
-            }
-          }}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-[90vh] max-h-[800px] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Top Header Bar */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {hotel.property_name_ko || hotel.property_name_en || '호텔명'}
-                </h2>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>2026년 7월 15일</span>
-                  <span>-</span>
-                  <span>2026년 7월 16일</span>
-                  <span className="ml-2">성인 2명</span>
-                </div>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                  확인
-                </Button>
-              </div>
-              <button
-                onClick={closeImageGallery}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Image Category Tabs */}
-            <div className="flex items-center gap-6 px-6 py-4 border-b border-gray-200 overflow-x-auto">
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                슬라이드쇼
-              </button>
-              <button className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-2 whitespace-nowrap">
-                전체({displayImages.length})
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                동영상(0)
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                객실(0)
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                숙소(0)
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                편의/부대시설(0)
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                식사 공간/장소(0)
-              </button>
-              <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-                주변 명소(0)
-              </button>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex h-[calc(100%-140px)]">
-              {/* Left Section - Image Grid */}
-              <div className="flex-1 p-6 overflow-y-auto">
-                {!showImageDetail ? (
-                  <div className="grid grid-cols-3 gap-4">
-                    {displayImages.map((media, index) => (
-                      <div 
-                        key={media.id} 
-                        className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
-                        onClick={() => openImageDetail(index)}
-                      >
-                        <Image
-                          src={media.media_path}
-                          alt={media.alt || `Gallery ${index + 1}`}
-                          fill
-                          className="object-cover transition-all duration-300 group-hover:scale-105"
-                          placeholder="blur"
-                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                          loading="lazy"
-                          onLoad={() => console.log(`갤러리 이미지 ${index + 1} 로드 완료`)}
-                          onError={(e) => {
-                            console.error(`갤러리 이미지 ${index + 1} 로드 실패:`, e);
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.svg';
-                          }}
-                        />
-                      </div>
-                    ))}
-
-                  </div>
-                ) : (
-                  /* Image Detail View */
-                  <div className="h-full flex flex-col">
-                    {/* Detail Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <button
-                        onClick={closeImageDetail}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        <span>갤러리로 돌아가기</span>
-                      </button>
-                      <div className="text-sm text-gray-500">
-                        {selectedDetailImage + 1} / {displayImages.length}
-                      </div>
-                    </div>
-
-                    {/* Main Image */}
-                    <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-100">
-                      {displayImages.length > 0 ? (
-                        <Image
-                          src={displayImages[selectedDetailImage]?.media_path}
-                          alt={displayImages[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
-                          fill
-                          className="object-contain"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="text-center text-gray-500">
-                            <div className="text-4xl mb-4">📷</div>
-                            <div className="text-xl">이미지가 없습니다</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Navigation Controls */}
-                    {displayImages.length > 1 && (
-                      <div className="flex items-center justify-between mt-4">
-                        <button
-                          onClick={prevImage}
-                          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span>이전</span>
-                        </button>
-                        <button
-                          onClick={nextImage}
-                          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <span>다음</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Thumbnail Navigation */}
-                    {displayImages.length > 1 && (
-                      <div className="mt-4">
-                        <div className="flex gap-2 overflow-x-auto pb-2">
-                          {displayImages.map((media, index) => (
-                            <button
-                              key={media.id}
-                              onClick={() => setSelectedDetailImage(index)}
-                              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                                index === selectedDetailImage ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <Image
-                                src={media.media_path}
-                                alt={media.alt || `Thumbnail ${index + 1}`}
-                                width={80}
-                                height={80}
-                                className="w-full h-full object-cover"
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Section - Information Sidebar */}
-              <div className="w-80 border-l border-gray-200 p-6 overflow-y-auto">
-                <div className="space-y-6">
-
-
-                  {/* Promotional Text */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-blue-600">인기 많은 숙소입니다!</p>
-                    <p className="text-xs text-gray-600">오늘 21명의 여행객이 이 숙소 예약함</p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full text-gray-700 border-gray-300 hover:bg-gray-50">
-                      숙소 인근 명소 보기
-                    </Button>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      예약 가능한 객실 보기
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ImageGallery
+        images={displayImages}
+        hotelName={hotel.property_name_ko || hotel.property_name_en || '호텔명'}
+        isOpen={showImageGallery}
+        onClose={closeImageGallery}
+        selectedImage={selectedImage}
+        onImageSelect={handleImageSelect}
+      />
 
       {/* Promotion */}
-      {(isLoadingPromotions || (hotelPromotions && hotelPromotions.length > 0)) && (
-        <div className="bg-gray-100 py-4 mt-1.5">
-          <div className="container mx-auto max-w-[1440px] px-4">
-            {isLoadingPromotions ? (
-              <div className="bg-blue-600 text-white p-6 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <span className="font-medium text-lg">프로모션</span>
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span className="text-sm">프로모션 정보를 불러오는 중...</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-blue-600 text-white p-6 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <span className="font-medium text-lg">프로모션</span>
-                  <div className="flex gap-2 flex-wrap items-center">
-                    {hotelPromotions.map((promotion, index) => (
-                      <div key={promotion.promotion_id} className="flex items-center gap-2 min-w-0 flex-shrink-0">
-                        <span className="bg-pink-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
-                          {promotion.promotion}
-                        </span>
-                        {promotion.promotion_description && (
-                          <span className="bg-orange-500 px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
-                            {promotion.promotion_description}
-                          </span>
-                        )}
-                        {promotion.booking_date && (
-                          <span className="text-xs text-blue-100 whitespace-nowrap">
-                            예약: ~{new Date(promotion.booking_date).toLocaleDateString('ko-KR')}
-                          </span>
-                        )}
-                        {promotion.check_in_date && (
-                          <span className="text-xs text-blue-100 whitespace-nowrap">
-                            투숙: ~{new Date(promotion.check_in_date).toLocaleDateString('ko-KR')}
-                          </span>
-                        )}
-                        {index < hotelPromotions.length - 1 && (
-                          <span className="text-blue-200 mx-1">|</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <HotelPromotion
+        promotions={hotelPromotions}
+        isLoading={isLoadingPromotions}
+      />
 
-      <div className="bg-gray-100 py-4">
-        <div className="container mx-auto max-w-[1440px] px-4">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-8 border-b mb-6">
-              <button
-                onClick={() => setActiveTab("benefits")}
-                className={`flex items-center gap-2 pb-3 font-semibold ${
-                  activeTab === "benefits"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
-              >
-                <span className="text-xl">🏆</span>
-                예약 혜택
-              </button>
-              <button
-                onClick={() => setActiveTab("introduction")}
-                className={`pb-3 font-semibold ${
-                  activeTab === "introduction"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
-              >
-                호텔 상세 정보
-              </button>
-              <button
-                onClick={() => setActiveTab("transportation")}
-                className={`pb-3 font-semibold ${
-                  activeTab === "transportation"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
-              >
-                위치 및 교통
-              </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                className={`flex items-center gap-2 pb-3 font-semibold ${
-                  activeTab === "reviews"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
-                }`}
-              >
-                <span className="text-xl">⭐</span>
-                리뷰 평가 분석
-              </button>
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === "benefits" && (
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <h4 className="text-base font-medium text-gray-700 mb-4">예약 시 제공되는 혜택</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <Utensils className="h-3 w-3 text-blue-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">2인 조식 무료 제공</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 font-semibold text-xs">$</span>
-                      </div>
-                      <div className="text-xs text-gray-700">100$ 상당의 식음료 크레딧</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-purple-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <MessageCircle className="h-3 w-3 text-purple-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">얼리 체크인, 레이트 체크아웃 (현장 가능시)</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <Bed className="h-3 w-3 text-indigo-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">객실 무료 업그레이드 (현장 가능시)</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-amber-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <Star className="h-3 w-3 text-amber-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">글로벌 체인 멤버십 포인트 적립</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-slate-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <Shield className="h-3 w-3 text-slate-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">투숙 후 호텔에서 체크아웃 시 결제</div>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className="w-6 h-6 bg-rose-50 rounded-md flex items-center justify-center flex-shrink-0">
-                        <MessageCircle className="h-3 w-3 text-rose-600" />
-                      </div>
-                      <div className="text-xs text-gray-700">전문 컨시어지를 통한 1:1 프라이빗 상담 예약</div>
-                    </div>
-                  </div>
-                </div>
-
-                                 {/* 호텔 상세 정보 섹션 */}
-                 <div className="border-t border-gray-200 pt-6">
-                   <div className="mb-4">
-                     <h4 className="text-base font-medium text-gray-700">호텔 상세 정보</h4>
-                   </div>
-                  
-                                     {/* 접힌 상태 - 미리보기 */}
-                   {!isHotelInfoExpanded && introHtml && (
-                     <div className="max-w-[70%] mx-auto">
-                       <div className="relative h-20 overflow-hidden">
-                         <div 
-                           className="text-gray-600 text-sm leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                           dangerouslySetInnerHTML={{ __html: introHtml }}
-                         />
-                         {/* 그라데이션 오버레이 */}
-                         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
-                       </div>
-                     </div>
-                   )}
-                   
-                   {/* 펼쳐진 상태 - 전체 내용 */}
-                   {isHotelInfoExpanded && (
-                     <div className="max-w-[70%] mx-auto">
-                       {introHtml ? (
-                         <div 
-                           className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                           dangerouslySetInnerHTML={{ __html: introHtml }}
-                         />
-                       ) : (
-                         <p className="text-gray-700 leading-relaxed">
-                           {hotel.property_description || `${hotel.property_name_ko || '호텔'}의 상세 정보가 아직 제공되지 않았습니다.`}
-                         </p>
-                       )}
-                     </div>
-                   )}
-                   
-                   {/* 버튼 - 하단 가운데 */}
-                   <div className="text-center mt-6">
-                     <button
-                       onClick={() => setIsHotelInfoExpanded(!isHotelInfoExpanded)}
-                       className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
-                     >
-                       {isHotelInfoExpanded ? (
-                         <>
-                           <span>호텔정보 접기</span>
-                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                           </svg>
-                         </>
-                       ) : (
-                         <>
-                           <span>호텔정보 더보기</span>
-                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                           </svg>
-                         </>
-                       )}
-                     </button>
-                   </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "introduction" && (
-              <div className="space-y-4">
-                <div className="prose max-w-none">
-                  
-                  {/* Property Details 표시 */}
-                  {introHtml ? (
-                    <div className="max-w-[70%] mx-auto mb-6">
-                      <div
-                        className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                        dangerouslySetInnerHTML={{ __html: introHtml }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="max-w-[70%] mx-auto mb-6">
-                      <p className="text-gray-700 leading-relaxed">
-                        {hotel.property_description || `${hotel.property_name_ko || '호텔'}의 상세 정보가 아직 제공되지 않았습니다.`}
-                      </p>
-                    </div>
-                  )}
-
-
-                </div>
-              </div>
-            )}
-
-            {activeTab === "transportation" && (
-              <div className="space-y-6">
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-lg mb-2">📍</div>
-                  <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
-                        </div>
-                        </div>
-            )}
-
-            {activeTab === "reviews" && (
-              <div className="space-y-6">
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-lg mb-2">⭐</div>
-                  <p className="text-gray-500">리뷰 평가 분석이 준비 중입니다.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Hotel Tabs */}
+      <HotelTabs
+        introHtml={introHtml}
+        hotelName={hotel.property_name_ko || '호텔'}
+        propertyDescription={hotel.property_description}
+      />
 
       {/* Search Bar - Sticky */}
       <div className="sticky top-16 z-40 bg-gray-100 py-4">
@@ -1928,209 +915,18 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">객실 타입별 요금 상세</h3>
               
-              {/* API 조회 완료 후 데이터 상태에 따라 표시 */}
-              {sabreLoading ? (
-                /* API 조회 중일 때 로딩 표시 */
-                <div className="flex items-center justify-center py-8">
-                  <div className="flex items-center gap-3 text-blue-600">
-                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-sm">해당 일자와 인원에 맞는 객실 요금을 조회 중입니다.</span>
-                  </div>
-                </div>
-              ) : sabreError ? (
-                /* API 오류 시 오류 메시지 표시 */
-                <div className="text-center py-6">
-                  <div className="text-red-500 mb-2">
-                    <span className="text-2xl">⚠️</span>
-                  </div>
-                  <p className="text-sm text-red-600 mb-3">객실 정보 조회에 실패했습니다.</p>
-                  <div className="text-xs text-gray-500">
-                    <p>• Sabre API 연결을 확인해주세요</p>
-                    <p>• 호텔의 Rate Plan 정보가 있는지 확인해주세요</p>
-                    <p>• 잠시 후 다시 시도해주세요</p>
-                  </div>
-                </div>
-              ) : Array.isArray(ratePlanCodes) && ratePlanCodes.length > 0 ? (
-                <>
-              {/* Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200 text-sm">
-                  <thead>
-                    <tr className="bg-gray-200">
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
-                          <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
-                      <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                        {ratePlanCodes.map((rp: any, idx: number) => {
-                        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-                        const roomName = rp.RoomName || 'N/A'
-                        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
-                        const currency = rp.Currency || 'KRW'
-                        const rateKey: string = rp.RateKey || 'N/A'
-                        const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
-                        
-                        // AI 처리 함수들과 동일한 키 생성 방식 사용
-                        const rowKey = `${roomType}-${roomName}`
-                        const introKey = `${roomType}-${roomName}-${rateKey}`
-                        const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
-                        
-                        // 디버깅을 위한 로그 (첫 번째 행만)
-                        if (idx === 0) {
-                          console.log('🔍 테이블 렌더링 디버깅:', {
-                            idx,
-                            roomType,
-                            roomName,
-                            rowKey,
-                            globalOTAStyleRoomName: globalOTAStyleRoomNames.get(rowKey),
-                            bedType: bedTypes.get(rowKey),
-                            roomIntroduction: roomIntroductions.get(rowKey),
-                            allGlobalOTAStyleKeys: Array.from(globalOTAStyleRoomNames.keys()),
-                            allBedTypeKeys: Array.from(bedTypes.keys()),
-                            allIntroductionKeys: Array.from(roomIntroductions.keys())
-                          })
-                        }
-                        
-                        return (
-                          <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px] hidden">
-                              <div className="text-gray-700 font-medium">
-                                  {isGeneratingRoomNames && idx === 0 ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                    <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
-                                  </div>
-                                ) : (
-                                  globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
-                                )}
-                              </div>
-                            </td>
-                              <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px] hidden">
-                                <div className="text-gray-700 font-medium">
-                                  {rp.RoomViewDescription || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
-                              <div className="text-gray-700 font-medium">
-                                  {extractBedTypeFromDescription(rp.Description || 'N/A')}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
-                              <div className="text-gray-700">
-                                {roomIntroductions.has(introKey) ? (
-                                  roomIntroduction
-                                  ) : isGeneratingIntroductions && currentProcessingRow === idx ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                      <span className="text-gray-500 text-xs">AI 가 객실 소개 설명을 준비 중입니다.</span>
-                                  </div>
-                                ) : (
-                                  rp.Description || 'N/A'
-                                )}
-                              </div>
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                                {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
-                                  `${parseInt(String(amount)).toLocaleString()}` : 
-                                  <span className="text-red-500">요금 정보 없음</span>
-                                }
-                            </td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
-                            <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
-                              <button
-                                type="button"
-                                title={typeof rateKey === 'string' ? rateKey : ''}
-                                onClick={() => copyRateKey(String(rateKey), idx)}
-                                className="font-mono underline decoration-dotted hover:text-blue-600"
-                              >
-                                {shortRateKey}
-                              </button>
-                              {copiedRateKeyRow === idx && (
-                                <span className="ml-2 text-xs text-green-600">Copied</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                        })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Table Legend */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-600">
-                  <div>
-                    <span className="font-medium">베드:</span> AI가 해석한 침대 구성 (킹, 트윈, 더블 등)
-                  </div>
-                  <div>
-                    <span className="font-medium">객실 소개:</span> AI가 생성한 매력적인 객실 소개
-                  </div>
-                  <div>
-                    <span className="font-medium">총 요금:</span> 세금 포함 최종 요금
-                  </div>
-                  <div>
-                    <span className="font-medium">통화:</span> 요금 단위
-                  </div>
-                  <div>
-                    <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
-                  </div>
-                </div>
-              </div>
-                </>
-              ) : (
-                /* API 조회 완료 후 데이터가 없을 때 표시할 메시지 */
-                <div className="text-center py-12">
-                  <div className="mb-6">
-                    <div className="text-6xl mb-4">🏨</div>
-                    <h4 className="text-xl font-semibold text-gray-700 mb-4">
-                      해당 일자에 예약 가능한 객실이 조회되지 않습니다.
-                    </h4>
-                    <p className="text-gray-600 mb-6">
-                      호텔 전문 컨시어지 상담이나 전화를 해주시면 상세히 안내해 드리겠습니다.
-                    </p>
-              </div>
-                  
-                  {/* 상담하기 버튼 */}
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <button 
-                      onClick={() => {
-                        // 전화 걸기
-                        window.open('tel:1588-0000', '_self')
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      전화 상담
-                    </button>
-                    
-                    <button 
-                      onClick={() => {
-                        // 카카오톡 상담 (예시)
-                        window.open('https://pf.kakao.com/_your_kakao_channel', '_blank')
-                      }}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 3C6.486 3 2 6.262 2 10.2c0 2.4 1.6 4.5 4 5.8V21l3.5-2c.5.1 1 .1 1.5.1 5.514 0 10-3.262 10-7.2S17.514 3 12 3z"/>
-                      </svg>
-                      카카오톡 상담
-                    </button>
-                  </div>
-                  
-                  <div className="mt-6 text-sm text-gray-500">
-                    <p>상담 시간: 평일 09:00 - 18:00</p>
-                    <p>전화: 1588-0000</p>
-                  </div>
-                </div>
-              )}
+              <RoomRatesTable
+                ratePlans={ratePlanCodes || []}
+                roomIntroductions={roomIntroductions}
+                globalOTAStyleRoomNames={globalOTAStyleRoomNames}
+                bedTypes={bedTypes}
+                isGeneratingIntroductions={isGeneratingIntroductions}
+                isGeneratingRoomNames={isGeneratingRoomNames}
+                currentProcessingRow={currentProcessingRow}
+                sabreLoading={sabreLoading}
+                sabreError={sabreError}
+                hasSearched={hasSearched}
+              />
 
               {/* Sabre API 호텔 상세 정보 테이블 */}
               <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
