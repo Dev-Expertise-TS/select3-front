@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -182,6 +182,17 @@ interface HotelSearchResultsProps {
   showAllHotels?: boolean
   hideSearchBar?: boolean
   showFilters?: boolean
+  // 체인 페이지용 props
+  initialHotels?: any[]
+  allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
+  selectedChainBrands?: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string }>
+  currentChainName?: string
+  onChainChange?: (chainSlug: string) => void
+  serverFilterOptions?: {
+    countries: Array<{ id: string; label: string; count: number }>
+    cities: Array<{ id: string; label: string; count: number }>
+    brands: Array<{ id: string; label: string; count: number }>
+  }
 }
 
 export function HotelSearchResults({ 
@@ -189,7 +200,14 @@ export function HotelSearchResults({
   subtitle = "전 세계 프리미엄 호텔과 리조트를 찾아보세요",
   showAllHotels = false,
   hideSearchBar = false,
-  showFilters = false
+  showFilters = false,
+  // 체인 페이지용 props
+  initialHotels = [],
+  allChains = [],
+  selectedChainBrands = [],
+  currentChainName = "",
+  onChainChange,
+  serverFilterOptions
 }: HotelSearchResultsProps) {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
@@ -227,6 +245,9 @@ export function HotelSearchResults({
   const { data: allHotels, isLoading: isAllHotelsLoading, error: allHotelsError } = useAllHotels()
   const { data: bannerHotel, isLoading: isBannerLoading } = useBannerHotel()
   const { data: filterOptions, isLoading: isFilterLoading } = useFilterOptions()
+
+  // 체인 페이지용 필터 옵션 (서버에서 계산된 것을 사용)
+  const chainFilterOptions = serverFilterOptions || { countries: [], cities: [], brands: [] }
 
   const handleSearch = (newQuery: string, dates?: { checkIn: string; checkOut: string }) => {
     setSearchQuery(newQuery)
@@ -282,8 +303,43 @@ export function HotelSearchResults({
     }
   }, [query, checkInParam, checkOutParam])
 
+  // 체인 페이지용 필터링된 데이터 (useMemo로 계산)
+  const filteredChainHotels = useMemo(() => {
+    if (initialHotels.length === 0) {
+      return []
+    }
+    
+    let filtered = initialHotels
+
+    // 국가 필터 적용
+    if (selectedCountries.length > 0) {
+      filtered = filtered.filter(hotel => 
+        selectedCountries.includes(hotel.country || 'Unknown')
+      )
+    }
+
+    // 도시 필터 적용
+    if (selectedCities.length > 0) {
+      filtered = filtered.filter(hotel => 
+        selectedCities.includes(hotel.location || hotel.city || 'Unknown')
+      )
+    }
+
+    // 브랜드 필터 적용
+    if (selectedBrands.length > 0) {
+      filtered = filtered.filter(hotel => 
+        selectedBrands.some(brandId => {
+          const brand = selectedChainBrands.find(b => String(b.brand_id) === brandId)
+          return brand && hotel.brand === brand.brand_name_en
+        })
+      )
+    }
+
+    return filtered
+  }, [initialHotels, selectedCountries, selectedCities, selectedBrands, selectedChainBrands])
+
   // 표시할 데이터 결정
-  const allData = searchQuery.trim() ? searchResults : (showAllHotels ? allHotels : [])
+  const allData = searchQuery.trim() ? searchResults : (showAllHotels ? allHotels : (initialHotels.length > 0 ? filteredChainHotels : []))
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount
   const isLoading = searchQuery.trim() ? isSearchLoading : (showAllHotels ? isAllHotelsLoading : false)
@@ -334,11 +390,50 @@ export function HotelSearchResults({
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* 필터 사이드바 */}
                 <div className="lg:col-span-1">
-                  {filterOptions && (
+                  {/* 체인 페이지용 체인 선택 필터 */}
+                  {allChains.length > 0 && onChainChange && (
+                    <div className="mb-6">
+                      <div className="bg-white rounded-lg shadow-sm p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          체인 선택
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="text-sm text-gray-600 mb-2">
+                            현재: <span className="font-medium text-blue-600">{currentChainName}</span>
+                          </div>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                onChainChange(e.target.value)
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors"
+                          >
+                            <option value="">다른 체인 선택...</option>
+                            {allChains
+                              .filter(chain => chain.slug !== '')
+                              .sort((a, b) => (a.chain_name_kr || a.chain_name_en).localeCompare(b.chain_name_kr || b.chain_name_en))
+                              .map((chain) => (
+                                <option key={chain.chain_id} value={chain.slug}>
+                                  {chain.chain_name_kr || chain.chain_name_en}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 일반 필터 */}
+                  {(filterOptions || chainFilterOptions.countries.length > 0) && (
                     <HotelFilter
-                      countries={filterOptions.countries}
-                      cities={filterOptions.cities}
-                      brands={filterOptions.brands}
+                      countries={initialHotels.length > 0 ? chainFilterOptions.countries : (filterOptions?.countries || [])}
+                      cities={initialHotels.length > 0 ? chainFilterOptions.cities : (filterOptions?.cities || [])}
+                      brands={initialHotels.length > 0 ? chainFilterOptions.brands : (filterOptions?.brands || [])}
                       selectedCountries={selectedCountries}
                       selectedCities={selectedCities}
                       selectedBrands={selectedBrands}

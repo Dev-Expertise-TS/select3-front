@@ -1,8 +1,6 @@
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { BrandHotelsClient } from "@/features/brands"
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
+import { ChainPageClient } from "./chain-page-client"
 
 interface HotelRow {
   sabre_id: number
@@ -16,23 +14,6 @@ interface HotelRow {
   slug?: string
 }
 
-interface HotelChain {
-  chain_id: number
-  chain_name_en: string
-  chain_name_kr?: string
-}
-
-// slug를 chain_name_en으로 역변환하는 함수 (toSlug의 역함수)
-function fromSlug(slug: string): string {
-  // 하이픈을 공백으로 변환하고 각 단어의 첫 글자를 대문자로
-  return slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-// slug 컬럼을 사용하므로 alias 매핑이 필요 없음
-// const slugAliasToName: Record<string, string> = {}
 
 async function getChainHotels(chainSlug: string) {
   const supabase = await createClient()
@@ -128,17 +109,19 @@ export default async function ChainPage({ params }: ChainPageProps) {
     notFound()
   }
   
-  // 호텔 데이터를 BrandHotelsClient에서 사용할 수 있는 형태로 변환
+  // 호텔 데이터를 HotelSearchResults에서 사용할 수 있는 형태로 변환
   const transformedHotels = hotels.map(hotel => ({
     id: hotel.sabre_id,
     name: hotel.property_name_en || hotel.property_name_ko,
     nameKo: hotel.property_name_ko,
     location: hotel.city_ko || hotel.city_en || hotel.city,
+    city: hotel.city_ko || hotel.city_en || hotel.city,
     address: hotel.property_address,
-    image: hotel.image_1 || "/placeholder.svg", // image_1 사용
+    image: hotel.image_1 || "/placeholder.svg",
     brand: chainRow.chain_name_en,
-    chain: chainRow.chain_name_en, // 체인 정보 추가
-    slug: hotel.slug, // slug 정보 추가
+    chain: chainRow.chain_name_en,
+    slug: hotel.slug,
+    country: 'Unknown', // 국가 정보가 필요하면 추가
     rating: 0,
     price: "₩0",
     benefits: [],
@@ -150,17 +133,28 @@ export default async function ChainPage({ params }: ChainPageProps) {
     }
   }))
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <Header />
-      <BrandHotelsClient 
-        hotels={transformedHotels} 
-        displayName={chainRow.chain_name_en}
-        allChains={allChains}
-        selectedChainBrands={selectedChainBrands}
+  // 서버에서 필터 옵션 미리 계산
+  const serverFilterOptions = {
+    countries: [],
+    cities: Array.from(new Set(transformedHotels.map(hotel => hotel.location))).map(city => ({
+      id: city,
+      label: city,
+      count: transformedHotels.filter(hotel => hotel.location === city).length
+    })).sort((a, b) => a.label.localeCompare(b.label)),
+    brands: selectedChainBrands.map(brand => ({
+      id: String(brand.brand_id),
+      label: brand.brand_name_kr || brand.brand_name_en,
+      count: transformedHotels.filter(hotel => hotel.brand === brand.brand_name_en).length
+    })).sort((a, b) => a.label.localeCompare(b.label))
+  }
 
-      />
-      <Footer />
-    </div>
+  return (
+    <ChainPageClient
+      chainRow={chainRow}
+      transformedHotels={transformedHotels}
+      allChains={allChains}
+      selectedChainBrands={selectedChainBrands}
+      serverFilterOptions={serverFilterOptions}
+    />
   )
 }
