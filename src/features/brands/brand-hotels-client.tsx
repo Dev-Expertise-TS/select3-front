@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { BrandHotelCard } from "@/components/shared/brand-hotel-card"
 import { ArrowLeft, MapPin } from "lucide-react"
@@ -50,6 +50,33 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
   const router = useRouter()
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedBrand, setSelectedBrand] = useState<string>("all")
+
+  // 첫 6개 이미지 preload
+  useEffect(() => {
+    const priorityImages = hotels.slice(0, 6).map(hotel => hotel.image)
+    
+    priorityImages.forEach(imageUrl => {
+      if (imageUrl && imageUrl !== '/placeholder.svg') {
+        const link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.href = imageUrl
+        document.head.appendChild(link)
+      }
+    })
+
+    // cleanup function
+    return () => {
+      priorityImages.forEach(imageUrl => {
+        if (imageUrl && imageUrl !== '/placeholder.svg') {
+          const existingLink = document.querySelector(`link[href="${imageUrl}"]`)
+          if (existingLink) {
+            document.head.removeChild(existingLink)
+          }
+        }
+      })
+    }
+  }, [hotels])
 
   const cities = useMemo(() => {
     const uniqueCities = Array.from(new Set(hotels.map((hotel) => hotel.location)))
@@ -251,7 +278,7 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
             <div className="flex-1">
               {filteredHotels.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredHotels.map((hotel) => (
+                  {filteredHotels.map((hotel, index) => (
                     <BrandHotelCard
                       key={hotel.id}
                       href={makeHotelHref(hotel)}
@@ -261,6 +288,7 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
                       city={hotel.location}
                       address={hotel.address}
                       brandLabel={hotel.brand || hotel.promotion?.title || undefined}
+                      priority={index < 6} // 첫 6개 이미지는 우선 로딩
                     />
                   ))}
                 </div>
