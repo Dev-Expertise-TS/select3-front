@@ -13,6 +13,17 @@ interface RoomRatesTableProps {
   sabreLoading: boolean
   sabreError: any
   hasSearched: boolean
+  cacheStats: {
+    hits: number
+    misses: number
+    totalProcessed: number
+  }
+  clearCache: () => void
+  getCacheInfo: () => {
+    totalItems: number
+    items: any[]
+    stats: any
+  }
 }
 
 export function RoomRatesTable({
@@ -25,9 +36,34 @@ export function RoomRatesTable({
   currentProcessingRow,
   sabreLoading,
   sabreError,
-  hasSearched
+  hasSearched,
+  cacheStats,
+  clearCache,
+  getCacheInfo
 }: RoomRatesTableProps) {
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  // 표시할 레코드 수 결정 (접힌 상태: 3개, 펼친 상태: 전체)
+  const visibleRows = isExpanded ? ratePlans.length : Math.min(3, ratePlans.length)
+  const hasMoreRows = ratePlans.length > 3
+  
+  // 접힌 상태의 레코드들에 대한 AI 처리 완료 상태 계산
+  const hiddenRows = ratePlans.slice(3)
+  const hiddenRowsWithAI = hiddenRows.filter((rp: any, idx: number) => {
+    const roomType = rp.RoomType || rp.RoomName || 'N/A'
+    const roomName = rp.RoomName || 'N/A'
+    const rateKey: string = rp.RateKey || 'N/A'
+    const introKey = `${roomType}-${roomName}-${rateKey}`
+    return roomIntroductions.has(introKey)
+  }).length
+  
+  const hiddenRowsWithRoomNames = hiddenRows.filter((rp: any, idx: number) => {
+    const roomType = rp.RoomType || rp.RoomName || 'N/A'
+    const roomName = rp.RoomName || 'N/A'
+    const rowKey = `${roomType}-${roomName}`
+    return globalOTAStyleRoomNames.has(rowKey)
+  }).length
 
   const copyRateKey = async (text: string, index: number) => {
     try {
@@ -169,6 +205,60 @@ export function RoomRatesTable({
 
   return (
     <>
+      {/* 캐시 상태 표시 */}
+      {cacheStats.totalProcessed > 0 && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">💾</span>
+                <span className="text-sm font-medium text-green-800">AI 캐시 상태</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs text-green-700">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span>캐시 히트: {cacheStats.hits}회</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  <span>캐시 미스: {cacheStats.misses}회</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>총 처리: {cacheStats.totalProcessed}개</span>
+                </div>
+                <div className="text-green-600 font-medium">
+                  히트율: {cacheStats.totalProcessed > 0 ? Math.round((cacheStats.hits / cacheStats.totalProcessed) * 100) : 0}%
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const info = getCacheInfo()
+                  console.log('캐시 정보:', info)
+                  alert(`캐시 항목: ${info.totalItems}개\n히트율: ${info.stats.totalProcessed > 0 ? Math.round((info.stats.hits / info.stats.totalProcessed) * 100) : 0}%`)
+                }}
+                className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors"
+              >
+                상세 정보
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('캐시를 모두 삭제하시겠습니까?')) {
+                    clearCache()
+                    alert('캐시가 삭제되었습니다.')
+                  }
+                }}
+                className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+              >
+                캐시 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border border-gray-200 text-sm">
@@ -184,7 +274,7 @@ export function RoomRatesTable({
             </tr>
           </thead>
           <tbody>
-            {ratePlans.map((rp: any, idx: number) => {
+            {ratePlans.slice(0, visibleRows).map((rp: any, idx: number) => {
               const roomType = rp.RoomType || rp.RoomName || 'N/A'
               const roomName = rp.RoomName || 'N/A'
               const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
@@ -262,6 +352,70 @@ export function RoomRatesTable({
         </table>
       </div>
 
+      {/* 더보기/접기 버튼 */}
+      {hasMoreRows && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
+          >
+            {isExpanded ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+                접기 ({ratePlans.length - 3}개 숨기기)
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                더보기 ({ratePlans.length - 3}개 더 보기)
+              </>
+            )}
+          </button>
+          
+          {/* 접힌 상태에서 AI 처리 진행 상황 표시 */}
+          {!isExpanded && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              {(isGeneratingIntroductions || isGeneratingRoomNames) ? (
+                <>
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm font-medium">
+                      접힌 상태의 {ratePlans.length - 3}개 레코드에 대해 AI 처리가 진행 중입니다...
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs text-blue-600 text-center">
+                    모든 레코드의 AI 처리가 완료되면 더보기를 클릭하여 결과를 확인할 수 있습니다.
+                  </div>
+                </>
+              ) : (
+                <div className="text-center">
+                  <div className="text-sm font-medium text-blue-700 mb-2">
+                    접힌 상태의 {ratePlans.length - 3}개 레코드 AI 처리 상태
+                  </div>
+                  <div className="flex justify-center gap-4 text-xs text-blue-600">
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>객실 소개: {hiddenRowsWithAI}/{ratePlans.length - 3}개 완료</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>객실명: {hiddenRowsWithRoomNames}/{ratePlans.length - 3}개 완료</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-blue-500">
+                    더보기를 클릭하여 AI 처리된 결과를 확인하세요.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table Legend */}
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">테이블 설명</h4>
@@ -282,6 +436,30 @@ export function RoomRatesTable({
             <span className="font-medium">RATEKEY:</span> 예약 시 필요한 고유 코드
           </div>
         </div>
+        
+        {/* 캐시 관련 설명 */}
+        {cacheStats.totalProcessed > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h5 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+              <span className="text-lg">💾</span>
+              AI 캐시 시스템
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+              <div>
+                <span className="font-medium text-green-600">캐시 히트:</span> 동일한 객실 데이터에 대해 이전에 AI 처리한 결과를 재사용
+              </div>
+              <div>
+                <span className="font-medium text-orange-600">캐시 미스:</span> 새로운 객실 데이터로 AI 처리 수행
+              </div>
+              <div>
+                <span className="font-medium text-blue-600">캐시 만료:</span> 24시간 후 자동 만료 (브라우저 새로고침 시 초기화)
+              </div>
+              <div>
+                <span className="font-medium text-purple-600">성능 향상:</span> 캐시 히트 시 AI API 호출 없이 즉시 표시
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

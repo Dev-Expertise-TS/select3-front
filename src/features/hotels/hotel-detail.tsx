@@ -83,9 +83,10 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     isGeneratingRoomNames,
     isGeneratingBedTypes,
     currentProcessingRow,
-    hasProcessedAI,
     processRatePlans,
-    setHasProcessedAI
+    cacheStats,
+    clearCache,
+    getCacheInfo
   } = useRoomAIProcessing()
 
   // URL로부터 checkIn/checkOut이 오면 초기화
@@ -103,21 +104,36 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // 이미지 preloading을 위한 상태
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())
+  const [imageLoadingStates, setImageLoadingStates] = useState<Map<string, 'loading' | 'loaded' | 'error'>>(new Map())
 
   // ===== 유틸리티 함수들 =====
   const preloadImage = (src: string) => {
     if (preloadedImages.has(src)) return Promise.resolve(null)
     
+    // 로딩 상태 설정
+    setImageLoadingStates(prev => new Map(prev).set(src, 'loading'))
+    
     return new Promise<HTMLImageElement | null>((resolve, reject) => {
       const img = new window.Image()
       img.onload = () => {
         setPreloadedImages(prev => new Set([...prev, src]))
+        setImageLoadingStates(prev => new Map(prev).set(src, 'loaded'))
+        console.log(`✅ 이미지 preload 완료: ${src}`)
         resolve(img)
       }
-      img.onerror = reject
+      img.onerror = (error) => {
+        setImageLoadingStates(prev => new Map(prev).set(src, 'error'))
+        console.error(`❌ 이미지 preload 실패: ${src}`, error)
+        reject(error)
+      }
       img.src = src
     })
   }
+
+  // 이미지 로딩 상태 확인
+  const isImageLoading = (src: string) => imageLoadingStates.get(src) === 'loading'
+  const isImageLoaded = (src: string) => imageLoadingStates.get(src) === 'loaded'
+  const isImageError = (src: string) => imageLoadingStates.get(src) === 'error'
 
   
   // URL에서 sabreId 읽기
@@ -256,20 +272,29 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   // 이미지 데이터 우선순위: select_hotels 이미지 > hotel_media
   const displayImages = hotelImages.length > 0 ? hotelImages : hotelMedia
   
-  // 이미지 preloading useEffect
+  // 이미지 preloading useEffect (개선된 버전)
   useEffect(() => {
     if (displayImages.length > 0) {
-      // 첫 번째 이미지는 priority로 이미 로드되므로, 2-4번째 이미지를 preload
-      const imagesToPreload = displayImages.slice(1, 4)
-      imagesToPreload.forEach((media, index) => {
-        if (media.media_path) {
-          preloadImage(media.media_path).catch(error => {
-            console.warn(`이미지 preload 실패 (${index + 2}번째):`, error)
+      console.log(`🖼️ 이미지 preloading 시작: ${displayImages.length}개 이미지`)
+      
+      // 모든 이미지를 순차적으로 preload (첫 번째는 이미 priority로 로드됨)
+      const preloadPromises = displayImages.map((media, index) => {
+        if (media.media_path && !preloadedImages.has(media.media_path)) {
+          console.log(`🔄 이미지 preloading 중 (${index + 1}번째): ${media.media_path}`)
+          return preloadImage(media.media_path).catch(error => {
+            console.warn(`이미지 preload 실패 (${index + 1}번째):`, error)
+            return null
           })
         }
+        return Promise.resolve(null)
+      })
+      
+      // 모든 preload 완료 후 로그
+      Promise.allSettled(preloadPromises).then(() => {
+        console.log(`✅ 모든 이미지 preloading 완료: ${preloadedImages.size}개 성공`)
       })
     }
-  }, [displayImages])
+  }, [displayImages, preloadedImages])
 
   // 모달이 열릴 때 body 스크롤 막기
   useEffect(() => {
@@ -481,12 +506,12 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   })
 
 
-  // ratePlanCodes가 변경될 때 AI 처리 함수들 호출 (한 번만)
+  // ratePlanCodes가 변경될 때 AI 처리 함수들 호출 (날짜별로 처리)
   useEffect(() => {
     if (ratePlanCodes && ratePlanCodes.length > 0 && hotel?.property_name_ko) {
-      processRatePlans(ratePlanCodes, hotel.property_name_ko)
+      processRatePlans(ratePlanCodes, hotel.property_name_ko, searchDates.checkIn, searchDates.checkOut)
     }
-  }, [ratePlanCodes, hotel?.property_name_ko, processRatePlans])
+  }, [ratePlanCodes, hotel?.property_name_ko, searchDates.checkIn, searchDates.checkOut, processRatePlans])
 
   // Rate Plan 데이터 추출 함수
   function extractRatePlansFromSabreData(sabreData: any): any[] {
@@ -859,6 +884,10 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         onImageSelect={handleImageSelect}
         onGalleryOpen={openImageGallery}
         preloadedImages={preloadedImages}
+        imageLoadingStates={imageLoadingStates}
+        isImageLoading={isImageLoading}
+        isImageLoaded={isImageLoaded}
+        isImageError={isImageError}
       />
 
       {/* Image Gallery Modal */}
@@ -926,6 +955,9 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                 sabreLoading={sabreLoading}
                 sabreError={sabreError}
                 hasSearched={hasSearched}
+                cacheStats={cacheStats}
+                clearCache={clearCache}
+                getCacheInfo={getCacheInfo}
               />
 
               {/* Sabre API 호텔 상세 정보 테이블 */}

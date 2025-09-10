@@ -76,27 +76,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 // ISR을 위한 revalidate 설정 (5분마다 재생성)
 export const revalidate = 300
 
-// 인기 있는 호텔들을 미리 정적 생성
-export async function generateStaticParams() {
-  try {
-    const supabase = await createClient()
-    
-    // 인기 있는 호텔들 (예: 상위 50개)을 미리 생성
-    const { data: hotels } = await supabase
-      .from('select_hotels')
-      .select('slug')
-      .not('slug', 'is', null)
-      .limit(50)
-    
-    return hotels?.map((hotel) => ({
-      slug: hotel.slug,
-    })) || []
-  } catch (error) {
-    console.error('generateStaticParams 에러:', error)
-    // 에러 발생 시 빈 배열 반환 (빌드 실패 방지)
-    return []
-  }
-}
+// 정적 생성 비활성화 (ISR 사용으로 대체)
+// export async function generateStaticParams() {
+//   // generateStaticParams는 정적 생성 시점에 실행되므로
+//   // cookies가 필요한 createClient()를 사용할 수 없음
+//   // 대신 ISR(revalidate)을 사용하여 동적으로 생성
+//   return []
+// }
 
 // 구조화된 데이터 생성
 function generateHotelStructuredData(hotel: any, slug: string) {

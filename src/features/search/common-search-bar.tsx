@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MapPin, Calendar, Loader2, Users } from "lucide-react"
@@ -42,12 +42,29 @@ export function CommonSearchBar({
   const supabase = createClient()
   // 기본값 설정: undefined나 빈 객체일 때 기본값 사용
   const defaultGuests = { rooms: 1, adults: 2 }
-  const safeGuests = guests || defaultGuests
+
+  // 초기 날짜 값 계산 (useMemo로 안전하게)
+  const initialDates = useMemo(() => {
+    if (checkIn && checkOut) {
+      return { checkIn, checkOut }
+    }
+    
+    const today = new Date()
+    const twoWeeksLater = new Date(today)
+    twoWeeksLater.setDate(today.getDate() + 14)
+    const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
+    twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
+    
+    return {
+      checkIn: twoWeeksLater.toISOString().split('T')[0],
+      checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
+    }
+  }, [checkIn, checkOut])
 
   // 로컬 상태로 날짜 관리
-  const [localCheckIn, setLocalCheckIn] = useState(checkIn)
-  const [localCheckOut, setLocalCheckOut] = useState(checkOut)
-  const [localGuests, setLocalGuests] = useState(safeGuests)
+  const [localCheckIn, setLocalCheckIn] = useState(initialDates.checkIn)
+  const [localCheckOut, setLocalCheckOut] = useState(initialDates.checkOut)
+  const [localGuests, setLocalGuests] = useState(defaultGuests)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showGuestSelector, setShowGuestSelector] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
@@ -69,6 +86,10 @@ export function CommonSearchBar({
   } | null>(null)
   const [suggestionError, setSuggestionError] = useState<string | null>(null)
 
+  // 이전 props 값을 추적하여 무한 루프 방지
+  const prevCheckInRef = useRef<string | undefined>(checkIn)
+  const prevCheckOutRef = useRef<string | undefined>(checkOut)
+
   // 입력어 하이라이트 유틸
   const highlightText = (text: string, q: string) => {
     if (!q) return text
@@ -86,31 +107,32 @@ export function CommonSearchBar({
     )
   }
 
-  // 기본 날짜 설정 (2주 뒤와 2주 뒤 + 1일)
+  // props가 변경될 때 로컬 상태 동기화 (안전한 방식)
   useEffect(() => {
-    if (!checkIn && !checkOut) {
-      const today = new Date()
-      const twoWeeksLater = new Date(today)
-      twoWeeksLater.setDate(today.getDate() + 14)
-      const twoWeeksLaterPlusOne = new Date(twoWeeksLater)
-      twoWeeksLaterPlusOne.setDate(twoWeeksLater.getDate() + 1)
+    const checkInChanged = prevCheckInRef.current !== checkIn
+    const checkOutChanged = prevCheckOutRef.current !== checkOut
+    
+    if (checkInChanged || checkOutChanged) {
+      if (checkIn && checkOut) {
+        setLocalCheckIn(checkIn)
+        setLocalCheckOut(checkOut)
+      }
       
-      const twoWeeksLaterStr = twoWeeksLater.toISOString().split('T')[0]
-      const twoWeeksLaterPlusOneStr = twoWeeksLaterPlusOne.toISOString().split('T')[0]
-      
-      setLocalCheckIn(twoWeeksLaterStr)
-      setLocalCheckOut(twoWeeksLaterPlusOneStr)
-    } else {
-      setLocalCheckIn(checkIn)
-      setLocalCheckOut(checkOut)
+      // 이전 값 업데이트
+      prevCheckInRef.current = checkIn
+      prevCheckOutRef.current = checkOut
     }
   }, [checkIn, checkOut])
 
-  // 기본 게스트 정보 설정
+  // 기본 게스트 정보 설정 (useMemo로 안전하게 처리)
+  const safeGuests = useMemo(() => {
+    return guests || defaultGuests
+  }, [guests?.rooms, guests?.adults]) // guests 객체의 실제 값만 의존성으로 사용
+
+  // safeGuests가 변경될 때만 로컬 상태 업데이트
   useEffect(() => {
-    const currentGuests = guests || defaultGuests
-    setLocalGuests(currentGuests)
-  }, [guests])
+    setLocalGuests(safeGuests)
+  }, [safeGuests])
 
   // initialQuery 변경 시 searchQuery 업데이트
   useEffect(() => {

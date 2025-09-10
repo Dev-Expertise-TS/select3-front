@@ -19,6 +19,7 @@ interface HotelAdBannerProps {
     benefit_5?: string
     benefit_6?: string
     media_path?: string
+    image_1?: string
   }
   copywriter?: string
   className?: string
@@ -44,11 +45,11 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
       onClick={handleClick}
     >
       {/* 배경 이미지 */}
-      {hotel.media_path && (
+      {(hotel.image_1 || hotel.media_path) && (
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
           style={{
-            backgroundImage: `url(${hotel.media_path})`
+            backgroundImage: `url(${hotel.image_1 || hotel.media_path})`
           }}
         />
       )}
