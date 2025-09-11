@@ -5,11 +5,13 @@ import { Star, Utensils, MessageCircle, Bed, Shield } from "lucide-react"
 
 interface HotelTabsProps {
   introHtml: string | null
+  locationHtml: string | null
   hotelName: string
+  propertyAddress?: string
   propertyDescription?: string
 }
 
-export function HotelTabs({ introHtml, hotelName, propertyDescription }: HotelTabsProps) {
+export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
   const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
 
@@ -212,10 +214,82 @@ export function HotelTabs({ introHtml, hotelName, propertyDescription }: HotelTa
 
           {activeTab === "transportation" && (
             <div className="space-y-6">
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg mb-2">📍</div>
-                <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
-              </div>
+              {locationHtml ? (
+                <div className="prose max-w-none">
+                  <div className="max-w-[70%] mx-auto mb-6">
+                    <div
+                      className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
+                      dangerouslySetInnerHTML={{ __html: locationHtml }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-2">📍</div>
+                  <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
+                </div>
+              )}
+
+              {/* 구글 지도 */}
+              {propertyAddress && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">호텔 위치</h3>
+                  <div className="bg-gray-100 rounded-lg p-4">
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600 mb-2">
+                        <span className="font-medium">주소:</span> {propertyAddress}
+                      </p>
+                    </div>
+                    <div className="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
+                      {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+                        <iframe
+                          src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(propertyAddress)}`}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title={`${hotelName} 위치`}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full bg-gray-100">
+                          <div className="text-center">
+                            <div className="text-gray-400 text-4xl mb-2">🗺️</div>
+                            <p className="text-gray-500 text-sm">구글 맵스 API 키가 설정되지 않았습니다.</p>
+                            <p className="text-gray-400 text-xs mt-1">환경 변수에 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY를 추가해주세요.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(propertyAddress)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        구글 지도에서 보기
+                      </a>
+                      <a
+                        href={`https://map.kakao.com/link/search/${encodeURIComponent(propertyAddress)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        카카오맵에서 보기
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

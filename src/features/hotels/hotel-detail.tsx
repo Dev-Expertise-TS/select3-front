@@ -350,6 +350,58 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     })
     return chosen || null
   }, [hotel?.property_details, sabreHotelDetails])
+
+  // 호텔 위치 정보 HTML 결정 (property_location 우선)
+  const locationHtml = useMemo(() => {
+    const rawLocation = hotel?.property_location as unknown
+
+    const normalizeHtml = (v: unknown): string | null => {
+      if (!v) return null
+      // 1) 문자열
+      if (typeof v === 'string') {
+        const t = v.trim()
+        return t.length > 0 ? t : null
+      }
+      // 2) 배열 -> 문자열 합치기
+      if (Array.isArray(v)) {
+        const joined = v.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n')
+        return joined.trim().length > 0 ? joined : null
+      }
+      // 3) 객체 -> 흔한 필드 우선, 없으면 전체를 문자열화
+      if (typeof v === 'object') {
+        const obj = v as Record<string, unknown>
+        const candidates = [
+          obj.html,
+          obj.content,
+          obj.description,
+          obj.details,
+        ]
+        for (const c of candidates) {
+          if (typeof c === 'string' && c.trim().length > 0) return c
+          if (Array.isArray(c)) {
+            const joined = c.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join('\n')
+            if (joined.trim().length > 0) return joined
+          }
+        }
+        try {
+          const s = JSON.stringify(v)
+          return s && s !== '{}' ? s : null
+        } catch {
+          return null
+        }
+      }
+      return null
+    }
+
+    const locationHtml = normalizeHtml(rawLocation)
+
+    console.log('📍 호텔 위치 정보:', {
+      locationType: typeof rawLocation,
+      locationLen: locationHtml?.length || 0,
+      hasLocation: !!locationHtml
+    })
+    return locationHtml || null
+  }, [hotel?.property_location])
   
   // 호텔 프로모션 데이터 조회
   useEffect(() => {
@@ -861,7 +913,9 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       {/* Hotel Tabs */}
       <HotelTabs
         introHtml={introHtml}
+        locationHtml={locationHtml}
         hotelName={hotel.property_name_ko || '호텔'}
+        propertyAddress={hotel.property_address}
         propertyDescription={hotel.property_description}
       />
 

@@ -44,10 +44,16 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       let errorData;
+      const contentType = response.headers.get('content-type');
+      
       try {
-        errorData = await response.json();
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+        } else {
+          errorData = await response.text();
+        }
       } catch (e) {
-        errorData = await response.text();
+        errorData = `응답 파싱 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}`;
       }
       
       console.error('OpenAI API 오류 상세:', {

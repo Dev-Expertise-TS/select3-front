@@ -12,7 +12,7 @@ async function getHotelBySlug(slug: string) {
     
     const { data: hotel, error } = await supabase
       .from('select_hotels')
-      .select('*, image_1, image_2, image_3, image_4, image_5')
+      .select('*, image_1, image_2, image_3, image_4, image_5, property_location, property_address, city, city_ko, city_en')
       .eq('slug', slug)
       .single()
     

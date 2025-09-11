@@ -43,38 +43,9 @@ export function RoomRatesTable({
 }: RoomRatesTableProps) {
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [selectedBedTypes, setSelectedBedTypes] = useState<string[]>([])
+  const [selectedViewTypes, setSelectedViewTypes] = useState<string[]>([])
   
-  // 표시할 레코드 수 결정 (접힌 상태: 3개, 펼친 상태: 전체)
-  const visibleRows = isExpanded ? ratePlans.length : Math.min(3, ratePlans.length)
-  const hasMoreRows = ratePlans.length > 3
-  
-  // 접힌 상태의 레코드들에 대한 AI 처리 완료 상태 계산
-  const hiddenRows = ratePlans.slice(3)
-  const hiddenRowsWithAI = hiddenRows.filter((rp: any, idx: number) => {
-    const roomType = rp.RoomType || rp.RoomName || 'N/A'
-    const roomName = rp.RoomName || 'N/A'
-    const rateKey: string = rp.RateKey || 'N/A'
-    const introKey = `${roomType}-${roomName}-${rateKey}`
-    return roomIntroductions.has(introKey)
-  }).length
-  
-  const hiddenRowsWithRoomNames = hiddenRows.filter((rp: any, idx: number) => {
-    const roomType = rp.RoomType || rp.RoomName || 'N/A'
-    const roomName = rp.RoomName || 'N/A'
-    const rowKey = `${roomType}-${roomName}`
-    return globalOTAStyleRoomNames.has(rowKey)
-  }).length
-
-  const copyRateKey = async (text: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedRateKeyRow(index)
-      setTimeout(() => setCopiedRateKeyRow(null), 1200)
-    } catch (_e) {
-      // noop
-    }
-  }
-
   // 베드 타입 추출 함수 (객실 소개 데이터에서)
   const extractBedTypeFromDescription = (description: string): string => {
     if (!description || description === 'N/A') return '정보 없음'
@@ -107,6 +78,97 @@ export function RoomRatesTable({
     }
     
     return '베드 정보 없음'
+  }
+
+  // 뷰 타입 추출 함수
+  const extractViewTypeFromDescription = (roomViewDescription: string): string => {
+    if (!roomViewDescription || roomViewDescription === 'N/A') return '정보 없음'
+    
+    // 뷰 타입 키워드 매칭
+    const viewKeywords = [
+      { keyword: 'OCEAN VIEW', type: '오션 뷰' },
+      { keyword: 'SEA VIEW', type: '바다 뷰' },
+      { keyword: 'CITY VIEW', type: '시티 뷰' },
+      { keyword: 'MOUNTAIN VIEW', type: '마운틴 뷰' },
+      { keyword: 'GARDEN VIEW', type: '가든 뷰' },
+      { keyword: 'POOL VIEW', type: '풀 뷰' },
+      { keyword: 'RIVER VIEW', type: '리버 뷰' },
+      { keyword: 'LAKE VIEW', type: '레이크 뷰' },
+      { keyword: 'INTERIOR VIEW', type: '인테리어 뷰' },
+      { keyword: 'STREET VIEW', type: '스트리트 뷰' },
+      { keyword: 'OCEAN', type: '오션 뷰' },
+      { keyword: 'SEA', type: '바다 뷰' },
+      { keyword: 'CITY', type: '시티 뷰' },
+      { keyword: 'MOUNTAIN', type: '마운틴 뷰' },
+      { keyword: 'GARDEN', type: '가든 뷰' },
+      { keyword: 'POOL', type: '풀 뷰' },
+      { keyword: 'RIVER', type: '리버 뷰' },
+      { keyword: 'LAKE', type: '레이크 뷰' },
+      { keyword: 'INTERIOR', type: '인테리어 뷰' },
+      { keyword: 'STREET', type: '스트리트 뷰' }
+    ]
+    
+    const upperDescription = roomViewDescription.toUpperCase()
+    
+    for (const { keyword, type } of viewKeywords) {
+      if (upperDescription.includes(keyword)) {
+        return type
+      }
+    }
+    
+    return '뷰 정보 없음'
+  }
+  
+  // 베드 타입과 뷰 타입 필터링된 데이터
+  const filteredRatePlans = ratePlans.filter((rp: any) => {
+    const bedType = extractBedTypeFromDescription(rp.Description || 'N/A')
+    const viewType = extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')
+    
+    const bedTypeMatch = selectedBedTypes.length === 0 || selectedBedTypes.includes(bedType)
+    const viewTypeMatch = selectedViewTypes.length === 0 || selectedViewTypes.includes(viewType)
+    
+    return bedTypeMatch && viewTypeMatch
+  })
+
+  // 표시할 레코드 수 결정 (접힌 상태: 3개, 펼친 상태: 전체)
+  const visibleRows = isExpanded ? filteredRatePlans.length : Math.min(3, filteredRatePlans.length)
+  const hasMoreRows = filteredRatePlans.length > 3
+  
+  // 베드 타입 옵션 추출
+  const availableBedTypes = Array.from(
+    new Set(ratePlans.map((rp: any) => extractBedTypeFromDescription(rp.Description || 'N/A')))
+  ).sort()
+
+  // 뷰 타입 옵션 추출
+  const availableViewTypes = Array.from(
+    new Set(ratePlans.map((rp: any) => extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')))
+  ).sort()
+
+  // 접힌 상태의 레코드들에 대한 AI 처리 완료 상태 계산
+  const hiddenRows = filteredRatePlans.slice(3)
+  const hiddenRowsWithAI = hiddenRows.filter((rp: any, idx: number) => {
+    const roomType = rp.RoomType || rp.RoomName || 'N/A'
+    const roomName = rp.RoomName || 'N/A'
+    const rateKey: string = rp.RateKey || 'N/A'
+    const introKey = `${roomType}-${roomName}-${rateKey}`
+    return roomIntroductions.has(introKey)
+  }).length
+  
+  const hiddenRowsWithRoomNames = hiddenRows.filter((rp: any, idx: number) => {
+    const roomType = rp.RoomType || rp.RoomName || 'N/A'
+    const roomName = rp.RoomName || 'N/A'
+    const rowKey = `${roomType}-${roomName}`
+    return globalOTAStyleRoomNames.has(rowKey)
+  }).length
+
+  const copyRateKey = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedRateKeyRow(index)
+      setTimeout(() => setCopiedRateKeyRow(null), 1200)
+    } catch (_e) {
+      // noop
+    }
   }
 
   if (!hasSearched) {
@@ -259,22 +321,153 @@ export function RoomRatesTable({
         </div>
       )}
 
+      {/* 베드 타입 & 뷰 타입 필터 */}
+      {(availableBedTypes.length > 1 || availableViewTypes.length > 1) && (
+        <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-gray-700">필터</h4>
+            {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+              <button
+                onClick={() => {
+                  setSelectedBedTypes([])
+                  setSelectedViewTypes([])
+                }}
+                className="text-xs text-gray-600 hover:text-gray-800 underline"
+              >
+                전체 해제
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* 베드 타입 필터 */}
+            {availableBedTypes.length > 1 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="text-xs font-medium text-gray-600">베드 타입</h5>
+                  {selectedBedTypes.length > 0 && (
+                    <button
+                      onClick={() => setSelectedBedTypes([])}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      해제
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {availableBedTypes.map((bedType) => {
+                    const count = ratePlans.filter((rp: any) => 
+                      extractBedTypeFromDescription(rp.Description || 'N/A') === bedType
+                    ).length
+                    
+                    return (
+                      <button
+                        key={bedType}
+                        onClick={() => {
+                          if (selectedBedTypes.includes(bedType)) {
+                            setSelectedBedTypes(selectedBedTypes.filter(type => type !== bedType))
+                          } else {
+                            setSelectedBedTypes([...selectedBedTypes, bedType])
+                          }
+                        }}
+                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                          selectedBedTypes.includes(bedType)
+                            ? 'bg-blue-100 text-blue-800 border-blue-300'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {bedType} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 뷰 타입 필터 */}
+            {availableViewTypes.length > 1 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="text-xs font-medium text-gray-600">뷰 타입</h5>
+                  {selectedViewTypes.length > 0 && (
+                    <button
+                      onClick={() => setSelectedViewTypes([])}
+                      className="text-xs text-green-600 hover:text-green-800 underline"
+                    >
+                      해제
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {availableViewTypes.map((viewType) => {
+                    const count = ratePlans.filter((rp: any) => 
+                      extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A') === viewType
+                    ).length
+                    
+                    return (
+                      <button
+                        key={viewType}
+                        onClick={() => {
+                          if (selectedViewTypes.includes(viewType)) {
+                            setSelectedViewTypes(selectedViewTypes.filter(type => type !== viewType))
+                          } else {
+                            setSelectedViewTypes([...selectedViewTypes, viewType])
+                          }
+                        }}
+                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                          selectedViewTypes.includes(viewType)
+                            ? 'bg-green-100 text-green-800 border-green-300'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {viewType} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 필터 상태 표시 */}
+          {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="text-xs text-gray-600">
+                {selectedBedTypes.length > 0 && (
+                  <span className="mr-4">
+                    <span className="text-blue-600 font-medium">베드:</span> {selectedBedTypes.join(', ')}
+                  </span>
+                )}
+                {selectedViewTypes.length > 0 && (
+                  <span>
+                    <span className="text-green-600 font-medium">뷰:</span> {selectedViewTypes.join(', ')}
+                  </span>
+                )}
+                <span className="ml-4 text-gray-500">
+                  ({filteredRatePlans.length}개 객실 표시)
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-200 text-sm">
+        <table className="w-full border-collapse border border-gray-200 text-base">
           <thead>
             <tr className="bg-gray-200">
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">객실 소개</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">총 요금</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">통화</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">RATEKEY</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">객실 소개</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">총 요금</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">통화</th>
+              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">RATEKEY</th>
             </tr>
           </thead>
           <tbody>
-            {ratePlans.slice(0, visibleRows).map((rp: any, idx: number) => {
+            {filteredRatePlans.slice(0, visibleRows).map((rp: any, idx: number) => {
               const roomType = rp.RoomType || rp.RoomName || 'N/A'
               const roomName = rp.RoomName || 'N/A'
               const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
@@ -289,7 +482,7 @@ export function RoomRatesTable({
               
               return (
                 <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[168px] min-w-[168px] hidden">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[168px] min-w-[168px] hidden">
                     <div className="text-gray-700 font-medium">
                       {isGeneratingRoomNames && idx === 0 ? (
                         <div className="flex items-center space-x-2">
@@ -301,17 +494,17 @@ export function RoomRatesTable({
                       )}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px] hidden">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[100px] min-w-[100px] hidden">
                     <div className="text-gray-700 font-medium">
-                      {rp.RoomViewDescription || 'N/A'}
+                      {extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center w-[100px] min-w-[100px]">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[100px] min-w-[100px]">
                     <div className="text-gray-700 font-medium">
                       {extractBedTypeFromDescription(rp.Description || 'N/A')}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-left">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-left">
                     <div className="text-gray-700">
                       {roomIntroductions.has(introKey) ? (
                         roomIntroduction
@@ -325,14 +518,14 @@ export function RoomRatesTable({
                       )}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">
                     {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
                       `${parseInt(String(amount)).toLocaleString()}` : 
                       <span className="text-red-500">요금 정보 없음</span>
                     }
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">{currency}</td>
-                  <td className="border border-gray-200 px-4 py-3 text-sm text-gray-700 text-center">
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">{currency}</td>
+                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">
                     <button
                       type="button"
                       title={typeof rateKey === 'string' ? rateKey : ''}
@@ -364,14 +557,14 @@ export function RoomRatesTable({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                 </svg>
-                접기 ({ratePlans.length - 3}개 숨기기)
+                접기 ({filteredRatePlans.length - 3}개 숨기기)
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-                더보기 ({ratePlans.length - 3}개 더 보기)
+                더보기 ({filteredRatePlans.length - 3}개 더 보기)
               </>
             )}
           </button>
@@ -384,7 +577,7 @@ export function RoomRatesTable({
                   <div className="flex items-center justify-center gap-2 text-blue-700">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                     <span className="text-sm font-medium">
-                      접힌 상태의 {ratePlans.length - 3}개 레코드에 대해 AI 처리가 진행 중입니다...
+                      접힌 상태의 {filteredRatePlans.length - 3}개 레코드에 대해 AI 처리가 진행 중입니다...
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-blue-600 text-center">
@@ -392,20 +585,20 @@ export function RoomRatesTable({
                   </div>
                 </>
               ) : (
-                <div className="text-center">
-                  <div className="text-sm font-medium text-blue-700 mb-2">
-                    접힌 상태의 {ratePlans.length - 3}개 레코드 AI 처리 상태
-                  </div>
-                  <div className="flex justify-center gap-4 text-xs text-blue-600">
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span>객실 소개: {hiddenRowsWithAI}/{ratePlans.length - 3}개 완료</span>
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-blue-700 mb-2">
+                      접힌 상태의 {filteredRatePlans.length - 3}개 레코드 AI 처리 상태
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span>객실명: {hiddenRowsWithRoomNames}/{ratePlans.length - 3}개 완료</span>
+                    <div className="flex justify-center gap-4 text-xs text-blue-600">
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span>객실 소개: {hiddenRowsWithAI}/{filteredRatePlans.length - 3}개 완료</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span>객실명: {hiddenRowsWithRoomNames}/{filteredRatePlans.length - 3}개 완료</span>
+                      </div>
                     </div>
-                  </div>
                   <div className="mt-2 text-xs text-blue-500">
                     더보기를 클릭하여 AI 처리된 결과를 확인하세요.
                   </div>

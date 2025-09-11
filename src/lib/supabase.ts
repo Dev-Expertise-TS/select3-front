@@ -65,7 +65,7 @@ export type Database = {
           continent_en: string | null
           property_address: string
           destination_sort: string
-          location_section: string | null
+          property_location: string | null
           
           // 체인 정보
           chain: string
@@ -158,7 +158,7 @@ export type Database = {
           continent_en?: string | null
           property_address: string
           destination_sort: string
-          location_section?: string | null
+          property_location?: string | null
           
           // 체인 정보
           chain: string
