@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin, Coffee, Star, Badge, Calendar, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 
@@ -111,7 +112,7 @@ export function HotelCard({
           imageClassName
         )}>
                       <Image
-              src={hotel.image}
+              src={getSafeImageUrl(hotel.image)}
               alt={`${hotel.property_name_ko} - ${hotel.city}`}
               fill
               className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
@@ -120,12 +121,8 @@ export function HotelCard({
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               loading={variant === 'featured' || variant === 'promotion' ? 'eager' : 'lazy'}
-              onLoad={() => console.log(`호텔 카드 이미지 로드 완료: ${hotel.property_name_ko}`)}
-              onError={(e) => {
-                console.error(`호텔 카드 이미지 로드 실패: ${hotel.image}`)
-                const target = e.target as HTMLImageElement
-                target.src = '/placeholder.svg'
-              }}
+              onLoad={() => handleImageLoad(hotel.image)}
+              onError={handleImageError}
             />
           
           {/* 이미지 오버레이 */}

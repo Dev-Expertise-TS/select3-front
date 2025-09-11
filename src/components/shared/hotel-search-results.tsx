@@ -330,7 +330,7 @@ export function HotelSearchResults({
       filtered = filtered.filter(hotel => 
         selectedBrands.some(brandId => {
           const brand = selectedChainBrands.find(b => String(b.brand_id) === brandId)
-          return brand && hotel.brand === brand.brand_name_en
+          return brand && (hotel.brand === brand.brand_name_en || hotel.brand === brand.brand_name_kr)
         })
       )
     }
@@ -413,7 +413,7 @@ export function HotelSearchResults({
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors"
                           >
-                            <option value="">다른 체인 선택...</option>
+                            <option value="">브랜드 선택</option>
                             {allChains
                               .filter(chain => chain.slug !== '')
                               .sort((a, b) => (a.chain_name_kr || a.chain_name_en).localeCompare(b.chain_name_kr || b.chain_name_en))

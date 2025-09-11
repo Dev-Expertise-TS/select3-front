@@ -109,29 +109,35 @@ export default async function ChainPage({ params }: ChainPageProps) {
     notFound()
   }
   
+  // 브랜드 정보를 매핑하기 위한 Map 생성
+  const brandMap = new Map(selectedChainBrands.map(brand => [String(brand.brand_id), brand]))
+
   // 호텔 데이터를 HotelSearchResults에서 사용할 수 있는 형태로 변환
-  const transformedHotels = hotels.map(hotel => ({
-    id: hotel.sabre_id,
-    name: hotel.property_name_en || hotel.property_name_ko,
-    nameKo: hotel.property_name_ko,
-    location: hotel.city_ko || hotel.city_en || hotel.city,
-    city: hotel.city_ko || hotel.city_en || hotel.city,
-    address: hotel.property_address,
-    image: hotel.image_1 || "/placeholder.svg",
-    brand: chainRow.chain_name_en,
-    chain: chainRow.chain_name_en,
-    slug: hotel.slug,
-    country: 'Unknown', // 국가 정보가 필요하면 추가
-    rating: 0,
-    price: "₩0",
-    benefits: [],
-    promotion: {
-      title: chainRow.chain_name_en,
-      bookingDeadline: "",
-      stayPeriod: "",
-      highlight: "",
+  const transformedHotels = hotels.map(hotel => {
+    const brandInfo = brandMap.get(String(hotel.brand_id))
+    return {
+      id: hotel.sabre_id,
+      name: hotel.property_name_en || hotel.property_name_ko,
+      nameKo: hotel.property_name_ko,
+      location: hotel.city_ko || hotel.city_en || hotel.city,
+      city: hotel.city_ko || hotel.city_en || hotel.city,
+      address: hotel.property_address,
+      image: hotel.image_1 || "/placeholder.svg",
+      brand: brandInfo?.brand_name_kr || brandInfo?.brand_name_en || 'Unknown Brand',
+      chain: chainRow.chain_name_kr || chainRow.chain_name_en,
+      slug: hotel.slug,
+      country: 'Unknown', // 국가 정보가 필요하면 추가
+      rating: 0,
+      price: "₩0",
+      benefits: [],
+      promotion: {
+        title: brandInfo?.brand_name_kr || brandInfo?.brand_name_en || chainRow.chain_name_en,
+        bookingDeadline: "",
+        stayPeriod: "",
+        highlight: "",
+      }
     }
-  }))
+  })
 
   // 서버에서 필터 옵션 미리 계산
   const serverFilterOptions = {
@@ -144,7 +150,7 @@ export default async function ChainPage({ params }: ChainPageProps) {
     brands: selectedChainBrands.map(brand => ({
       id: String(brand.brand_id),
       label: brand.brand_name_kr || brand.brand_name_en,
-      count: transformedHotels.filter(hotel => hotel.brand === brand.brand_name_en).length
+      count: hotels.filter(hotel => String(hotel.brand_id) === String(brand.brand_id)).length
     })).sort((a, b) => a.label.localeCompare(b.label))
   }
 

@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Star, MapPin, Heart } from "lucide-react"
+import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 
 interface ImageItem {
   id: string
@@ -114,7 +115,7 @@ export function HotelInfo({
                     return null
                   })()}
                   <Image
-                    src={images[selectedImage]?.media_path || images[0]?.media_path}
+                    src={getSafeImageUrl(images[selectedImage]?.media_path || images[0]?.media_path)}
                     alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                     fill
                     className="object-cover transition-opacity duration-300"
@@ -122,12 +123,8 @@ export function HotelInfo({
                     placeholder="blur"
                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 60vw"
-                    onLoad={() => console.log('메인 이미지 로드 완료')}
-                    onError={(e) => {
-                      console.error('메인 이미지 로드 실패:', e);
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
+                    onLoad={() => handleImageLoad(images[selectedImage]?.media_path || images[0]?.media_path)}
+                    onError={handleImageError}
                   />
                 </div>
               ) : (
@@ -171,7 +168,7 @@ export function HotelInfo({
                         )}
                         
                         <Image
-                          src={media.media_path}
+                          src={getSafeImageUrl(media.media_path)}
                           alt={media.alt || `Gallery ${index + 2}`}
                           fill
                           className="object-cover transition-opacity duration-300"
@@ -179,12 +176,8 @@ export function HotelInfo({
                           blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
                           loading={index < 2 ? "eager" : "lazy"}
-                          onLoad={() => console.log(`썸네일 ${index + 2} 로드 완료`)}
-                          onError={(e) => {
-                            console.error(`썸네일 ${index + 2} 로드 실패:`, e);
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.svg';
-                          }}
+                          onLoad={() => handleImageLoad(media.media_path)}
+                          onError={handleImageError}
                         />
                       </div>
                     )

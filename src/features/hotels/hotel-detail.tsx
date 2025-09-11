@@ -26,6 +26,7 @@ import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
 
 // Utils & Services
 import { supabase } from "@/lib/supabase"
+import { processHotelImages, getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 
 // Types
 interface HotelDetailProps {
@@ -213,60 +214,11 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   // 호텔 미디어 이미지 조회 (기존 방식)
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
   
-  // select_hotels 테이블의 이미지 컬럼들을 사용한 이미지 배열 생성
+  // select_hotels 테이블의 이미지 컬럼들을 사용한 이미지 배열 생성 (안전한 처리)
   const hotelImages = useMemo(() => {
     if (!hotel) return []
     
-    const images = []
-    
-    // image_1을 가장 큰 그리드에 사용하기 위해 첫 번째로 추가
-    if (hotel.image_1) {
-      images.push({
-        id: 'image_1',
-        media_path: hotel.image_1,
-        alt: `${hotel.property_name_ko} - 메인 이미지`,
-        isMain: true
-      })
-    }
-    
-    // 나머지 이미지들 추가
-    if (hotel.image_2) {
-      images.push({
-        id: 'image_2',
-        media_path: hotel.image_2,
-        alt: `${hotel.property_name_ko} - 갤러리 이미지 2`,
-        isMain: false
-      })
-    }
-    
-    if (hotel.image_3) {
-      images.push({
-        id: 'image_3',
-        media_path: hotel.image_3,
-        alt: `${hotel.property_name_ko} - 갤러리 이미지 3`,
-        isMain: false
-      })
-    }
-    
-    if (hotel.image_4) {
-      images.push({
-        id: 'image_4',
-        media_path: hotel.image_4,
-        alt: `${hotel.property_name_ko} - 갤러리 이미지 4`,
-        isMain: false
-      })
-    }
-    
-    if (hotel.image_5) {
-      images.push({
-        id: 'image_5',
-        media_path: hotel.image_5,
-        alt: `${hotel.property_name_ko} - 갤러리 이미지 5`,
-        isMain: false
-      })
-    }
-    
-    return images
+    return processHotelImages(hotel)
   }, [hotel])
   
   // 이미지 데이터 우선순위: select_hotels 이미지 > hotel_media

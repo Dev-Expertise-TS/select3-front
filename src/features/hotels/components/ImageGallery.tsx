@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { X, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { Button } from "@/components/ui/button"
 
 interface ImageItem {
@@ -155,7 +156,7 @@ export function ImageGallery({
                     onClick={() => openImageDetail(index)}
                   >
                     <Image
-                      src={media.media_path}
+                      src={getSafeImageUrl(media.media_path)}
                       alt={media.alt || `Gallery ${index + 1}`}
                       fill
                       className="object-cover transition-all duration-300 group-hover:scale-105"
@@ -163,12 +164,8 @@ export function ImageGallery({
                       blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                       loading="lazy"
-                      onLoad={() => console.log(`갤러리 이미지 ${index + 1} 로드 완료`)}
-                      onError={(e) => {
-                        console.error(`갤러리 이미지 ${index + 1} 로드 실패:`, e);
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.svg';
-                      }}
+                      onLoad={() => handleImageLoad(media.media_path)}
+                      onError={handleImageError}
                     />
                   </div>
                 ))}
@@ -194,10 +191,12 @@ export function ImageGallery({
                 <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-100">
                   {images.length > 0 ? (
                     <Image
-                      src={images[selectedDetailImage]?.media_path}
+                      src={getSafeImageUrl(images[selectedDetailImage]?.media_path)}
                       alt={images[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
                       fill
                       className="object-contain"
+                      onLoad={() => handleImageLoad(images[selectedDetailImage]?.media_path)}
+                      onError={handleImageError}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
