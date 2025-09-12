@@ -118,7 +118,12 @@ export function useRoomAIProcessing() {
     
     // 이미 처리 중이면 중복 실행 방지
     if (isGeneratingIntroductions) {
-      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지')
+      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지:', {
+        isGeneratingIntroductions,
+        startIndex,
+        endIndex,
+        currentProcessingRow
+      })
       return
     }
     
@@ -314,7 +319,11 @@ export function useRoomAIProcessing() {
     
     // 이미 처리 중이면 중복 실행 방지
     if (isGeneratingRoomNames) {
-      console.log('⚠️ 이미 객실명 생성 중이므로 중복 실행 방지')
+      console.log('⚠️ 이미 객실명 생성 중이므로 중복 실행 방지:', {
+        isGeneratingRoomNames,
+        startIndex,
+        endIndex
+      })
       return
     }
     
@@ -552,12 +561,14 @@ export function useRoomAIProcessing() {
   }
 
   // 나머지 레코드 AI 처리 함수 (더보기 버튼용)
-  const processRemainingRatePlans = (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+  const processRemainingRatePlans = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
     console.log('🚀 processRemainingRatePlans 함수가 호출되었습니다:', {
       ratePlansLength: ratePlans?.length,
       hotelName,
       checkIn,
       checkOut,
+      isGeneratingIntroductions,
+      isGeneratingRoomNames,
       stackTrace: new Error().stack
     })
     
@@ -576,17 +587,36 @@ export function useRoomAIProcessing() {
       return
     }
     
+    // 중복 실행 방지 로직 제거 - AI 처리 함수들에서 관리
+    console.log('🔍 현재 AI 처리 상태:', {
+      isGeneratingIntroductions,
+      isGeneratingRoomNames
+    })
+    
     console.log('🚀 나머지 레코드 AI 처리 시작:', {
       ratePlansLength: ratePlans.length,
       hotelName: hotelName,
       checkIn: checkIn,
       checkOut: checkOut,
-      remainingCount: ratePlans.length - 3
+      remainingCount: ratePlans.length - 3,
+      startIndex: 3,
+      endIndex: ratePlans.length
     })
     
     // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
-    generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
-    generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
+    try {
+      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작')
+      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
+      console.log('✅ generateGlobalOTAStyleRoomNames 완료')
+      
+      console.log('🔄 generateRoomIntroductionsSequential 호출 시작')
+      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
+      console.log('✅ generateRoomIntroductionsSequential 완료')
+      
+      console.log('✅ processRemainingRatePlans 함수 호출 완료')
+    } catch (error) {
+      console.error('❌ processRemainingRatePlans 함수 실행 중 오류:', error)
+    }
   }
 
   return {

@@ -24,7 +24,7 @@ interface RoomRatesTableProps {
     items: any[]
     stats: any
   }
-  processRemainingRatePlans: (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => void
+  processRemainingRatePlans: (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => Promise<void>
   hotelName: string
   checkIn: string
   checkOut: string
@@ -558,17 +558,28 @@ export function RoomRatesTable({
         <div className="mt-4 text-center">
           <button
             onClick={() => {
+              console.log('🔍 더보기 버튼 클릭됨:', {
+                isExpanded,
+                filteredRatePlansLength: filteredRatePlans.length,
+                originalRatePlansLength: ratePlans.length,
+                hotelName,
+                checkIn,
+                checkOut
+              })
+              
               if (!isExpanded) {
                 // 더보기 클릭 시 나머지 레코드 AI 처리 시작 (원본 ratePlans 사용)
-                console.log('🔍 더보기 버튼 클릭 - AI 처리 시작:', {
-                  filteredRatePlansLength: filteredRatePlans.length,
-                  originalRatePlansLength: ratePlans.length,
-                  hotelName,
-                  checkIn,
-                  checkOut
-                })
+                console.log('🚀 AI 처리 함수 호출 시작')
                 processRemainingRatePlans(ratePlans, hotelName, checkIn, checkOut)
+                  .then(() => {
+                    console.log('✅ AI 처리 함수 호출 완료')
+                  })
+                  .catch((error: any) => {
+                    console.error('❌ AI 처리 함수 호출 실패:', error)
+                  })
               }
+              
+              console.log('🔄 상태 변경:', { from: isExpanded, to: !isExpanded })
               setIsExpanded(!isExpanded)
             }}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
