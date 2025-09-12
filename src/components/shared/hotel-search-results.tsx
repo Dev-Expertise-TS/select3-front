@@ -166,10 +166,24 @@ function useFilterOptions() {
         cityMap.get(key).count++
       })
 
+      // 체인 데이터 조회 (임시로 하드코딩된 체인 목록)
+      const chains = [
+        { id: 'marriott', label: 'Marriott International', count: 0 },
+        { id: 'hilton', label: 'Hilton Worldwide', count: 0 },
+        { id: 'hyatt', label: 'Hyatt Hotels', count: 0 },
+        { id: 'ihg', label: 'InterContinental Hotels Group', count: 0 },
+        { id: 'accor', label: 'Accor', count: 0 },
+        { id: 'shangri-la', label: 'Shangri-La Hotels', count: 0 },
+        { id: 'mandarin', label: 'Mandarin Oriental Hotel Group', count: 0 },
+        { id: 'four-seasons', label: 'Four Seasons Hotels', count: 0 },
+        { id: 'aman', label: 'Aman Resorts', count: 0 }
+      ]
+
       return {
         countries: Array.from(countryMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
         cities: Array.from(cityMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
-        brands: brands.sort((a, b) => a.label.localeCompare(b.label))
+        brands: brands.sort((a, b) => a.label.localeCompare(b.label)),
+        chains: chains.sort((a, b) => a.label.localeCompare(b.label))
       }
     },
     staleTime: 10 * 60 * 1000, // 10분
@@ -192,6 +206,7 @@ interface HotelSearchResultsProps {
     countries: Array<{ id: string; label: string; count: number }>
     cities: Array<{ id: string; label: string; count: number }>
     brands: Array<{ id: string; label: string; count: number }>
+    chains: Array<{ id: string; label: string; count: number }>
   }
 }
 
@@ -220,6 +235,7 @@ export function HotelSearchResults({
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const [selectedChains, setSelectedChains] = useState<string[]>([])
   const [searchDates, setSearchDates] = useState(() => {
     // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
     if (checkInParam && checkOutParam) {
@@ -247,7 +263,7 @@ export function HotelSearchResults({
   const { data: filterOptions, isLoading: isFilterLoading } = useFilterOptions()
 
   // 체인 페이지용 필터 옵션 (서버에서 계산된 것을 사용)
-  const chainFilterOptions = serverFilterOptions || { countries: [], cities: [], brands: [] }
+  const chainFilterOptions = serverFilterOptions || { countries: [], cities: [], brands: [], chains: [] }
 
   const handleSearch = (newQuery: string, dates?: { checkIn: string; checkOut: string }) => {
     setSearchQuery(newQuery)
@@ -278,6 +294,7 @@ export function HotelSearchResults({
     setSelectedCountries([])
     setSelectedCities([])
     setSelectedBrands([])
+    setSelectedChains([])
   }
 
   // URL 파라미터 변경 시 검색어와 날짜 동기화
@@ -434,12 +451,15 @@ export function HotelSearchResults({
                       countries={initialHotels.length > 0 ? chainFilterOptions.countries : (filterOptions?.countries || [])}
                       cities={initialHotels.length > 0 ? chainFilterOptions.cities : (filterOptions?.cities || [])}
                       brands={initialHotels.length > 0 ? chainFilterOptions.brands : (filterOptions?.brands || [])}
+                      chains={initialHotels.length > 0 ? chainFilterOptions.chains : (filterOptions?.chains || [])}
                       selectedCountries={selectedCountries}
                       selectedCities={selectedCities}
                       selectedBrands={selectedBrands}
+                      selectedChains={selectedChains}
                       onCountryChange={setSelectedCountries}
                       onCityChange={setSelectedCities}
                       onBrandChange={setSelectedBrands}
+                      onChainChange={setSelectedChains}
                       onClearAll={handleClearAllFilters}
                     />
                   )}

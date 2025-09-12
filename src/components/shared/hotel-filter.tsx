@@ -51,55 +51,55 @@ export function HotelFilter({
   const [searchBrand, setSearchBrand] = useState("")
   const [searchChain, setSearchChain] = useState("")
 
-  const filteredCountries = countries.filter(country =>
+  const filteredCountries = (countries || []).filter(country =>
     country.label.toLowerCase().includes(searchCountry.toLowerCase())
   )
 
-  const filteredCities = cities.filter(city =>
+  const filteredCities = (cities || []).filter(city =>
     city.label.toLowerCase().includes(searchCity.toLowerCase())
   )
 
-  const filteredBrands = brands.filter(brand =>
+  const filteredBrands = (brands || []).filter(brand =>
     brand.label.toLowerCase().includes(searchBrand.toLowerCase())
   )
 
-  const filteredChains = chains.filter(chain =>
+  const filteredChains = (chains || []).filter(chain =>
     chain.label.toLowerCase().includes(searchChain.toLowerCase())
   )
 
   const handleCountryToggle = (countryId: string) => {
-    if (selectedCountries.includes(countryId)) {
-      onCountryChange(selectedCountries.filter(id => id !== countryId))
+    if ((selectedCountries || []).includes(countryId)) {
+      onCountryChange((selectedCountries || []).filter(id => id !== countryId))
     } else {
-      onCountryChange([...selectedCountries, countryId])
+      onCountryChange([...(selectedCountries || []), countryId])
     }
   }
 
   const handleCityToggle = (cityId: string) => {
-    if (selectedCities.includes(cityId)) {
-      onCityChange(selectedCities.filter(id => id !== cityId))
+    if ((selectedCities || []).includes(cityId)) {
+      onCityChange((selectedCities || []).filter(id => id !== cityId))
     } else {
-      onCityChange([...selectedCities, cityId])
+      onCityChange([...(selectedCities || []), cityId])
     }
   }
 
   const handleBrandToggle = (brandId: string) => {
-    if (selectedBrands.includes(brandId)) {
-      onBrandChange(selectedBrands.filter(id => id !== brandId))
+    if ((selectedBrands || []).includes(brandId)) {
+      onBrandChange((selectedBrands || []).filter(id => id !== brandId))
     } else {
-      onBrandChange([...selectedBrands, brandId])
+      onBrandChange([...(selectedBrands || []), brandId])
     }
   }
 
   const handleChainToggle = (chainId: string) => {
-    if (selectedChains.includes(chainId)) {
-      onChainChange(selectedChains.filter(id => id !== chainId))
+    if ((selectedChains || []).includes(chainId)) {
+      onChainChange((selectedChains || []).filter(id => id !== chainId))
     } else {
-      onChainChange([...selectedChains, chainId])
+      onChainChange([...(selectedChains || []), chainId])
     }
   }
 
-  const hasActiveFilters = selectedCountries.length > 0 || selectedCities.length > 0 || selectedBrands.length > 0 || selectedChains.length > 0
+  const hasActiveFilters = (selectedCountries || []).length > 0 || (selectedCities || []).length > 0 || (selectedBrands || []).length > 0 || (selectedChains || []).length > 0
 
   return (
     <Card className={cn("p-6", className)}>
