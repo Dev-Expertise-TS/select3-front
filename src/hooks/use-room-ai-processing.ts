@@ -145,9 +145,10 @@ export function useRoomAIProcessing() {
         
         const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
         
-        // 현재 처리 중인 행 번호 업데이트
-        setCurrentProcessingRow(i)
-        console.log(`🔍 ${i + 1}번째 객실 소개 생성 중:`, { 
+        // 현재 처리 중인 행 번호 업데이트 (원본 배열 기준)
+        const actualRowIndex = startIndex + i
+        setCurrentProcessingRow(actualRowIndex)
+        console.log(`🔍 ${i + 1}번째 객실 소개 생성 중 (전체 ${actualRowIndex + 1}번째):`, { 
           roomType, 
           roomName, 
           description: description.substring(0, 100) + '...',
@@ -155,7 +156,10 @@ export function useRoomAIProcessing() {
           enhancedDescription: enhancedDescription.substring(0, 100) + '...',
           introKey, 
           currentRow: i,
-          totalRows: roomsToProcess.length
+          actualRowIndex: actualRowIndex,
+          totalRows: roomsToProcess.length,
+          startIndex: startIndex,
+          endIndex: endIndex || ratePlans.length
         })
         
         // 캐시 키 생성 (날짜 정보 포함, View 데이터 포함된 설명 사용)
@@ -338,7 +342,10 @@ export function useRoomAIProcessing() {
         
         const key = `${roomType}-${roomName}`
         
-        console.log(`🔍 ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 중:`, { 
+        // 현재 처리 중인 행 번호 업데이트 (원본 배열 기준)
+        const actualRowIndex = startIndex + i
+        
+        console.log(`🔍 ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 중 (전체 ${actualRowIndex + 1}번째):`, { 
           roomType, 
           roomName, 
           description: description.substring(0, 100) + '...',
@@ -346,7 +353,10 @@ export function useRoomAIProcessing() {
           enhancedDescription: enhancedDescription.substring(0, 100) + '...',
           key,
           currentRow: i,
-          totalRows: roomsToProcess.length
+          actualRowIndex: actualRowIndex,
+          totalRows: roomsToProcess.length,
+          startIndex: startIndex,
+          endIndex: endIndex || ratePlans.length
         })
         
         // 캐시 키 생성 (날짜 정보 포함, View 데이터 포함된 설명 사용)
@@ -551,19 +561,32 @@ export function useRoomAIProcessing() {
       stackTrace: new Error().stack
     })
     
-    if (ratePlans && ratePlans.length > 3 && hotelName) {
-      console.log('🚀 나머지 레코드 AI 처리 시작:', {
-        ratePlansLength: ratePlans.length,
-        hotelName: hotelName,
-        checkIn: checkIn,
-        checkOut: checkOut,
-        remainingCount: ratePlans.length - 3
-      })
-      
-      // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
-      generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
-      generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
+    if (!ratePlans || ratePlans.length === 0) {
+      console.log('⚠️ ratePlans가 비어있음 - AI 처리 중단')
+      return
     }
+    
+    if (!hotelName) {
+      console.log('⚠️ hotelName이 비어있음 - AI 처리 중단')
+      return
+    }
+    
+    if (ratePlans.length <= 3) {
+      console.log('⚠️ 전체 레코드가 3개 이하 - 나머지 처리 불필요')
+      return
+    }
+    
+    console.log('🚀 나머지 레코드 AI 처리 시작:', {
+      ratePlansLength: ratePlans.length,
+      hotelName: hotelName,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      remainingCount: ratePlans.length - 3
+    })
+    
+    // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
+    generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
+    generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
   }
 
   return {

@@ -519,7 +519,7 @@ export function RoomRatesTable({
                       ) : isGeneratingIntroductions && currentProcessingRow === idx ? (
                         <div className="flex items-center space-x-2">
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          <span className="text-gray-500 text-xs">AI 가 객실 소개 설명을 준비 중입니다.</span>
+                          <span className="text-gray-500 text-xs">AI가 객실 소개 설명을 준비 중입니다.</span>
                         </div>
                       ) : (
                         rp.Description || 'N/A'
@@ -559,8 +559,15 @@ export function RoomRatesTable({
           <button
             onClick={() => {
               if (!isExpanded) {
-                // 더보기 클릭 시 나머지 레코드 AI 처리 시작
-                processRemainingRatePlans(filteredRatePlans, hotelName, checkIn, checkOut)
+                // 더보기 클릭 시 나머지 레코드 AI 처리 시작 (원본 ratePlans 사용)
+                console.log('🔍 더보기 버튼 클릭 - AI 처리 시작:', {
+                  filteredRatePlansLength: filteredRatePlans.length,
+                  originalRatePlansLength: ratePlans.length,
+                  hotelName,
+                  checkIn,
+                  checkOut
+                })
+                processRemainingRatePlans(ratePlans, hotelName, checkIn, checkOut)
               }
               setIsExpanded(!isExpanded)
             }}
@@ -586,7 +593,7 @@ export function RoomRatesTable({
           {/* 접힌 상태에서 AI 처리 진행 상황 표시 */}
           {!isExpanded && (
             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              {(isGeneratingIntroductions || isGeneratingRoomNames) ? (
+              {(isGeneratingIntroductions || isGeneratingRoomNames) && currentProcessingRow >= 3 ? (
                 <>
                   <div className="flex items-center justify-center gap-2 text-blue-700">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -595,7 +602,7 @@ export function RoomRatesTable({
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-blue-600 text-center">
-                    AI 처리가 완료되면 자동으로 결과가 표시됩니다.
+                    현재 처리 중: {currentProcessingRow + 1}번째 레코드
                   </div>
                 </>
               ) : (
