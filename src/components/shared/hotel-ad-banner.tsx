@@ -20,6 +20,8 @@ interface HotelAdBannerProps {
     benefit_6?: string
     media_path?: string
     image_1?: string
+    brand_name_en?: string | null
+    chain_name_en?: string | null
   }
   copywriter?: string
   className?: string
@@ -60,6 +62,27 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
       {/* 콘텐츠 */}
       <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-8 lg:px-12">
         <div className="max-w-2xl">
+          {/* 브랜드 뱃지 */}
+          {(hotel.brand_name_en || hotel.chain_name_en) && (
+            <div className="mb-3 md:mb-4">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/30">
+                {hotel.brand_name_en && (
+                  <span className="text-white text-sm font-medium">
+                    {hotel.brand_name_en}
+                  </span>
+                )}
+                {hotel.brand_name_en && hotel.chain_name_en && (
+                  <span className="text-white/70 text-xs">•</span>
+                )}
+                {hotel.chain_name_en && (
+                  <span className="text-white/80 text-xs">
+                    {hotel.chain_name_en}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
           {/* 호텔명 */}
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4">
             {hotel.property_name_ko}
