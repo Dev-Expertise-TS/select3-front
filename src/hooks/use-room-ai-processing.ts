@@ -94,13 +94,15 @@ export function useRoomAIProcessing() {
   })
 
   // 객실 소개 AI 생성 함수 (1행씩 순차 처리, 캐시 적용)
-  const generateRoomIntroductionsSequential = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+  const generateRoomIntroductionsSequential = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string, startIndex: number = 0, endIndex?: number) => {
     console.log('🏨 generateRoomIntroductionsSequential 호출됨:', {
       ratePlansLength: ratePlans?.length,
       ratePlans: ratePlans,
       hotelName: hotelName,
       checkIn,
       checkOut,
+      startIndex,
+      endIndex,
       stackTrace: new Error().stack
     })
     
@@ -125,9 +127,9 @@ export function useRoomAIProcessing() {
     console.log('🔄 객실 소개 AI 생성 시작 (1행씩 순차 처리, 캐시 적용)...')
     
     try {
-      // 전체 레코드에 대해 순차적으로 AI 처리
-      const roomsToProcess = ratePlans
-      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개)`)
+      // 처리할 레코드 범위 결정 (기본값: 전체, 또는 지정된 범위)
+      const roomsToProcess = ratePlans.slice(startIndex, endIndex || ratePlans.length)
+      console.log(`🔍 객실 소개 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개, 시작: ${startIndex}, 끝: ${endIndex || ratePlans.length})`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
@@ -284,13 +286,15 @@ export function useRoomAIProcessing() {
   }
 
   // 글로벌 호텔 OTA 스타일 객실명 생성 함수 (캐시 적용)
-  const generateGlobalOTAStyleRoomNames = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+  const generateGlobalOTAStyleRoomNames = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string, startIndex: number = 0, endIndex?: number) => {
     console.log('🏨 generateGlobalOTAStyleRoomNames 호출됨:', {
       ratePlansLength: ratePlans?.length,
       ratePlans: ratePlans,
       hotelName: hotelName,
       checkIn,
       checkOut,
+      startIndex,
+      endIndex,
       stackTrace: new Error().stack
     })
     
@@ -316,9 +320,9 @@ export function useRoomAIProcessing() {
     try {
       const roomNames = new Map<string, string>()
       
-      // 전체 레코드에 대해 순차적으로 AI 처리
-      const roomsToProcess = ratePlans
-      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개)`)
+      // 처리할 레코드 범위 결정 (기본값: 전체, 또는 지정된 범위)
+      const roomsToProcess = ratePlans.slice(startIndex, endIndex || ratePlans.length)
+      console.log(`🔍 객실명 생성 대상: ${roomsToProcess.length}개 객실 (전체 ${ratePlans.length}개, 시작: ${startIndex}, 끝: ${endIndex || ratePlans.length})`)
       
       for (let i = 0; i < roomsToProcess.length; i++) {
         const rp = roomsToProcess[i]
@@ -523,7 +527,7 @@ export function useRoomAIProcessing() {
       // 날짜별로 고유한 처리 키 생성
       const processKey = `${hotelName}-${checkIn || ''}-${checkOut || ''}`
       
-      console.log('🚀 ratePlanCodes 변경 감지, AI 처리 함수들 호출 시작:', {
+      console.log('🚀 ratePlanCodes 변경 감지, AI 처리 함수들 호출 시작 (첫 3행만):', {
         ratePlansLength: ratePlans.length,
         hotelName: hotelName,
         checkIn: checkIn,
@@ -531,9 +535,34 @@ export function useRoomAIProcessing() {
         processKey: processKey
       })
       
-      // AI 처리 함수들 호출 (날짜 정보 포함)
-      generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut)
-      generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut)
+      // AI 처리 함수들 호출 (첫 3행만 처리)
+      generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 0, 3)
+      generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 0, 3)
+    }
+  }
+
+  // 나머지 레코드 AI 처리 함수 (더보기 버튼용)
+  const processRemainingRatePlans = (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+    console.log('🚀 processRemainingRatePlans 함수가 호출되었습니다:', {
+      ratePlansLength: ratePlans?.length,
+      hotelName,
+      checkIn,
+      checkOut,
+      stackTrace: new Error().stack
+    })
+    
+    if (ratePlans && ratePlans.length > 3 && hotelName) {
+      console.log('🚀 나머지 레코드 AI 처리 시작:', {
+        ratePlansLength: ratePlans.length,
+        hotelName: hotelName,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        remainingCount: ratePlans.length - 3
+      })
+      
+      // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
+      generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
+      generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
     }
   }
 
@@ -546,6 +575,7 @@ export function useRoomAIProcessing() {
     isGeneratingBedTypes,
     currentProcessingRow,
     processRatePlans,
+    processRemainingRatePlans,
     // 캐시 관련 추가
     cacheStats,
     clearCache,

@@ -85,6 +85,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     isGeneratingBedTypes,
     currentProcessingRow,
     processRatePlans,
+    processRemainingRatePlans,
     cacheStats,
     clearCache,
     getCacheInfo
@@ -964,6 +965,10 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                 cacheStats={cacheStats}
                 clearCache={clearCache}
                 getCacheInfo={getCacheInfo}
+                processRemainingRatePlans={processRemainingRatePlans}
+                hotelName={hotel?.name || ''}
+                checkIn={searchDates.checkIn}
+                checkOut={searchDates.checkOut}
               />
 
               {/* Sabre API 호텔 상세 정보 테이블 */}

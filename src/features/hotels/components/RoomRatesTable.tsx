@@ -24,6 +24,10 @@ interface RoomRatesTableProps {
     items: any[]
     stats: any
   }
+  processRemainingRatePlans: (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => void
+  hotelName: string
+  checkIn: string
+  checkOut: string
 }
 
 export function RoomRatesTable({
@@ -39,7 +43,11 @@ export function RoomRatesTable({
   hasSearched,
   cacheStats,
   clearCache,
-  getCacheInfo
+  getCacheInfo,
+  processRemainingRatePlans,
+  hotelName,
+  checkIn,
+  checkOut
 }: RoomRatesTableProps) {
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -549,7 +557,13 @@ export function RoomRatesTable({
       {hasMoreRows && (
         <div className="mt-4 text-center">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              if (!isExpanded) {
+                // 더보기 클릭 시 나머지 레코드 AI 처리 시작
+                processRemainingRatePlans(filteredRatePlans, hotelName, checkIn, checkOut)
+              }
+              setIsExpanded(!isExpanded)
+            }}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
           >
             {isExpanded ? (
@@ -577,17 +591,17 @@ export function RoomRatesTable({
                   <div className="flex items-center justify-center gap-2 text-blue-700">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                     <span className="text-sm font-medium">
-                      접힌 상태의 {filteredRatePlans.length - 3}개 레코드에 대해 AI 처리가 진행 중입니다...
+                      나머지 {filteredRatePlans.length - 3}개 레코드에 대해 AI 처리가 진행 중입니다...
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-blue-600 text-center">
-                    모든 레코드의 AI 처리가 완료되면 더보기를 클릭하여 결과를 확인할 수 있습니다.
+                    AI 처리가 완료되면 자동으로 결과가 표시됩니다.
                   </div>
                 </>
               ) : (
                   <div className="text-center">
                     <div className="text-sm font-medium text-blue-700 mb-2">
-                      접힌 상태의 {filteredRatePlans.length - 3}개 레코드 AI 처리 상태
+                      나머지 {filteredRatePlans.length - 3}개 레코드 AI 처리 상태
                     </div>
                     <div className="flex justify-center gap-4 text-xs text-blue-600">
                       <div className="flex items-center gap-1">
@@ -600,7 +614,7 @@ export function RoomRatesTable({
                       </div>
                     </div>
                   <div className="mt-2 text-xs text-blue-500">
-                    더보기를 클릭하여 AI 처리된 결과를 확인하세요.
+                    더보기를 클릭하여 나머지 레코드의 AI 처리를 시작하세요.
                   </div>
                 </div>
               )}

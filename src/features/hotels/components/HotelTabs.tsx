@@ -262,7 +262,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                         </div>
                       )}
                     </div>
-                    <div className="mt-4 flex gap-2">
+                    <div className="mt-4">
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(propertyAddress)}`}
                         target="_blank"
@@ -274,17 +274,6 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         구글 지도에서 보기
-                      </a>
-                      <a
-                        href={`https://map.kakao.com/link/search/${encodeURIComponent(propertyAddress)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                        </svg>
-                        카카오맵에서 보기
                       </a>
                     </div>
                   </div>
