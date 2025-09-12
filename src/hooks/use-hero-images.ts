@@ -66,7 +66,7 @@ export function useHeroImages() {
         
         if (chainsError) throw chainsError
         
-        // 5. 데이터 조합 - 각 호텔마다 image_1 사용
+        // 5. 데이터 조합 - 각 호텔마다 image_1 사용 (유효성 검증 포함)
         const heroImages: HeroImageData[] = hotels.map(hotel => {
           
           // 브랜드 정보 찾기
@@ -75,12 +75,44 @@ export function useHeroImages() {
           // 체인 정보 찾기
           const chain = chainsData?.find(c => c.chain_id === brand?.chain_id)
           
+          // 이미지 경로 유효성 검증
+          const isValidImagePath = (path: string | null | undefined): boolean => {
+            if (!path) return false
+            // 존재하지 않는 이미지 경로들 필터링
+            const invalidPaths = [
+              '/park-hyatt-tokyo-city-view.png',
+              '/ritz-carlton-laguna-niguel-ocean-view.png',
+              '/four-seasons-new-york-luxury-suite.png',
+              '/mandarin-oriental-bangkok-riverside-view.png'
+            ]
+            return !invalidPaths.includes(path)
+          }
+          
+          // 유효한 이미지 경로 선택 또는 fallback
+          let mediaPath = '/placeholder.svg'
+          if (isValidImagePath(hotel.image_1)) {
+            mediaPath = hotel.image_1
+          } else {
+            // 도시별 fallback 이미지 매핑
+            const cityFallbacks: Record<string, string> = {
+              'Tokyo': '/destination-image/tokyo.jpg',
+              'London': '/destination-image/london.jpg',
+              'Bali': '/destination-image/bali.webp',
+              'Singapore': '/destination-image/singapore.jpg',
+              'Hong Kong': '/destination-image/hongkong.webp',
+              'Osaka': '/destination-image/osaka.avif',
+              'Roma': '/destination-image/roma.jpg',
+              'Danang': '/destination-image/danang.jpg'
+            }
+            mediaPath = cityFallbacks[hotel.city] || '/destination-image/tokyo.jpg'
+          }
+          
           return {
             sabre_id: hotel.sabre_id,
             property_name_ko: hotel.property_name_ko || `호텔 ${hotel.sabre_id}`,
             property_name_en: hotel.property_name_en || 'Luxury Destination',
             slug: hotel.slug || '',
-            media_path: hotel.image_1 || '/placeholder.svg',
+            media_path: mediaPath,
             city: hotel.city || 'Unknown',
             chain_name_en: chain?.chain_name_en || 'LUXURY',
             brand_name_en: brand?.brand_name_en || 'PREMIUM',
