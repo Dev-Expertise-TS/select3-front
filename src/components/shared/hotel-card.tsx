@@ -167,23 +167,35 @@ export function HotelCard({
           <div className="mb-3">
             <div className="flex items-end justify-between mb-1">
               <div className="flex-1 mr-2">
-                <h3 className="font-bold text-gray-900 text-base truncate group-hover:text-blue-600 transition-colors">
+                <h3 className={cn(
+                  "font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors",
+                  isThreeGrid ? "text-lg" : "text-base"
+                )}>
                   {hotel.property_name_ko}
                 </h3>
                 {hotel.property_name_en && (
-                  <p className="text-sm text-gray-600 truncate mt-1">
+                  <p className={cn(
+                    "text-gray-600 truncate mt-1",
+                    isThreeGrid ? "text-base" : "text-sm"
+                  )}>
                     {hotel.property_name_en}
                   </p>
                 )}
               </div>
-              <span className="text-xs text-gray-500 font-medium flex-shrink-0">
+              <span className={cn(
+                "text-gray-500 font-medium flex-shrink-0",
+                isThreeGrid ? "text-sm" : "text-xs"
+              )}>
                 {hotel.city}
               </span>
             </div>
 
             {/* 주소 정보가 있을 때만 표시 */}
             {hotel.property_address && hotel.property_address !== '주소 정보 없음' && (
-              <div className="flex items-start text-sm text-gray-500 mb-2">
+              <div className={cn(
+                "flex items-start text-gray-500 mb-2",
+                isThreeGrid ? "text-base" : "text-sm"
+              )}>
                 <MapPin className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
                 <span className="truncate">{hotel.property_address}</span>
               </div>
@@ -237,15 +249,24 @@ export function HotelCard({
           {variant === 'promotion' && Array.isArray(promotions) && promotions.length > 0 && (
             <div className="border-t pt-3 mt-3 flex-1 flex flex-col">
               <div className="flex-1 flex flex-col">
-                <p className="text-xs font-semibold text-gray-900 mb-2">프로모션 혜택</p>
+                <p className={cn(
+                  "font-semibold text-gray-900 mb-2",
+                  isThreeGrid ? "text-sm" : "text-xs"
+                )}>프로모션 혜택</p>
                 <div className="flex-1 flex flex-col justify-center">
                   {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 */}
                   {promotions.slice(0, 1).map((promotion: any, index: number) => (
                     <div key={index} className="bg-blue-50 p-2 rounded-lg flex flex-col" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.HEIGHT}px` }}>
-                      <div className="text-xs text-gray-700 mb-1 font-medium line-clamp-2 flex items-center" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.TEXT_HEIGHT}px` }} title={promotion.promotion}>
+                      <div className={cn(
+                        "text-gray-700 mb-1 font-medium line-clamp-2 flex items-center",
+                        isThreeGrid ? "text-sm" : "text-xs"
+                      )} style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.TEXT_HEIGHT}px` }} title={promotion.promotion}>
                         {promotion.promotion}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-auto">
+                      <div className={cn(
+                        "flex items-center gap-4 text-gray-500 mt-auto",
+                        isThreeGrid ? "text-sm" : "text-xs"
+                      )}>
                         {promotion.booking_date && (
                           <div className="flex items-center">
                             <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
