@@ -151,6 +151,11 @@ export default async function ChainPage({ params }: ChainPageProps) {
       id: String(brand.brand_id),
       label: brand.brand_name_kr || brand.brand_name_en,
       count: hotels.filter(hotel => String(hotel.brand_id) === String(brand.brand_id)).length
+    })).sort((a, b) => a.label.localeCompare(b.label)),
+    chains: allChains.map(chain => ({
+      id: String(chain.chain_id),
+      label: chain.chain_name_kr || chain.chain_name_en,
+      count: 0 // 체인별 호텔 수는 동적으로 계산됨
     })).sort((a, b) => a.label.localeCompare(b.label))
   }
 

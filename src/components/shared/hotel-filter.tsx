@@ -16,16 +16,10 @@ interface FilterOption {
 interface HotelFilterProps {
   countries: FilterOption[]
   cities: FilterOption[]
-  brands: FilterOption[]
-  chains: FilterOption[]
   selectedCountries: string[]
   selectedCities: string[]
-  selectedBrands: string[]
-  selectedChains: string[]
   onCountryChange: (countries: string[]) => void
   onCityChange: (cities: string[]) => void
-  onBrandChange: (brands: string[]) => void
-  onChainChange: (chains: string[]) => void
   onClearAll: () => void
   className?: string
 }
@@ -33,23 +27,15 @@ interface HotelFilterProps {
 export function HotelFilter({
   countries,
   cities,
-  brands,
-  chains,
   selectedCountries,
   selectedCities,
-  selectedBrands,
-  selectedChains,
   onCountryChange,
   onCityChange,
-  onBrandChange,
-  onChainChange,
   onClearAll,
   className
 }: HotelFilterProps) {
   const [searchCountry, setSearchCountry] = useState("")
   const [searchCity, setSearchCity] = useState("")
-  const [searchBrand, setSearchBrand] = useState("")
-  const [searchChain, setSearchChain] = useState("")
 
   const filteredCountries = (countries || []).filter(country =>
     country.label.toLowerCase().includes(searchCountry.toLowerCase())
@@ -57,14 +43,6 @@ export function HotelFilter({
 
   const filteredCities = (cities || []).filter(city =>
     city.label.toLowerCase().includes(searchCity.toLowerCase())
-  )
-
-  const filteredBrands = (brands || []).filter(brand =>
-    brand.label.toLowerCase().includes(searchBrand.toLowerCase())
-  )
-
-  const filteredChains = (chains || []).filter(chain =>
-    chain.label.toLowerCase().includes(searchChain.toLowerCase())
   )
 
   const handleCountryToggle = (countryId: string) => {
@@ -83,23 +61,8 @@ export function HotelFilter({
     }
   }
 
-  const handleBrandToggle = (brandId: string) => {
-    if ((selectedBrands || []).includes(brandId)) {
-      onBrandChange((selectedBrands || []).filter(id => id !== brandId))
-    } else {
-      onBrandChange([...(selectedBrands || []), brandId])
-    }
-  }
 
-  const handleChainToggle = (chainId: string) => {
-    if ((selectedChains || []).includes(chainId)) {
-      onChainChange((selectedChains || []).filter(id => id !== chainId))
-    } else {
-      onChainChange([...(selectedChains || []), chainId])
-    }
-  }
-
-  const hasActiveFilters = (selectedCountries || []).length > 0 || (selectedCities || []).length > 0 || (selectedBrands || []).length > 0 || (selectedChains || []).length > 0
+  const hasActiveFilters = (selectedCountries || []).length > 0 || (selectedCities || []).length > 0
 
   return (
     <Card className={cn("p-6", className)}>
@@ -186,73 +149,6 @@ export function HotelFilter({
           </div>
         </div>
 
-        {/* 호텔 브랜드 필터 */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">호텔 브랜드</h4>
-          <div className="space-y-2">
-            <Input
-              placeholder="브랜드 검색..."
-              value={searchBrand}
-              onChange={(e) => setSearchBrand(e.target.value)}
-              className="h-8 text-sm"
-            />
-            <div className="max-h-32 overflow-y-auto space-y-1">
-              {filteredBrands.map((brand) => (
-                <button
-                  key={brand.id}
-                  onClick={() => handleBrandToggle(brand.id)}
-                  className={cn(
-                    "w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 transition-colors",
-                    selectedBrands.includes(brand.id) && "bg-blue-50 text-blue-700"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{brand.label}</span>
-                    {brand.count && (
-                      <Badge variant="secondary" className="text-xs">
-                        {brand.count}
-                      </Badge>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 호텔 체인 필터 */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">호텔 체인</h4>
-          <div className="space-y-2">
-            <Input
-              placeholder="체인 검색..."
-              value={searchChain}
-              onChange={(e) => setSearchChain(e.target.value)}
-              className="h-8 text-sm"
-            />
-            <div className="max-h-32 overflow-y-auto space-y-1">
-              {filteredChains.map((chain) => (
-                <button
-                  key={chain.id}
-                  onClick={() => handleChainToggle(chain.id)}
-                  className={cn(
-                    "w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 transition-colors",
-                    selectedChains.includes(chain.id) && "bg-blue-50 text-blue-700"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{chain.label}</span>
-                    {chain.count && (
-                      <Badge variant="secondary" className="text-xs">
-                        {chain.count}
-                      </Badge>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 선택된 필터 표시 */}
@@ -289,42 +185,6 @@ export function HotelFilter({
                   <button
                     onClick={() => handleCityToggle(cityId)}
                     className="ml-1 hover:text-green-600"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ) : null
-            })}
-            {selectedBrands.map((brandId) => {
-              const brand = brands.find(b => b.id === brandId)
-              return brand ? (
-                <Badge
-                  key={brandId}
-                  variant="default"
-                  className="bg-purple-100 text-purple-800 hover:bg-purple-200"
-                >
-                  {brand.label}
-                  <button
-                    onClick={() => handleBrandToggle(brandId)}
-                    className="ml-1 hover:text-purple-600"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ) : null
-            })}
-            {selectedChains.map((chainId) => {
-              const chain = chains.find(c => c.id === chainId)
-              return chain ? (
-                <Badge
-                  key={chainId}
-                  variant="default"
-                  className="bg-orange-100 text-orange-800 hover:bg-orange-200"
-                >
-                  {chain.label}
-                  <button
-                    onClick={() => handleChainToggle(chainId)}
-                    className="ml-1 hover:text-orange-600"
                   >
                     ×
                   </button>

@@ -5,6 +5,7 @@ import { HotelSearchResults } from "@/components/shared/hotel-search-results"
 
 interface ChainPageClientProps {
   chainRow: {
+    chain_id: number
     chain_name_en: string
     chain_name_kr?: string
   }
@@ -15,6 +16,7 @@ interface ChainPageClientProps {
     countries: Array<{ id: string; label: string; count: number }>
     cities: Array<{ id: string; label: string; count: number }>
     brands: Array<{ id: string; label: string; count: number }>
+    chains: Array<{ id: string; label: string; count: number }>
   }
 }
 
@@ -27,9 +29,9 @@ export function ChainPageClient({
 }: ChainPageClientProps) {
   const router = useRouter()
 
-  // 체인 변경 핸들러
-  const handleChainChange = (chainSlug: string) => {
-    router.push(`/chain/${chainSlug}`)
+  // 체인 변경 핸들러 - 고정된 페이지로 이동
+  const handleChainChange = (chainId: string) => {
+    router.push(`/chain/brand?chain=${chainId}`)
   }
 
   return (
@@ -43,6 +45,7 @@ export function ChainPageClient({
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}
       currentChainName={chainRow.chain_name_kr || chainRow.chain_name_en}
+      currentChainId={String(chainRow.chain_id)}
       onChainChange={handleChainChange}
       serverFilterOptions={serverFilterOptions}
     />
