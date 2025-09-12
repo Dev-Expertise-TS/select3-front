@@ -48,14 +48,18 @@ export function useHeroImages() {
         if (hotelsError) throw hotelsError
         if (!hotels) return []
         
-        // 3. hotel_brands에서 brand_id로 브랜드 정보 조회
-        const brandIds = hotels.map(hotel => hotel.brand_id).filter(Boolean)
-        const { data: brandsData, error: brandsError } = await supabase
-          .from('hotel_brands')
-          .select('brand_id, brand_name_en, chain_id')
-          .in('brand_id', brandIds)
-        
-        if (brandsError) throw brandsError
+        // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
+        const brandIds = hotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
+        let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
+        if (brandIds.length > 0) {
+          const { data, error: brandsError } = await supabase
+            .from('hotel_brands')
+            .select('brand_id, brand_name_en, chain_id')
+            .in('brand_id', brandIds)
+          
+          if (brandsError) throw brandsError
+          brandsData = data || []
+        }
         
         // 4. hotel_chains에서 chain_id로 체인 정보 조회
         const chainIds = brandsData?.map(brand => brand.chain_id).filter(Boolean) || []
@@ -74,6 +78,18 @@ export function useHeroImages() {
           
           // 체인 정보 찾기
           const chain = chainsData?.find(c => c.chain_id === brand?.chain_id)
+          
+          // 브랜드명 결정 (우선순위: brand_name_en > chain_name_en > 기본값)
+          const getBrandDisplayName = () => {
+            if (brand?.brand_name_en) return brand.brand_name_en
+            if (chain?.chain_name_en) return chain.chain_name_en
+            // 호텔명에서 체인 정보 추출 시도
+            const hotelName = hotel.property_name_ko || hotel.property_name_en || ''
+            if (hotelName.includes('포시즌스') || hotelName.includes('Four Seasons')) return 'FOUR SEASONS'
+            if (hotelName.includes('만다린') || hotelName.includes('Mandarin')) return 'MANDARIN ORIENTAL'
+            if (hotelName.includes('인터컨티넨탈') || hotelName.includes('InterContinental')) return 'INTERCONTINENTAL'
+            return 'LUXURY'
+          }
           
           // 이미지 경로 유효성 검증
           const isValidImagePath = (path: string | null | undefined): boolean => {
@@ -115,7 +131,7 @@ export function useHeroImages() {
             media_path: mediaPath,
             city: hotel.city || 'Unknown',
             chain_name_en: chain?.chain_name_en || 'LUXURY',
-            brand_name_en: brand?.brand_name_en || 'PREMIUM',
+            brand_name_en: getBrandDisplayName(),
           }
         })
         

@@ -179,7 +179,7 @@ export function HeroCarousel4() {
                     {/* Top: Category Badge */}
                     <div className="flex justify-start p-4">
                       <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
-                        {slide.chain_name_en}
+                        {slide.brand_name_en || slide.chain_name_en || 'LUXURY'}
                       </span>
                     </div>
                     
