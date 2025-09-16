@@ -19,6 +19,7 @@ import { HotelPromotion } from "./components/HotelPromotion"
 import { HotelTabs } from "./components/HotelTabs"
 import { HotelInfo } from "./components/HotelInfo"
 import { RoomRatesTable } from "./components/RoomRatesTable"
+import { RoomCardList } from "./components/RoomCardList"
 
 // Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
@@ -953,6 +954,22 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">객실 타입별 요금 상세</h3>
               
+              {/* 객실 카드 리스트 */}
+              {ratePlanCodes && ratePlanCodes.length > 0 && (
+                <div className="mb-8">
+           <RoomCardList
+             ratePlans={ratePlanCodes}
+             roomIntroductions={roomIntroductions}
+             globalOTAStyleRoomNames={globalOTAStyleRoomNames}
+             bedTypes={bedTypes}
+             isGeneratingIntroductions={isGeneratingIntroductions}
+             currentProcessingRow={currentProcessingRow}
+             checkIn={searchDates.checkIn}
+             checkOut={searchDates.checkOut}
+           />
+                </div>
+              )}
+              
               <RoomRatesTable
                 ratePlans={ratePlanCodes || []}
                 roomIntroductions={roomIntroductions}
@@ -968,7 +985,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                 clearCache={clearCache}
                 getCacheInfo={getCacheInfo}
                 processRemainingRatePlans={processRemainingRatePlans}
-                hotelName={hotel?.name || ''}
+                hotelName={hotel?.property_name_ko || hotel?.property_name_en || ''}
                 checkIn={searchDates.checkIn}
                 checkOut={searchDates.checkOut}
               />

@@ -54,6 +54,7 @@ export function RoomRatesTable({
   const [selectedBedTypes, setSelectedBedTypes] = useState<string[]>([])
   const [selectedViewTypes, setSelectedViewTypes] = useState<string[]>([])
   
+  
   // 베드 타입 추출 함수 (객실 소개 데이터에서)
   const extractBedTypeFromDescription = (description: string): string => {
     if (!description || description === 'N/A') return '정보 없음'
@@ -485,8 +486,24 @@ export function RoomRatesTable({
               
               // AI 처리 함수들과 동일한 키 생성 방식 사용
               const rowKey = `${roomType}-${roomName}`
-              const introKey = `${roomType}-${roomName}-${rateKey}`
+              const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}` // AI 처리 함수와 동일한 방식
               const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
+              
+              // 디버깅: 키와 Map 상태 확인
+              if (idx >= 3) { // 4행부터 디버깅
+                console.log(`🔍 ${idx + 1}행 디버깅:`, {
+                  rowKey,
+                  introKey,
+                  hasRoomIntroduction: roomIntroductions.has(introKey),
+                  roomIntroduction: roomIntroduction.substring(0, 50) + '...',
+                  mapSize: roomIntroductions.size,
+                  mapKeys: Array.from(roomIntroductions.keys()).slice(0, 3),
+                  allMapKeys: Array.from(roomIntroductions.keys()),
+                  roomType,
+                  roomName,
+                  rateKey
+                })
+              }
               
               return (
                 <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
@@ -514,16 +531,32 @@ export function RoomRatesTable({
                   </td>
                   <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-left">
                     <div className="text-gray-700">
-                      {roomIntroductions.has(introKey) ? (
-                        roomIntroduction
-                      ) : isGeneratingIntroductions && currentProcessingRow === idx ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          <span className="text-gray-500 text-xs">AI가 객실 소개 설명을 준비 중입니다.</span>
-                        </div>
-                      ) : (
-                        rp.Description || 'N/A'
-                      )}
+                      {(() => {
+                        // 디버깅을 위한 로그 (4행부터만)
+                        if (idx >= 3) {
+                          console.log(`🔍 ${idx + 1}행 객실 소개 렌더링:`, {
+                            introKey,
+                            roomIntroduction: roomIntroduction.substring(0, 50) + '...',
+                            hasValidIntro: roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...',
+                            isGenerating: isGeneratingIntroductions,
+                            currentRow: currentProcessingRow,
+                            idx
+                          })
+                        }
+                        
+                        if (roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...') {
+                          return roomIntroduction
+                        } else if (isGeneratingIntroductions && currentProcessingRow === idx) {
+                          return (
+                            <div className="flex items-center space-x-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              <span className="text-gray-500 text-xs">AI가 객실 소개 설명을 준비 중입니다.</span>
+                            </div>
+                          )
+                        } else {
+                          return rp.Description || 'N/A'
+                        }
+                      })()}
                     </div>
                   </td>
                   <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">
@@ -558,28 +591,18 @@ export function RoomRatesTable({
         <div className="mt-4 text-center">
           <button
             onClick={() => {
-              console.log('🔍 더보기 버튼 클릭됨:', {
-                isExpanded,
-                filteredRatePlansLength: filteredRatePlans.length,
-                originalRatePlansLength: ratePlans.length,
-                hotelName,
-                checkIn,
-                checkOut
-              })
-              
               if (!isExpanded) {
                 // 더보기 클릭 시 나머지 레코드 AI 처리 시작 (원본 ratePlans 사용)
-                console.log('🚀 AI 처리 함수 호출 시작')
+                if (!processRemainingRatePlans || !ratePlans || ratePlans.length === 0 || !hotelName) {
+                  return
+                }
+                
                 processRemainingRatePlans(ratePlans, hotelName, checkIn, checkOut)
-                  .then(() => {
-                    console.log('✅ AI 처리 함수 호출 완료')
-                  })
                   .catch((error: any) => {
                     console.error('❌ AI 처리 함수 호출 실패:', error)
                   })
               }
               
-              console.log('🔄 상태 변경:', { from: isExpanded, to: !isExpanded })
               setIsExpanded(!isExpanded)
             }}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"

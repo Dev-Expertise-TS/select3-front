@@ -207,6 +207,10 @@ export function useRoomAIProcessing() {
           
           // 캐시된 데이터를 즉시 상태에 반영
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === cachedIntro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, cachedIntro)
             return newMap
@@ -252,6 +256,10 @@ export function useRoomAIProcessing() {
           
           // 즉시 상태 업데이트 (1행씩 표시)
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === intro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, intro)
             return newMap
@@ -274,6 +282,10 @@ export function useRoomAIProcessing() {
           
           // 즉시 상태 업데이트 (fallback도 1행씩 표시)
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === fallbackIntro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, fallbackIntro)
             return newMap
@@ -399,6 +411,10 @@ export function useRoomAIProcessing() {
           
           // 캐시된 데이터를 즉시 상태에 반영
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === cachedRoomName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, cachedRoomName)
             return newMap
@@ -437,6 +453,10 @@ export function useRoomAIProcessing() {
           
           // 즉시 상태 업데이트 (1행씩 표시)
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === otaStyleName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, otaStyleName)
             return newMap
@@ -459,6 +479,10 @@ export function useRoomAIProcessing() {
           
           // 즉시 상태 업데이트 (fallback도 1행씩 표시)
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === fallbackName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, fallbackName)
             return newMap
@@ -533,7 +557,7 @@ export function useRoomAIProcessing() {
   }
 
   // ratePlanCodes가 변경될 때 AI 처리 함수들 호출 (날짜별로 처리)
-  const processRatePlans = (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+  const processRatePlans = useCallback(async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
     console.log('🚀 processRatePlans 함수가 호출되었습니다:', {
       ratePlansLength: ratePlans?.length,
       hotelName,
@@ -554,61 +578,42 @@ export function useRoomAIProcessing() {
         processKey: processKey
       })
       
-      // AI 처리 함수들 호출 (첫 3행만 처리)
-      generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 0, 3)
-      generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 0, 3)
+      // 초기 3개 레코드 AI 처리 비활성화
+      console.log('🚫 초기 3개 레코드 AI 처리가 비활성화되었습니다.')
+      
+      // 상태는 처리되지 않음으로 설정
+      setIsGeneratingIntroductions(false)
+      setIsGeneratingRoomNames(false)
+      setCurrentProcessingRow(-1)
     }
-  }
+  }, [])
 
   // 나머지 레코드 AI 처리 함수 (더보기 버튼용) - 직접 처리 방식
-  const processRemainingRatePlans = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
-    console.log('🚀 processRemainingRatePlans 함수가 호출되었습니다:', {
-      ratePlansLength: ratePlans?.length,
-      hotelName,
-      checkIn,
-      checkOut,
-      isGeneratingIntroductions,
-      isGeneratingRoomNames,
-      stackTrace: new Error().stack
-    })
-    
-    if (!ratePlans || ratePlans.length === 0) {
-      console.log('⚠️ ratePlans가 비어있음 - AI 처리 중단')
+  const processRemainingRatePlans = useCallback(async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
+    // 빠른 조건 검사
+    if (!ratePlans || ratePlans.length === 0 || !hotelName || ratePlans.length <= 3) {
       return
     }
-    
-    if (!hotelName) {
-      console.log('⚠️ hotelName이 비어있음 - AI 처리 중단')
-      return
-    }
-    
-    if (ratePlans.length <= 3) {
-      console.log('⚠️ 전체 레코드가 3개 이하 - 나머지 처리 불필요')
-      return
-    }
-    
-    console.log('🚀 나머지 레코드 직접 AI 처리 시작:', {
-      ratePlansLength: ratePlans.length,
-      hotelName: hotelName,
-      checkIn: checkIn,
-      checkOut: checkOut,
-      remainingCount: ratePlans.length - 3,
-      startIndex: 3,
-      endIndex: ratePlans.length
-    })
     
     // 나머지 레코드 직접 처리 (3행부터 끝까지)
     const remainingRooms = ratePlans.slice(3)
-    console.log(`🔍 처리할 나머지 객실 수: ${remainingRooms.length}개`)
     
-    // 상태 설정
+    // 첫 3개 레코드도 함께 처리하지 않음 (더보기 버튼에서도 비활성화)
+    console.log('🚫 더보기 버튼에서도 첫 3개 레코드 AI 처리가 비활성화되었습니다.')
+    
+    // remainingRooms가 없으면 처리하지 않음
+    if (remainingRooms.length === 0) {
+      console.log('🚫 처리할 나머지 레코드가 없습니다.')
+      return
+    }
+    
+    // 상태 설정 (즉시 실행)
     setIsGeneratingIntroductions(true)
     setIsGeneratingRoomNames(true)
     setCurrentProcessingRow(3)
     
     try {
       // 객실명 처리
-      console.log('🔄 나머지 객실명 직접 처리 시작')
       for (let i = 0; i < remainingRooms.length; i++) {
         const rp = remainingRooms[i]
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
@@ -625,13 +630,6 @@ export function useRoomAIProcessing() {
         
         setCurrentProcessingRow(actualRowIndex)
         
-        console.log(`🔍 ${i + 1}번째 나머지 객실명 처리 중 (전체 ${actualRowIndex + 1}번째):`, { 
-          roomType, 
-          roomName, 
-          key,
-          actualRowIndex
-        })
-        
         // 캐시 키 생성
         const dataHash = generateDataHash(roomType, roomName, enhancedDescription, hotelName, checkIn, checkOut)
         const cacheKey = `${CACHE_PREFIX}roomname_${dataHash}`
@@ -639,8 +637,11 @@ export function useRoomAIProcessing() {
         // 캐시에서 조회 시도
         const cachedRoomName = getCachedData(cacheKey)
         if (cachedRoomName) {
-          console.log(`💾 ${i + 1}번째 나머지 객실명 캐시 히트:`, cachedRoomName)
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === cachedRoomName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, cachedRoomName)
             return newMap
@@ -653,12 +654,14 @@ export function useRoomAIProcessing() {
           setCachedData(cacheKey, otaStyleName)
           
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === otaStyleName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, otaStyleName)
             return newMap
           })
-          
-          console.log(`✅ ${i + 1}번째 나머지 객실명 생성 완료:`, otaStyleName)
           
           if (i < remainingRooms.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 300))
@@ -669,6 +672,10 @@ export function useRoomAIProcessing() {
           
           setCachedData(cacheKey, fallbackName)
           setGlobalOTAStyleRoomNames(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(key) === fallbackName) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(key, fallbackName)
             return newMap
@@ -677,7 +684,6 @@ export function useRoomAIProcessing() {
       }
       
       // 객실 소개 처리
-      console.log('🔄 나머지 객실 소개 직접 처리 시작')
       for (let i = 0; i < remainingRooms.length; i++) {
         const rp = remainingRooms[i]
         const roomType = rp.RoomType || rp.RoomName || 'N/A'
@@ -694,13 +700,6 @@ export function useRoomAIProcessing() {
         
         setCurrentProcessingRow(actualRowIndex)
         
-        console.log(`🔍 ${i + 1}번째 나머지 객실 소개 처리 중 (전체 ${actualRowIndex + 1}번째):`, { 
-          roomType, 
-          roomName, 
-          introKey,
-          actualRowIndex
-        })
-        
         // 캐시 키 생성
         const dataHash = generateDataHash(roomType, roomName, enhancedDescription, hotelName, checkIn, checkOut)
         const cacheKey = `${CACHE_PREFIX}intro_${dataHash}`
@@ -708,8 +707,11 @@ export function useRoomAIProcessing() {
         // 캐시에서 조회 시도
         const cachedIntro = getCachedData(cacheKey)
         if (cachedIntro) {
-          console.log(`💾 ${i + 1}번째 나머지 객실 소개 캐시 히트:`, cachedIntro.substring(0, 50) + '...')
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === cachedIntro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, cachedIntro)
             return newMap
@@ -727,12 +729,14 @@ export function useRoomAIProcessing() {
           setCachedData(cacheKey, intro)
           
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === intro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, intro)
             return newMap
           })
-          
-          console.log(`✅ ${i + 1}번째 나머지 객실 소개 생성 완료:`, intro.substring(0, 50) + '...')
           
           if (i < remainingRooms.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500))
@@ -743,6 +747,10 @@ export function useRoomAIProcessing() {
           
           setCachedData(cacheKey, fallbackIntro)
           setRoomIntroductions(prev => {
+            // 이미 같은 값이 있으면 업데이트하지 않음
+            if (prev.get(introKey) === fallbackIntro) {
+              return prev
+            }
             const newMap = new Map(prev)
             newMap.set(introKey, fallbackIntro)
             return newMap
@@ -750,16 +758,14 @@ export function useRoomAIProcessing() {
         }
       }
       
-      console.log('✅ 나머지 레코드 직접 AI 처리 완료')
     } catch (error) {
       console.error('❌ 나머지 레코드 직접 AI 처리 중 오류:', error)
     } finally {
       setIsGeneratingIntroductions(false)
       setIsGeneratingRoomNames(false)
       setCurrentProcessingRow(-1)
-      console.log('🏁 나머지 레코드 AI 처리 완료')
     }
-  }
+  }, [])
 
   return {
     roomIntroductions,
