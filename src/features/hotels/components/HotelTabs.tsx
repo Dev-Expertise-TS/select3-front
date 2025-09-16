@@ -125,13 +125,13 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
   return (
     <div className="bg-gray-100 py-4">
-      <div className="container mx-auto max-w-[1440px] px-4">
-        <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="container mx-auto max-w-[1440px] px-2 sm:px-4">
+        <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
           {/* Tab Navigation */}
-          <div className="flex items-center gap-8 border-b mb-6">
+          <div className="flex items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 overflow-x-auto">
             <button
               onClick={() => setActiveTab("benefits")}
-              className={`flex items-center gap-2 pb-3 font-semibold ${
+              className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
                 activeTab === "benefits"
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-600 hover:text-blue-600"
@@ -142,7 +142,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             </button>
             <button
               onClick={() => setActiveTab("introduction")}
-              className={`pb-3 font-semibold ${
+              className={`pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
                 activeTab === "introduction"
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-600 hover:text-blue-600"
@@ -152,7 +152,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             </button>
             <button
               onClick={() => setActiveTab("transportation")}
-              className={`pb-3 font-semibold ${
+              className={`pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
                 activeTab === "transportation"
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-600 hover:text-blue-600"
@@ -163,7 +163,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             {hotelBlogs && (
               <button
                 onClick={() => setActiveTab("articles")}
-                className={`flex items-center gap-2 pb-3 font-semibold ${
+                className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "articles"
                     ? "text-blue-600 border-b-2 border-blue-600"
                     : "text-gray-600 hover:text-blue-600"
@@ -175,7 +175,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             )}
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`flex items-center gap-2 pb-3 font-semibold ${
+              className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
                 activeTab === "reviews"
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-600 hover:text-blue-600"
@@ -204,14 +204,14 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               </div>
 
               {/* 호텔 상세 정보 섹션 */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="mb-4">
+              <div className="border-t border-gray-200 pt-3 sm:pt-6">
+                <div className="mb-2 sm:mb-4">
                   <h4 className="text-base font-medium text-gray-700">호텔 상세 정보</h4>
                 </div>
                 
                 {/* 접힌 상태 - 미리보기 */}
                 {!isHotelInfoExpanded && introHtml && (
-                  <div className="max-w-[70%] mx-auto">
+                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto">
                     <div className="relative h-20 overflow-hidden">
                       <div 
                         className="text-gray-600 text-sm leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
@@ -225,7 +225,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                 
                 {/* 펼쳐진 상태 - 전체 내용 */}
                 {isHotelInfoExpanded && (
-                  <div className="max-w-[70%] mx-auto">
+                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto">
                     {introHtml ? (
                       <div 
                         className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
@@ -240,7 +240,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                 )}
                 
                 {/* 버튼 - 하단 가운데 */}
-                <div className="text-center mt-6">
+                <div className="text-center mt-3 sm:mt-6">
                   <button
                     onClick={() => setIsHotelInfoExpanded(!isHotelInfoExpanded)}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
@@ -271,14 +271,14 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               <div className="prose max-w-none">
                 {/* Property Details 표시 */}
                 {introHtml ? (
-                  <div className="max-w-[70%] mx-auto mb-6">
+                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
                     <div
                       className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
                       dangerouslySetInnerHTML={{ __html: introHtml }}
                     />
                   </div>
                 ) : (
-                  <div className="max-w-[70%] mx-auto mb-6">
+                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
                     <p className="text-gray-700 leading-relaxed">
                       {propertyDescription || `${hotelName}의 상세 정보가 아직 제공되지 않았습니다.`}
                     </p>
@@ -289,10 +289,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
           )}
 
           {activeTab === "transportation" && (
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-6">
               {locationHtml ? (
                 <div className="prose max-w-none">
-                  <div className="max-w-[70%] mx-auto mb-6">
+                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-3 sm:mb-6">
                     <div
                       className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
                       dangerouslySetInnerHTML={{ __html: locationHtml }}
@@ -308,15 +308,15 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
               {/* 구글 지도 */}
               {propertyAddress && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">호텔 위치</h3>
-                  <div className="bg-gray-100 rounded-lg p-4">
-                    <div className="mb-4">
+                <div className="mt-4 sm:mt-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-4">호텔 위치</h3>
+                  <div className="bg-gray-100 rounded-lg p-2 sm:p-4">
+                    <div className="mb-2 sm:mb-4">
                       <p className="text-sm text-gray-600 mb-2">
                         <span className="font-medium">주소:</span> {propertyAddress}
                       </p>
                     </div>
-                    <div className="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="relative w-full h-64 sm:h-96 bg-gray-200 rounded-lg overflow-hidden">
                       {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
                         <iframe
                           src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(propertyAddress)}`}
