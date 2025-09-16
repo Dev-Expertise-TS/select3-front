@@ -11,7 +11,8 @@ const nextConfig = {
       'images.unsplash.com',
       'via.placeholder.com',
       'picsum.photos',
-      'source.unsplash.com'
+      'source.unsplash.com',
+      'framerusercontent.com'
     ],
     remotePatterns: [
       {

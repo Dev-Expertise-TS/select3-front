@@ -5,19 +5,23 @@ import { cn } from "@/lib/utils"
 
 interface BlogCardProps {
   id: string
+  slug: string
   mainImage: string | null
   mainTitle: string
   subTitle: string | null
   createdAt: string
+  updatedAt: string | null
   className?: string
 }
 
 export function BlogCard({
   id,
+  slug,
   mainImage,
   mainTitle,
   subTitle,
   createdAt,
+  updatedAt,
   className
 }: BlogCardProps) {
   const formatDate = (dateString: string) => {
@@ -29,7 +33,7 @@ export function BlogCard({
   }
 
   return (
-    <Link href={`/blog/${id}`} className="block group h-full">
+    <Link href={`/blog/${slug}`} className="block group h-full">
       <Card className={cn(
         "overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col py-0",
         className
@@ -62,7 +66,7 @@ export function BlogCard({
           </div>
           <div className="flex items-center justify-between pt-4 mt-auto">
             <span className="text-xs text-gray-500">
-              {formatDate(createdAt)}
+              {formatDate(updatedAt || createdAt)}
             </span>
           </div>
         </CardContent>

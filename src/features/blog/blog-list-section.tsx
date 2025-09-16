@@ -7,10 +7,12 @@ import { cn } from "@/lib/utils"
 
 interface Blog {
   id: string
+  slug: string
   main_image: string | null
   main_title: string
   sub_title: string | null
   created_at: string
+  updated_at: string | null
 }
 
 interface BlogResponse {
@@ -118,10 +120,12 @@ export function BlogListSection() {
                 <BlogCard
                   key={`blog-${blog.id}-${index}`}
                   id={blog.id}
+                  slug={blog.slug}
                   mainImage={blog.main_image}
                   mainTitle={blog.main_title}
                   subTitle={blog.sub_title}
                   createdAt={blog.created_at}
+                  updatedAt={blog.updated_at}
                 />
               ))}
             </div>

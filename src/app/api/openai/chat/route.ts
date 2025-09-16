@@ -20,8 +20,26 @@ export async function POST(request: NextRequest) {
     // OpenAI API 키 확인
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
+      console.error('❌ OpenAI API 키가 설정되지 않았습니다.');
       return NextResponse.json(
-        { error: 'OpenAI API 키가 설정되지 않았습니다.' },
+        { 
+          error: 'OpenAI API 키가 설정되지 않았습니다.',
+          details: '환경 변수 OPENAI_API_KEY를 확인해주세요.',
+          code: 'MISSING_API_KEY'
+        },
+        { status: 500 }
+      );
+    }
+
+    // API 키 형식 검증
+    if (!apiKey.startsWith('sk-')) {
+      console.error('❌ OpenAI API 키 형식이 올바르지 않습니다:', apiKey.substring(0, 10) + '...');
+      return NextResponse.json(
+        { 
+          error: 'OpenAI API 키 형식이 올바르지 않습니다.',
+          details: 'API 키는 "sk-"로 시작해야 합니다.',
+          code: 'INVALID_API_KEY_FORMAT'
+        },
         { status: 500 }
       );
     }

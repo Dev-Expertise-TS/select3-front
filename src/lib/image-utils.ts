@@ -27,6 +27,16 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
     /^$/,
   ]
 
+  // 허용된 외부 도메인들
+  const allowedDomains = [
+    'images.unsplash.com',
+    'via.placeholder.com',
+    'picsum.photos',
+    'source.unsplash.com',
+    'framerusercontent.com',
+    'bnnuekzyfuvgeefmhmnp.supabase.co' // Supabase 스토리지
+  ]
+
   // 잘못된 패턴 체크
   for (const pattern of invalidPatterns) {
     if (pattern.test(url)) {
@@ -56,7 +66,18 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
     
     // 절대 URL인 경우
     if (url.startsWith('http')) {
-      new URL(url)
+      const urlObj = new URL(url)
+      const hostname = urlObj.hostname
+      
+      // 허용된 도메인인지 확인
+      const isAllowedDomain = allowedDomains.some(domain => 
+        hostname === domain || hostname.endsWith('.' + domain)
+      )
+      
+      if (!isAllowedDomain) {
+        console.warn(`⚠️ 허용되지 않은 외부 도메인: ${hostname}`)
+        return false
+      }
     }
     
     return true

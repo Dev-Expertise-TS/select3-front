@@ -7,8 +7,9 @@ export async function GET(request: NextRequest) {
     
     const { data: blogs, error } = await supabase
       .from("select_hotel_blogs")
-      .select("id, main_image, main_title, sub_title, created_at")
-      .order("created_at", { ascending: false })
+      .select("id, slug, main_image, main_title, sub_title, created_at, updated_at")
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
 
     if (error) {
       console.error("Blog fetch error:", error)

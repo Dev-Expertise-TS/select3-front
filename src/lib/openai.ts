@@ -223,6 +223,13 @@ export async function generateGlobalOTAStyleRoomName(roomType: string, roomName:
     if (!response.ok) {
       const errorText = await response.text()
       console.error('❌ 객실 타입 추출 OpenAI API 오류 응답:', errorText)
+      
+      // API 키 관련 오류인 경우 더 자세한 정보 제공
+      if (response.status === 401) {
+        console.error('🔑 OpenAI API 키 인증 실패 - API 키를 확인해주세요.');
+        throw new Error(`OpenAI API 키 인증 실패 (401): API 키가 유효하지 않거나 만료되었습니다.`);
+      }
+      
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 
@@ -297,6 +304,13 @@ export async function interpretBedType(description: string, roomName: string): P
     if (!response.ok) {
       const errorText = await response.text()
       console.error('❌ 베드 구성 해석 OpenAI API 오류 응답:', errorText)
+      
+      // API 키 관련 오류인 경우 더 자세한 정보 제공
+      if (response.status === 401) {
+        console.error('🔑 OpenAI API 키 인증 실패 - API 키를 확인해주세요.');
+        throw new Error(`OpenAI API 키 인증 실패 (401): API 키가 유효하지 않거나 만료되었습니다.`);
+      }
+      
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 
@@ -391,6 +405,13 @@ export async function generateRoomIntroduction(roomInfo: RoomInfo, hotelName: st
     if (!response.ok) {
       const errorText = await response.text()
       console.error('❌ OpenAI API 오류 응답:', errorText)
+      
+      // API 키 관련 오류인 경우 더 자세한 정보 제공
+      if (response.status === 401) {
+        console.error('🔑 OpenAI API 키 인증 실패 - API 키를 확인해주세요.');
+        throw new Error(`OpenAI API 키 인증 실패 (401): API 키가 유효하지 않거나 만료되었습니다.`);
+      }
+      
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 

@@ -1,7 +1,28 @@
 "use client"
 
-import { useState } from "react"
-import { Star, Utensils, MessageCircle, Bed, Shield } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Star, Utensils, MessageCircle, Bed, Shield, FileText } from "lucide-react"
+import { BlogContentRenderer } from "@/components/shared"
+
+interface BlogContent {
+  slug: string
+  main_title: string
+  main_image: string | null
+  sub_title: string | null
+  s1_contents: string | null
+  s2_contents: string | null
+  s3_contents: string | null
+  s4_contents: string | null
+  s5_contents: string | null
+  s6_contents: string | null
+  s7_contents: string | null
+  s8_contents: string | null
+  s9_contents: string | null
+  s10_contents: string | null
+  s11_contents: string | null
+  s12_contents: string | null
+  created_at: string
+}
 
 interface HotelTabsProps {
   introHtml: string | null
@@ -9,11 +30,52 @@ interface HotelTabsProps {
   hotelName: string
   propertyAddress?: string
   propertyDescription?: string
+  sabreId?: number
 }
 
-export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription }: HotelTabsProps) {
+export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
   const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
+  
+  // 아티클 관련 상태
+  const [articles, setArticles] = useState<BlogContent[]>([])
+  const [isLoadingArticles, setIsLoadingArticles] = useState(false)
+  const [articlesError, setArticlesError] = useState<string | null>(null)
+
+  // 호텔별 아티클 데이터 가져오기
+  const fetchHotelArticles = async () => {
+    if (!sabreId) {
+      setArticlesError("호텔 ID가 없습니다.")
+      return
+    }
+
+    try {
+      setIsLoadingArticles(true)
+      setArticlesError(null)
+      
+      const response = await fetch(`/api/hotels/${sabreId}/blogs`)
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        setArticles(data.data)
+        console.log(`✅ 호텔 ${sabreId}의 아티클 ${data.data.length}개 로드 완료:`, data.meta)
+      } else {
+        setArticlesError(data.error || "아티클을 불러오는데 실패했습니다.")
+      }
+    } catch (error) {
+      setArticlesError("네트워크 오류가 발생했습니다.")
+      console.error("Hotel articles fetch error:", error)
+    } finally {
+      setIsLoadingArticles(false)
+    }
+  }
+
+  // 아티클 탭이 활성화될 때 데이터 가져오기
+  useEffect(() => {
+    if (activeTab === "articles" && articles.length === 0 && !isLoadingArticles && sabreId) {
+      fetchHotelArticles()
+    }
+  }, [activeTab, articles.length, isLoadingArticles, sabreId])
 
   const benefits = [
     {
@@ -96,6 +158,17 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               }`}
             >
               위치 및 교통
+            </button>
+            <button
+              onClick={() => setActiveTab("articles")}
+              className={`flex items-center gap-2 pb-3 font-semibold ${
+                activeTab === "articles"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-600 hover:text-blue-600"
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              아티클
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
@@ -277,6 +350,74 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                       </a>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "articles" && (
+            <div className="space-y-6">
+              {isLoadingArticles ? (
+                <div className="text-center py-12">
+                  <div className="flex items-center justify-center gap-3 text-blue-600">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">아티클을 불러오는 중...</span>
+                  </div>
+                </div>
+              ) : articlesError ? (
+                <div className="text-center py-12">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-8">
+                    <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
+                    <p className="text-red-600 mb-4">{articlesError}</p>
+                    <button
+                      onClick={fetchHotelArticles}
+                      className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      다시 시도
+                    </button>
+                  </div>
+                </div>
+              ) : articles.length > 0 ? (
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">관련 아티클</h3>
+                    <p className="text-gray-600">{hotelName}과 관련된 아티클을 확인하세요</p>
+                  </div>
+                  
+                  {articles.map((article, index) => (
+                    <div key={article.slug} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="max-w-4xl mx-auto">
+                        <BlogContentRenderer 
+                          blog={article}
+                          showHeader={true}
+                          showImage={true}
+                          showDate={true}
+                          className="space-y-4"
+                          imageClassName="mb-12"
+                          contentClassName="prose prose-lg max-w-none"
+                        />
+                      </div>
+                      
+                      {/* 아티클 링크 */}
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <a
+                          href={`/blog/${article.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          전체 아티클 보기
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-2">📝</div>
+                  <p className="text-gray-500">{hotelName}과 관련된 아티클이 없습니다.</p>
+                  <p className="text-gray-400 text-sm mt-2">다른 호텔의 아티클을 확인해보세요.</p>
                 </div>
               )}
             </div>

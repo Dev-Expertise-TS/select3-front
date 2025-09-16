@@ -918,6 +918,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         hotelName={hotel.property_name_ko || '호텔'}
         propertyAddress={hotel.property_address}
         propertyDescription={hotel.property_description}
+        sabreId={hotel.sabre_id}
       />
 
       {/* Search Bar - Sticky */}
