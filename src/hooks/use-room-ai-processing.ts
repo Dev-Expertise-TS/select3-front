@@ -116,8 +116,8 @@ export function useRoomAIProcessing() {
       return
     }
     
-    // 이미 처리 중이면 중복 실행 방지
-    if (isGeneratingIntroductions) {
+    // 이미 처리 중이면 중복 실행 방지 (단, 더보기 버튼의 경우 예외)
+    if (isGeneratingIntroductions && startIndex < 3) {
       console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지:', {
         isGeneratingIntroductions,
         startIndex,
@@ -317,8 +317,8 @@ export function useRoomAIProcessing() {
       return
     }
     
-    // 이미 처리 중이면 중복 실행 방지
-    if (isGeneratingRoomNames) {
+    // 이미 처리 중이면 중복 실행 방지 (단, 더보기 버튼의 경우 예외)
+    if (isGeneratingRoomNames && startIndex < 3) {
       console.log('⚠️ 이미 객실명 생성 중이므로 중복 실행 방지:', {
         isGeneratingRoomNames,
         startIndex,
@@ -587,10 +587,18 @@ export function useRoomAIProcessing() {
       return
     }
     
-    // 중복 실행 방지 로직 제거 - AI 처리 함수들에서 관리
-    console.log('🔍 현재 AI 처리 상태:', {
-      isGeneratingIntroductions,
-      isGeneratingRoomNames
+    // AI 처리 상태 강제 초기화 (더보기 버튼 클릭 시)
+    console.log('🔄 AI 처리 상태 강제 초기화')
+    setIsGeneratingIntroductions(false)
+    setIsGeneratingRoomNames(false)
+    setCurrentProcessingRow(-1)
+    
+    // 상태 초기화 후 잠시 대기 (React 상태 업데이트 보장)
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    console.log('🔍 현재 AI 처리 상태 (초기화 후):', {
+      isGeneratingIntroductions: false,
+      isGeneratingRoomNames: false
     })
     
     console.log('🚀 나머지 레코드 AI 처리 시작:', {
@@ -605,12 +613,24 @@ export function useRoomAIProcessing() {
     
     // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
     try {
-      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작 (3행부터 끝까지)')
-      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3, ratePlans.length)
+      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작 (startIndex: 3)')
+      console.log('📊 호출 전 상태 확인:', {
+        isGeneratingRoomNames,
+        isGeneratingIntroductions,
+        currentProcessingRow
+      })
+      
+      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
       console.log('✅ generateGlobalOTAStyleRoomNames 완료')
       
-      console.log('🔄 generateRoomIntroductionsSequential 호출 시작 (3행부터 끝까지)')
-      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3, ratePlans.length)
+      console.log('🔄 generateRoomIntroductionsSequential 호출 시작 (startIndex: 3)')
+      console.log('📊 호출 전 상태 확인:', {
+        isGeneratingRoomNames,
+        isGeneratingIntroductions,
+        currentProcessingRow
+      })
+      
+      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
       console.log('✅ generateRoomIntroductionsSequential 완료')
       
       console.log('✅ processRemainingRatePlans 함수 호출 완료')
