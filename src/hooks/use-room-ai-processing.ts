@@ -605,12 +605,12 @@ export function useRoomAIProcessing() {
     
     // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
     try {
-      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작')
-      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
+      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작 (3행부터 끝까지)')
+      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3, ratePlans.length)
       console.log('✅ generateGlobalOTAStyleRoomNames 완료')
       
-      console.log('🔄 generateRoomIntroductionsSequential 호출 시작')
-      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
+      console.log('🔄 generateRoomIntroductionsSequential 호출 시작 (3행부터 끝까지)')
+      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3, ratePlans.length)
       console.log('✅ generateRoomIntroductionsSequential 완료')
       
       console.log('✅ processRemainingRatePlans 함수 호출 완료')
