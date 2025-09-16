@@ -34,8 +34,14 @@ export function useHeroImages() {
           .select('sabre_id')
           .eq('surface', '히어로')
         
-        if (featureError) throw featureError
-        if (!featureSlots || featureSlots.length === 0) return []
+        if (featureError) {
+          console.error('❌ 히어로 feature slots 조회 실패:', featureError)
+          throw featureError
+        }
+        if (!featureSlots || featureSlots.length === 0) {
+          console.log('⚠️ 히어로 feature slots 데이터 없음')
+          return []
+        }
         
         const sabreIds = featureSlots.map(slot => slot.sabre_id)
         
@@ -45,8 +51,14 @@ export function useHeroImages() {
           .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id, image_1')
           .in('sabre_id', sabreIds)
         
-        if (hotelsError) throw hotelsError
-        if (!hotels) return []
+        if (hotelsError) {
+          console.error('❌ 히어로 호텔 데이터 조회 실패:', hotelsError)
+          throw hotelsError
+        }
+        if (!hotels) {
+          console.log('⚠️ 히어로 호텔 데이터 없음')
+          return []
+        }
         
         // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
         const brandIds = hotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
@@ -57,7 +69,10 @@ export function useHeroImages() {
             .select('brand_id, brand_name_en, chain_id')
             .in('brand_id', brandIds)
           
-          if (brandsError) throw brandsError
+          if (brandsError) {
+            console.error('❌ 히어로 브랜드 데이터 조회 실패:', brandsError)
+            throw brandsError
+          }
           brandsData = data || []
         }
         
@@ -68,7 +83,10 @@ export function useHeroImages() {
           .select('chain_id, chain_name_en')
           .in('chain_id', chainIds)
         
-        if (chainsError) throw chainsError
+        if (chainsError) {
+          console.error('❌ 히어로 체인 데이터 조회 실패:', chainsError)
+          throw chainsError
+        }
         
         // 5. 데이터 조합 - 각 호텔마다 image_1 사용 (유효성 검증 포함)
         const heroImages: HeroImageData[] = hotels.map(hotel => {
@@ -137,7 +155,7 @@ export function useHeroImages() {
         
         return heroImages
       } catch (error) {
-        console.error('❌ 히어로 이미지 조회 실패:', error)
+        console.error('❌ 히어로 이미지 조회 실패:', error instanceof Error ? error.message : String(error))
         return []
       }
     },
