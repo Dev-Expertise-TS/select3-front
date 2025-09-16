@@ -28,6 +28,8 @@ export function RoomCardList({
   
   // 처음 3개만 보여주고, 더보기 버튼 클릭 시 전체 표시
   const displayedRatePlans = showAll ? ratePlans : ratePlans.slice(0, 3)
+
+  // AI 처리는 hotel-detail.tsx에서 자동으로 호출되므로 여기서는 제거
   // 베드 타입 추출 함수
   const extractBedTypeFromDescription = (description: string): string => {
     if (!description || description === 'N/A') return '베드 정보 없음'
@@ -103,20 +105,23 @@ export function RoomCardList({
         
         // AI 처리 함수들과 동일한 키 생성 방식 사용
         const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
-        const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
+        const roomIntroduction = roomIntroductions.get(introKey) || undefined
+        
         
         // 베드 타입과 수용 인원 추출
         const bedType = extractBedTypeFromDescription(description)
         const occupancy = extractOccupancy(description)
         
-        // 면적 정보 (일반적으로 30-50m² 범위)
-        const area = "35m²" // 기본값, 실제 데이터가 있다면 사용
+        // 면적 정보 제거 (실제 데이터가 없으므로)
+        const area = undefined
         
         // 할인 정보 제거
         const discount = undefined
         
-        // AI 처리 중인지 확인
-        const isGenerating = isGeneratingIntroductions && currentProcessingRow === idx
+        // AI 처리 중인지 확인 - 더 정확한 조건
+        const isGenerating = isGeneratingIntroductions && 
+          currentProcessingRow === idx && 
+          (!roomIntroduction || roomIntroduction.includes('AI가 객실 소개를 생성 중입니다'))
 
         return (
           <RoomCard

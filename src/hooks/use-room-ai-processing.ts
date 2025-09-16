@@ -116,16 +116,7 @@ export function useRoomAIProcessing() {
       return
     }
     
-    // 이미 처리 중이면 중복 실행 방지 (단, 더보기 버튼의 경우 예외)
-    if (isGeneratingIntroductions && startIndex < 3) {
-      console.log('⚠️ 이미 객실 소개 생성 중이므로 중복 실행 방지:', {
-        isGeneratingIntroductions,
-        startIndex,
-        endIndex,
-        currentProcessingRow
-      })
-      return
-    }
+    // processRatePlans에서 이미 중복 실행 방지하므로 여기서는 제거
     
     setIsGeneratingIntroductions(true)
     setCurrentProcessingRow(-1) // 초기화
@@ -567,6 +558,12 @@ export function useRoomAIProcessing() {
     })
     
     if (ratePlans && ratePlans.length > 0 && hotelName) {
+      // 이미 처리 중이면 중복 실행 방지
+      if (isGeneratingIntroductions) {
+        console.log('⚠️ 이미 AI 처리 중이므로 중복 실행 방지')
+        return
+      }
+      
       // 날짜별로 고유한 처리 키 생성
       const processKey = `${hotelName}-${checkIn || ''}-${checkOut || ''}`
       
@@ -578,15 +575,24 @@ export function useRoomAIProcessing() {
         processKey: processKey
       })
       
-      // 초기 3개 레코드 AI 처리 비활성화
-      console.log('🚫 초기 3개 레코드 AI 처리가 비활성화되었습니다.')
-      
-      // 상태는 처리되지 않음으로 설정
-      setIsGeneratingIntroductions(false)
-      setIsGeneratingRoomNames(false)
-      setCurrentProcessingRow(-1)
+      // 상태 설정
+      setIsGeneratingIntroductions(true)
+      setIsGeneratingRoomNames(true)
+      setCurrentProcessingRow(0)
+
+      try {
+        // AI 처리 함수들 순차 호출 (첫 3행만 처리)
+        await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 0, 3)
+        await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 0, 3)
+      } catch (error) {
+        console.error('초기 AI 처리 중 오류:', error)
+      } finally {
+        setIsGeneratingIntroductions(false)
+        setIsGeneratingRoomNames(false)
+        setCurrentProcessingRow(-1)
+      }
     }
-  }, [])
+  }, [isGeneratingIntroductions])
 
   // 나머지 레코드 AI 처리 함수 (더보기 버튼용) - 직접 처리 방식
   const processRemainingRatePlans = useCallback(async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {

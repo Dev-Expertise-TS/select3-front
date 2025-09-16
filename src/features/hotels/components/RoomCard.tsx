@@ -7,7 +7,7 @@ interface RoomCardProps {
   roomType: string
   roomName: string
   description: string
-  roomIntroduction: string
+  roomIntroduction?: string
   bedType: string
   area?: string
   occupancy: string
@@ -101,9 +101,12 @@ export function RoomCard({
     return `${averagePerNight.toLocaleString()} ${currency}`
   }
 
-  const displayIntroduction = roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...' 
+  const displayIntroduction = roomIntroduction && 
+    roomIntroduction !== 'N/A' && 
+    !roomIntroduction.includes('AI가 객실 소개를 생성 중입니다')
     ? roomIntroduction 
     : description || '객실 소개 정보를 준비 중입니다.'
+  
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -158,31 +161,31 @@ export function RoomCard({
           </div>
         </div>
 
-        {/* 객실 소개 - 고정 높이 */}
-        <div className="mb-4">
-          <div className="text-gray-700 text-sm leading-relaxed h-20 overflow-hidden">
-            {isGenerating ? (
-              <div className="flex items-center gap-2 h-full">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
+            {/* 객실 소개 - 고정 높이 */}
+            <div className="mb-4">
+              <div className="text-gray-700 text-sm leading-relaxed h-20 overflow-hidden">
+                {isGenerating ? (
+                  <div className="flex items-center gap-2 h-full">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
+                  </div>
+                ) : (
+                  <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
+                    <span className={isExpanded ? '' : 'line-clamp-3'}>
+                      {displayIntroduction}
+                    </span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
-                <span className={isExpanded ? '' : 'line-clamp-3'}>
-                  {displayIntroduction}
-                </span>
-              </div>
-            )}
-          </div>
-          {!isGenerating && displayIntroduction.length > 100 && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-blue-600 text-xs mt-2 hover:underline"
-            >
-              {isExpanded ? '접기' : '더보기'}
-            </button>
-          )}
-        </div>
+              {!isGenerating && displayIntroduction && displayIntroduction.length > 100 && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-blue-600 text-xs mt-2 hover:underline"
+                >
+                  {isExpanded ? '접기' : '더보기'}
+                </button>
+              )}
+            </div>
 
         {/* 가격 정보 */}
         <div className="border-t border-gray-100 pt-4">
@@ -205,7 +208,7 @@ export function RoomCard({
           
           {/* 예약 버튼 */}
           <button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200">
-            예약하기
+            예약 컨시어지
           </button>
         </div>
       </div>
