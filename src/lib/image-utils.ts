@@ -78,6 +78,15 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
         console.warn(`⚠️ 허용되지 않은 외부 도메인: ${hostname}`)
         return false
       }
+      
+      // Supabase 스토리지 URL의 경우 추가 검증
+      if (hostname.includes('supabase.co')) {
+        // Supabase 스토리지 경로가 올바른지 확인
+        if (!urlObj.pathname.includes('/storage/v1/object/public/')) {
+          console.warn(`⚠️ 잘못된 Supabase 스토리지 경로: ${urlObj.pathname}`)
+          return false
+        }
+      }
     }
     
     return true
@@ -159,8 +168,18 @@ export function handleImageError(
   e: React.SyntheticEvent<HTMLImageElement, Event>,
   fallbackSrc: string = '/placeholder.svg'
 ): void {
-  console.error('이미지 로드 실패:', e.currentTarget.src)
   const target = e.currentTarget as HTMLImageElement
+  
+  // 이미 플레이스홀더로 대체된 경우 무한 루프 방지
+  if (target.src.includes('placeholder.svg') || target.src.includes('placeholder.png')) {
+    return
+  }
+  
+  // 개발 환경에서만 에러 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('이미지 로드 실패, 플레이스홀더로 대체:', target.src)
+  }
+  
   target.src = fallbackSrc
 }
 

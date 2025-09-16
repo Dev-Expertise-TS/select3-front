@@ -7,17 +7,34 @@ const nextConfig = {
   },
   images: {
     unoptimized: false,
-    domains: [
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'picsum.photos',
-      'source.unsplash.com',
-      'framerusercontent.com'
-    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'framerusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'bnnuekzyfuvgeefmhmnp.supabase.co',
       },
     ],
     formats: ['image/webp', 'image/avif'],
