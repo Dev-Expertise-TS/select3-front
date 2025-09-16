@@ -31,9 +31,10 @@ interface HotelTabsProps {
   propertyAddress?: string
   propertyDescription?: string
   sabreId?: number
+  hotelBlogs?: string | null
 }
 
-export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId }: HotelTabsProps) {
+export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId, hotelBlogs }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
   const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
   
@@ -159,17 +160,19 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             >
               위치 및 교통
             </button>
-            <button
-              onClick={() => setActiveTab("articles")}
-              className={`flex items-center gap-2 pb-3 font-semibold ${
-                activeTab === "articles"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
-              }`}
-            >
-              <FileText className="h-4 w-4" />
-              아티클
-            </button>
+            {hotelBlogs && (
+              <button
+                onClick={() => setActiveTab("articles")}
+                className={`flex items-center gap-2 pb-3 font-semibold ${
+                  activeTab === "articles"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-blue-600"
+                }`}
+              >
+                <FileText className="h-4 w-4" />
+                아티클
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("reviews")}
               className={`flex items-center gap-2 pb-3 font-semibold ${
