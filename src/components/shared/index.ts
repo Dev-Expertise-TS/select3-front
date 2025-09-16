@@ -1,5 +1,6 @@
 export { BrandHotelCard } from './brand-hotel-card'
 export { BrandCard } from './brand-card'
+export { BlogCard } from './blog-card'
 export { HotelCard } from './hotel-card'
 export { HotelCardGrid } from './hotel-card-grid'
 export { HotelFilter } from './hotel-filter'

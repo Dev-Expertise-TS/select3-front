@@ -57,7 +57,7 @@ export function HotelInfo({
                 )}
                 <div className="flex items-center">
                   {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-orange-400 text-orange-400" />
+                    <Star key={`hotel-info-star-${i}`} className="h-4 w-4 fill-orange-400 text-orange-400" />
                   ))}
                 </div>
               </div>

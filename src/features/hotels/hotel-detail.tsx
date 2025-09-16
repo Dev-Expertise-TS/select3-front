@@ -1185,7 +1185,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                                   <span className="font-medium w-20">등급:</span>
                                   <span className="flex items-center gap-1">
                                     {Array.from({ length: parseInt(sabreHotelInfo.HotelRating) || 0 }).map((_, i) => (
-                                      <span key={i} className="text-yellow-500">⭐</span>
+                                      <span key={`hotel-rating-star-${i}`} className="text-yellow-500">⭐</span>
                                     ))}
                                     <span className="ml-2">({sabreHotelInfo.HotelRating}성급)</span>
                                   </span>
