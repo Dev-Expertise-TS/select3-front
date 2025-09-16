@@ -560,7 +560,7 @@ export function useRoomAIProcessing() {
     }
   }
 
-  // 나머지 레코드 AI 처리 함수 (더보기 버튼용)
+  // 나머지 레코드 AI 처리 함수 (더보기 버튼용) - 직접 처리 방식
   const processRemainingRatePlans = async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {
     console.log('🚀 processRemainingRatePlans 함수가 호출되었습니다:', {
       ratePlansLength: ratePlans?.length,
@@ -587,21 +587,7 @@ export function useRoomAIProcessing() {
       return
     }
     
-    // AI 처리 상태 강제 초기화 (더보기 버튼 클릭 시)
-    console.log('🔄 AI 처리 상태 강제 초기화')
-    setIsGeneratingIntroductions(false)
-    setIsGeneratingRoomNames(false)
-    setCurrentProcessingRow(-1)
-    
-    // 상태 초기화 후 잠시 대기 (React 상태 업데이트 보장)
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    console.log('🔍 현재 AI 처리 상태 (초기화 후):', {
-      isGeneratingIntroductions: false,
-      isGeneratingRoomNames: false
-    })
-    
-    console.log('🚀 나머지 레코드 AI 처리 시작:', {
+    console.log('🚀 나머지 레코드 직접 AI 처리 시작:', {
       ratePlansLength: ratePlans.length,
       hotelName: hotelName,
       checkIn: checkIn,
@@ -611,31 +597,167 @@ export function useRoomAIProcessing() {
       endIndex: ratePlans.length
     })
     
-    // 나머지 레코드에 대해 AI 처리 함수들 호출 (3행부터 끝까지)
+    // 나머지 레코드 직접 처리 (3행부터 끝까지)
+    const remainingRooms = ratePlans.slice(3)
+    console.log(`🔍 처리할 나머지 객실 수: ${remainingRooms.length}개`)
+    
+    // 상태 설정
+    setIsGeneratingIntroductions(true)
+    setIsGeneratingRoomNames(true)
+    setCurrentProcessingRow(3)
+    
     try {
-      console.log('🔄 generateGlobalOTAStyleRoomNames 호출 시작 (startIndex: 3)')
-      console.log('📊 호출 전 상태 확인:', {
-        isGeneratingRoomNames,
-        isGeneratingIntroductions,
-        currentProcessingRow
-      })
+      // 객실명 처리
+      console.log('🔄 나머지 객실명 직접 처리 시작')
+      for (let i = 0; i < remainingRooms.length; i++) {
+        const rp = remainingRooms[i]
+        const roomType = rp.RoomType || rp.RoomName || 'N/A'
+        const roomName = rp.RoomName || 'N/A'
+        const description = rp.Description || 'N/A'
+        const roomView = rp.RoomViewDescription || rp.RoomView || 'N/A'
+        
+        const enhancedDescription = roomView && roomView !== 'N/A' 
+          ? `${description} (View: ${roomView})`
+          : description
+        
+        const key = `${roomType}-${roomName}`
+        const actualRowIndex = 3 + i
+        
+        setCurrentProcessingRow(actualRowIndex)
+        
+        console.log(`🔍 ${i + 1}번째 나머지 객실명 처리 중 (전체 ${actualRowIndex + 1}번째):`, { 
+          roomType, 
+          roomName, 
+          key,
+          actualRowIndex
+        })
+        
+        // 캐시 키 생성
+        const dataHash = generateDataHash(roomType, roomName, enhancedDescription, hotelName, checkIn, checkOut)
+        const cacheKey = `${CACHE_PREFIX}roomname_${dataHash}`
+        
+        // 캐시에서 조회 시도
+        const cachedRoomName = getCachedData(cacheKey)
+        if (cachedRoomName) {
+          console.log(`💾 ${i + 1}번째 나머지 객실명 캐시 히트:`, cachedRoomName)
+          setGlobalOTAStyleRoomNames(prev => {
+            const newMap = new Map(prev)
+            newMap.set(key, cachedRoomName)
+            return newMap
+          })
+          continue
+        }
+        
+        try {
+          const otaStyleName = await generateGlobalOTAStyleRoomName(roomType, roomName, enhancedDescription, hotelName)
+          setCachedData(cacheKey, otaStyleName)
+          
+          setGlobalOTAStyleRoomNames(prev => {
+            const newMap = new Map(prev)
+            newMap.set(key, otaStyleName)
+            return newMap
+          })
+          
+          console.log(`✅ ${i + 1}번째 나머지 객실명 생성 완료:`, otaStyleName)
+          
+          if (i < remainingRooms.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300))
+          }
+        } catch (roomError) {
+          console.error(`❌ ${i + 1}번째 나머지 객실명 생성 실패:`, roomError)
+          const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
+          
+          setCachedData(cacheKey, fallbackName)
+          setGlobalOTAStyleRoomNames(prev => {
+            const newMap = new Map(prev)
+            newMap.set(key, fallbackName)
+            return newMap
+          })
+        }
+      }
       
-      await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 3)
-      console.log('✅ generateGlobalOTAStyleRoomNames 완료')
+      // 객실 소개 처리
+      console.log('🔄 나머지 객실 소개 직접 처리 시작')
+      for (let i = 0; i < remainingRooms.length; i++) {
+        const rp = remainingRooms[i]
+        const roomType = rp.RoomType || rp.RoomName || 'N/A'
+        const roomName = rp.RoomName || 'N/A'
+        const description = rp.Description || 'N/A'
+        const roomView = rp.RoomViewDescription || rp.RoomView || 'N/A'
+        
+        const enhancedDescription = roomView && roomView !== 'N/A' 
+          ? `${description} (View: ${roomView})`
+          : description
+        
+        const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
+        const actualRowIndex = 3 + i
+        
+        setCurrentProcessingRow(actualRowIndex)
+        
+        console.log(`🔍 ${i + 1}번째 나머지 객실 소개 처리 중 (전체 ${actualRowIndex + 1}번째):`, { 
+          roomType, 
+          roomName, 
+          introKey,
+          actualRowIndex
+        })
+        
+        // 캐시 키 생성
+        const dataHash = generateDataHash(roomType, roomName, enhancedDescription, hotelName, checkIn, checkOut)
+        const cacheKey = `${CACHE_PREFIX}intro_${dataHash}`
+        
+        // 캐시에서 조회 시도
+        const cachedIntro = getCachedData(cacheKey)
+        if (cachedIntro) {
+          console.log(`💾 ${i + 1}번째 나머지 객실 소개 캐시 히트:`, cachedIntro.substring(0, 50) + '...')
+          setRoomIntroductions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(introKey, cachedIntro)
+            return newMap
+          })
+          continue
+        }
+        
+        try {
+          const intro = await generateRoomIntroduction({
+            roomType: roomType,
+            roomName: roomName,
+            description: enhancedDescription
+          }, hotelName)
+          
+          setCachedData(cacheKey, intro)
+          
+          setRoomIntroductions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(introKey, intro)
+            return newMap
+          })
+          
+          console.log(`✅ ${i + 1}번째 나머지 객실 소개 생성 완료:`, intro.substring(0, 50) + '...')
+          
+          if (i < remainingRooms.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+        } catch (roomError) {
+          console.error(`❌ ${i + 1}번째 나머지 객실 소개 생성 실패:`, roomError)
+          const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
+          
+          setCachedData(cacheKey, fallbackIntro)
+          setRoomIntroductions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(introKey, fallbackIntro)
+            return newMap
+          })
+        }
+      }
       
-      console.log('🔄 generateRoomIntroductionsSequential 호출 시작 (startIndex: 3)')
-      console.log('📊 호출 전 상태 확인:', {
-        isGeneratingRoomNames,
-        isGeneratingIntroductions,
-        currentProcessingRow
-      })
-      
-      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 3)
-      console.log('✅ generateRoomIntroductionsSequential 완료')
-      
-      console.log('✅ processRemainingRatePlans 함수 호출 완료')
+      console.log('✅ 나머지 레코드 직접 AI 처리 완료')
     } catch (error) {
-      console.error('❌ processRemainingRatePlans 함수 실행 중 오류:', error)
+      console.error('❌ 나머지 레코드 직접 AI 처리 중 오류:', error)
+    } finally {
+      setIsGeneratingIntroductions(false)
+      setIsGeneratingRoomNames(false)
+      setCurrentProcessingRow(-1)
+      console.log('🏁 나머지 레코드 AI 처리 완료')
     }
   }
 
