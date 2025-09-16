@@ -47,35 +47,35 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="py-8 pb-16 bg-white">
-              <div className="container mx-auto px-4 max-w-[1440px]">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+    <section className="py-6 sm:py-8 pb-12 sm:pb-16 bg-white">
+              <div className="container mx-auto px-3 sm:px-4 max-w-[1440px]">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
             럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
           </h2>
-          <p className="text-base text-gray-600 mb-2">지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고</p>
-          <p className="text-base text-gray-600">투숙과 함께 아래의 일곱 가지 혜택을 누려보세요</p>
+          <p className="text-sm sm:text-base text-gray-600 mb-1 sm:mb-2">지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고</p>
+          <p className="text-sm sm:text-base text-gray-600">투숙과 함께 아래의 일곱 가지 혜택을 누려보세요</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-2 md:gap-3">
           {benefits.map((benefit, index) => {
             const IconComponent = benefit.icon
             return (
               <div
                 key={index}
-                className="bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 md:p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden"
+                className="bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-3 sm:p-2 md:p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden"
                 style={{ borderColor: '#E6CDB5' }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-1 md:mb-2 group-hover:from-gray-300/40 group-hover:to-gray-400/60 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 shadow-lg group-hover:shadow-xl border"
+                  <div className="w-10 h-10 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-2 sm:mb-1 md:mb-2 group-hover:from-gray-300/40 group-hover:to-gray-400/60 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 shadow-lg group-hover:shadow-xl border"
                     style={{ borderColor: '#E6CDB5' }}>
-                    <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-gray-700 transition-colors" />
+                    <IconComponent className="w-5 h-5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-gray-700 transition-colors" />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-xs mb-0.5 leading-tight group-hover:text-gray-700 transition-colors">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-xs mb-1 sm:mb-0.5 leading-tight group-hover:text-gray-700 transition-colors">
                     {benefit.title}
                   </h3>
-                  <p className="font-semibold text-gray-600 text-xs mb-1 leading-tight">{benefit.subtitle}</p>
-                  <p className="text-gray-600 text-xs leading-snug line-clamp-2 group-hover:text-gray-700 transition-colors">
+                  <p className="font-semibold text-gray-600 text-sm sm:text-xs mb-1 leading-tight">{benefit.subtitle}</p>
+                  <p className="text-gray-600 text-sm sm:text-xs leading-snug line-clamp-2 group-hover:text-gray-700 transition-colors">
                     {benefit.description}
                   </p>
                 </div>

@@ -138,17 +138,17 @@ export function HotelCardGridSection4({
   ...gridProps
 }: HotelCardGridSection4Props) {
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto max-w-[1440px] px-4">
+    <section className="py-8 sm:py-12 md:py-16 bg-gray-50">
+      <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
         {/* 헤더 */}
         {(title || subtitle) && (
           <div className={cn(
-            "text-center mb-12",
+            "text-center mb-8 sm:mb-10 md:mb-12",
             headerClassName
           )}>
             {title && (
               <h2 className={cn(
-                "text-3xl md:text-4xl font-bold text-gray-900 mb-4",
+                "text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4",
                 titleClassName
               )}>
                 {title}
@@ -156,7 +156,7 @@ export function HotelCardGridSection4({
             )}
             {subtitle && (
               <p className={cn(
-                "text-lg text-gray-600",
+                "text-sm sm:text-base md:text-lg text-gray-600",
                 subtitleClassName
               )}>
                 {subtitle}

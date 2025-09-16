@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, Coffee, Utensils, Waves, Heart, Filter, ChevronDown } from "lucide-react"
+import { ArrowLeft, Coffee, Utensils, Waves, Filter, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search/common-search-bar"
 
@@ -107,9 +107,6 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
               </Button>
             </Link>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm">
-                <Heart className="h-4 w-4" />
-              </Button>
               <Button variant="outline" size="sm">
                 Log in
               </Button>
@@ -203,10 +200,6 @@ export default async function DestinationPage({ params }: { params: Promise<{ ci
                           {hotel.badge}
                         </div>
                       )}
-                      <Button variant="ghost" size="sm" className="absolute top-3 right-3 bg-white/80 hover:bg-white">
-                        <Heart className="h-4 w-4" />
-                        Save
-                      </Button>
                       <div className="absolute bottom-3 left-3 text-white text-sm font-medium">1 / 14</div>
                     </div>
 

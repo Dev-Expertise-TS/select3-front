@@ -463,16 +463,16 @@ export function RoomRatesTable({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-200 text-base">
+        <table className="w-full border-collapse border border-gray-200 text-sm sm:text-base">
           <thead>
             <tr className="bg-gray-200">
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">객실 소개</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">총 요금</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">통화</th>
-              <th className="border border-gray-200 px-4 py-3 text-center text-base font-semibold text-gray-700">RATEKEY</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700 w-[168px] min-w-[168px] hidden">객실명</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700 w-[100px] min-w-[100px] hidden">View</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700 w-[100px] min-w-[100px]">베드 타입</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700">객실 소개</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700">총 요금</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700">통화</th>
+              <th className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center text-sm sm:text-base font-semibold text-gray-700">RATEKEY</th>
             </tr>
           </thead>
           <tbody>
@@ -507,7 +507,7 @@ export function RoomRatesTable({
               
               return (
                 <tr key={`rp-${idx}`} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[168px] min-w-[168px] hidden">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center w-[168px] min-w-[168px] hidden">
                     <div className="text-gray-700 font-medium">
                       {isGeneratingRoomNames && idx === 0 ? (
                         <div className="flex items-center space-x-2">
@@ -519,17 +519,17 @@ export function RoomRatesTable({
                       )}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[100px] min-w-[100px] hidden">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center w-[100px] min-w-[100px] hidden">
                     <div className="text-gray-700 font-medium">
                       {extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center w-[100px] min-w-[100px]">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center w-[100px] min-w-[100px]">
                     <div className="text-gray-700 font-medium">
                       {extractBedTypeFromDescription(rp.Description || 'N/A')}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-left">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-left">
                     <div className="text-gray-700">
                       {(() => {
                         // 디버깅을 위한 로그 (4행부터만)
@@ -559,14 +559,14 @@ export function RoomRatesTable({
                       })()}
                     </div>
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">
                     {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
                       `${parseInt(String(amount)).toLocaleString()}` : 
                       <span className="text-red-500">요금 정보 없음</span>
                     }
                   </td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">{currency}</td>
-                  <td className="border border-gray-200 px-4 py-3 text-base text-gray-700 text-center">
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">{currency}</td>
+                  <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">
                     <button
                       type="button"
                       title={typeof rateKey === 'string' ? rateKey : ''}

@@ -111,7 +111,7 @@ export function RoomCard({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* 카드 헤더 - 객실 이미지 대신 아이콘 영역 */}
-      <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative">
+      <div className="h-32 sm:h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative">
         <div className={`p-6 rounded-full ${getBedColor(bedType)}`}>
           {getBedIcon(bedType)}
         </div>
@@ -123,21 +123,21 @@ export function RoomCard({
       </div>
 
       {/* 카드 내용 */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* 객실명과 타입 */}
-        <div className="mb-4">
-          <div className="flex items-start justify-between mb-1">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="mb-3 sm:mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-0 mb-1">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               {roomName || roomType}
             </h3>
             {view && view !== 'N/A' && (
-              <span className="text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded">
+              <span className="text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded self-start">
                 {view}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="bg-gray-100 px-2 py-1 rounded text-xs">{roomType}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
+            <span className="bg-gray-100 px-2 py-1 rounded text-xs self-start">{roomType}</span>
             {area && (
               <div className="flex items-center gap-1">
                 <Ruler className="w-3 h-3" />
@@ -148,7 +148,7 @@ export function RoomCard({
         </div>
 
         {/* 베드 타입과 수용 인원 */}
-        <div className="flex items-center justify-between mb-4 text-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4 text-sm">
           <div className="flex items-center gap-2">
             <div className={`p-2 rounded-full ${getBedColor(bedType)}`}>
               {getBedIcon(bedType)}
@@ -162,8 +162,8 @@ export function RoomCard({
         </div>
 
             {/* 객실 소개 - 고정 높이 */}
-            <div className="mb-4">
-              <div className="text-gray-700 text-sm leading-relaxed h-20 overflow-hidden">
+            <div className="mb-3 sm:mb-4">
+              <div className="text-gray-700 text-sm leading-relaxed h-16 sm:h-20 overflow-hidden">
                 {isGenerating ? (
                   <div className="flex items-center gap-2 h-full">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -188,13 +188,13 @@ export function RoomCard({
             </div>
 
         {/* 가격 정보 */}
-        <div className="border-t border-gray-100 pt-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="border-t border-gray-100 pt-3 sm:pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
             <span className="text-sm text-gray-600">
               {calculateNights(checkIn, checkOut)}박 세금 포함
             </span>
-            <div className="text-right">
-              <div className="text-lg font-bold text-gray-900">
+            <div className="text-left sm:text-right">
+              <div className="text-base sm:text-lg font-bold text-gray-900">
                 {formatAmount(amount, currency)}
               </div>
               {/* 1박 평균 금액 - 1박이 아닌 경우에만 표시 */}
@@ -205,9 +205,9 @@ export function RoomCard({
               )}
             </div>
           </div>
-          
+
           {/* 예약 버튼 */}
-          <button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200">
+          <button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base">
             예약 컨시어지
           </button>
         </div>
