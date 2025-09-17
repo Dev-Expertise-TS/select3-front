@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from './supabase/client'
 
 // RatePlanCode 타입 정의
 export interface RatePlanCode {
@@ -15,25 +15,8 @@ export interface RatePlanCode {
   BookingCode?: string
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-// 환경변수 디버깅
-console.log('🔧 Supabase 클라이언트 설정:')
-console.log('  - URL:', supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : '❌ 설정 안됨')
-console.log('  - ANON_KEY:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '❌ 설정 안됨')
-console.log('  - URL 길이:', supabaseUrl?.length || 0)
-console.log('  - ANON_KEY 길이:', supabaseAnonKey?.length || 0)
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-})
-
-console.log('✅ Supabase 클라이언트 생성 완료')
+// SSR 호환 클라이언트 생성 (싱글톤 패턴 적용)
+export const supabase = createClient()
 
 // 타입 안전성을 위한 데이터베이스 타입 정의
 export type Database = {

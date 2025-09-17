@@ -93,6 +93,8 @@ export function PromotionBanner() {
                 alt={currentPromo?.property_name_ko || "프로모션 호텔"}
                 fill
                 className="object-cover"
+                sizes="(max-width: 640px) 48px, 80px"
+                priority={currentPromoIndex === 0}
               />
             </div>
             <div className="h-8 sm:h-13 flex flex-col justify-center animate-slide-in-right">

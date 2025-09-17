@@ -1,9 +1,9 @@
 "use client"
 
-import { HotelCardGrid } from './hotel-card-grid'
+import { HotelCardGridAllView } from './hotel-card-grid-all-view'
 import { HotelErrorBoundary } from './hotel-error-boundary'
 
-interface HotelListSectionProps {
+interface HotelListSectionAllViewProps {
   // 제목과 부제목
   title: string
   subtitle?: string
@@ -33,9 +33,10 @@ interface HotelListSectionProps {
   searchQuery?: string
   
   className?: string
+  isThreeGrid?: boolean
 }
 
-export function HotelListSection({
+export function HotelListSectionAllView({
   title,
   subtitle,
   hotels,
@@ -45,17 +46,18 @@ export function HotelListSection({
   onLoadMore,
   totalCount,
   displayCount,
-  columns = 3,
+  columns = 4,
   variant = 'default',
-  gap = 'sm',
+  gap = 'lg',
   showBenefits = true,
   showRating = false,
   showPrice = false,
   showBadge = false,
   showPromotionBadge = false,
   searchQuery,
-  className
-}: HotelListSectionProps) {
+  className,
+  isThreeGrid = false
+}: HotelListSectionAllViewProps) {
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -95,10 +97,9 @@ export function HotelListSection({
 
     return (
       <>
-        <HotelCardGrid
+        <HotelCardGridAllView
           hotels={hotels}
           variant={variant}
-          columns={columns}
           gap={gap}
           showBenefits={showBenefits}
           showRating={showRating}
@@ -106,6 +107,7 @@ export function HotelListSection({
           showBadge={showBadge}
           showPromotionBadge={showPromotionBadge}
           emptyMessage="호텔 목록이 없습니다."
+          isThreeGrid={isThreeGrid}
         />
         {hasMoreData && onLoadMore && (
           <div className="text-center mt-12">

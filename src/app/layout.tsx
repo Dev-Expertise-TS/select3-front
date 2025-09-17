@@ -8,7 +8,7 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
-  preload: true,
+  preload: true, // 실제로 사용되는 폰트이므로 preload 유지
   fallback: ['system-ui', 'arial'],
 })
 

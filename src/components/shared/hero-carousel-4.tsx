@@ -166,6 +166,7 @@ export function HeroCarousel4() {
                       fill
                       priority={index < 2}
                       className="object-cover transition-all duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       onError={(e) => {
                         console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
                         const target = e.target as HTMLImageElement

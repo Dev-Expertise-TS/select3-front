@@ -10,13 +10,19 @@ export function useHotels() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*, image_1, image_2, image_3, image_4, image_5')
+        .select('*')
         .limit(50)
+        .order('property_name_ko')
       
-      if (error) throw error
-      return data
+      if (error) {
+        console.error('호텔 목록 조회 오류:', error)
+        throw error
+      }
+      return data || []
     },
     staleTime: 5 * 60 * 1000, // 5분
+    retry: 3,
+    retryDelay: 1000,
   })
 }
 
@@ -27,15 +33,20 @@ export function useHotel(sabreId: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*, image_1, image_2, image_3, image_4, image_5')
+        .select('*')
         .eq('sabre_id', sabreId)
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('호텔 조회 오류:', error)
+        throw error
+      }
       return data
     },
     enabled: !!sabreId,
     staleTime: 5 * 60 * 1000, // 5분
+    retry: 3,
+    retryDelay: 1000,
   })
 }
 
@@ -46,15 +57,20 @@ export function useHotelBySlug(slug: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*, image_1, image_2, image_3, image_4, image_5')
+        .select('*')
         .eq('slug', slug)
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('호텔 slug 조회 오류:', error)
+        throw error
+      }
       return data
     },
     enabled: !!slug,
     staleTime: 5 * 60 * 1000, // 5분
+    retry: 3,
+    retryDelay: 1000,
   })
 }
 
@@ -84,14 +100,20 @@ export function useHotelSearch(query: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*, image_1, image_2, image_3, image_4, image_5')
+        .select('*')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
+        .order('property_name_ko')
       
-      if (error) throw error
-      return data
+      if (error) {
+        console.error('호텔 검색 오류:', error)
+        throw error
+      }
+      return data || []
     },
     enabled: query.length > 0,
     staleTime: 2 * 60 * 1000, // 2분
+    retry: 3,
+    retryDelay: 1000,
   })
 }
 
@@ -104,14 +126,19 @@ export function useBrandHotels(brandId: string | null) {
       
       const { data, error } = await supabase
         .from('select_hotels')
-        .select('*, image_1, image_2, image_3, image_4, image_5')
+        .select('*')
         .eq('brand_id', parseInt(brandId))
         .order('property_name_ko')
       
-      if (error) throw error
+      if (error) {
+        console.error('브랜드 호텔 조회 오류:', error)
+        throw error
+      }
       return data || []
     },
     enabled: !!brandId,
     staleTime: 5 * 60 * 1000, // 5분
+    retry: 3,
+    retryDelay: 1000,
   })
 }
