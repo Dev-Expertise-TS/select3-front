@@ -177,14 +177,14 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
         {/* 헤더 */}
-        <div className="bg-white border-b border-gray-200 p-4">
+        <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2 text-gray-700">
                 <Calendar className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">
+                <span className="font-medium text-sm sm:text-base">
                   {selectedCheckIn && selectedCheckOut 
                     ? `${formatDateForDisplay(selectedCheckIn)} - ${formatDateForDisplay(selectedCheckOut)} ${calculateNights()}박`
                     : selectedCheckIn 
@@ -195,7 +195,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <Users className="h-4 w-4" />
-                <span className="text-sm">{guests || "객실 1개, 성인 2명"}</span>
+                <span className="text-xs sm:text-sm">{guests || "객실 1개, 성인 2명"}</span>
               </div>
             </div>
             {/* 닫기 버튼 */}
@@ -210,11 +210,11 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
         </div>
 
         {/* 캘린더 */}
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-8">
+        <div className="p-3 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
             {/* 첫 번째 달 */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -223,7 +223,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
                 </h3>
                 <div className="w-8"></div>
@@ -232,7 +232,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               <div className="grid grid-cols-7 gap-1">
                 {['일', '월', '화', '수', '목', '금', '토'].map(day => (
                   <div key={day} className={cn(
-                    "h-10 flex items-center justify-center text-sm font-medium",
+                    "h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm font-medium",
                     day === '일' ? "text-red-500" : "text-gray-500"
                   )}>
                     {day}
@@ -253,7 +253,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                       onClick={() => handleDateClick(date)}
                       disabled={!isCurrentMonth(date) || isPastOrToday}
                       className={cn(
-                        "h-10 w-10 rounded-full text-sm font-medium transition-all duration-200 relative",
+                        "h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 relative",
                         !isCurrentMonth(date) && "text-gray-300 cursor-not-allowed",
                         isCurrentMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-50",
                         isCurrentMonth(date) && !isPastOrToday && "hover:bg-gray-100",
@@ -275,9 +275,9 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
 
             {/* 두 번째 달 */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
                 <div className="w-8"></div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 2}월
                 </h3>
                 <Button
@@ -293,7 +293,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               <div className="grid grid-cols-7 gap-1">
                 {['일', '월', '화', '수', '목', '금', '토'].map(day => (
                   <div key={day} className={cn(
-                    "h-10 flex items-center justify-center text-sm font-medium",
+                    "h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm font-medium",
                     day === '일' ? "text-red-500" : "text-gray-500"
                   )}>
                     {day}
@@ -314,7 +314,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                       onClick={() => handleDateClick(date)}
                       disabled={!isSecondMonth(date) || isPastOrToday}
                       className={cn(
-                        "h-10 w-10 rounded-full text-sm font-medium transition-all duration-200 relative",
+                        "h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 relative",
                         !isSecondMonth(date) && "text-gray-300 cursor-not-allowed",
                         isSecondMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-50",
                         isSecondMonth(date) && !isPastOrToday && "hover:bg-gray-100",
@@ -337,13 +337,13 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
         </div>
 
         {/* 하단 정보 */}
-        <div className="bg-gray-50 border-t border-gray-200 p-4">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center gap-4">
+        <div className="bg-gray-50 border-t border-gray-200 p-3 sm:p-4">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
+            <div className="flex items-center gap-2 sm:gap-4">
               <span>• 마우스를 위로 올려 휴일 확인</span>
             </div>
             <div className="text-right">
-                             <div className="font-medium text-gray-900">
+                             <div className="font-medium text-gray-900 text-xs sm:text-sm">
                  {selectedCheckIn && selectedCheckOut 
                    ? `${formatDateForDisplay(selectedCheckIn)} ~ ${formatDateForDisplay(selectedCheckOut)} (${calculateNights()}박)`
                    : selectedCheckIn 

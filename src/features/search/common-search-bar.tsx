@@ -365,9 +365,9 @@ export function CommonSearchBar({
   }
 
   return (
-    <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-3 sm:p-4 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 ${className}`}
+      <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-4 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 ${className}`}
       style={{ borderColor: '#E6CDB5' }}>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 위치 검색 영역 */}
         <div className="flex items-center gap-2 w-full sm:w-[30%] relative group">
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 transition-colors group-focus-within:text-blue-600 flex-shrink-0" />
@@ -476,8 +476,8 @@ export function CommonSearchBar({
           )}
         </div>
 
-        {/* 날짜 입력 영역 */}
-        <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-3 sm:pt-0 sm:pl-4"
+          {/* 날짜 입력 영역 */}
+          <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-2 sm:pt-0 sm:pl-4"
           style={{ borderTopColor: '#E6CDB5', borderLeftColor: '#E6CDB5' }}>
           <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
             <Calendar className="h-4 w-4" />
@@ -507,8 +507,8 @@ export function CommonSearchBar({
           </div>
         </div>
 
-        {/* 게스트 정보 영역 */}
-        <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-3 sm:pt-0 sm:pl-4"
+          {/* 게스트 정보 영역 */}
+          <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-2 sm:pt-0 sm:pl-4"
           style={{ borderTopColor: '#E6CDB5', borderLeftColor: '#E6CDB5' }}>
           <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
             <Users className="h-4 w-4" />
@@ -532,7 +532,7 @@ export function CommonSearchBar({
         <Button 
           variant="brand"
           size="lg"
-          className="font-bold w-full sm:w-[140px] flex items-center justify-center shrink-0 mt-2 sm:mt-0" 
+             className="font-bold w-full sm:w-[140px] flex items-center justify-center shrink-0 mt-1 sm:mt-0"
           onClick={handleSearch}
           disabled={isSearching || isSabreLoading}
         >
