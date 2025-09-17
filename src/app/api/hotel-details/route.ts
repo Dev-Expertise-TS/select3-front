@@ -48,6 +48,125 @@ export async function POST(request: NextRequest) {
 
     console.log('📤 Sabre Hotel Details API 요청:', requestBody)
 
+    // 여러 Sabre API 엔드포인트를 시도하여 객실 상세 정보 가져오기
+    let descriptiveData = null
+    
+    // 1. hotel-avail API 시도 (객실 가용성 및 상세 정보)
+    try {
+      console.log('📤 Hotel Avail API 요청:', {
+        HotelCode: body.hotelCode.toString(),
+        StartDate: body.startDate,
+        EndDate: body.endDate,
+        Adults: body.adults || 2,
+        Children: body.children || 0,
+        Rooms: body.rooms || 1
+      })
+      
+      const availResponse = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          HotelCode: body.hotelCode.toString(),
+          StartDate: body.startDate,
+          EndDate: body.endDate,
+          Adults: body.adults || 2,
+          Children: body.children || 0,
+          Rooms: body.rooms || 1
+        }),
+        signal: AbortSignal.timeout(10000)
+      })
+      
+      if (availResponse.ok) {
+        descriptiveData = await availResponse.json()
+        console.log('📥 Hotel Avail API 응답:', {
+          hasResult: !!descriptiveData,
+          resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
+          fullResponse: descriptiveData
+        })
+      } else {
+        console.warn('Hotel Avail API 호출 실패:', {
+          status: availResponse.status,
+          statusText: availResponse.statusText,
+          url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail'
+        })
+      }
+    } catch (error) {
+      console.warn('Hotel Avail API 호출 오류:', error)
+    }
+    
+    // 2. hotel-info API 시도
+    if (!descriptiveData) {
+      try {
+        console.log('📤 Hotel Info API 요청:', {
+          HotelCode: body.hotelCode.toString(),
+          CodeContext: 'GLOBAL'
+        })
+        
+        const infoResponse = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            HotelCode: body.hotelCode.toString(),
+            CodeContext: 'GLOBAL'
+          }),
+          signal: AbortSignal.timeout(10000)
+        })
+        
+        if (infoResponse.ok) {
+          descriptiveData = await infoResponse.json()
+          console.log('📥 Hotel Info API 응답:', {
+            hasResult: !!descriptiveData,
+            resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
+            fullResponse: descriptiveData
+          })
+        } else {
+          console.warn('Hotel Info API 호출 실패:', {
+            status: infoResponse.status,
+            statusText: infoResponse.statusText,
+            url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-info'
+          })
+        }
+      } catch (error) {
+        console.warn('Hotel Info API 호출 오류:', error)
+      }
+    }
+    
+    // 3. hotel-search API 시도
+    if (!descriptiveData) {
+      try {
+        console.log('📤 Hotel Search API 요청:', {
+          HotelCode: body.hotelCode.toString()
+        })
+        
+        const searchResponse = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            HotelCode: body.hotelCode.toString()
+          }),
+          signal: AbortSignal.timeout(10000)
+        })
+        
+        if (searchResponse.ok) {
+          descriptiveData = await searchResponse.json()
+          console.log('📥 Hotel Search API 응답:', {
+            hasResult: !!descriptiveData,
+            resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
+            fullResponse: descriptiveData
+          })
+        } else {
+          console.warn('Hotel Search API 호출 실패:', {
+            status: searchResponse.status,
+            statusText: searchResponse.statusText,
+            url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-search'
+          })
+        }
+      } catch (error) {
+        console.warn('Hotel Search API 호출 오류:', error)
+      }
+    }
+
+    // 기존 hotel-details API 호출
     const response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,7 +212,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<HotelDetailsResponse>(
       {
         success: true,
-        data: result
+        data: {
+          ...result,
+          descriptiveData: descriptiveData // 객실 상세 정보 추가
+        }
       },
       { status: 200 }
     )

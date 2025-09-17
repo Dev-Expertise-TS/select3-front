@@ -592,7 +592,7 @@ export function useRoomAIProcessing() {
         setCurrentProcessingRow(-1)
       }
     }
-  }, [isGeneratingIntroductions])
+  }, []) // 의존성 배열을 비워서 함수가 재생성되지 않도록 함
 
   // 나머지 레코드 AI 처리 함수 (더보기 버튼용) - 직접 처리 방식
   const processRemainingRatePlans = useCallback(async (ratePlans: any[], hotelName: string, checkIn?: string, checkOut?: string) => {

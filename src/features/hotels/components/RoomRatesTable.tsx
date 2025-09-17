@@ -57,7 +57,7 @@ export function RoomRatesTable({
   
   // 베드 타입 추출 함수 (객실 소개 데이터에서)
   const extractBedTypeFromDescription = (description: string): string => {
-    if (!description || description === 'N/A') return '정보 없음'
+    if (!description || description === 'N/A') return ''
     
     // 베드 타입 키워드 매칭
     const bedKeywords = [
@@ -86,12 +86,12 @@ export function RoomRatesTable({
       }
     }
     
-    return '베드 정보 없음'
+    return ''
   }
 
   // 뷰 타입 추출 함수
-  const extractViewTypeFromDescription = (roomViewDescription: string): string => {
-    if (!roomViewDescription || roomViewDescription === 'N/A') return '정보 없음'
+  const extractViewTypeFromDescription = (roomViewDescription: string): string | null => {
+    if (!roomViewDescription || roomViewDescription === 'N/A' || roomViewDescription === null) return null
     
     // 뷰 타입 키워드 매칭
     const viewKeywords = [
@@ -125,16 +125,16 @@ export function RoomRatesTable({
       }
     }
     
-    return '뷰 정보 없음'
+    return null
   }
   
   // 베드 타입과 뷰 타입 필터링된 데이터
   const filteredRatePlans = ratePlans.filter((rp: any) => {
-    const bedType = extractBedTypeFromDescription(rp.Description || 'N/A')
-    const viewType = extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')
+    const bedType = extractBedTypeFromDescription(rp.Description || '')
+    const viewType = extractViewTypeFromDescription(rp.RoomViewDescription || '')
     
     const bedTypeMatch = selectedBedTypes.length === 0 || selectedBedTypes.includes(bedType)
-    const viewTypeMatch = selectedViewTypes.length === 0 || selectedViewTypes.includes(viewType)
+    const viewTypeMatch = selectedViewTypes.length === 0 || (viewType && selectedViewTypes.includes(viewType))
     
     return bedTypeMatch && viewTypeMatch
   })
@@ -145,27 +145,27 @@ export function RoomRatesTable({
   
   // 베드 타입 옵션 추출
   const availableBedTypes = Array.from(
-    new Set(ratePlans.map((rp: any) => extractBedTypeFromDescription(rp.Description || 'N/A')))
+    new Set(ratePlans.map((rp: any) => extractBedTypeFromDescription(rp.Description || '')).filter(bedType => bedType !== ''))
   ).sort()
 
-  // 뷰 타입 옵션 추출
+  // 뷰 타입 옵션 추출 (null 값 제외)
   const availableViewTypes = Array.from(
-    new Set(ratePlans.map((rp: any) => extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')))
+    new Set(ratePlans.map((rp: any) => extractViewTypeFromDescription(rp.RoomViewDescription || '')).filter(viewType => viewType !== null))
   ).sort()
 
   // 접힌 상태의 레코드들에 대한 AI 처리 완료 상태 계산
   const hiddenRows = filteredRatePlans.slice(3)
   const hiddenRowsWithAI = hiddenRows.filter((rp: any, idx: number) => {
-    const roomType = rp.RoomType || rp.RoomName || 'N/A'
-    const roomName = rp.RoomName || 'N/A'
-    const rateKey: string = rp.RateKey || 'N/A'
+    const roomType = rp.RoomType || rp.RoomName || ''
+    const roomName = rp.RoomName || ''
+    const rateKey: string = rp.RateKey || ''
     const introKey = `${roomType}-${roomName}-${rateKey}`
     return roomIntroductions.has(introKey)
   }).length
   
   const hiddenRowsWithRoomNames = hiddenRows.filter((rp: any, idx: number) => {
-    const roomType = rp.RoomType || rp.RoomName || 'N/A'
-    const roomName = rp.RoomName || 'N/A'
+    const roomType = rp.RoomType || rp.RoomName || ''
+    const roomName = rp.RoomName || ''
     const rowKey = `${roomType}-${roomName}`
     return globalOTAStyleRoomNames.has(rowKey)
   }).length
@@ -366,7 +366,7 @@ export function RoomRatesTable({
                 <div className="flex flex-wrap gap-1">
                   {availableBedTypes.map((bedType) => {
                     const count = ratePlans.filter((rp: any) => 
-                      extractBedTypeFromDescription(rp.Description || 'N/A') === bedType
+                      extractBedTypeFromDescription(rp.Description || '') === bedType
                     ).length
                     
                     return (
@@ -410,7 +410,7 @@ export function RoomRatesTable({
                 <div className="flex flex-wrap gap-1">
                   {availableViewTypes.map((viewType) => {
                     const count = ratePlans.filter((rp: any) => 
-                      extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A') === viewType
+                      extractViewTypeFromDescription(rp.RoomViewDescription || '') === viewType
                     ).length
                     
                     return (
@@ -477,16 +477,16 @@ export function RoomRatesTable({
           </thead>
           <tbody>
             {filteredRatePlans.slice(0, visibleRows).map((rp: any, idx: number) => {
-              const roomType = rp.RoomType || rp.RoomName || 'N/A'
-              const roomName = rp.RoomName || 'N/A'
+              const roomType = rp.RoomType || rp.RoomName || ''
+              const roomName = rp.RoomName || ''
               const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
               const currency = rp.Currency || 'KRW'
-              const rateKey: string = rp.RateKey || 'N/A'
+              const rateKey: string = rp.RateKey || ''
               const shortRateKey = typeof rateKey === 'string' && rateKey.length > 10 ? `${rateKey.slice(0, 10)}...` : rateKey
               
               // AI 처리 함수들과 동일한 키 생성 방식 사용
               const rowKey = `${roomType}-${roomName}`
-              const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}` // AI 처리 함수와 동일한 방식
+              const introKey = `${roomType}-${roomName}-${rp.RateKey || ''}` // AI 처리 함수와 동일한 방식
               const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
               
               // 디버깅: 키와 Map 상태 확인
@@ -515,18 +515,18 @@ export function RoomRatesTable({
                           <span className="text-gray-500">AI가 객실 타입을 추출 중입니다...</span>
                         </div>
                       ) : (
-                        globalOTAStyleRoomNames.get(rowKey) || '정보 없음'
+                        globalOTAStyleRoomNames.get(rowKey) || ''
                       )}
                     </div>
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center w-[100px] min-w-[100px] hidden">
                     <div className="text-gray-700 font-medium">
-                      {extractViewTypeFromDescription(rp.RoomViewDescription || 'N/A')}
+                      {extractViewTypeFromDescription(rp.RoomViewDescription || '') || '-'}
                     </div>
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center w-[100px] min-w-[100px]">
                     <div className="text-gray-700 font-medium">
-                      {extractBedTypeFromDescription(rp.Description || 'N/A')}
+                      {extractBedTypeFromDescription(rp.Description || '')}
                     </div>
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-left">
@@ -554,13 +554,13 @@ export function RoomRatesTable({
                             </div>
                           )
                         } else {
-                          return rp.Description || 'N/A'
+                          return rp.Description || ''
                         }
                       })()}
                     </div>
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">
-                    {amount && amount !== 'N/A' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
+                    {amount && amount !== '' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
                       `${parseInt(String(amount)).toLocaleString()}` : 
                       <span className="text-red-500">요금 정보 없음</span>
                     }

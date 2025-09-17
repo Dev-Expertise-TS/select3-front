@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bed, Users, Ruler, Star } from "lucide-react"
+import { Bed, Users, Ruler } from "lucide-react"
 
 interface RoomCardProps {
   roomType: string
@@ -11,13 +11,13 @@ interface RoomCardProps {
   bedType: string
   area?: string
   occupancy: string
-  amount: string
+  amount: string | number
   currency: string
   discount?: string
   isGenerating?: boolean
   checkIn?: string
   checkOut?: string
-  view?: string
+  view?: string | null
 }
 
 export function RoomCard({
@@ -72,10 +72,10 @@ export function RoomCard({
     return Math.max(1, diffDays) // 최소 1박
   }
 
-  const formatAmount = (amount: string, currency: string = 'KRW') => {
+  const formatAmount = (amount: string | number, currency: string = 'KRW') => {
     if (!amount || amount === 'N/A' || amount === '0') return '요금 정보 없음'
-    const numAmount = parseInt(amount)
-    if (isNaN(numAmount)) return amount
+    const numAmount = typeof amount === 'number' ? amount : parseInt(String(amount))
+    if (isNaN(numAmount)) return String(amount)
     
     // KRW인 경우 원 문자를 오른쪽에 붙임
     if (currency === 'KRW') {
@@ -85,11 +85,11 @@ export function RoomCard({
   }
 
   // 1박 평균 금액 계산 함수
-  const calculateAveragePerNight = (amount: string, checkIn?: string, checkOut?: string, currency: string = 'KRW') => {
+  const calculateAveragePerNight = (amount: string | number, checkIn?: string, checkOut?: string, currency: string = 'KRW') => {
     if (!amount || amount === 'N/A' || amount === '0') return '요금 정보 없음'
     
-    const numAmount = parseInt(amount)
-    if (isNaN(numAmount)) return amount
+    const numAmount = typeof amount === 'number' ? amount : parseInt(String(amount))
+    if (isNaN(numAmount)) return String(amount)
     
     const nights = calculateNights(checkIn, checkOut)
     const averagePerNight = Math.round(numAmount / nights)
@@ -105,7 +105,7 @@ export function RoomCard({
     roomIntroduction !== 'N/A' && 
     !roomIntroduction.includes('AI가 객실 소개를 생성 중입니다')
     ? roomIntroduction 
-    : description || '객실 소개 정보를 준비 중입니다.'
+    : description || ''
   
 
   return (
@@ -161,31 +161,31 @@ export function RoomCard({
           </div>
         </div>
 
-            {/* 객실 소개 - 고정 높이 */}
-            <div className="mb-3 sm:mb-4">
-              <div className="text-gray-700 text-sm leading-relaxed h-16 sm:h-20 overflow-hidden">
-                {isGenerating ? (
-                  <div className="flex items-center gap-2 h-full">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
-                  </div>
-                ) : (
-                  <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
-                    <span className={isExpanded ? '' : 'line-clamp-3'}>
-                      {displayIntroduction}
-                    </span>
-                  </div>
-                )}
+        {/* 객실 소개 - 고정 높이 */}
+        <div className="mb-3 sm:mb-4">
+          <div className="text-gray-700 text-sm leading-relaxed h-16 sm:h-20 overflow-hidden">
+            {isGenerating ? (
+              <div className="flex items-center gap-2 h-full">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
               </div>
-              {!isGenerating && displayIntroduction && displayIntroduction.length > 100 && (
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-blue-600 text-xs mt-2 hover:underline"
-                >
-                  {isExpanded ? '접기' : '더보기'}
-                </button>
-              )}
-            </div>
+            ) : (
+              <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
+                <span className={isExpanded ? '' : 'line-clamp-3'}>
+                  {displayIntroduction}
+                </span>
+              </div>
+            )}
+          </div>
+          {!isGenerating && displayIntroduction && displayIntroduction.length > 100 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-blue-600 text-xs mt-2 hover:underline"
+            >
+              {isExpanded ? '접기' : '더보기'}
+            </button>
+          )}
+        </div>
 
         {/* 가격 정보 */}
         <div className="border-t border-gray-100 pt-3 sm:pt-4">

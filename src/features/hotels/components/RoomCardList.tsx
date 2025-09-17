@@ -95,13 +95,13 @@ export function RoomCardList({
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {displayedRatePlans.map((rp: any, idx: number) => {
-        const roomType = rp.RoomType || rp.RoomName || 'N/A'
-        const roomName = rp.RoomName || 'N/A'
-        const description = rp.Description || 'N/A'
-        const view = rp.RoomViewDescription || rp.RoomView || 'N/A'
-        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || '0'
+        const roomType = rp.RoomType || rp.RoomName || ''
+        const roomName = rp.RoomName || ''
+        const description = rp.Description || ''
+        const view = rp.RoomViewDescription || rp.RoomView || null
+        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || 0
         const currency = rp.Currency || 'KRW'
-        const rateKey: string = rp.RateKey || 'N/A'
+        const rateKey: string = rp.RateKey || ''
         
         // AI 처리 함수들과 동일한 키 생성 방식 사용
         const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`

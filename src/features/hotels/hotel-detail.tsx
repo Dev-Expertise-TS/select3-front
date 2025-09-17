@@ -48,6 +48,384 @@ interface HotelPromotion {
   check_in_date: string;
 }
 
+// 유틸리티 함수들 (컴포넌트 외부로 이동하여 무한 리렌더링 방지)
+function deepGet(obj: unknown, keys: string[]): unknown {
+  let cur: unknown = obj
+  for (const key of keys) {
+    if (cur && typeof cur === 'object' && Object.prototype.hasOwnProperty.call(cur as object, key)) {
+      cur = (cur as Record<string, unknown>)[key]
+    } else {
+      return undefined
+    }
+  }
+  return cur
+}
+
+// 개별 추출 함수들은 extractRatePlansFromSabreData 내부에서 처리하므로 제거됨
+
+function extractRatePlansFromSabreData(sabreData: any): any[] {
+  console.log('🔍 extractRatePlansFromSabreData 호출됨:', sabreData)
+  if (!sabreData) {
+    console.log('❌ sabreData가 없음')
+    return []
+  }
+  
+  // Sabre API 응답 구조 전체 분석
+  console.log('🔍 Sabre API 응답 구조 분석:', {
+    topLevelKeys: Object.keys(sabreData),
+    hotelDetailsInfo: sabreData.HotelDetailsInfo ? Object.keys(sabreData.HotelDetailsInfo) : '없음',
+    hotelRateInfo: sabreData.HotelDetailsInfo?.HotelRateInfo ? Object.keys(sabreData.HotelDetailsInfo.HotelRateInfo) : '없음',
+    rooms: sabreData.HotelDetailsInfo?.HotelRateInfo?.Rooms ? Object.keys(sabreData.HotelDetailsInfo.HotelRateInfo.Rooms) : '없음',
+    ratePlans: sabreData.HotelDetailsInfo?.RatePlans ? Object.keys(sabreData.HotelDetailsInfo.RatePlans) : '없음'
+  })
+  
+  // Rooms에서 Rate Plan 정보 추출
+  const extractRatePlansFromRooms = (roomsNode: unknown, deepGetFn: (obj: unknown, keys: string[]) => unknown): any[] => {
+    console.log('🔍 extractRatePlansFromRooms 호출됨:', roomsNode)
+    const roomArray: unknown[] = Array.isArray(roomsNode) ? roomsNode : [roomsNode]
+    const ratePlans: any[] = []
+    
+    console.log('🔍 처리할 Room 개수:', roomArray.length)
+    
+    for (let i = 0; i < roomArray.length; i++) {
+      const room = roomArray[i]
+      const r = room as any
+      console.log(`🔍 ${i + 1}번째 Room 처리 중:`, r)
+      
+      // Room 기본 정보 추출
+      const rt = deepGetFn(r, ['RoomType'])
+      const rdName = deepGetFn(r, ['RoomDescription', 'Name'])
+      const descSrc = deepGetFn(r, ['RoomDescription', 'Text'])
+      
+      const roomType: string = typeof rt === 'string' ? rt : (typeof rdName === 'string' ? rdName : '')
+      const roomName: string = typeof rdName === 'string' ? rdName : ''
+      const description: string = Array.isArray(descSrc) ? 
+        (typeof (descSrc as unknown[])[0] === 'string' ? (descSrc as unknown[])[0] as string : '') : 
+        (typeof descSrc === 'string' ? descSrc as string : '')
+      
+      // RoomViewDescription 추출 (다양한 경로 시도)
+      let roomViewDescription = null
+      roomViewDescription = deepGetFn(r, ['RoomViewDescription']) || r.RoomViewDescription
+      if (!roomViewDescription) { roomViewDescription = deepGetFn(r, ['Room', 'RoomViewDescription']) }
+      if (!roomViewDescription && Array.isArray(r.Room)) { 
+        roomViewDescription = r.Room.find((roomItem: any) => roomItem.RoomViewDescription)?.RoomViewDescription 
+      }
+      if (!roomViewDescription && r.RatePlans && r.RatePlans.RatePlan) {
+        const ratePlanArray = Array.isArray(r.RatePlans.RatePlan) ? r.RatePlans.RatePlan : [r.RatePlans.RatePlan]
+        roomViewDescription = ratePlanArray.find((rp: any) => rp.RoomViewDescription)?.RoomViewDescription
+      }
+      if (!roomViewDescription) { roomViewDescription = null } // 기본값 제거
+      
+      // RatePlans 정보 추출
+      const plansNode = deepGetFn(r, ['RatePlans', 'RatePlan'])
+      console.log(`🔍 ${i + 1}번째 Room의 RatePlans 정보:`, plansNode)
+      if (plansNode) {
+        const plans: unknown[] = Array.isArray(plansNode) ? plansNode : [plansNode]
+        console.log(`🔍 ${i + 1}번째 Room의 RatePlan 개수:`, plans.length)
+        
+        for (const plan of plans) {
+          const p = plan as Record<string, unknown>
+          
+          // RateKey 추출 (다양한 경로 시도)
+          const rateKey: string = (() => {
+            const paths = [
+              ['RateKey'],
+              ['RatePlanCode'],
+              ['BookingCode'],
+              ['RateCode'],
+              ['PlanCode'],
+              ['Code'],
+              ['Id']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'string' && v) return v
+            }
+            return ''
+          })()
+          
+          // 기타 요금 정보 추출 (다양한 경로 시도)
+          const currency: string = (() => {
+            const paths = [
+              ['ConvertedRateInfo', 'CurrencyCode'],
+              ['RateInfo', 'CurrencyCode'],
+              ['CurrencyCode'],
+              ['Currency']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'string' && v) return v
+            }
+            return 'KRW' // 기본값
+          })()
+          
+          const amountAfterTax: number = (() => {
+            const paths = [
+              ['ConvertedRateInfo', 'AmountAfterTax'],
+              ['RateInfo', 'AmountAfterTax'],
+              ['AmountAfterTax'],
+              ['TotalAmount'],
+              ['Amount'],
+              ['Price']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'number' && v > 0) return v
+              if (typeof v === 'string' && v && !isNaN(Number(v))) return Number(v)
+            }
+            return 0
+          })()
+          
+          const amountBeforeTax: number = (() => {
+            const paths = [
+              ['ConvertedRateInfo', 'AmountBeforeTax'],
+              ['RateInfo', 'AmountBeforeTax'],
+              ['AmountBeforeTax'],
+              ['BaseAmount'],
+              ['SubTotal']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'number' && v > 0) return v
+              if (typeof v === 'string' && v && !isNaN(Number(v))) return Number(v)
+            }
+            return 0
+          })()
+          
+          // RoomTypeCode와 BookingCode 추출
+          const roomTypeCode: string = (() => {
+            const paths = [
+              ['RoomTypeCode'],
+              ['RoomCode'],
+              ['TypeCode'],
+              ['Room', 'RoomTypeCode'],
+              ['Room', 'Code']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'string' && v) return v
+            }
+            return ''
+          })()
+          
+          const bookingCode: string = (() => {
+            const paths = [
+              ['BookingCode'],
+              ['RatePlanCode'],
+              ['PlanCode'],
+              ['Code'],
+              ['Id']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'string' && v) return v
+            }
+            return rateKey // RateKey를 기본값으로 사용
+          })()
+          
+          // 디버깅 로그 추가
+          console.log('Rate Plan 추출 결과:', {
+            RateKey: rateKey,
+            RoomType: roomType,
+            Currency: currency,
+            AmountAfterTax: amountAfterTax,
+            AmountBeforeTax: amountBeforeTax,
+            RoomTypeCode: roomTypeCode,
+            BookingCode: bookingCode,
+            RoomViewDescription: roomViewDescription,
+            originalData: p
+          })
+          
+          ratePlans.push({
+            RateKey: rateKey,
+            RoomType: roomType,
+            RoomName: roomName,
+            Description: description,
+            RoomViewDescription: roomViewDescription,
+            RoomView: roomViewDescription, // RoomViewDescription과 동일하게 설정
+            Currency: currency,
+            AmountAfterTax: amountAfterTax,
+            AmountBeforeTax: amountBeforeTax,
+            RoomTypeCode: roomTypeCode,
+            BookingCode: bookingCode,
+            // 추가 필드들
+            RatePlanDescription: '',
+            RatePlanType: '',
+            RateDescription: '',
+            PlanDescription: '',
+            RateInfo: '',
+            PlanInfo: '',
+            RateCategory: '',
+            RoomCategory: '',
+            MealPlan: '',
+            CancellationPolicy: '',
+            DepositRequired: '',
+            Prepaid: '',
+            // 원본 데이터도 보존
+            _original: p
+          })
+        }
+      }
+    }
+    
+    console.log('🔍 extractRatePlansFromRooms 최종 결과:', ratePlans)
+    return ratePlans
+  }
+  
+  // 1차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms > Room > RatePlans > RatePlan
+  const roomsNode = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms', 'Room'])
+  if (roomsNode) {
+    console.log('✅ 1차 경로: Rooms 정보 발견:', roomsNode)
+    const result = extractRatePlansFromRooms(roomsNode, deepGet)
+    console.log('✅ 1차 경로 결과:', result)
+    return result
+  }
+  
+  // 2차 경로: GetHotelDetailsRS > HotelDetailsInfo > RatePlans > RatePlan
+  const ratePlansNode = deepGet(sabreData, ['HotelDetailsInfo', 'RatePlans', 'RatePlan'])
+  if (ratePlansNode) {
+    console.log('✅ 2차 경로: RatePlans 정보 발견:', ratePlansNode)
+    const plans: unknown[] = Array.isArray(ratePlansNode) ? ratePlansNode : [ratePlansNode]
+    const result = plans.map((plan: any) => ({
+      RateKey: plan.RateKey || '',
+      RoomType: plan.RoomType || '',
+      RoomName: plan.RoomName || '',
+      Description: plan.Description || '',
+      RoomViewDescription: plan.RoomViewDescription || null,
+      RoomView: plan.RoomViewDescription || null,
+      Currency: plan.Currency || '',
+      AmountAfterTax: plan.AmountAfterTax || 0,
+      AmountBeforeTax: plan.AmountBeforeTax || 0,
+      RoomTypeCode: plan.RoomTypeCode || '',
+      BookingCode: plan.BookingCode || '',
+      RatePlanDescription: plan.RatePlanDescription || '',
+      RatePlanType: plan.RatePlanType || '',
+      RateDescription: plan.RateDescription || '',
+      PlanDescription: plan.PlanDescription || '',
+      RateInfo: plan.RateInfo || '',
+      PlanInfo: plan.PlanInfo || '',
+      RateCategory: plan.RateCategory || '',
+      RoomCategory: plan.RoomCategory || '',
+      MealPlan: plan.MealPlan || '',
+      CancellationPolicy: plan.CancellationPolicy || '',
+      DepositRequired: plan.DepositRequired || '',
+      Prepaid: plan.Prepaid || '',
+      _original: plan
+    }))
+    console.log('✅ 2차 경로 결과:', result)
+    return result
+  }
+  
+  // 3차 경로: GetHotelDetailsRS > HotelDetailsInfo > Rooms > Room > RatePlans > RatePlan
+  const roomsNode2 = deepGet(sabreData, ['HotelDetailsInfo', 'Rooms', 'Room'])
+  if (roomsNode2) {
+    console.log('✅ 3차 경로: Rooms 정보 발견:', roomsNode2)
+    const result = extractRatePlansFromRooms(roomsNode2, deepGet)
+    console.log('✅ 3차 경로 결과:', result)
+    return result
+  }
+  
+  // 4차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > RatePlans > RatePlan
+  const ratePlansNode2 = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'RatePlans', 'RatePlan'])
+  if (ratePlansNode2) {
+    console.log('✅ 4차 경로: RatePlans 정보 발견:', ratePlansNode2)
+    const plans: unknown[] = Array.isArray(ratePlansNode2) ? ratePlansNode2 : [ratePlansNode2]
+    const result = plans.map((plan: any) => ({
+      RateKey: plan.RateKey || '',
+      RoomType: plan.RoomType || '',
+      RoomName: plan.RoomName || '',
+      Description: plan.Description || '',
+      RoomViewDescription: plan.RoomViewDescription || null,
+      RoomView: plan.RoomViewDescription || null,
+      Currency: plan.Currency || '',
+      AmountAfterTax: plan.AmountAfterTax || 0,
+      AmountBeforeTax: plan.AmountBeforeTax || 0,
+      RoomTypeCode: plan.RoomTypeCode || '',
+      BookingCode: plan.BookingCode || '',
+      RatePlanDescription: plan.RatePlanDescription || '',
+      RatePlanType: plan.RatePlanType || '',
+      RateDescription: plan.RateDescription || '',
+      PlanDescription: plan.PlanDescription || '',
+      RateInfo: plan.RateInfo || '',
+      PlanInfo: plan.PlanInfo || '',
+      RateCategory: plan.RateCategory || '',
+      RoomCategory: plan.RoomCategory || '',
+      MealPlan: plan.MealPlan || '',
+      CancellationPolicy: plan.CancellationPolicy || '',
+      DepositRequired: plan.DepositRequired || '',
+      Prepaid: plan.Prepaid || '',
+      _original: plan
+    }))
+    console.log('✅ 4차 경로 결과:', result)
+    return result
+  }
+  
+  // 5차 경로: GetHotelDetailsRS > HotelDetailsInfo > HotelRateInfo > Rooms
+  const roomsNode3 = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms'])
+  if (roomsNode3) {
+    console.log('✅ 5차 경로: Rooms 정보 발견:', roomsNode3)
+    const result = extractRatePlansFromRooms(roomsNode3, deepGet)
+    console.log('✅ 5차 경로 결과:', result)
+    return result
+  }
+  
+  // 6차 경로: GetHotelDetailsRS > HotelDetailsInfo > Rooms
+  const roomsNode4 = deepGet(sabreData, ['HotelDetailsInfo', 'Rooms'])
+  if (roomsNode4) {
+    console.log('✅ 6차 경로: Rooms 정보 발견:', roomsNode4)
+    const result = extractRatePlansFromRooms(roomsNode4, deepGet)
+    console.log('✅ 6차 경로 결과:', result)
+    return result
+  }
+  
+  // 7차 경로: ConvertedRateInfo (현재 버전의 경로도 시도)
+  const convertedRateInfos = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'RateInfos', 'ConvertedRateInfo'])
+  if (convertedRateInfos) {
+    console.log('✅ 7차 경로: ConvertedRateInfo 정보 발견:', convertedRateInfos)
+    const rateInfoArray: unknown[] = Array.isArray(convertedRateInfos) ? convertedRateInfos : [convertedRateInfos]
+    const result = rateInfoArray.map((rateInfo: any) => ({
+      RateKey: rateInfo?.RateKey || '',
+      RoomType: '', // ConvertedRateInfo에는 객실 상세 정보가 없을 수 있음
+      RoomName: '',
+      Description: '',
+      RoomViewDescription: null,
+      RoomView: null,
+      Currency: rateInfo?.CurrencyCode || 'KRW',
+      AmountAfterTax: rateInfo?.AmountAfterTax || 0,
+      AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
+      AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
+      StartDate: rateInfo?.StartDate || '',
+      EndDate: rateInfo?.EndDate || '',
+      RoomTypeCode: '',
+      BookingCode: '',
+      RatePlanDescription: '',
+      RatePlanType: '',
+      RateDescription: '',
+      PlanDescription: '',
+      RateInfo: '',
+      PlanInfo: '',
+      RateCategory: '',
+      RoomCategory: '',
+      MealPlan: '',
+      CancellationPolicy: '',
+      DepositRequired: '',
+      Prepaid: '',
+      _original: rateInfo
+    }))
+    console.log('✅ 7차 경로 결과:', result)
+    return result
+  }
+  
+  console.log('❌ 모든 경로에서 Rate Plan 데이터를 찾을 수 없음')
+  return []
+}
+
 interface SearchDates {
   checkIn: string;
   checkOut: string;
@@ -531,134 +909,17 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     staleTime: 5 * 60 * 1000, // 5분 캐시
   })
 
-  // Rate Plan 데이터 추출 함수 (실제 Sabre API 응답 구조에 맞게 수정)
-  function extractRatePlansFromSabreData(sabreData: any): any[] {
-    console.log('🔍 extractRatePlansFromSabreData 시작:', {
-      hasSabreData: !!sabreData,
-      sabreDataType: typeof sabreData,
-      topLevelKeys: sabreData ? Object.keys(sabreData) : 'no data'
-    })
-    
-    if (!sabreData) {
-      console.warn('⚠️ sabreData가 없음')
+  // 중복된 함수들 제거됨 - 컴포넌트 외부의 함수들 사용
+
+  // sabreData에서 ratePlans 추출 (useMemo로 메모이제이션하여 무한 리렌더링 방지)
+  const ratePlanCodes = useMemo(() => {
+    if (!sabreData?.ratePlans) {
+      console.log('🔍 sabreData 또는 ratePlans가 없음')
       return []
     }
     
-    const deepGet = (obj: unknown, keys: string[]): unknown => {
-      let cur: unknown = obj
-      for (const key of keys) {
-        if (cur && typeof cur === 'object' && Object.prototype.hasOwnProperty.call(cur as object, key)) {
-          cur = (cur as Record<string, unknown>)[key]
-        } else {
-          return undefined
-        }
-      }
-      return cur
-    }
-    
-    const ratePlans: any[] = []
-    
-    // 실제 Sabre API 응답 구조에 맞게 수정
-    // HotelDetailsInfo.HotelRateInfo.RateInfos.ConvertedRateInfo 경로에서 데이터 추출
-    const convertedRateInfos = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'RateInfos', 'ConvertedRateInfo'])
-    
-    console.log('🔍 ConvertedRateInfo 분석:', {
-      hasConvertedRateInfos: !!convertedRateInfos,
-      isArray: Array.isArray(convertedRateInfos),
-      count: Array.isArray(convertedRateInfos) ? convertedRateInfos.length : (convertedRateInfos ? 1 : 0)
-    })
-    
-    if (convertedRateInfos) {
-      const rateInfoArray: unknown[] = Array.isArray(convertedRateInfos) ? convertedRateInfos : [convertedRateInfos]
-      
-      for (let i = 0; i < rateInfoArray.length; i++) {
-        const rateInfo = rateInfoArray[i] as any
-        
-        console.log(`🔍 ${i + 1}번째 Rate Info 처리:`, {
-          hasRateInfo: !!rateInfo,
-          rateInfoKeys: rateInfo ? Object.keys(rateInfo) : 'no rateInfo',
-          rateKey: rateInfo?.RateKey,
-          amountAfterTax: rateInfo?.AmountAfterTax,
-          currency: rateInfo?.CurrencyCode
-        })
-        
-        // 기본 객실 정보 (실제 데이터가 없으므로 기본값 사용)
-        const roomType = 'Standard Room' // 기본값
-        const roomName = 'Standard Room' // 기본값
-        const description = 'Comfortable and well-appointed room with modern amenities' // 기본값
-        const roomView = 'City View' // 기본값
-        
-        const ratePlanData = {
-          RateKey: rateInfo?.RateKey || '',
-          RoomType: roomType,
-          RoomName: roomName,
-          Description: description,
-          RoomView: roomView,
-          RoomViewDescription: roomView,
-          Currency: rateInfo?.CurrencyCode || 'KRW',
-          AmountAfterTax: rateInfo?.AmountAfterTax || 0,
-          AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
-          AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
-          StartDate: rateInfo?.StartDate || '',
-          EndDate: rateInfo?.EndDate || '',
-          RoomTypeCode: '',
-          RatePlanDescription: '',
-          RatePlanType: '',
-          BookingCode: '',
-          RateDescription: '',
-          PlanDescription: '',
-          RateInfo: '',
-          PlanInfo: '',
-          RateCategory: '',
-          RoomCategory: '',
-          MealPlan: '',
-          CancellationPolicy: '',
-          DepositRequired: '',
-          Prepaid: ''
-        }
-        
-        console.log(`✅ Rate Info ${i + 1} 추출 완료:`, {
-          RateKey: ratePlanData.RateKey,
-          RoomType: ratePlanData.RoomType,
-          AmountAfterTax: ratePlanData.AmountAfterTax,
-          Currency: ratePlanData.Currency
-        })
-        
-        ratePlans.push(ratePlanData)
-      }
-    } else {
-      console.warn('⚠️ ConvertedRateInfo 노드를 찾을 수 없음')
-      
-      // 대안: Rooms 경로도 확인해보기
-      const roomsNode = deepGet(sabreData, ['HotelDetailsInfo', 'HotelRateInfo', 'Rooms'])
-      console.log('🔍 대안 Rooms 노드 확인:', {
-        hasRoomsNode: !!roomsNode,
-        roomsNodeType: typeof roomsNode,
-        isArray: Array.isArray(roomsNode)
-      })
-      
-      if (roomsNode) {
-        console.log('🔍 Rooms 노드에서 데이터 추출 시도...')
-        // 기존 Rooms 로직 유지 (필요시)
-      }
-    }
-    
-    console.log('✅ 최종 추출 결과:', {
-      totalRatePlans: ratePlans.length,
-      ratePlans: ratePlans.map((rp, index) => ({
-        index: index + 1,
-        RateKey: rp.RateKey,
-        RoomType: rp.RoomType,
-        AmountAfterTax: rp.AmountAfterTax,
-        Currency: rp.Currency
-      }))
-    })
-    
-    return ratePlans
-  }
-
-  // sabreData에서 ratePlans 추출
-  const ratePlanCodes = sabreData?.ratePlans ? extractRatePlansFromSabreData(sabreData.ratePlans) : []
+    return extractRatePlansFromSabreData(sabreData.ratePlans)
+  }, [sabreData?.ratePlans]) // sabreData.ratePlans가 변경될 때만 재계산
   
   console.log('🔍 ratePlanCodes 상태:', {
     hasSabreData: !!sabreData,
@@ -669,14 +930,12 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     ratePlanCodes: ratePlanCodes.slice(0, 3) // 처음 3개만 로그
   })
 
-
-
   // ratePlanCodes가 변경될 때 AI 처리 함수들 호출
   useEffect(() => {
     if (ratePlanCodes && ratePlanCodes.length > 0 && hotel?.property_name_ko) {
       processRatePlans(ratePlanCodes, hotel.property_name_ko, searchDates.checkIn, searchDates.checkOut)
     }
-  }, [ratePlanCodes, hotel?.property_name_ko, searchDates.checkIn, searchDates.checkOut, processRatePlans])
+  }, [ratePlanCodes, hotel?.property_name_ko, searchDates.checkIn, searchDates.checkOut]) // processRatePlans 제거 (함수가 재생성되지 않음)
 
   // ===== UI 이벤트 핸들러들 =====
   const closeImageGallery = () => {
