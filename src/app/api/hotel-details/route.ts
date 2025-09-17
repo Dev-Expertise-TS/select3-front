@@ -83,6 +83,13 @@ export async function POST(request: NextRequest) {
     
     const result = await response.json()
     
+    console.log('📥 Sabre API 응답:', {
+      hasResult: !!result,
+      resultKeys: result ? Object.keys(result) : 'no result',
+      hasGetHotelDetailsRS: !!result?.GetHotelDetailsRS,
+      getHotelDetailsRSKeys: result?.GetHotelDetailsRS ? Object.keys(result.GetHotelDetailsRS) : 'no GetHotelDetailsRS'
+    })
+    
     return NextResponse.json<HotelDetailsResponse>(
       {
         success: true,
