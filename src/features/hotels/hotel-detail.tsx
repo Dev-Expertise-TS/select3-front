@@ -990,10 +990,10 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       <div className="py-2 sm:py-3">
         <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href={`/destination/${hotel.city_ko || hotel.city_eng || 'unknown'}`}>
+            <Link href="/all-hotel-resort">
               <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 px-2 sm:px-3">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">{hotel.city_ko || hotel.city_eng || '모든 숙소'}</span>
+                <span className="hidden sm:inline">모든 숙소</span>
                 <span className="sm:hidden">뒤로</span>
               </Button>
             </Link>
