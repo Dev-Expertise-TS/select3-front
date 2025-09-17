@@ -4,8 +4,8 @@ import { HotelCardGridAllView } from './hotel-card-grid-all-view'
 import { HotelErrorBoundary } from './hotel-error-boundary'
 
 interface HotelListSectionAllViewProps {
-  // 제목과 부제목
-  title: string
+  // 제목과 부제목 (선택적)
+  title?: string
   subtitle?: string
   
   // 데이터와 상태
@@ -138,16 +138,20 @@ export function HotelListSectionAllView({
 
   return (
     <div className={`lg:col-span-4 ${className || ''}`}>
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-gray-600">
-            {subtitle}
-          </p>
-        )}
-      </div>
+      {(title || subtitle) && (
+        <div className="mb-6">
+          {title && (
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+              {title}
+            </h1>
+          )}
+          {subtitle && (
+            <p className="text-gray-600">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
       
       <HotelErrorBoundary>
         {renderContent()}

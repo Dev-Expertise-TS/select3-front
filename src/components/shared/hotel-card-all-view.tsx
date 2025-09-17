@@ -35,6 +35,11 @@ export interface HotelCardAllViewData {
   benefit_4?: string
   benefit_5?: string
   benefit_6?: string
+  // 브랜드와 체인 정보
+  brand_id?: number
+  chain_id?: number
+  brand_name_en?: string
+  chain_name_en?: string
 }
 
 // 전체보기용 호텔 카드 Props 타입 정의
@@ -101,10 +106,10 @@ function HotelImageSection({
       
       {/* 배지들 */}
       <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-        {/* 호텔 체인/브랜드 배지 */}
-        {hotel.chain && (
+        {/* 브랜드 배지 (brand_name_en만 표시) */}
+        {hotel.brand_name_en && (
           <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-md text-sm font-medium shadow-sm">
-            {hotel.chain}
+            {hotel.brand_name_en}
           </div>
         )}
         {/* 기타 배지들 */}

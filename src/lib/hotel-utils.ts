@@ -125,7 +125,8 @@ export interface HotelCardAllViewData {
 // 전체보기용 호텔 데이터 변환 함수
 export function transformHotelToAllViewCardData(
   hotel: any,
-  imageUrl?: string
+  imageUrl?: string,
+  brandNameEn?: string
 ): HotelCardAllViewData {
   const slug = hotel.slug || undefined
   
@@ -161,21 +162,31 @@ export function transformHotelToAllViewCardData(
     benefit_3: hotel.benefit_3 || undefined,
     benefit_4: hotel.benefit_4 || undefined,
     benefit_5: hotel.benefit_5 || undefined,
-    benefit_6: hotel.benefit_6 || undefined
+    benefit_6: hotel.benefit_6 || undefined,
+    // 브랜드와 체인 정보
+    brand_id: hotel.brand_id || undefined,
+    chain_id: undefined, // chain_id는 없으므로 undefined
+    brand_name_en: brandNameEn || undefined, // hotel_brands에서 조회한 브랜드명
+    chain_name_en: undefined   // chain_name_en 사용하지 않음
   }
 }
 
 // 전체보기용 호텔 목록을 카드 데이터로 일괄 변환
 export function transformHotelsToAllViewCardData(
   hotels: any[],
-  mediaData?: any[]
+  mediaData?: any[],
+  brandData?: any[]
 ): HotelCardAllViewData[] {
   return hotels.map(hotel => {
     // 해당 호텔의 이미지 찾기
     const media = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
     const imageUrl = media?.media_path || hotel.image_1 || '/placeholder.svg'
     
-    return transformHotelToAllViewCardData(hotel, imageUrl)
+    // 브랜드 정보 찾기
+    const brand = brandData?.find(b => b.brand_id === hotel.brand_id)
+    const brandNameEn = brand?.brand_name_en
+    
+    return transformHotelToAllViewCardData(hotel, imageUrl, brandNameEn)
   })
 }
 

@@ -12,6 +12,7 @@ import { transformSearchResultsToCardData, transformHotelsToAllViewCardData } fr
 import { HotelBannerSection } from './hotel-banner-section'
 import { HotelListSection } from './hotel-list-section'
 import { HotelListSectionAllView } from './hotel-list-section-all-view'
+import { HotelFilterAllView } from './hotel-filter-all-view'
 
 const supabase = createClient()
 
@@ -46,18 +47,117 @@ function useSearchResults(query: string, tick: number) {
   })
 }
 
+// 필터 옵션 조회 훅
+function useFilterOptions() {
+  return useQuery({
+    queryKey: ['filter-options'],
+    queryFn: async () => {
+      // 호텔 데이터 조회
+      const { data: hotels, error: hotelsError } = await supabase
+        .from('select_hotels')
+        .select('city, city_ko, city_en, country_ko, country_en, brand_id, chain_ko, chain_en')
+      
+      if (hotelsError) throw hotelsError
+      
+      // 브랜드 데이터 조회
+      const brandIds = hotels?.filter(h => h.brand_id).map(h => h.brand_id) || []
+      let brands = []
+      if (brandIds.length > 0) {
+        const { data: brandData } = await supabase
+          .from('hotel_brands')
+          .select('brand_id, brand_name_en')
+          .in('brand_id', brandIds)
+        brands = brandData || []
+      }
+      
+      // 도시 옵션 생성
+      const cityMap = new Map()
+      hotels?.forEach(hotel => {
+        const city = hotel.city_ko || hotel.city || hotel.city_en
+        if (city) {
+          cityMap.set(city, (cityMap.get(city) || 0) + 1)
+        }
+      })
+      const cities = Array.from(cityMap.entries()).map(([label, count]) => ({
+        id: label,
+        label,
+        count
+      })).sort((a, b) => b.count - a.count)
+      
+      // 국가 옵션 생성
+      const countryMap = new Map()
+      hotels?.forEach(hotel => {
+        const country = hotel.country_ko || hotel.country_en
+        if (country) {
+          countryMap.set(country, (countryMap.get(country) || 0) + 1)
+        }
+      })
+      const countries = Array.from(countryMap.entries()).map(([label, count]) => ({
+        id: label,
+        label,
+        count
+      })).sort((a, b) => b.count - a.count)
+      
+      // 브랜드 옵션 생성
+      const brandMap = new Map()
+      hotels?.forEach(hotel => {
+        if (hotel.brand_id) {
+          const brand = brands.find(b => b.brand_id === hotel.brand_id)
+          if (brand) {
+            const brandName = brand.brand_name_en
+            brandMap.set(brandName, (brandMap.get(brandName) || 0) + 1)
+          }
+        }
+      })
+      const brandOptions = Array.from(brandMap.entries()).map(([label, count]) => ({
+        id: label,
+        label,
+        count
+      })).sort((a, b) => b.count - a.count)
+      
+      // 체인 옵션 생성
+      const chainMap = new Map()
+      hotels?.forEach(hotel => {
+        const chain = hotel.chain_ko || hotel.chain_en
+        if (chain) {
+          chainMap.set(chain, (chainMap.get(chain) || 0) + 1)
+        }
+      })
+      const chains = Array.from(chainMap.entries()).map(([label, count]) => ({
+        id: label,
+        label,
+        count
+      })).sort((a, b) => b.count - a.count)
+      
+      return {
+        cities: cities.slice(0, 20), // 상위 20개만
+        countries: countries.slice(0, 20),
+        brands: brandOptions.slice(0, 20),
+        chains: chains.slice(0, 20)
+      }
+    },
+    staleTime: 10 * 60 * 1000, // 10분
+    retry: 3,
+    retryDelay: 1000,
+  })
+}
+
 // 모든 호텔 조회 훅 (검색어 없이)
 function useAllHotels() {
   return useQuery({
     queryKey: ['all-hotels'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5, chain_ko, chain_en')
-        .order('sabre_id')
-      
-      if (error) throw error
-      if (!data) return []
+      try {
+        const { data, error } = await supabase
+          .from('select_hotels')
+          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5, chain_ko, chain_en, brand_id')
+          .order('sabre_id')
+        
+        if (error) {
+          console.error('호텔 목록 조회 오류:', error)
+          throw error
+        }
+        if (!data) return []
       
       // 호텔 미디어 조회
       const sabreIds = data.map((hotel: any) => hotel.sabre_id)
@@ -67,8 +167,28 @@ function useAllHotels() {
         .in('sabre_id', sabreIds)
         .order('sort_order', { ascending: true })
       
-      // 데이터 변환 (전체보기용)
-      return transformHotelsToAllViewCardData(data, mediaData || [])
+      // 브랜드 정보 조회
+      const brandIds = data.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+      let brandData = []
+      if (brandIds.length > 0) {
+        const { data: brandResult, error: brandError } = await supabase
+          .from('hotel_brands')
+          .select('brand_id, brand_name_en')
+          .in('brand_id', brandIds)
+        
+        if (brandError) {
+          console.error('브랜드 정보 조회 오류:', brandError)
+        } else {
+          brandData = brandResult || []
+        }
+      }
+      
+        // 데이터 변환 (전체보기용) - 브랜드 정보 포함
+        return transformHotelsToAllViewCardData(data, mediaData || [], brandData)
+      } catch (error) {
+        console.error('전체 호텔 조회 중 오류 발생:', error)
+        throw error
+      }
     },
     staleTime: 5 * 60 * 1000, // 5분
   })
@@ -282,6 +402,12 @@ export function HotelSearchResults({
   const [displayCount, setDisplayCount] = useState(12) // 초기 표시 개수
   const [selectedChainId, setSelectedChainId] = useState<string | null>(currentChainId || null)
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(initialBrandId || null)
+  const [filters, setFilters] = useState({
+    city: '',
+    country: '',
+    brand: '',
+    chain: ''
+  })
   const [searchDates, setSearchDates] = useState(() => {
     // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
     if (checkInParam && checkOutParam) {
@@ -309,6 +435,7 @@ export function HotelSearchResults({
   const { data: chainBrandHotels, isLoading: isChainBrandLoading, error: chainBrandError } = useChainBrandHotels(selectedChainId)
   const { data: brandHotels, isLoading: isBrandLoading, error: brandError } = useBrandHotels(selectedBrandId)
   const { data: chainBrands } = useChainBrands(selectedChainId)
+  const { data: filterOptions, isLoading: isFilterOptionsLoading } = useFilterOptions()
 
 
   const handleSearch = (newQuery: string) => {
@@ -322,6 +449,65 @@ export function HotelSearchResults({
     url.searchParams.set('q', newQuery)
     window.history.pushState({}, '', url.toString())
   }
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters)
+    setDisplayCount(12) // 필터 변경 시 표시 개수 초기화
+  }
+
+  // 개별 필터 변경 핸들러 (상호 배타적 동작)
+  const handleSingleFilterChange = (type: keyof typeof filters, value: string) => {
+    const newFilters = { ...filters }
+    
+    // 필터 간 상호 배타적 동작
+    if (type === 'city' && value) {
+      // 도시 선택 시 국가 필터 초기화
+      newFilters.country = ''
+    } else if (type === 'country' && value) {
+      // 국가 선택 시 도시 필터 초기화
+      newFilters.city = ''
+    } else if (type === 'brand' && value) {
+      // 브랜드 선택 시 체인 필터 초기화
+      newFilters.chain = ''
+    } else if (type === 'chain' && value) {
+      // 체인 선택 시 브랜드 필터 초기화
+      newFilters.brand = ''
+    }
+    
+    // 선택된 필터 값 설정
+    newFilters[type] = value
+    
+    handleFiltersChange(newFilters)
+  }
+
+  // 필터링된 데이터 계산
+  const filteredData = useMemo(() => {
+    if (!allHotels) return []
+    
+    return allHotels.filter(hotel => {
+      // 도시 필터
+      if (filters.city && !hotel.city_ko?.includes(filters.city) && !hotel.city?.includes(filters.city)) {
+        return false
+      }
+      
+      // 국가 필터
+      if (filters.country && !hotel.country_ko?.includes(filters.country) && !hotel.country_en?.includes(filters.country)) {
+        return false
+      }
+      
+      // 브랜드 필터
+      if (filters.brand && hotel.brand_name_en !== filters.brand) {
+        return false
+      }
+      
+      // 체인 필터
+      if (filters.chain && !hotel.chain?.includes(filters.chain)) {
+        return false
+      }
+      
+      return true
+    })
+  }, [allHotels, filters])
 
 
   const handleLoadMore = () => {
@@ -392,7 +578,7 @@ export function HotelSearchResults({
       ? chainBrandHotels 
       : selectedBrandId 
         ? brandHotels 
-        : (showAllHotels ? allHotels : (initialHotels.length > 0 ? filteredChainHotels : []))
+        : (showAllHotels ? filteredData : (initialHotels.length > 0 ? filteredChainHotels : []))
   
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount
@@ -443,28 +629,137 @@ export function HotelSearchResults({
         <section className="py-8">
           <div className="container mx-auto max-w-[1440px] px-4">
             {showAllHotels ? (
-              <>
-                {console.log('렌더링: HotelListSectionAllView 사용', { showAllHotels, searchQuery: searchQuery.trim() })}
-                <HotelListSectionAllView
-                title={title}
-                subtitle={subtitle}
-                hotels={displayData}
-                isLoading={isLoading}
-                error={error}
-                hasMoreData={hasMoreData}
-                onLoadMore={handleLoadMore}
-                totalCount={allData?.length}
-                displayCount={displayData.length}
-                columns={4}
-                variant="default"
-                gap="lg"
-                showBenefits={true}
-                showRating={false}
-                showPrice={false}
-                showBadge={false}
-                showPromotionBadge={false}
-              />
-              </>
+              <div className="space-y-4">
+                {/* 제목 및 필터 영역 */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 py-2">
+                  {/* 텍스트 영역 */}
+                  <div className="flex-1 text-center lg:text-left">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                      호텔 & 리조트 전체보기
+                    </h1>
+                    <p className="text-base text-gray-600">
+                      전 세계 프리미엄 호텔과 리조트를 모두 확인해보세요
+                    </p>
+                  </div>
+                  
+                  {/* 필터 영역 */}
+                  {showFilters && (
+                    <div className="bg-white border border-gray-200 rounded-lg p-3 lg:w-[600px]">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-base font-semibold text-gray-900">
+                          필터 ({allData?.length || 0}개 호텔)
+                        </h3>
+                        <button
+                          onClick={() => handleFiltersChange({ city: '', country: '', brand: '', chain: '' })}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                          disabled={isFilterOptionsLoading}
+                        >
+                          초기화
+                        </button>
+                      </div>
+                      
+                      {isFilterOptionsLoading ? (
+                        <div className="text-center py-3">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                          <p className="text-gray-600 mt-1 text-xs">로딩 중...</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* 도시 필터 */}
+                      <div>
+                        <select
+                          value={filters.city}
+                          onChange={(e) => handleSingleFilterChange('city', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isFilterOptionsLoading}
+                        >
+                          <option value="">도시 전체</option>
+                          {filterOptions?.cities.map(city => (
+                            <option key={city.id} value={city.id}>
+                              {city.label} ({city.count})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* 국가 필터 */}
+                      <div>
+                        <select
+                          value={filters.country}
+                          onChange={(e) => handleSingleFilterChange('country', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isFilterOptionsLoading}
+                        >
+                          <option value="">국가 전체</option>
+                          {filterOptions?.countries.map(country => (
+                            <option key={country.id} value={country.id}>
+                              {country.label} ({country.count})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* 브랜드 필터 */}
+                      <div>
+                        <select
+                          value={filters.brand}
+                          onChange={(e) => handleSingleFilterChange('brand', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isFilterOptionsLoading}
+                        >
+                          <option value="">브랜드 전체</option>
+                          {filterOptions?.brands.map(brand => (
+                            <option key={brand.id} value={brand.id}>
+                              {brand.label} ({brand.count})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* 체인 필터 */}
+                      <div>
+                        <select
+                          value={filters.chain}
+                          onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isFilterOptionsLoading}
+                        >
+                          <option value="">체인 전체</option>
+                          {filterOptions?.chains.map(chain => (
+                            <option key={chain.id} value={chain.id}>
+                              {chain.label} ({chain.count})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 호텔 목록 */}
+                <div>
+                  {console.log('렌더링: HotelListSectionAllView 사용', { showAllHotels, searchQuery: searchQuery.trim() })}
+                  <HotelListSectionAllView
+                    hotels={displayData}
+                    isLoading={isLoading}
+                    error={error}
+                    hasMoreData={hasMoreData}
+                    onLoadMore={handleLoadMore}
+                    totalCount={allData?.length}
+                    displayCount={displayData.length}
+                    columns={4}
+                    variant="default"
+                    gap="lg"
+                    showBenefits={true}
+                    showRating={false}
+                    showPrice={false}
+                    showBadge={false}
+                    showPromotionBadge={false}
+                  />
+                </div>
+              </div>
             ) : !showAllHotels && searchQuery.trim() ? (
               <>
                 {console.log('렌더링: HotelListSection 사용 (검색 결과)', { showAllHotels, searchQuery: searchQuery.trim() })}
