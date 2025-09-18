@@ -167,12 +167,37 @@ export async function POST(request: NextRequest) {
     }
 
     // 기존 hotel-details API 호출
-    const response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(15000)
-    })
+    let response: Response
+    try {
+      response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(15000)
+      })
+    } catch (fetchError) {
+      console.error('❌ Sabre API 네트워크 오류:', fetchError)
+      
+      // 네트워크 오류인 경우 사용자 친화적인 메시지 반환
+      if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+        return NextResponse.json<HotelDetailsResponse>(
+          {
+            success: false,
+            error: '호텔 정보 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'
+          },
+          { status: 503 } // Service Unavailable
+        )
+      }
+      
+      // 기타 네트워크 오류
+      return NextResponse.json<HotelDetailsResponse>(
+        {
+          success: false,
+          error: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        },
+        { status: 500 }
+      )
+    }
     
     if (!response.ok) {
       const errorText = await response.text()

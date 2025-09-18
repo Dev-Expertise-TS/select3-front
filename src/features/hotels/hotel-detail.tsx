@@ -902,6 +902,14 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         return null
       } catch (error) {
         console.error('Hotel Details API 호출 오류:', error)
+        
+        // 네트워크 오류인 경우 더 자세한 로그
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          console.error('❌ 네트워크 연결 실패: Sabre API 서버에 연결할 수 없습니다.')
+          console.error('❌ 서버 URL: https://sabre-nodejs-9tia3.ondigitalocean.app')
+          console.error('❌ 가능한 원인: 서버 다운, 네트워크 문제, CORS 정책')
+        }
+        
         return null
       }
     },
@@ -1087,10 +1095,19 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                     <span className="text-4xl">⚠️</span>
                   </div>
                   <p className="text-lg text-red-600 mb-3">객실 정보를 불러올 수 없습니다.</p>
-                  <div className="text-sm text-gray-500 space-y-1">
+                  <div className="text-sm text-gray-500 space-y-1 mb-4">
                     <p>• 네트워크 연결을 확인해주세요</p>
                     <p>• 잠시 후 다시 시도해주세요</p>
                     <p>• 검색 버튼을 다시 클릭해주세요</p>
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                    <div className="flex items-center mb-2">
+                      <span className="text-yellow-600 text-lg mr-2">ℹ️</span>
+                      <h4 className="text-sm font-medium text-yellow-800">서비스 상태</h4>
+                    </div>
+                    <p className="text-xs text-yellow-700">
+                      호텔 정보 서버에 일시적인 문제가 있습니다. 기본 호텔 정보는 정상적으로 표시됩니다.
+                    </p>
                   </div>
                 </div>
               ) : ratePlanCodes && ratePlanCodes.length > 0 ? (

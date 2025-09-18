@@ -566,6 +566,28 @@ export function HotelSearchResults({
     }
   }, [query, checkInParam, checkOutParam])
 
+  // URL 파라미터에서 필터 정보 읽어오기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const cityParam = urlParams.get('city')
+    const countryParam = urlParams.get('country')
+    const brandParam = urlParams.get('brand')
+    const chainParam = urlParams.get('chain')
+    
+    // URL 파라미터가 있으면 필터 적용
+    if (cityParam || countryParam || brandParam || chainParam) {
+      const newFilters = {
+        city: cityParam || '',
+        country: countryParam || '',
+        brand: brandParam || '',
+        chain: chainParam || ''
+      }
+      
+      console.log('🔍 URL 파라미터에서 필터 적용:', newFilters)
+      setFilters(newFilters)
+    }
+  }, []) // 컴포넌트 마운트 시 한 번만 실행
+
   // 체인 페이지용 필터링된 데이터 (useMemo로 계산)
   const filteredChainHotels = useMemo(() => {
     if (initialHotels.length === 0) {
