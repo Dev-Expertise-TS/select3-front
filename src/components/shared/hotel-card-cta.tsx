@@ -5,7 +5,7 @@ import Link from "next/link"
 import { MapPin, Coffee, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 // CTA용 호텔 데이터 타입 정의
 export interface HotelCardCtaData {
@@ -55,13 +55,17 @@ export function HotelCardCta({
   const [hotelBenefits, setHotelBenefits] = useState<string[]>([])
   const [isLoadingBenefits, setIsLoadingBenefits] = useState(false)
   
+  // 중복 호출 방지를 위한 ref
+  const benefitsFetchedRef = useRef(false)
+  
   // 호텔별 혜택 데이터 가져오기
   const fetchHotelBenefits = useCallback(async () => {
-    if (!hotel.sabre_id || isLoadingBenefits) {
+    if (!hotel.sabre_id || benefitsFetchedRef.current || isLoadingBenefits) {
       return
     }
 
     try {
+      benefitsFetchedRef.current = true
       setIsLoadingBenefits(true)
       
       const response = await fetch(`/api/hotels/${hotel.sabre_id}/benefits`)
@@ -89,10 +93,10 @@ export function HotelCardCta({
 
   // 컴포넌트 마운트 시 혜택 데이터 가져오기
   useEffect(() => {
-    if (showBenefits) {
+    if (showBenefits && hotel.sabre_id) {
       fetchHotelBenefits()
     }
-  }, [showBenefits, fetchHotelBenefits])
+  }, [showBenefits, hotel.sabre_id, fetchHotelBenefits])
   
   // variant별 스타일 클래스
   const variantClasses = {
