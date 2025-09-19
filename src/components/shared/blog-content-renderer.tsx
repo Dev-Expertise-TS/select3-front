@@ -61,21 +61,51 @@ function useHotelData(sabreId: number | null) {
     queryFn: async () => {
       if (!sabreId) return null
       
-      const { data, error } = await supabase
-        .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, city_ko, property_address, image_1, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
-        .eq('sabre_id', sabreId)
-        .single()
-      
-      if (error) {
-        console.error('호텔 데이터 조회 오류:', error)
+      try {
+        console.log('호텔 데이터 조회 시작:', { sabreId })
+        
+        const { data, error } = await supabase
+          .from('select_hotels')
+          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, property_address, image_1, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
+          .eq('sabre_id', sabreId)
+          .single()
+        
+        console.log('호텔 데이터 조회 결과:', { 
+          hasData: !!data, 
+          hasError: !!error,
+          sabreId 
+        })
+        
+        if (error) {
+          // 에러 객체를 안전하게 직렬화
+          const errorInfo = {
+            message: error.message || '알 수 없는 오류',
+            details: error.details || null,
+            hint: error.hint || null,
+            code: error.code || null,
+            sabreId,
+            timestamp: new Date().toISOString()
+          }
+          console.error('호텔 데이터 조회 오류:', errorInfo)
+          return null
+        }
+        
+        return data
+      } catch (err) {
+        // 예외 객체를 안전하게 직렬화
+        const errorInfo = {
+          message: err instanceof Error ? err.message : '알 수 없는 예외',
+          stack: err instanceof Error ? err.stack : null,
+          sabreId,
+          timestamp: new Date().toISOString()
+        }
+        console.error('호텔 데이터 조회 중 예외 발생:', errorInfo)
         return null
       }
-      
-      return data
     },
     enabled: !!sabreId,
     staleTime: 5 * 60 * 1000, // 5분
+    retry: 1, // 재시도 횟수 제한
   })
 }
 
@@ -83,11 +113,27 @@ function useHotelData(sabreId: number | null) {
 function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
   const { data: hotelData, isLoading, error } = useHotelData(sabreId)
   
-  if (!sabreId || isLoading || error || !hotelData) {
+  // 로딩 중이거나 sabreId가 없으면 렌더링하지 않음
+  if (!sabreId || isLoading) {
+    return null
+  }
+  
+  // 오류가 있거나 데이터가 없으면 렌더링하지 않음
+  if (error || !hotelData) {
+    console.log('🚫 호텔 카드 CTA 렌더링 생략:', { sabreId, error: !!error, hasData: !!hotelData })
     return null
   }
   
   // 호텔 데이터를 HotelCardCtaData 형태로 변환
+  const benefits = [
+    hotelData.benefit_1,
+    hotelData.benefit_2,
+    hotelData.benefit_3,
+    hotelData.benefit_4,
+    hotelData.benefit_5,
+    hotelData.benefit_6
+  ].filter(benefit => benefit && benefit.trim() !== '')
+  
   const hotelCardData: HotelCardCtaData = {
     sabre_id: hotelData.sabre_id,
     property_name_ko: hotelData.property_name_ko,
@@ -96,14 +142,7 @@ function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
     city_ko: hotelData.city_ko,
     property_address: hotelData.property_address,
     image: hotelData.image_1 || '/placeholder.svg',
-    benefits: [
-      hotelData.benefit_1,
-      hotelData.benefit_2,
-      hotelData.benefit_3,
-      hotelData.benefit_4,
-      hotelData.benefit_5,
-      hotelData.benefit_6
-    ].filter(benefit => benefit && benefit.trim() !== ''),
+    benefits,
     slug: hotelData.slug,
     rating: 4.5, // 기본값
     price: undefined,
@@ -111,6 +150,13 @@ function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
     badge: undefined,
     isPromotion: false
   }
+  
+  console.log('✅ 호텔 카드 CTA 데이터 생성:', {
+    sabreId,
+    hotelName: hotelCardData.property_name_ko,
+    benefitsCount: benefits.length,
+    hasImage: !!hotelCardData.image
+  })
   
   return (
     <div className="my-8">
@@ -227,7 +273,7 @@ export function BlogContentRenderer({
           <div key={`content-${index}`} className="mb-6">
             <div 
               className="text-gray-800 leading-relaxed whitespace-pre-wrap prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={{ __html: section.content || '' }}
             />
             
             {/* 호텔 카드 CTA 렌더링 */}

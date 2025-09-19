@@ -16,7 +16,6 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
   // 기본 placeholder나 잘못된 경로 체크
   const invalidPatterns = [
     /^\/[^\/]*\.(png|jpg|jpeg|gif|webp|avif)$/i, // 루트 경로의 이미지 파일 (예: /hotel-name.png)
-    /^\/placeholder\.svg$/i,
     /^\/next\.svg$/i,
     /^\/vercel\.svg$/i,
     /^\/file\.svg$/i,
@@ -55,7 +54,8 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
         '/select_logo.avif',
         '/favicon.ico',
         '/favicon.png',
-        '/robots.txt'
+        '/robots.txt',
+        '/placeholder.svg'
       ]
       
       const isValidPublicPath = validPublicPaths.some(path => url.startsWith(path))

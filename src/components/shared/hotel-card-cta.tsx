@@ -89,7 +89,7 @@ export function HotelCardCta({
     } finally {
       setIsLoadingBenefits(false)
     }
-  }, [hotel.sabre_id, isLoadingBenefits])
+  }, [hotel.sabre_id])
 
   // 컴포넌트 마운트 시 혜택 데이터 가져오기
   useEffect(() => {
@@ -126,11 +126,12 @@ export function HotelCardCta({
               alt={`${hotel.property_name_ko} - ${hotel.city}`}
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, 50vw"
-              priority={false}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+              priority={variant === 'featured' || variant === 'promotion'}
+              quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxH/xAAAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-              loading="lazy"
+              loading={variant === 'featured' || variant === 'promotion' ? 'eager' : 'lazy'}
               onLoad={() => handleImageLoad(hotel.image)}
               onError={handleImageError}
             />
