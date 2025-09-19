@@ -27,7 +27,7 @@ export async function GET(
     
     const benefitsData = await selectHotelBenefitsMapUtils.getHotelBenefits(sabreIdNumber)
     
-    console.log(`✅ 호텔 ${sabreIdNumber}의 혜택 ${benefitsData.length}개 조회 완료`)
+    console.log(`✅ 호텔 ${sabreIdNumber}의 혜택 ${benefitsData.length}개 조회 완료:`, benefitsData)
     
     return NextResponse.json({
       success: true,

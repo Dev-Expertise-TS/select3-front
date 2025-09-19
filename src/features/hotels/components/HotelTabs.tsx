@@ -74,7 +74,13 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       console.log(`🔍 호텔 ${sabreId}의 혜택 API 호출 시작...`)
       
       const response = await fetch(`/api/hotels/${sabreId}/benefits`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
+      console.log(`📊 호텔 ${sabreId} 혜택 API 응답:`, data)
       
       if (data.success && data.data) {
         // benefit_description 대신 benefit 컬럼 사용

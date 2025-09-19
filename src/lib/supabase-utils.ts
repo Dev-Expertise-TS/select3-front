@@ -413,7 +413,7 @@ async getBenefitsByCategory(category: string): Promise<SelectHotelBenefit[]> {
 export const selectHotelBenefitsMapUtils = {
   // 호텔별 혜택 조회
   // 주의: select_hotel_benefits 테이블에서 benefit_description 대신 benefit 컬럼을 사용해야 합니다.
-  async getHotelBenefits(hotelId: number): Promise<SelectHotelBenefitMap[]> {
+  async getHotelBenefits(sabreId: number): Promise<SelectHotelBenefitMap[]> {
     const { data, error } = await supabase
       .from('select_hotel_benefits_map')
       .select(`
@@ -425,8 +425,8 @@ export const selectHotelBenefitsMapUtils = {
           category
         )
       `)
-      .eq('hotel_id', hotelId)
-      .eq('is_included', true)
+      .eq('sabre_id', sabreId)
+      .order('sort')
     
     if (error) throw error
     return data || []
