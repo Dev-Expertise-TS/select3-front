@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Star, Utensils, MessageCircle, Bed, Shield, FileText } from "lucide-react"
 import { BlogContentRenderer } from "@/components/shared"
 
@@ -59,15 +59,19 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   const [hotelBenefits, setHotelBenefits] = useState<any[]>([])
   const [isLoadingBenefits, setIsLoadingBenefits] = useState(false)
   const [benefitsError, setBenefitsError] = useState<string | null>(null)
+  
+  // 중복 호출 방지를 위한 ref
+  const benefitsFetchedRef = useRef(false)
+  const articlesFetchedRef = useRef(false)
 
   // 호텔별 혜택 데이터 가져오기
-  const fetchHotelBenefits = async () => {
-    if (!sabreId) {
-      setBenefitsError("호텔 ID가 없습니다.")
+  const fetchHotelBenefits = useCallback(async () => {
+    if (!sabreId || benefitsFetchedRef.current || isLoadingBenefits) {
       return
     }
 
     try {
+      benefitsFetchedRef.current = true
       setIsLoadingBenefits(true)
       setBenefitsError(null)
       
@@ -103,16 +107,16 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     } finally {
       setIsLoadingBenefits(false)
     }
-  }
+  }, [sabreId, isLoadingBenefits])
 
   // 호텔별 아티클 데이터 가져오기
-  const fetchHotelArticles = async () => {
-    if (!sabreId) {
-      setArticlesError("호텔 ID가 없습니다.")
+  const fetchHotelArticles = useCallback(async () => {
+    if (!sabreId || articlesFetchedRef.current || isLoadingArticles) {
       return
     }
 
     try {
+      articlesFetchedRef.current = true
       setIsLoadingArticles(true)
       setArticlesError(null)
       
@@ -131,7 +135,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     } finally {
       setIsLoadingArticles(false)
     }
-  }
+  }, [sabreId, isLoadingArticles])
 
   // 혜택 아이콘 결정 함수들 (인덱스 기반)
   const getBenefitIconByIndex = (index: number) => {
@@ -175,17 +179,17 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
   // 혜택 탭이 활성화될 때 데이터 가져오기
   useEffect(() => {
-    if (activeTab === "benefits" && hotelBenefits.length === 0 && !isLoadingBenefits && sabreId) {
+    if (activeTab === "benefits" && sabreId) {
       fetchHotelBenefits()
     }
-  }, [activeTab, hotelBenefits.length, isLoadingBenefits, sabreId])
+  }, [activeTab, sabreId, fetchHotelBenefits])
 
   // 아티클 탭이 활성화될 때 데이터 가져오기
   useEffect(() => {
-    if (activeTab === "articles" && articles.length === 0 && !isLoadingArticles && sabreId) {
+    if (activeTab === "articles" && sabreId) {
       fetchHotelArticles()
     }
-  }, [activeTab, articles.length, isLoadingArticles, sabreId])
+  }, [activeTab, sabreId, fetchHotelArticles])
 
   // 기본 혜택 (데이터베이스에서 혜택이 없을 때 사용)
   const defaultBenefits = [
