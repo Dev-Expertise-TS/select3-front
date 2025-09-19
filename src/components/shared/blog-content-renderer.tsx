@@ -1,10 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSafeImageUrl, handleImageError } from "@/lib/image-utils"
+import { HotelCardCta, HotelCardCtaData } from "./hotel-card-cta"
+import { useQuery } from "@tanstack/react-query"
+import { createClient } from "@/lib/supabase/client"
 
 interface BlogContent {
   slug: string
@@ -24,6 +27,19 @@ interface BlogContent {
   s11_contents: string | null
   s12_contents: string | null
   created_at: string
+  // 호텔 sabre_id 필드들
+  s1_sabre_id: number | null
+  s2_sabre_id: number | null
+  s3_sabre_id: number | null
+  s4_sabre_id: number | null
+  s5_sabre_id: number | null
+  s6_sabre_id: number | null
+  s7_sabre_id: number | null
+  s8_sabre_id: number | null
+  s9_sabre_id: number | null
+  s10_sabre_id: number | null
+  s11_sabre_id: number | null
+  s12_sabre_id: number | null
 }
 
 interface BlogContentRendererProps {
@@ -34,6 +50,80 @@ interface BlogContentRendererProps {
   className?: string
   imageClassName?: string
   contentClassName?: string
+}
+
+// 호텔 데이터 조회 훅
+function useHotelData(sabreId: number | null) {
+  const supabase = createClient()
+  
+  return useQuery({
+    queryKey: ['hotel-data', sabreId],
+    queryFn: async () => {
+      if (!sabreId) return null
+      
+      const { data, error } = await supabase
+        .from('select_hotels')
+        .select('sabre_id, property_name_ko, property_name_en, city, city_ko, property_address, image_1, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
+        .eq('sabre_id', sabreId)
+        .single()
+      
+      if (error) {
+        console.error('호텔 데이터 조회 오류:', error)
+        return null
+      }
+      
+      return data
+    },
+    enabled: !!sabreId,
+    staleTime: 5 * 60 * 1000, // 5분
+  })
+}
+
+// 호텔 카드 CTA 컴포넌트
+function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
+  const { data: hotelData, isLoading, error } = useHotelData(sabreId)
+  
+  if (!sabreId || isLoading || error || !hotelData) {
+    return null
+  }
+  
+  // 호텔 데이터를 HotelCardCtaData 형태로 변환
+  const hotelCardData: HotelCardCtaData = {
+    sabre_id: hotelData.sabre_id,
+    property_name_ko: hotelData.property_name_ko,
+    property_name_en: hotelData.property_name_en,
+    city: hotelData.city,
+    city_ko: hotelData.city_ko,
+    property_address: hotelData.property_address,
+    image: hotelData.image_1 || '/placeholder.svg',
+    benefits: [
+      hotelData.benefit_1,
+      hotelData.benefit_2,
+      hotelData.benefit_3,
+      hotelData.benefit_4,
+      hotelData.benefit_5,
+      hotelData.benefit_6
+    ].filter(benefit => benefit && benefit.trim() !== ''),
+    slug: hotelData.slug,
+    rating: 4.5, // 기본값
+    price: undefined,
+    original_price: undefined,
+    badge: undefined,
+    isPromotion: false
+  }
+  
+  return (
+    <div className="my-8">
+      <HotelCardCta 
+        hotel={hotelCardData}
+        variant="default"
+        showBenefits={true}
+        showRating={false}
+        showPrice={false}
+        showBadge={false}
+      />
+    </div>
+  )
 }
 
 export function BlogContentRenderer({ 
@@ -58,19 +148,19 @@ export function BlogContentRenderer({
     if (!blog) return []
     
     const sections = [
-      blog.s1_contents,
-      blog.s2_contents,
-      blog.s3_contents,
-      blog.s4_contents,
-      blog.s5_contents,
-      blog.s6_contents,
-      blog.s7_contents,
-      blog.s8_contents,
-      blog.s9_contents,
-      blog.s10_contents,
-      blog.s11_contents,
-      blog.s12_contents
-    ].filter(content => content && content.trim() !== "")
+      { content: blog.s1_contents, sabreId: blog.s1_sabre_id },
+      { content: blog.s2_contents, sabreId: blog.s2_sabre_id },
+      { content: blog.s3_contents, sabreId: blog.s3_sabre_id },
+      { content: blog.s4_contents, sabreId: blog.s4_sabre_id },
+      { content: blog.s5_contents, sabreId: blog.s5_sabre_id },
+      { content: blog.s6_contents, sabreId: blog.s6_sabre_id },
+      { content: blog.s7_contents, sabreId: blog.s7_sabre_id },
+      { content: blog.s8_contents, sabreId: blog.s8_sabre_id },
+      { content: blog.s9_contents, sabreId: blog.s9_sabre_id },
+      { content: blog.s10_contents, sabreId: blog.s10_sabre_id },
+      { content: blog.s11_contents, sabreId: blog.s11_sabre_id },
+      { content: blog.s12_contents, sabreId: blog.s12_sabre_id }
+    ].filter(section => section.content && section.content.trim() !== "")
     
     return sections
   }
@@ -133,12 +223,17 @@ export function BlogContentRenderer({
 
       {/* 본문 내용 */}
       <article className={cn("prose prose-lg max-w-none", contentClassName)}>
-        {contentSections.map((content, index) => (
+        {contentSections.map((section, index) => (
           <div key={`content-${index}`} className="mb-6">
             <div 
               className="text-gray-800 leading-relaxed whitespace-pre-wrap prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-              dangerouslySetInnerHTML={{ __html: content }}
+              dangerouslySetInnerHTML={{ __html: section.content }}
             />
+            
+            {/* 호텔 카드 CTA 렌더링 */}
+            {section.sabreId && (
+              <HotelCardCtaWrapper sabreId={section.sabreId} />
+            )}
           </div>
         ))}
       </article>

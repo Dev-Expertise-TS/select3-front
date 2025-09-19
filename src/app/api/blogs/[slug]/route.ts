@@ -28,6 +28,18 @@ export async function GET(
         s10_contents,
         s11_contents,
         s12_contents,
+        s1_sabre_id,
+        s2_sabre_id,
+        s3_sabre_id,
+        s4_sabre_id,
+        s5_sabre_id,
+        s6_sabre_id,
+        s7_sabre_id,
+        s8_sabre_id,
+        s9_sabre_id,
+        s10_sabre_id,
+        s11_sabre_id,
+        s12_sabre_id,
         created_at
       `)
       .eq("slug", slug)
