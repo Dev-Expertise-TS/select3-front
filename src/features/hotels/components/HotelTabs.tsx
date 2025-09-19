@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Star, Utensils, MessageCircle, Bed, Shield, FileText } from "lucide-react"
 import { BlogContentRenderer } from "@/components/shared"
+import { selectHotelBenefitsMapUtils } from "@/lib/supabase-utils"
 
 interface BlogContent {
   slug: string
@@ -22,6 +23,18 @@ interface BlogContent {
   s11_contents: string | null
   s12_contents: string | null
   created_at: string
+  s1_sabre_id: number | null
+  s2_sabre_id: number | null
+  s3_sabre_id: number | null
+  s4_sabre_id: number | null
+  s5_sabre_id: number | null
+  s6_sabre_id: number | null
+  s7_sabre_id: number | null
+  s8_sabre_id: number | null
+  s9_sabre_id: number | null
+  s10_sabre_id: number | null
+  s11_sabre_id: number | null
+  s12_sabre_id: number | null
 }
 
 interface HotelTabsProps {
@@ -42,6 +55,42 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   const [articles, setArticles] = useState<BlogContent[]>([])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
   const [articlesError, setArticlesError] = useState<string | null>(null)
+  
+  // 혜택 관련 상태
+  const [hotelBenefits, setHotelBenefits] = useState<any[]>([])
+  const [isLoadingBenefits, setIsLoadingBenefits] = useState(false)
+  const [benefitsError, setBenefitsError] = useState<string | null>(null)
+
+  // 호텔별 혜택 데이터 가져오기
+  const fetchHotelBenefits = async () => {
+    if (!sabreId) {
+      setBenefitsError("호텔 ID가 없습니다.")
+      return
+    }
+
+    try {
+      setIsLoadingBenefits(true)
+      setBenefitsError(null)
+      
+      const benefitsData = await selectHotelBenefitsMapUtils.getHotelBenefits(sabreId)
+      
+      // benefit_description 대신 benefit 컬럼 사용
+      const formattedBenefits = benefitsData.map((item: any) => ({
+        icon: getBenefitIcon(item.select_hotel_benefits?.category),
+        iconColor: getBenefitIconColor(item.select_hotel_benefits?.category),
+        bgColor: getBenefitBgColor(item.select_hotel_benefits?.category),
+        text: item.select_hotel_benefits?.benefit || "혜택 정보 없음" // benefit_description 대신 benefit 사용
+      }))
+      
+      setHotelBenefits(formattedBenefits)
+      console.log(`✅ 호텔 ${sabreId}의 혜택 ${formattedBenefits.length}개 로드 완료`)
+    } catch (error) {
+      setBenefitsError("혜택을 불러오는데 실패했습니다.")
+      console.error("Hotel benefits fetch error:", error)
+    } finally {
+      setIsLoadingBenefits(false)
+    }
+  }
 
   // 호텔별 아티클 데이터 가져오기
   const fetchHotelArticles = async () => {
@@ -71,6 +120,53 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }
 
+  // 혜택 아이콘 결정 함수들
+  const getBenefitIcon = (category: string) => {
+    switch (category) {
+      case 'dining': return Utensils
+      case 'credit': return () => <span className="text-green-600 font-semibold text-xs">$</span>
+      case 'checkin': return MessageCircle
+      case 'upgrade': return Bed
+      case 'membership': return Star
+      case 'payment': return Shield
+      case 'concierge': return MessageCircle
+      default: return Star
+    }
+  }
+
+  const getBenefitIconColor = (category: string) => {
+    switch (category) {
+      case 'dining': return "text-blue-600"
+      case 'credit': return "text-green-600"
+      case 'checkin': return "text-purple-600"
+      case 'upgrade': return "text-indigo-600"
+      case 'membership': return "text-amber-600"
+      case 'payment': return "text-slate-600"
+      case 'concierge': return "text-rose-600"
+      default: return "text-gray-600"
+    }
+  }
+
+  const getBenefitBgColor = (category: string) => {
+    switch (category) {
+      case 'dining': return "bg-blue-50"
+      case 'credit': return "bg-green-50"
+      case 'checkin': return "bg-purple-50"
+      case 'upgrade': return "bg-indigo-50"
+      case 'membership': return "bg-amber-50"
+      case 'payment': return "bg-slate-50"
+      case 'concierge': return "bg-rose-50"
+      default: return "bg-gray-50"
+    }
+  }
+
+  // 혜택 탭이 활성화될 때 데이터 가져오기
+  useEffect(() => {
+    if (activeTab === "benefits" && hotelBenefits.length === 0 && !isLoadingBenefits && sabreId) {
+      fetchHotelBenefits()
+    }
+  }, [activeTab, hotelBenefits.length, isLoadingBenefits, sabreId])
+
   // 아티클 탭이 활성화될 때 데이터 가져오기
   useEffect(() => {
     if (activeTab === "articles" && articles.length === 0 && !isLoadingArticles && sabreId) {
@@ -78,7 +174,8 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }, [activeTab, articles.length, isLoadingArticles, sabreId])
 
-  const benefits = [
+  // 기본 혜택 (데이터베이스에서 혜택이 없을 때 사용)
+  const defaultBenefits = [
     {
       icon: Utensils,
       iconColor: "text-blue-600",
@@ -122,6 +219,9 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       text: "전문 컨시어지를 통한 1:1 프라이빗 상담 예약"
     }
   ]
+
+  // 사용할 혜택 결정 (데이터베이스에서 가져온 혜택이 있으면 사용, 없으면 기본 혜택 사용)
+  const benefits = hotelBenefits.length > 0 ? hotelBenefits : defaultBenefits
 
   return (
     <div className="bg-gray-100 py-4">
@@ -191,16 +291,46 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             <div className="space-y-6">
               <div className="space-y-3">
                 <h4 className="text-base font-medium text-gray-700 mb-4">예약 시 제공되는 혜택</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                      <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
-                        <benefit.icon className={`h-3 w-3 ${benefit.iconColor}`} />
-                      </div>
-                      <div className="text-xs text-gray-700">{benefit.text}</div>
+                
+                {/* 로딩 상태 */}
+                {isLoadingBenefits && (
+                  <div className="text-center py-8">
+                    <div className="flex items-center justify-center gap-3 text-blue-600">
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm">혜택을 불러오는 중...</span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+                
+                {/* 오류 상태 */}
+                {benefitsError && (
+                  <div className="text-center py-8">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
+                      <p className="text-red-600 mb-4">{benefitsError}</p>
+                      <button
+                        onClick={fetchHotelBenefits}
+                        className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        다시 시도
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* 혜택 목록 */}
+                {!isLoadingBenefits && !benefitsError && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {benefits.map((benefit, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                        <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
+                          <benefit.icon className={`h-3 w-3 ${benefit.iconColor}`} />
+                        </div>
+                        <div className="text-xs text-gray-700">{benefit.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 호텔 상세 정보 섹션 */}
