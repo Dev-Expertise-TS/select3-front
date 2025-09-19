@@ -191,54 +191,8 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }, [activeTab, sabreId, fetchHotelArticles])
 
-  // 기본 혜택 (데이터베이스에서 혜택이 없을 때 사용)
-  const defaultBenefits = [
-    {
-      icon: Utensils,
-      iconColor: "text-blue-600",
-      bgColor: "bg-blue-50",
-      text: "2인 조식 무료 제공"
-    },
-    {
-      icon: () => <span className="text-green-600 font-semibold text-xs">$</span>,
-      iconColor: "text-green-600",
-      bgColor: "bg-green-50",
-      text: "100$ 상당의 식음료 크레딧"
-    },
-    {
-      icon: MessageCircle,
-      iconColor: "text-purple-600",
-      bgColor: "bg-purple-50",
-      text: "얼리 체크인, 레이트 체크아웃 (현장 가능시)"
-    },
-    {
-      icon: Bed,
-      iconColor: "text-indigo-600",
-      bgColor: "bg-indigo-50",
-      text: "객실 무료 업그레이드 (현장 가능시)"
-    },
-    {
-      icon: Star,
-      iconColor: "text-amber-600",
-      bgColor: "bg-amber-50",
-      text: "글로벌 체인 멤버십 포인트 적립"
-    },
-    {
-      icon: Shield,
-      iconColor: "text-slate-600",
-      bgColor: "bg-slate-50",
-      text: "투숙 후 호텔에서 체크아웃 시 결제"
-    },
-    {
-      icon: MessageCircle,
-      iconColor: "text-rose-600",
-      bgColor: "bg-rose-50",
-      text: "전문 컨시어지를 통한 1:1 프라이빗 상담 예약"
-    }
-  ]
-
-  // 사용할 혜택 결정 (데이터베이스에서 가져온 혜택이 있으면 사용, 없으면 기본 혜택 사용)
-  const benefits = hotelBenefits.length > 0 ? hotelBenefits : defaultBenefits
+  // 사용할 혜택 결정 (데이터베이스에서 가져온 혜택만 사용, 없으면 빈 배열)
+  const benefits = hotelBenefits
 
   return (
     <div className="bg-gray-100 py-4">
@@ -337,16 +291,25 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                 
                 {/* 혜택 목록 */}
                 {!isLoadingBenefits && !benefitsError && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {benefits.map((benefit, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                        <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
-                          <benefit.icon className={`h-3 w-3 ${benefit.iconColor}`} />
-                        </div>
-                        <div className="text-xs text-gray-700">{benefit.text}</div>
+                  <>
+                    {benefits.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {benefits.map((benefit, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
+                            <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
+                              <benefit.icon className={`h-3 w-3 ${benefit.iconColor}`} />
+                            </div>
+                            <div className="text-xs text-gray-700">{benefit.text}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 text-lg mb-2">🏆</div>
+                        <p className="text-gray-500">이 호텔의 예약 혜택 정보가 준비 중입니다.</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
