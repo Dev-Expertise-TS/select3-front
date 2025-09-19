@@ -421,8 +421,8 @@ export const selectHotelBenefitsMapUtils = {
         select_hotel_benefits (
           benefit,
           benefit_description,
-          icon,
-          category
+          start_date,
+          end_date
         )
       `)
       .eq('sabre_id', sabreId)

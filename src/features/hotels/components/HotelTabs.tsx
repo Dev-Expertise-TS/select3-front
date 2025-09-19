@@ -84,10 +84,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       
       if (data.success && data.data) {
         // benefit_description 대신 benefit 컬럼 사용
-        const formattedBenefits = data.data.map((item: any) => ({
-          icon: getBenefitIcon(item.select_hotel_benefits?.category),
-          iconColor: getBenefitIconColor(item.select_hotel_benefits?.category),
-          bgColor: getBenefitBgColor(item.select_hotel_benefits?.category),
+        const formattedBenefits = data.data.map((item: any, index: number) => ({
+          icon: getBenefitIconByIndex(index),
+          iconColor: getBenefitIconColorByIndex(index),
+          bgColor: getBenefitBgColorByIndex(index),
           text: item.select_hotel_benefits?.benefit || "혜택 정보 없음" // benefit_description 대신 benefit 사용
         }))
         
@@ -133,44 +133,44 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }
 
-  // 혜택 아이콘 결정 함수들
-  const getBenefitIcon = (category: string) => {
-    switch (category) {
-      case 'dining': return Utensils
-      case 'credit': return () => <span className="text-green-600 font-semibold text-xs">$</span>
-      case 'checkin': return MessageCircle
-      case 'upgrade': return Bed
-      case 'membership': return Star
-      case 'payment': return Shield
-      case 'concierge': return MessageCircle
-      default: return Star
-    }
+  // 혜택 아이콘 결정 함수들 (인덱스 기반)
+  const getBenefitIconByIndex = (index: number) => {
+    const icons = [
+      Utensils,
+      () => <span className="text-green-600 font-semibold text-xs">$</span>,
+      MessageCircle,
+      Bed,
+      Star,
+      Shield,
+      MessageCircle
+    ]
+    return icons[index % icons.length]
   }
 
-  const getBenefitIconColor = (category: string) => {
-    switch (category) {
-      case 'dining': return "text-blue-600"
-      case 'credit': return "text-green-600"
-      case 'checkin': return "text-purple-600"
-      case 'upgrade': return "text-indigo-600"
-      case 'membership': return "text-amber-600"
-      case 'payment': return "text-slate-600"
-      case 'concierge': return "text-rose-600"
-      default: return "text-gray-600"
-    }
+  const getBenefitIconColorByIndex = (index: number) => {
+    const colors = [
+      "text-blue-600",
+      "text-green-600", 
+      "text-purple-600",
+      "text-indigo-600",
+      "text-amber-600",
+      "text-slate-600",
+      "text-rose-600"
+    ]
+    return colors[index % colors.length]
   }
 
-  const getBenefitBgColor = (category: string) => {
-    switch (category) {
-      case 'dining': return "bg-blue-50"
-      case 'credit': return "bg-green-50"
-      case 'checkin': return "bg-purple-50"
-      case 'upgrade': return "bg-indigo-50"
-      case 'membership': return "bg-amber-50"
-      case 'payment': return "bg-slate-50"
-      case 'concierge': return "bg-rose-50"
-      default: return "bg-gray-50"
-    }
+  const getBenefitBgColorByIndex = (index: number) => {
+    const bgColors = [
+      "bg-blue-50",
+      "bg-green-50",
+      "bg-purple-50", 
+      "bg-indigo-50",
+      "bg-amber-50",
+      "bg-slate-50",
+      "bg-rose-50"
+    ]
+    return bgColors[index % bgColors.length]
   }
 
   // 혜택 탭이 활성화될 때 데이터 가져오기
