@@ -382,6 +382,7 @@ export const selectHotelMediaUtils = {
 // select_hotel_benefits 관련 함수들
 export const selectHotelBenefitsUtils = {
   // 모든 혜택 조회
+  // 주의: select_hotel_benefits 테이블에서 benefit_description 대신 benefit 컬럼을 사용해야 합니다.
   async getAllBenefits(): Promise<SelectHotelBenefit[]> {
     const { data, error } = await supabase
       .from('select_hotel_benefits')
@@ -394,7 +395,8 @@ export const selectHotelBenefitsUtils = {
   },
 
   // 카테고리별 혜택 조회
-  async getBenefitsByCategory(category: string): Promise<SelectHotelBenefit[]> {
+  // 주의: select_hotel_benefits 테이블에서 benefit_description 대신 benefit 컬럼을 사용해야 합니다.
+async getBenefitsByCategory(category: string): Promise<SelectHotelBenefit[]> {
     const { data, error } = await supabase
       .from('select_hotel_benefits')
       .select('*')
@@ -410,14 +412,15 @@ export const selectHotelBenefitsUtils = {
 // select_hotel_benefits_map 관련 함수들
 export const selectHotelBenefitsMapUtils = {
   // 호텔별 혜택 조회
+  // 주의: select_hotel_benefits 테이블에서 benefit_description 대신 benefit 컬럼을 사용해야 합니다.
   async getHotelBenefits(hotelId: number): Promise<SelectHotelBenefitMap[]> {
     const { data, error } = await supabase
       .from('select_hotel_benefits_map')
       .select(`
         *,
         select_hotel_benefits (
-          name,
-          description,
+          benefit,
+          benefit_description,
           icon,
           category
         )
