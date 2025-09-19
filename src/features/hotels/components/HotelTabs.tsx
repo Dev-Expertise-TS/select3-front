@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Star, Utensils, MessageCircle, Bed, Shield, FileText } from "lucide-react"
 import { BlogContentRenderer } from "@/components/shared"
-import { selectHotelBenefitsMapUtils } from "@/lib/supabase-utils"
 
 interface BlogContent {
   slug: string
@@ -72,20 +71,28 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       setIsLoadingBenefits(true)
       setBenefitsError(null)
       
-      const benefitsData = await selectHotelBenefitsMapUtils.getHotelBenefits(sabreId)
+      console.log(`🔍 호텔 ${sabreId}의 혜택 API 호출 시작...`)
       
-      // benefit_description 대신 benefit 컬럼 사용
-      const formattedBenefits = benefitsData.map((item: any) => ({
-        icon: getBenefitIcon(item.select_hotel_benefits?.category),
-        iconColor: getBenefitIconColor(item.select_hotel_benefits?.category),
-        bgColor: getBenefitBgColor(item.select_hotel_benefits?.category),
-        text: item.select_hotel_benefits?.benefit || "혜택 정보 없음" // benefit_description 대신 benefit 사용
-      }))
+      const response = await fetch(`/api/hotels/${sabreId}/benefits`)
+      const data = await response.json()
       
-      setHotelBenefits(formattedBenefits)
-      console.log(`✅ 호텔 ${sabreId}의 혜택 ${formattedBenefits.length}개 로드 완료`)
+      if (data.success && data.data) {
+        // benefit_description 대신 benefit 컬럼 사용
+        const formattedBenefits = data.data.map((item: any) => ({
+          icon: getBenefitIcon(item.select_hotel_benefits?.category),
+          iconColor: getBenefitIconColor(item.select_hotel_benefits?.category),
+          bgColor: getBenefitBgColor(item.select_hotel_benefits?.category),
+          text: item.select_hotel_benefits?.benefit || "혜택 정보 없음" // benefit_description 대신 benefit 사용
+        }))
+        
+        setHotelBenefits(formattedBenefits)
+        console.log(`✅ 호텔 ${sabreId}의 혜택 ${formattedBenefits.length}개 로드 완료:`, data.meta)
+      } else {
+        setBenefitsError(data.error || "혜택을 불러오는데 실패했습니다.")
+        console.error("혜택 API 응답 오류:", data)
+      }
     } catch (error) {
-      setBenefitsError("혜택을 불러오는데 실패했습니다.")
+      setBenefitsError("네트워크 오류가 발생했습니다.")
       console.error("Hotel benefits fetch error:", error)
     } finally {
       setIsLoadingBenefits(false)
