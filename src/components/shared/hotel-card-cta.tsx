@@ -5,6 +5,7 @@ import Link from "next/link"
 import { MapPin, Coffee, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+import { useState, useEffect, useCallback } from "react"
 
 // CTA용 호텔 데이터 타입 정의
 export interface HotelCardCtaData {
@@ -49,6 +50,49 @@ export function HotelCardCta({
   imageClassName,
   contentClassName
 }: HotelCardCtaProps) {
+  
+  // 혜택 관련 상태
+  const [hotelBenefits, setHotelBenefits] = useState<string[]>([])
+  const [isLoadingBenefits, setIsLoadingBenefits] = useState(false)
+  
+  // 호텔별 혜택 데이터 가져오기
+  const fetchHotelBenefits = useCallback(async () => {
+    if (!hotel.sabre_id || isLoadingBenefits) {
+      return
+    }
+
+    try {
+      setIsLoadingBenefits(true)
+      
+      const response = await fetch(`/api/hotels/${hotel.sabre_id}/benefits`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        // benefit_description 대신 benefit 컬럼 사용
+        const formattedBenefits = data.data.map((item: any) => 
+          item.select_hotel_benefits?.benefit || "혜택 정보 없음"
+        ).filter((benefit: string) => benefit !== "혜택 정보 없음")
+        
+        setHotelBenefits(formattedBenefits)
+      }
+    } catch (error) {
+      console.error("Hotel benefits fetch error:", error)
+    } finally {
+      setIsLoadingBenefits(false)
+    }
+  }, [hotel.sabre_id, isLoadingBenefits])
+
+  // 컴포넌트 마운트 시 혜택 데이터 가져오기
+  useEffect(() => {
+    if (showBenefits) {
+      fetchHotelBenefits()
+    }
+  }, [showBenefits, fetchHotelBenefits])
   
   // variant별 스타일 클래스
   const variantClasses = {
@@ -148,10 +192,10 @@ export function HotelCardCta({
             </div>
 
             {/* 혜택 정보 */}
-            {showBenefits && hotel.benefits && hotel.benefits.length > 0 && (
+            {showBenefits && !isLoadingBenefits && hotelBenefits.length > 0 && (
               <div className="mb-4">
                 <div className="grid grid-cols-2 gap-2">
-                  {hotel.benefits.slice(0, 6).map((benefit, index) => (
+                  {hotelBenefits.slice(0, 6).map((benefit, index) => (
                     <div key={index} className="flex items-start text-sm text-gray-600">
                       <Coffee className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
                       <span className="line-clamp-2">{benefit}</span>
