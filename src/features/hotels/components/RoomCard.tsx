@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Bed, Users, Ruler } from "lucide-react"
 
 interface RoomCardProps {
@@ -113,6 +113,20 @@ export function RoomCard({
     ? roomIntroduction 
     : description || ''
   
+  // 텍스트 오버플로우 감지용
+  const descRef = useRef<HTMLSpanElement | null>(null)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+
+  useEffect(() => {
+    const el = descRef.current
+    if (!el) return
+    // isExpanded가 false일 때만 오버플로우 기준으로 판단 (클램프/높이 제한 상태)
+    if (!isExpanded) {
+      setIsOverflowing(el.scrollHeight > el.clientHeight + 1)
+    } else {
+      setIsOverflowing(false)
+    }
+  }, [displayIntroduction, isExpanded])
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -171,7 +185,7 @@ export function RoomCard({
         {/* 객실 소개 - 고정 높이 */}
         <div className="mb-3 sm:mb-4">
           <div className="relative">
-            <div className={`text-gray-700 text-sm leading-relaxed h-16 sm:h-20 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'} ${(!hasIntro && !isGenerating) ? 'blur-[2px] opacity-60 select-none pointer-events-none' : ''}`}>
+            <div className={`text-gray-700 text-sm leading-relaxed h-28 sm:h-36 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'} ${(!hasIntro && !isGenerating) ? 'blur-[2px] opacity-60 select-none pointer-events-none' : ''}`}>
               {isGenerating ? (
                 <div className="flex items-center gap-2 h-full">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -179,7 +193,7 @@ export function RoomCard({
                 </div>
               ) : (
                 <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
-                  <span className={isExpanded ? '' : 'line-clamp-3'}>
+                  <span ref={descRef} className={isExpanded ? '' : 'line-clamp-8'}>
                     {displayIntroduction}
                   </span>
                 </div>
@@ -187,7 +201,7 @@ export function RoomCard({
             </div>
 
             {/* 더보기 영역은 AI 미생성 블러 상태에서는 노출하지 않음 */}
-            {!isGenerating && hasIntro && displayIntroduction && displayIntroduction.length > 100 && (
+            {!isGenerating && hasIntro && (isOverflowing || isExpanded) && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-blue-600 text-xs mt-2 hover:underline"
