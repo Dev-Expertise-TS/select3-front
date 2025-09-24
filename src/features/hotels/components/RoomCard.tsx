@@ -133,7 +133,12 @@ export function RoomCard({
             )}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
-            <span className="bg-gray-100 px-2 py-1 rounded text-xs self-start">{roomName || roomType}</span>
+            {/**
+             * 작은 칩(배지) 영역 - 현재 미표시
+             * 추후 roomType 또는 roomName을 표시할 때 아래 예시를 사용하세요.
+             * 예시:
+             * <span className="bg-gray-100 px-2 py-1 rounded text-xs self-start">{roomName || roomType}</span>
+             */}
             {area && (
               <div className="flex items-center gap-1">
                 <Ruler className="w-3 h-3" />
