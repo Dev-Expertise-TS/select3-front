@@ -1134,29 +1134,34 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                     />
                   </div>
 
-                  {/* 객실 요금 상세 테이블 */}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4">객실 요금 상세 테이블</h4>
-                    <RoomRatesTable
-                      ratePlans={ratePlanCodes}
-                      roomIntroductions={roomIntroductions}
-                      globalOTAStyleRoomNames={globalOTAStyleRoomNames}
-                      bedTypes={bedTypes}
-                      isGeneratingIntroductions={isGeneratingIntroductions}
-                      isGeneratingRoomNames={isGeneratingRoomNames}
-                      currentProcessingRow={currentProcessingRow}
-                      sabreLoading={sabreLoading}
-                      sabreError={sabreError}
-                      hasSearched={hasSearched}
-                      cacheStats={cacheStats}
-                      clearCache={clearCache}
-                      getCacheInfo={getCacheInfo}
-                      processRemainingRatePlans={processRemainingRatePlans}
-                      hotelName={hotel?.property_name_ko || ''}
-                      checkIn={searchDates.checkIn}
-                      checkOut={searchDates.checkOut}
-                    />
-                  </div>
+                  {/* 객실 요금 상세 테이블, 데이터 테이블, 필터 영역 (비표시)
+                    - 향후 재사용을 위해 코드 흔적만 남김
+                    - 아래 블록 전체를 비활성화
+                  */}
+                  {false && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-800 mb-4">객실 요금 상세 테이블</h4>
+                      <RoomRatesTable
+                        ratePlans={ratePlanCodes}
+                        roomIntroductions={roomIntroductions}
+                        globalOTAStyleRoomNames={globalOTAStyleRoomNames}
+                        bedTypes={bedTypes}
+                        isGeneratingIntroductions={isGeneratingIntroductions}
+                        isGeneratingRoomNames={isGeneratingRoomNames}
+                        currentProcessingRow={currentProcessingRow}
+                        sabreLoading={sabreLoading}
+                        sabreError={sabreError}
+                        hasSearched={hasSearched}
+                        cacheStats={cacheStats}
+                        clearCache={clearCache}
+                        getCacheInfo={getCacheInfo}
+                        processRemainingRatePlans={processRemainingRatePlans}
+                        hotelName={hotel?.property_name_ko || ''}
+                        checkIn={searchDates.checkIn}
+                        checkOut={searchDates.checkOut}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : hasSearched ? (
                 <div className="text-center py-12">
