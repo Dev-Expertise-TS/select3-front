@@ -43,10 +43,6 @@ const nextConfig = {
     minimumCacheTTL: 300, // 캐시 시간을 5분으로 증가
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // 이미지 최적화 품질 기본값 설정
-    quality: 80,
-    // 압축 레벨 설정
-    compressionLevel: 6,
   },
 }
 
