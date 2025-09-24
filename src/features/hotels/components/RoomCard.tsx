@@ -110,17 +110,13 @@ export function RoomCard({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-      {/* 카드 헤더 - 객실 이미지 대신 아이콘 영역 */}
-      <div className="h-32 sm:h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative">
-        <div className={`p-6 rounded-full ${getBedColor(bedType)}`}>
-          {getBedIcon(bedType)}
+      {/* 이미지 영역 (향후 사용 예정)
+        유지 목적의 자리표시자입니다. 나중에 객실 썸네일/갤러리 영역을 복원할 때 이 위치를 사용합니다.
+        예시 구조:
+        <div className="h-32 sm:h-48 relative">
+          <Image ... />
         </div>
-        {discount && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-            {discount}
-          </div>
-        )}
-      </div>
+      */}
 
       {/* 카드 내용 */}
       <div className="p-4 sm:p-6">
