@@ -18,6 +18,9 @@ interface RoomCardProps {
   checkIn?: string
   checkOut?: string
   view?: string | null
+  isBeyondFirstRow?: boolean
+  hasIntro?: boolean
+  onRequestIntro?: () => void
 }
 
 export function RoomCard({
@@ -34,7 +37,10 @@ export function RoomCard({
   isGenerating = false,
   checkIn,
   checkOut,
-  view
+  view,
+  isBeyondFirstRow = false,
+  hasIntro = false,
+  onRequestIntro
 }: RoomCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -164,28 +170,44 @@ export function RoomCard({
 
         {/* 객실 소개 - 고정 높이 */}
         <div className="mb-3 sm:mb-4">
-          <div className="text-gray-700 text-sm leading-relaxed h-16 sm:h-20 overflow-hidden">
-            {isGenerating ? (
-              <div className="flex items-center gap-2 h-full">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
-              </div>
-            ) : (
-              <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
-                <span className={isExpanded ? '' : 'line-clamp-3'}>
-                  {displayIntroduction}
-                </span>
+          <div className="relative">
+            <div className={`text-gray-700 text-sm leading-relaxed h-16 sm:h-20 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'} ${(!hasIntro && !isGenerating) ? 'blur-[2px] opacity-60 select-none pointer-events-none' : ''}`}>
+              {isGenerating ? (
+                <div className="flex items-center gap-2 h-full">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
+                </div>
+              ) : (
+                <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
+                  <span className={isExpanded ? '' : 'line-clamp-3'}>
+                    {displayIntroduction}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 더보기 영역은 AI 미생성 블러 상태에서는 노출하지 않음 */}
+            {!isGenerating && hasIntro && displayIntroduction && displayIntroduction.length > 100 && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-blue-600 text-xs mt-2 hover:underline"
+              >
+                {isExpanded ? '접기' : '더보기'}
+              </button>
+            )}
+
+            {/* 4행 이후 + AI 미생성 시 중앙 버튼 표시 */}
+            {!isGenerating && isBeyondFirstRow && !hasIntro && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  onClick={onRequestIntro}
+                  className="px-3 py-1.5 text-xs sm:text-sm bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  객실 설명 AI 설명 보기
+                </button>
               </div>
             )}
           </div>
-          {!isGenerating && displayIntroduction && displayIntroduction.length > 100 && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-blue-600 text-xs mt-2 hover:underline"
-            >
-              {isExpanded ? '접기' : '더보기'}
-            </button>
-          )}
         </div>
 
         {/* 가격 정보 */}

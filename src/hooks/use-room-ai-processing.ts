@@ -773,6 +773,31 @@ export function useRoomAIProcessing() {
     }
   }, [])
 
+  // 단일 객실 소개만 AI 처리 (RoomCard의 버튼 클릭 시)
+  const processSingleRoomIntro = useCallback(async (
+    ratePlans: any[],
+    hotelName: string,
+    index: number,
+    checkIn?: string,
+    checkOut?: string
+  ) => {
+    if (!ratePlans || !hotelName) return
+    if (index < 0 || index >= ratePlans.length) return
+
+    try {
+      setIsGeneratingIntroductions(true)
+      setCurrentProcessingRow(index)
+
+      // 해당 인덱스만 처리
+      await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, index, index + 1)
+    } catch (error) {
+      console.error('❌ 단일 객실 소개 생성 실패:', { index, error })
+    } finally {
+      setIsGeneratingIntroductions(false)
+      setCurrentProcessingRow(-1)
+    }
+  }, [])
+
   return {
     roomIntroductions,
     globalOTAStyleRoomNames,
@@ -783,6 +808,7 @@ export function useRoomAIProcessing() {
     currentProcessingRow,
     processRatePlans,
     processRemainingRatePlans,
+    processSingleRoomIntro,
     // 캐시 관련 추가
     cacheStats,
     clearCache,

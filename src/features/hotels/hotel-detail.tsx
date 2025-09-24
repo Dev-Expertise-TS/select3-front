@@ -466,6 +466,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     currentProcessingRow,
     processRatePlans,
     processRemainingRatePlans,
+    processSingleRoomIntro,
     cacheStats,
     clearCache,
     getCacheInfo
@@ -1124,6 +1125,12 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                       currentProcessingRow={currentProcessingRow}
                       checkIn={searchDates.checkIn}
                       checkOut={searchDates.checkOut}
+                      onRequestIntro={(index) => {
+                        if (!hotel?.property_name_ko) return
+                        if (!ratePlanCodes || ratePlanCodes.length === 0) return
+                        // 해당 index의 카드만 처리
+                        processSingleRoomIntro(ratePlanCodes, hotel.property_name_ko, index, searchDates.checkIn, searchDates.checkOut)
+                      }}
                     />
                   </div>
 
