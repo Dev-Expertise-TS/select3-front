@@ -124,7 +124,7 @@ export function RoomCard({
         <div className="mb-3 sm:mb-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-0 mb-1">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-              {roomName || roomType}
+              {roomType || roomName}
             </h3>
             {view && view !== 'N/A' && (
               <span className="text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded self-start">
@@ -133,7 +133,7 @@ export function RoomCard({
             )}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
-            <span className="bg-gray-100 px-2 py-1 rounded text-xs self-start">{roomType}</span>
+            <span className="bg-gray-100 px-2 py-1 rounded text-xs self-start">{roomName || roomType}</span>
             {area && (
               <div className="flex items-center gap-1">
                 <Ruler className="w-3 h-3" />
