@@ -59,10 +59,10 @@ export function ChainBrandPageClient({
     ? allBrands.filter(brand => brand.chain_id === parseInt(selectedChainId))
     : []
 
-  // 현재 선택된 체인 이름
+  // 현재 선택된 체인 이름 (영문)
   const currentChainName = selectedChainId 
-    ? allChains.find(chain => chain.chain_id === parseInt(selectedChainId))?.chain_name_kr || 
-      allChains.find(chain => chain.chain_id === parseInt(selectedChainId))?.chain_name_en || 
+    ? allChains.find(chain => chain.chain_id === parseInt(selectedChainId))?.chain_name_en || 
+      allChains.find(chain => chain.chain_id === parseInt(selectedChainId))?.chain_name_kr || 
       ""
     : ""
 
@@ -86,12 +86,12 @@ export function ChainBrandPageClient({
         cities: [],
         brands: allBrands.map(brand => ({
           id: String(brand.brand_id),
-          label: brand.brand_name_kr || brand.brand_name_en,
+          label: brand.brand_name_en || brand.brand_name_kr,
           count: 0 // 동적으로 계산됨
         })),
         chains: allChains.map(chain => ({
           id: String(chain.chain_id),
-          label: chain.chain_name_kr || chain.chain_name_en,
+          label: chain.chain_name_en || chain.chain_name_kr,
           count: 0 // 동적으로 계산됨
         }))
       }}

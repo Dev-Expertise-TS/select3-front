@@ -44,7 +44,7 @@ export function ChainPageClient({
       initialHotels={transformedHotels}
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}
-      currentChainName={chainRow.chain_name_kr || chainRow.chain_name_en}
+      currentChainName={chainRow.chain_name_en || chainRow.chain_name_kr}
       currentChainId={String(chainRow.chain_id)}
       onChainChange={handleChainChange}
       serverFilterOptions={serverFilterOptions}

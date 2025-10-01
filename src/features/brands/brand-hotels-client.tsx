@@ -88,10 +88,10 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
     return selectedChainBrands.map(brand => brand.brand_name_en).sort()
   }, [selectedChainBrands])
 
-  // 현재 선택된 체인의 한국어 이름
+  // 현재 선택된 체인의 영문 이름
   const currentChainName = useMemo(() => {
     const currentChain = allChains.find(chain => chain.chain_name_en === displayName)
-    return currentChain?.chain_name_kr || currentChain?.chain_name_en || displayName
+    return currentChain?.chain_name_en || currentChain?.chain_name_kr || displayName
   }, [allChains, displayName])
 
   const filteredHotels = useMemo(() => {
@@ -188,10 +188,14 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
                       <option value="">다른 체인 선택...</option>
                       {allChains
                         .filter(chain => chain.slug !== '') // 빈 slug 제외
-                        .sort((a, b) => (a.chain_name_kr || a.chain_name_en).localeCompare(b.chain_name_kr || b.chain_name_en))
+                        .sort((a, b) => {
+                          const aName = a.chain_name_en || a.chain_name_kr || ''
+                          const bName = b.chain_name_en || b.chain_name_kr || ''
+                          return aName.localeCompare(bName)
+                        })
                         .map((chain) => (
                           <option key={chain.chain_id} value={chain.slug}>
-                            {chain.chain_name_kr || chain.chain_name_en}
+                            {chain.chain_name_en || chain.chain_name_kr}
                           </option>
                         ))}
                     </select>

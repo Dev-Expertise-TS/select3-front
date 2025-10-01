@@ -15,7 +15,7 @@ async function getHotelChains() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_kr, slug, logo_path')
+    .select('chain_id, chain_name_en, chain_name_kr, slug')
     .order('chain_name_en')
 
   if (error || !data) {
@@ -25,20 +25,53 @@ async function getHotelChains() {
       { chain_id: 2, chain_name_en: 'Marriott International', chain_name_kr: '메리어트 인터내셔널', slug: 'marriott', logo_path: '/brand-image/marriott.avif' },
       { chain_id: 3, chain_name_en: 'Hilton', chain_name_kr: '힐튼', slug: 'hilton', logo_path: '/brand-image/hilton.avif' },
       { chain_id: 4, chain_name_en: 'InterContinental Hotels Group (IHG)', chain_name_kr: '인터컨티넨탈 호텔 그룹', slug: 'ihg', logo_path: '/brand-image/ihg.avif' },
+      { chain_id: 5, chain_name_en: 'Wyndham Hotels & Resorts', chain_name_kr: '윈덤 호텔 & 리조트', slug: 'wyndham-hotels-resorts', logo_path: '/placeholder.svg' },
+      { chain_id: 6, chain_name_en: 'Radisson Hotel Group', chain_name_kr: '래디슨 호텔 그룹', slug: 'radisson-hotel-group', logo_path: '/placeholder.svg' },
+      { chain_id: 7, chain_name_en: 'Global Hotel Alliance', chain_name_kr: '글로벌 호텔 얼라이언스', slug: 'global-hotel-alliance', logo_path: '/placeholder.svg' },
       { chain_id: 8, chain_name_en: 'Aman Resorts International', chain_name_kr: '아만 리조트 인터네셔널', slug: 'aman', logo_path: '/brand-image/aman.avif' },
-      { chain_id: 9, chain_name_en: 'Four Seasons Hotels and Resorts', chain_name_kr: '포시즌스 호텔 & 리조트', slug: 'four-seasons-hotels-and-resorts', logo_path: '/brand-image/LW.avif' },
-      { chain_id: 10, chain_name_en: 'The Ritz-Carlton Hotel Company', chain_name_kr: '리츠칼튼 호텔', slug: 'the-ritz-carlton-hotel-company', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 9, chain_name_en: 'Four Seasons Hotels and Resorts', chain_name_kr: '포시즌스 호텔 & 리조트', slug: 'four-seasons-hotels-and-resorts', logo_path: '/placeholder.svg' },
+      { chain_id: 10, chain_name_en: 'The Ritz-Carlton Hotel Company', chain_name_kr: '리츠칼튼 호텔', slug: 'the-ritz-carlton-hotel-company', logo_path: '/placeholder.svg' },
       { chain_id: 11, chain_name_en: 'Mandarin Oriental Hotel Group', chain_name_kr: '만다린 오리엔탈 호텔 그룹', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
       { chain_id: 12, chain_name_en: 'Shangri-La Hotels and Resorts', chain_name_kr: '샹그릴라 호텔 & 리조트', slug: 'shangri-la', logo_path: '/brand-image/shangri-la.avif' },
-      { chain_id: 13, chain_name_en: 'Kempinski Hotels', chain_name_kr: '켐핀스키 호텔', slug: 'kempinski-hotels', logo_path: '/brand-image/LW.avif' },
-      { chain_id: 14, chain_name_en: 'Fairmont Hotels & Resorts', chain_name_kr: '페어몬트 호텔 & 리조트', slug: 'fairmont-hotels-resorts', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 13, chain_name_en: 'Kempinski Hotels', chain_name_kr: '켐핀스키 호텔', slug: 'kempinski-hotels', logo_path: '/placeholder.svg' },
+      { chain_id: 14, chain_name_en: 'Fairmont Hotels & Resorts', chain_name_kr: '페어몬트 호텔 & 리조트', slug: 'fairmont-hotels-resorts', logo_path: '/placeholder.svg' },
+      { chain_id: 15, chain_name_en: 'Sofitel Hotels & Resorts', chain_name_kr: '소피텔 호텔 & 리조트', slug: 'sofitel-hotels-resorts', logo_path: '/placeholder.svg' },
       { chain_id: 16, chain_name_en: 'Capella Hotel Group', chain_name_kr: '카펠라 호텔 그룹', slug: 'capella', logo_path: '/brand-image/capella.avif' },
+      { chain_id: 17, chain_name_en: 'The Peninsula Hotels', chain_name_kr: '페닌슐라 호텔', slug: 'the-peninsula-hotels', logo_path: '/placeholder.svg' },
       { chain_id: 18, chain_name_en: 'Hyatt Hotels Corporation', chain_name_kr: '하얏트 호텔 그룹', slug: 'hyatt', logo_path: '/brand-image/hyatt.avif' },
+      { chain_id: 20, chain_name_en: 'Heavens Portfolio', chain_name_kr: '헤븐스 포트폴리오', slug: 'heavens-portfolio', logo_path: '/brand-image/heavens-portfolio.avif' },
+      { chain_id: 21, chain_name_en: 'LHW VITA', chain_name_kr: 'LHW VITA', slug: 'lhw-vita', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 22, chain_name_en: 'Pan Pacific', chain_name_kr: '팬 퍼시픽', slug: 'pacific', logo_path: '/brand-image/pan-pacific.avif' },
+      { chain_id: 23, chain_name_en: 'Preferred Hotels & Resorts', chain_name_kr: '프리퍼드 호텔 & 리조트', slug: 'preferred-hotels-resorts', logo_path: '/brand-image/platinum.avif' },
+      { chain_id: 24, chain_name_en: 'Virtuoso', chain_name_kr: '버추오소', slug: 'virtuoso', logo_path: '/brand-image/virtuoso.avif' },
+      { chain_id: 25, chain_name_en: 'Melia', chain_name_kr: '멜리아', slug: 'melia', logo_path: '/brand-image/bravos.avif' },
     ]
     return fallback
   }
 
-  return data
+  // logo_path 매핑 (DB에 없으므로 slug 기반으로 매핑)
+  const logoMap: Record<string, string> = {
+    'accor': '/brand-image/accor.avif',
+    'marriott': '/brand-image/marriott.avif',
+    'hilton': '/brand-image/hilton.avif',
+    'ihg': '/brand-image/ihg.avif',
+    'aman': '/brand-image/aman.avif',
+    'mandarin-oriental': '/brand-image/mandarin.avif',
+    'shangri-la': '/brand-image/shangri-la.avif',
+    'capella': '/brand-image/capella.avif',
+    'hyatt': '/brand-image/hyatt.avif',
+    'heavens-portfolio': '/brand-image/heavens-portfolio.avif',
+    'lhw-vita': '/brand-image/LW.avif',
+    'pacific': '/brand-image/pan-pacific.avif',
+    'preferred-hotels-resorts': '/brand-image/platinum.avif',
+    'virtuoso': '/brand-image/virtuoso.avif',
+    'melia': '/brand-image/bravos.avif',
+  }
+
+  return data.map(chain => ({
+    ...chain,
+    logo_path: logoMap[chain.slug] || '/placeholder.svg'
+  }))
 }
 
 export async function BrandProgramPage() {

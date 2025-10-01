@@ -34,23 +34,23 @@ interface HotelChain {
 // }
 
 async function getHotelChains() {
-  // /public/brand-image 폴더의 이미지들을 사용하여 브랜드 카드 구성
+  // DB hotel_chains 테이블과 일치하는 slug 사용 (logo_path는 기존 이미지 유지)
   const brandCards: HotelChain[] = [
-    { chain_id: 1, chain_name_en: 'Marriott International', chain_name_kr: '메리어트 인터내셔널', slug: 'marriott-international', logo_path: '/brand-image/marriott.avif' },
-    { chain_id: 2, chain_name_en: 'Aman Resorts', chain_name_kr: '아만 리조트', slug: 'aman-resorts-international', logo_path: '/brand-image/aman.avif' },
-    { chain_id: 3, chain_name_en: 'Hyatt Hotels', chain_name_kr: '하이어트 호텔', slug: 'hyatt-hotels-corporation', logo_path: '/brand-image/hyatt.avif' },
-    { chain_id: 4, chain_name_en: 'IHG Hotels', chain_name_kr: 'IHG 호텔', slug: 'intercontinental-hotels-group-ihg', logo_path: '/brand-image/ihg.avif' },
-    { chain_id: 5, chain_name_en: 'Accor Hotels', chain_name_kr: '아코르 호텔', slug: 'accor-hotels', logo_path: '/brand-image/accor.avif' },
-    { chain_id: 6, chain_name_en: 'Hilton Worldwide', chain_name_kr: '힐튼 월드와이드', slug: 'hilton-hotels-resorts-hilton-worldwide-holdings-inc', logo_path: '/brand-image/hilton.avif' },
-    { chain_id: 7, chain_name_en: 'Shangri-La Hotels', chain_name_kr: '샹그릴라 호텔', slug: 'shangri-la-hotels-and-resorts', logo_path: '/brand-image/shangri-la.avif' },
-    { chain_id: 8, chain_name_en: 'Mandarin Oriental', chain_name_kr: '만다린 오리엔탈', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
-    { chain_id: 9, chain_name_en: 'Capella Hotels', chain_name_kr: '카펠라 호텔', slug: 'capella-hotels', logo_path: '/brand-image/capella.avif' },
-    { chain_id: 10, chain_name_en: 'Pan Pacific', chain_name_kr: '팬 퍼시픽', slug: 'pan-pacific', logo_path: '/brand-image/pan-pacific.avif' },
-    { chain_id: 11, chain_name_en: 'Virtuoso', chain_name_kr: '버츄오소', slug: 'virtuoso', logo_path: '/brand-image/virtuoso.avif' },
-    { chain_id: 12, chain_name_en: 'Platinum', chain_name_kr: '플래티넘', slug: 'platinum', logo_path: '/brand-image/platinum.avif' },
-    { chain_id: 13, chain_name_en: 'Bravo', chain_name_kr: '브라보', slug: 'bravos', logo_path: '/brand-image/bravos.avif' },
-    { chain_id: 14, chain_name_en: 'Heavens Portfolio', chain_name_kr: '헤븐스 포트폴리오', slug: 'heavens-portfolio', logo_path: '/brand-image/heavens-portfolio.avif' },
-    { chain_id: 15, chain_name_en: 'LW', chain_name_kr: 'LW', slug: 'lw', logo_path: '/brand-image/LW.avif' },
+    { chain_id: 1, chain_name_en: 'Accor Hotels', chain_name_kr: '아코르 호텔 그룹', slug: 'accor', logo_path: '/brand-image/accor.avif' },
+    { chain_id: 2, chain_name_en: 'Marriott International', chain_name_kr: '메리어트 인터내셔널', slug: 'marriott', logo_path: '/brand-image/marriott.avif' },
+    { chain_id: 3, chain_name_en: 'Hilton', chain_name_kr: '힐튼', slug: 'hilton', logo_path: '/brand-image/hilton.avif' },
+    { chain_id: 4, chain_name_en: 'InterContinental Hotels Group (IHG)', chain_name_kr: '인터컨티넨탈 호텔 그룹', slug: 'ihg', logo_path: '/brand-image/ihg.avif' },
+    { chain_id: 8, chain_name_en: 'Aman Resorts International', chain_name_kr: '아만 리조트 인터네셔널', slug: 'aman', logo_path: '/brand-image/aman.avif' },
+    { chain_id: 11, chain_name_en: 'Mandarin Oriental Hotel Group', chain_name_kr: '만다린 오리엔탈 호텔 그룹', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
+    { chain_id: 12, chain_name_en: 'Shangri-La Hotels and Resorts', chain_name_kr: '샹그릴라 호텔 & 리조트', slug: 'shangri-la', logo_path: '/brand-image/shangri-la.avif' },
+    { chain_id: 16, chain_name_en: 'Capella Hotel Group', chain_name_kr: '카펠라 호텔 그룹', slug: 'capella', logo_path: '/brand-image/capella.avif' },
+    { chain_id: 18, chain_name_en: 'Hyatt Hotels Corporation', chain_name_kr: '하얏트 호텔 그룹', slug: 'hyatt', logo_path: '/brand-image/hyatt.avif' },
+    { chain_id: 20, chain_name_en: 'Heavens Portfolio', chain_name_kr: '헤븐스 포트폴리오', slug: 'heavens-portfolio', logo_path: '/brand-image/heavens-portfolio.avif' },
+    { chain_id: 21, chain_name_en: 'LHW VITA', chain_name_kr: 'LHW VITA', slug: 'lhw-vita', logo_path: '/brand-image/LW.avif' },
+    { chain_id: 22, chain_name_en: 'Pan Pacific', chain_name_kr: '팬 퍼시픽', slug: 'pacific', logo_path: '/brand-image/pan-pacific.avif' },
+    { chain_id: 23, chain_name_en: 'Preferred Hotels & Resorts', chain_name_kr: '프리퍼드 호텔 & 리조트', slug: 'preferred-hotels-resorts', logo_path: '/brand-image/platinum.avif' },
+    { chain_id: 24, chain_name_en: 'Virtuoso', chain_name_kr: '버추오소', slug: 'virtuoso', logo_path: '/brand-image/virtuoso.avif' },
+    { chain_id: 25, chain_name_en: 'Melia', chain_name_kr: '멜리아', slug: 'melia', logo_path: '/brand-image/bravos.avif' },
   ]
   
   return brandCards

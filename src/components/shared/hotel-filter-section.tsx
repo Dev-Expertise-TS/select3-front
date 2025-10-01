@@ -95,10 +95,10 @@ export function HotelFilterSection({
                 <option value="">체인 선택</option>
                 {allChains
                   .filter(chain => chain.slug !== '')
-                  .sort((a, b) => (a.chain_name_kr || a.chain_name_en || '').localeCompare(b.chain_name_kr || b.chain_name_en || ''))
+                  .sort((a, b) => (a.chain_name_en || a.chain_name_kr || '').localeCompare(b.chain_name_en || b.chain_name_kr || ''))
                   .map((chain) => (
                     <option key={chain.chain_id} value={String(chain.chain_id)}>
-                      {chain.chain_name_kr || chain.chain_name_en}
+                      {chain.chain_name_en || chain.chain_name_kr}
                     </option>
                   ))}
               </select>
@@ -120,10 +120,10 @@ export function HotelFilterSection({
                   >
                     <option value="">브랜드 선택</option>
                     {selectedChainBrands
-                      .sort((a, b) => (a.brand_name_kr || a.brand_name_en || '').localeCompare(b.brand_name_kr || b.brand_name_en || ''))
+                      .sort((a, b) => (a.brand_name_en || a.brand_name_kr || '').localeCompare(b.brand_name_en || b.brand_name_kr || ''))
                       .map((brand) => (
                         <option key={brand.brand_id} value={String(brand.brand_id)}>
-                          {brand.brand_name_kr || brand.brand_name_en}
+                          {brand.brand_name_en || brand.brand_name_kr}
                         </option>
                       ))}
                   </select>
