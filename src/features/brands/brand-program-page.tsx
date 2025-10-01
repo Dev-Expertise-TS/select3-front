@@ -21,18 +21,19 @@ async function getHotelChains() {
   if (error || !data) {
     console.warn('[ Server ] 호텔 체인 조회 실패 또는 빈 결과. 로컬 폴백을 사용합니다.')
     const fallback: HotelChain[] = [
-      { chain_id: 1, chain_name_en: 'Marriott International', slug: 'marriott-international', logo_path: '/brand-image/marriott.avif' },
-      { chain_id: 2, chain_name_en: 'Aman Resorts', slug: 'aman-resorts-international', logo_path: '/brand-image/aman.avif' },
-      { chain_id: 3, chain_name_en: 'Hyatt Hotels', slug: 'hyatt-hotels-corporation', logo_path: '/brand-image/hyatt.avif' },
-      { chain_id: 4, chain_name_en: 'IHG Hotels', slug: 'intercontinental-hotels-group-ihg', logo_path: '/brand-image/ihg.avif' },
-      { chain_id: 5, chain_name_en: 'Accor Hotels', slug: 'accor-hotels', logo_path: '/brand-image/accor.avif' },
-      { chain_id: 6, chain_name_en: 'Hilton Worldwide', slug: 'hilton-hotels-resorts-hilton-worldwide-holdings-inc', logo_path: '/brand-image/hilton.avif' },
-      { chain_id: 7, chain_name_en: 'Shangri-La Hotels', slug: 'shangri-la-hotels-and-resorts', logo_path: '/brand-image/shangri-la.avif' },
-      { chain_id: 8, chain_name_en: 'Four Seasons', slug: 'four-seasons-hotels-and-resorts', logo_path: '/brand-image/four-seasons.avif' },
-      { chain_id: 9, chain_name_en: 'The Ritz-Carlton', slug: 'ritz-carlton-hotel-company', logo_path: '/brand-image/ritz-carlton.avif' },
-      { chain_id: 10, chain_name_en: 'Mandarin Oriental', slug: 'mandarin-oriental-hotel-group', logo_path: '/brand-image/mandarin.avif' },
-      { chain_id: 11, chain_name_en: 'Kempinski Hotels', slug: 'kempinski-hotels', logo_path: '/brand-image/kempinski.avif' },
-      { chain_id: 12, chain_name_en: 'Fairmont Hotels', slug: 'fairmont-hotels-and-resorts', logo_path: '/brand-image/fairmont.avif' },
+      { chain_id: 1, chain_name_en: 'Accor Hotels', chain_name_kr: '아코르 호텔 그룹', slug: 'accor', logo_path: '/brand-image/accor.avif' },
+      { chain_id: 2, chain_name_en: 'Marriott International', chain_name_kr: '메리어트 인터내셔널', slug: 'marriott', logo_path: '/brand-image/marriott.avif' },
+      { chain_id: 3, chain_name_en: 'Hilton', chain_name_kr: '힐튼', slug: 'hilton', logo_path: '/brand-image/hilton.avif' },
+      { chain_id: 4, chain_name_en: 'InterContinental Hotels Group (IHG)', chain_name_kr: '인터컨티넨탈 호텔 그룹', slug: 'ihg', logo_path: '/brand-image/ihg.avif' },
+      { chain_id: 8, chain_name_en: 'Aman Resorts International', chain_name_kr: '아만 리조트 인터네셔널', slug: 'aman', logo_path: '/brand-image/aman.avif' },
+      { chain_id: 9, chain_name_en: 'Four Seasons Hotels and Resorts', chain_name_kr: '포시즌스 호텔 & 리조트', slug: 'four-seasons-hotels-and-resorts', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 10, chain_name_en: 'The Ritz-Carlton Hotel Company', chain_name_kr: '리츠칼튼 호텔', slug: 'the-ritz-carlton-hotel-company', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 11, chain_name_en: 'Mandarin Oriental Hotel Group', chain_name_kr: '만다린 오리엔탈 호텔 그룹', slug: 'mandarin-oriental', logo_path: '/brand-image/mandarin.avif' },
+      { chain_id: 12, chain_name_en: 'Shangri-La Hotels and Resorts', chain_name_kr: '샹그릴라 호텔 & 리조트', slug: 'shangri-la', logo_path: '/brand-image/shangri-la.avif' },
+      { chain_id: 13, chain_name_en: 'Kempinski Hotels', chain_name_kr: '켐핀스키 호텔', slug: 'kempinski-hotels', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 14, chain_name_en: 'Fairmont Hotels & Resorts', chain_name_kr: '페어몬트 호텔 & 리조트', slug: 'fairmont-hotels-resorts', logo_path: '/brand-image/LW.avif' },
+      { chain_id: 16, chain_name_en: 'Capella Hotel Group', chain_name_kr: '카펠라 호텔 그룹', slug: 'capella', logo_path: '/brand-image/capella.avif' },
+      { chain_id: 18, chain_name_en: 'Hyatt Hotels Corporation', chain_name_kr: '하얏트 호텔 그룹', slug: 'hyatt', logo_path: '/brand-image/hyatt.avif' },
     ]
     return fallback
   }
@@ -61,7 +62,7 @@ export async function BrandProgramPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {chains.map((chain) => (
-              <Link key={chain.chain_id} href={`/chain/${chain.slug}`}>
+              <Link key={chain.chain_id} href={`/brand/${chain.slug}`}>
                 <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer overflow-hidden aspect-[4/3] relative border border-gray-100">
                   <Image
                     src={chain.logo_path || "/placeholder.svg"}

@@ -48,7 +48,6 @@ interface HotelTabsProps {
 
 export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId, hotelBlogs }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
-  const [isHotelInfoExpanded, setIsHotelInfoExpanded] = useState(false)
   
   // 아티클 관련 상태
   const [articles, setArticles] = useState<BlogContent[]>([])
@@ -209,7 +208,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               }`}
             >
               <span className="text-xl">🏆</span>
-              예약 혜택
+              예약시 제공 혜택
             </button>
             <button
               onClick={() => setActiveTab("introduction")}
@@ -260,119 +259,54 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
           {/* Tab Content */}
           {activeTab === "benefits" && (
             <div className="space-y-6">
-              <div className="space-y-3">
-                <h4 className="text-base font-medium text-gray-700 mb-4">예약 시 제공되는 혜택</h4>
-                
-                {/* 로딩 상태 */}
-                {isLoadingBenefits && (
-                  <div className="text-center py-8">
-                    <div className="flex items-center justify-center gap-3 text-blue-600">
-                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-sm">혜택을 불러오는 중...</span>
-                    </div>
+              {/* 로딩 상태 */}
+              {isLoadingBenefits && (
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-center gap-3 text-blue-600">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">혜택을 불러오는 중...</span>
                   </div>
-                )}
-                
-                {/* 오류 상태 */}
-                {benefitsError && (
-                  <div className="text-center py-8">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
-                      <p className="text-red-600 mb-4">{benefitsError}</p>
-                      <button
-                        onClick={fetchHotelBenefits}
-                        className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        다시 시도
-                      </button>
-                    </div>
+                </div>
+              )}
+              
+              {/* 오류 상태 */}
+              {benefitsError && (
+                <div className="text-center py-8">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
+                    <p className="text-red-600 mb-4">{benefitsError}</p>
+                    <button
+                      onClick={fetchHotelBenefits}
+                      className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      다시 시도
+                    </button>
                   </div>
-                )}
-                
-                {/* 혜택 목록 */}
-                {!isLoadingBenefits && !benefitsError && (
-                  <>
-                    {benefits.length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {benefits.map((benefit, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
-                            <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
-                              <benefit.icon className={`h-3 w-3 ${benefit.iconColor}`} />
-                            </div>
-                            <div className="text-xs text-gray-700">{benefit.text}</div>
+                </div>
+              )}
+              
+              {/* 혜택 목록 */}
+              {!isLoadingBenefits && !benefitsError && (
+                <>
+                  {benefits.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-center justify-center gap-1.5 p-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex-1 min-w-[150px] shadow-sm hover:shadow-md transition-shadow">
+                          <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
+                            <benefit.icon className={`h-3.5 w-3.5 ${benefit.iconColor}`} />
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <div className="text-gray-400 text-lg mb-2">🏆</div>
-                        <p className="text-gray-500">이 호텔의 예약 혜택 정보가 준비 중입니다.</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* 호텔 상세 정보 섹션 */}
-              <div className="border-t border-gray-200 pt-3 sm:pt-6">
-                <div className="mb-2 sm:mb-4">
-                  <h4 className="text-base font-medium text-gray-700">호텔 상세 정보</h4>
-                </div>
-                
-                {/* 접힌 상태 - 미리보기 */}
-                {!isHotelInfoExpanded && introHtml && (
-                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto">
-                    <div className="relative h-20 overflow-hidden">
-                      <div 
-                        className="text-gray-600 text-sm leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                        dangerouslySetInnerHTML={{ __html: introHtml }}
-                      />
-                      {/* 그라데이션 오버레이 */}
-                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                          <div className="text-xs font-medium text-gray-800 leading-tight text-center">{benefit.text}</div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                )}
-                
-                {/* 펼쳐진 상태 - 전체 내용 */}
-                {isHotelInfoExpanded && (
-                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto">
-                    {introHtml ? (
-                      <div 
-                        className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                        dangerouslySetInnerHTML={{ __html: introHtml }}
-                      />
-                    ) : (
-                      <p className="text-gray-700 leading-relaxed">
-                        {propertyDescription || `${hotelName}의 상세 정보가 아직 제공되지 않았습니다.`}
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                {/* 버튼 - 하단 가운데 */}
-                <div className="text-center mt-3 sm:mt-6">
-                  <button
-                    onClick={() => setIsHotelInfoExpanded(!isHotelInfoExpanded)}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mx-auto"
-                  >
-                    {isHotelInfoExpanded ? (
-                      <>
-                        <span>호텔정보 접기</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        <span>호텔정보 더보기</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 text-lg mb-2">🏆</div>
+                      <p className="text-gray-500">이 호텔의 예약 혜택 정보가 준비 중입니다.</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 

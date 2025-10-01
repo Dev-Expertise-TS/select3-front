@@ -23,7 +23,7 @@ export function BrandCard({
 }: BrandCardProps) {
   return (
     <Link 
-      href={`/chain/${slug}`} 
+      href={`/brand/${slug}`} 
       className="block focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
       aria-label={`${chainNameKr || chainName} 브랜드 페이지로 이동`}
     >

@@ -31,7 +31,7 @@ export function ChainPageClient({
 
   // 체인 변경 핸들러 - 고정된 페이지로 이동
   const handleChainChange = (chainId: string) => {
-    router.push(`/chain/brand?chain=${chainId}`)
+    router.push(`/brand/brand?chain=${chainId}`)
   }
 
   return (

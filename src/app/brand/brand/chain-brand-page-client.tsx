@@ -34,8 +34,8 @@ export function ChainBrandPageClient({
     if (brandId) params.set('brand', brandId)
     
     const newURL = params.toString() 
-      ? `/chain/brand?${params.toString()}`
-      : '/chain/brand'
+      ? `/brand/brand?${params.toString()}`
+      : '/brand/brand'
     
     router.push(newURL)
   }

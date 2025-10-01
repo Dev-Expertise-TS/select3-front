@@ -115,38 +115,10 @@ export function ImageGallery({
           </button>
         </div>
 
-        {/* Image Category Tabs */}
-        <div className="flex items-center gap-6 px-6 py-4 border-b border-gray-200 overflow-x-auto">
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            슬라이드쇼
-          </button>
-          <button className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-2 whitespace-nowrap">
-            전체({images.length})
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            동영상(0)
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            객실(0)
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            숙소(0)
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            편의/부대시설(0)
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            식사 공간/장소(0)
-          </button>
-          <button className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">
-            주변 명소(0)
-          </button>
-        </div>
-
         {/* Main Content Area */}
-        <div className="flex h-[calc(100%-140px)]">
-          {/* Left Section - Image Grid */}
-          <div className="flex-1 p-6 overflow-y-auto">
+        <div className="h-[calc(100%-80px)]">
+          {/* Image Grid */}
+          <div className="h-full p-6 overflow-y-auto">
             {!showImageDetail ? (
               <div className="grid grid-cols-3 gap-4">
                 {images.map((media, index) => (
@@ -254,27 +226,6 @@ export function ImageGallery({
                 )}
               </div>
             )}
-          </div>
-
-          {/* Right Section - Information Sidebar */}
-          <div className="w-80 border-l border-gray-200 p-6 overflow-y-auto">
-            <div className="space-y-6">
-              {/* Promotional Text */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-blue-600">인기 많은 숙소입니다!</p>
-                <p className="text-xs text-gray-600">오늘 21명의 여행객이 이 숙소 예약함</p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full text-gray-700 border-gray-300 hover:bg-gray-50">
-                  숙소 인근 명소 보기
-                </Button>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  예약 가능한 객실 보기
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
