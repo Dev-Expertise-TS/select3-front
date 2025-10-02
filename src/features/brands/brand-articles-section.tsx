@@ -112,23 +112,9 @@ export function BrandArticlesSection({
     )
   }
 
-  // 아티클이 없는 경우
+  // 아티클이 없는 경우 - 아무것도 렌더링하지 않음
   if (articles.length === 0) {
-    return (
-      <section className={`py-12 ${className}`}>
-        <div className="container mx-auto max-w-[1440px] px-4">
-          <div className="text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              관련 아티클이 없습니다
-            </h3>
-            <p className="text-gray-600">
-              {chainName}과 관련된 아티클이 아직 준비되지 않았습니다.
-            </p>
-          </div>
-        </div>
-      </section>
-    )
+    return null
   }
 
   // 아티클 목록 표시
