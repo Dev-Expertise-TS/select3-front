@@ -153,23 +153,20 @@ export default async function ChainPage({ params }: ChainPageProps) {
     }
   })
 
-  // 서버에서 필터 옵션 미리 계산 (영문 표시)
+  // 서버에서 필터 옵션 미리 계산 (영문 표시, 카운트 제거)
   const serverFilterOptions = {
     countries: [],
     cities: Array.from(new Set(transformedHotels.map(hotel => hotel.location))).map(city => ({
       id: city,
-      label: city,
-      count: transformedHotels.filter(hotel => hotel.location === city).length
+      label: city
     })).sort((a, b) => a.label.localeCompare(b.label)),
     brands: selectedChainBrands.map(brand => ({
       id: String(brand.brand_id),
-      label: brand.brand_name_en || brand.brand_name_kr,
-      count: hotels.filter(hotel => String(hotel.brand_id) === String(brand.brand_id)).length
+      label: brand.brand_name_en || brand.brand_name_kr
     })).sort((a, b) => a.label.localeCompare(b.label)),
     chains: allChains.map(chain => ({
       id: String(chain.chain_id),
-      label: chain.chain_name_en || chain.chain_name_kr,
-      count: 0 // 체인별 호텔 수는 동적으로 계산됨
+      label: chain.chain_name_en || chain.chain_name_kr
     })).sort((a, b) => a.label.localeCompare(b.label))
   }
 

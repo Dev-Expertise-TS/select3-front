@@ -6,6 +6,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SimpleHotelSearch } from "./simple-hotel-search"
 import { HotelCardGrid } from "@/components/shared/hotel-card-grid"
+import { BrandArticlesSection } from "@/features/brands/brand-articles-section"
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { transformSearchResultsToCardData, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
@@ -70,50 +71,47 @@ function useFilterOptions() {
         brands = brandData || []
       }
       
-      // 도시 옵션 생성
-      const cityMap = new Map()
+      // 도시 옵션 생성 (카운트 제거)
+      const citySet = new Set()
       hotels?.forEach((hotel: any) => {
         const city = hotel.city_ko || hotel.city || hotel.city_en
         if (city) {
-          cityMap.set(city, (cityMap.get(city) || 0) + 1)
+          citySet.add(city)
         }
       })
-      const cities = Array.from(cityMap.entries()).map(([label, count]) => ({
-        id: label,
-        label,
-        count
-      })).sort((a, b) => b.count - a.count)
+      const cities = Array.from(citySet).map(city => ({
+        id: city,
+        label: city
+      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
       
-      // 국가 옵션 생성
-      const countryMap = new Map()
+      // 국가 옵션 생성 (카운트 제거)
+      const countrySet = new Set()
       hotels?.forEach((hotel: any) => {
         const country = hotel.country_ko || hotel.country_en
         if (country) {
-          countryMap.set(country, (countryMap.get(country) || 0) + 1)
+          countrySet.add(country)
         }
       })
-      const countries = Array.from(countryMap.entries()).map(([label, count]) => ({
-        id: label,
-        label,
-        count
-      })).sort((a, b) => b.count - a.count)
+      const countries = Array.from(countrySet).map(country => ({
+        id: country,
+        label: country
+      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
       
-      // 브랜드 옵션 생성
-      const brandMap = new Map()
+      // 브랜드 옵션 생성 (카운트 제거)
+      const brandSet = new Set()
       hotels?.forEach((hotel: any) => {
         if (hotel.brand_id) {
           const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
           if (brand) {
             const brandName = brand.brand_name_en
-            brandMap.set(brandName, (brandMap.get(brandName) || 0) + 1)
+            brandSet.add(brandName)
           }
         }
       })
-      const brandOptions = Array.from(brandMap.entries()).map(([label, count]) => ({
-        id: label,
-        label,
-        count
-      })).sort((a, b) => b.count - a.count)
+      const brandOptions = Array.from(brandSet).map(brandName => ({
+        id: brandName,
+        label: brandName
+      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
       
       // 체인 옵션 생성 (hotel_chains 테이블에서 조회)
       const { data: hotelChains } = await supabase
@@ -129,16 +127,14 @@ function useFilterOptions() {
         }
       })
       
-      // hotel_chains 테이블의 체인 목록 사용 (영문 표시)
+      // hotel_chains 테이블의 체인 목록 사용 (영문 표시, 카운트 제거)
       const chains = (hotelChains || []).map((chain: any) => {
         const chainName = chain.chain_name_en || chain.chain_name_kr
-        const count = chainMap.get(chain.chain_name_ko || chain.chain_name_en) || chainMap.get(chain.chain_name_en) || 0
         return {
           id: String(chain.chain_id),
-          label: chainName,
-          count
+          label: chainName
         }
-      }).filter((c: any) => c.count > 0).sort((a: any, b: any) => b.count - a.count)
+      }).sort((a: any, b: any) => a.label.localeCompare(b.label))
       
       return {
         cities: cities.slice(0, 20), // 상위 20개만
@@ -384,6 +380,10 @@ interface HotelSearchResultsProps {
     brands: Array<{ id: string; label: string; count: number }>
     chains: Array<{ id: string; label: string; count: number }>
   }
+  // 아티클 섹션용 props
+  showArticles?: boolean
+  articlesChainId?: string
+  articlesChainName?: string
 }
 
 export function HotelSearchResults({ 
@@ -401,7 +401,11 @@ export function HotelSearchResults({
   onChainChange,
   initialBrandId,
   onBrandChange,
-  serverFilterOptions
+  serverFilterOptions,
+  // 아티클 섹션용 props
+  showArticles = false,
+  articlesChainId,
+  articlesChainName
 }: HotelSearchResultsProps) {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
@@ -708,10 +712,10 @@ export function HotelSearchResults({
                   {/* 텍스트 영역 */}
                   <div className="flex-1 text-center lg:text-left">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                      호텔 & 리조트 전체보기
+                      {title}
                     </h1>
                     <p className="text-base text-gray-600">
-                      전 세계 프리미엄 호텔과 리조트를 모두 확인해보세요
+                      {subtitle}
                     </p>
                   </div>
                   
@@ -747,9 +751,9 @@ export function HotelSearchResults({
                           disabled={isFinalFilterOptionsLoading}
                         >
                           <option value="">도시 전체</option>
-                          {finalFilterOptions?.cities.map(city => (
+                          {finalFilterOptions?.cities.map((city: any) => (
                             <option key={city.id} value={city.id}>
-                              {city.label} ({city.count})
+                              {city.label}
                             </option>
                           ))}
                         </select>
@@ -764,9 +768,9 @@ export function HotelSearchResults({
                           disabled={isFinalFilterOptionsLoading}
                         >
                           <option value="">국가 전체</option>
-                          {finalFilterOptions?.countries.map(country => (
+                          {finalFilterOptions?.countries.map((country: any) => (
                             <option key={country.id} value={country.id}>
-                              {country.label} ({country.count})
+                              {country.label}
                             </option>
                           ))}
                         </select>
@@ -781,9 +785,9 @@ export function HotelSearchResults({
                           disabled={isFinalFilterOptionsLoading}
                         >
                           <option value="">브랜드 전체</option>
-                          {finalFilterOptions?.brands.map(brand => (
+                          {finalFilterOptions?.brands.map((brand: any) => (
                             <option key={brand.id} value={brand.id}>
-                              {brand.label} ({brand.count})
+                              {brand.label}
                             </option>
                           ))}
                         </select>
@@ -800,7 +804,7 @@ export function HotelSearchResults({
                           <option value="">체인 전체</option>
                           {finalFilterOptions?.chains.map((chain: any) => (
                             <option key={chain.id} value={chain.id}>
-                              {chain.label} ({chain.count})
+                              {chain.label}
                             </option>
                           ))}
                         </select>
@@ -872,6 +876,14 @@ export function HotelSearchResults({
           </div>
         </section>
       </main>
+
+      {/* 브랜드 관련 아티클 섹션 */}
+      {showArticles && articlesChainId && articlesChainName && (
+        <BrandArticlesSection 
+          chainId={articlesChainId}
+          chainName={articlesChainName}
+        />
+      )}
 
       {/* 푸터 */}
       <Footer />

@@ -9,7 +9,6 @@ const supabase = createClient()
 interface FilterOption {
   id: string
   label: string
-  count: number
 }
 
 interface HotelFilterAllViewProps {
@@ -53,7 +52,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         if (hotelsError) throw hotelsError
         
         // 브랜드 데이터 조회
-        const brandIds = hotels?.filter(h => h.brand_id).map(h => h.brand_id) || []
+        const brandIds = hotels?.filter((h: any) => h.brand_id).map((h: any) => h.brand_id) || []
         let brands = []
         if (brandIds.length > 0) {
           const { data: brandData } = await supabase
@@ -65,7 +64,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         
         // 도시 옵션 생성
         const cityMap = new Map()
-        hotels?.forEach(hotel => {
+        hotels?.forEach((hotel: any) => {
           const city = hotel.city_ko || hotel.city || hotel.city_en
           if (city) {
             cityMap.set(city, (cityMap.get(city) || 0) + 1)
@@ -73,13 +72,12 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })
         const cities = Array.from(cityMap.entries()).map(([label, count]) => ({
           id: label,
-          label,
-          count
-        })).sort((a, b) => b.count - a.count)
+          label
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
         
         // 국가 옵션 생성
         const countryMap = new Map()
-        hotels?.forEach(hotel => {
+        hotels?.forEach((hotel: any) => {
           const country = hotel.country_ko || hotel.country_en
           if (country) {
             countryMap.set(country, (countryMap.get(country) || 0) + 1)
@@ -87,15 +85,14 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })
         const countries = Array.from(countryMap.entries()).map(([label, count]) => ({
           id: label,
-          label,
-          count
-        })).sort((a, b) => b.count - a.count)
+          label
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
         
         // 브랜드 옵션 생성
         const brandMap = new Map()
-        hotels?.forEach(hotel => {
+        hotels?.forEach((hotel: any) => {
           if (hotel.brand_id) {
-            const brand = brands.find(b => b.brand_id === hotel.brand_id)
+            const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
             if (brand) {
               const brandName = brand.brand_name_en
               brandMap.set(brandName, (brandMap.get(brandName) || 0) + 1)
@@ -104,13 +101,12 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })
         const brandOptions = Array.from(brandMap.entries()).map(([label, count]) => ({
           id: label,
-          label,
-          count
-        })).sort((a, b) => b.count - a.count)
+          label
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
         
         // 체인 옵션 생성
         const chainMap = new Map()
-        hotels?.forEach(hotel => {
+        hotels?.forEach((hotel: any) => {
           const chain = hotel.chain_ko || hotel.chain_en
           if (chain) {
             chainMap.set(chain, (chainMap.get(chain) || 0) + 1)
@@ -118,9 +114,8 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })
         const chains = Array.from(chainMap.entries()).map(([label, count]) => ({
           id: label,
-          label,
-          count
-        })).sort((a, b) => b.count - a.count)
+          label
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
         
         setFilterOptions({
           cities: cities.slice(0, 20), // 상위 20개만
@@ -188,7 +183,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
             <option value="">전체</option>
             {filterOptions.cities.map(city => (
               <option key={city.id} value={city.id}>
-                {city.label} ({city.count})
+                {city.label}
               </option>
             ))}
           </select>
@@ -205,7 +200,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
             <option value="">전체</option>
             {filterOptions.countries.map(country => (
               <option key={country.id} value={country.id}>
-                {country.label} ({country.count})
+                {country.label}
               </option>
             ))}
           </select>
@@ -222,7 +217,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
             <option value="">전체</option>
             {filterOptions.brands.map(brand => (
               <option key={brand.id} value={brand.id}>
-                {brand.label} ({brand.count})
+                {brand.label}
               </option>
             ))}
           </select>
@@ -239,7 +234,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
             <option value="">전체</option>
             {filterOptions.chains.map(chain => (
               <option key={chain.id} value={chain.id}>
-                {chain.label} ({chain.count})
+                {chain.label}
               </option>
             ))}
           </select>

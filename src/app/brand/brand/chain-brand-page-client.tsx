@@ -86,13 +86,11 @@ export function ChainBrandPageClient({
         cities: [],
         brands: allBrands.map(brand => ({
           id: String(brand.brand_id),
-          label: brand.brand_name_en || brand.brand_name_kr,
-          count: 0 // 동적으로 계산됨
+          label: brand.brand_name_en || brand.brand_name_kr
         })),
         chains: allChains.map(chain => ({
           id: String(chain.chain_id),
-          label: chain.chain_name_en || chain.chain_name_kr,
-          count: 0 // 동적으로 계산됨
+          label: chain.chain_name_en || chain.chain_name_kr
         }))
       }}
     />

@@ -48,6 +48,10 @@ export function ChainPageClient({
       currentChainId={String(chainRow.chain_id)}
       onChainChange={handleChainChange}
       serverFilterOptions={serverFilterOptions}
+      // 아티클 섹션 표시
+      showArticles={true}
+      articlesChainId={String(chainRow.chain_id)}
+      articlesChainName={chainRow.chain_name_en}
     />
   )
 }
