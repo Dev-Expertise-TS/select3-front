@@ -78,6 +78,9 @@ export function useImageLoading(options: UseImageLoadingOptions = {}): UseImageL
           onError?.(decodedSrc, new Error('Image does not exist'));
           return;
         }
+      } else {
+        // 존재 여부 확인을 하지 않는 경우, 바로 로딩 상태로 설정
+        updateLoadingState(decodedSrc, 'loading');
       }
 
       // 이미지 preload

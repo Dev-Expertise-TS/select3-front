@@ -50,11 +50,12 @@ export function ImageGallery({
     })
   }, [images])
 
-  // 실제 존재하는 이미지들만 필터링
+  // 실제 존재하는 이미지들만 필터링 (존재 여부 확인이 완료되지 않은 경우도 포함)
   const validImages = useMemo(() => {
     return initiallyValidImages.filter((media) => {
       const exists = imageExistsMap.get(media.media_path)
-      return exists === true // 명시적으로 true인 경우만 포함
+      // 존재 여부 확인이 완료되지 않았거나(true/undefined) 존재하는 경우 포함
+      return exists !== false // false가 아닌 경우 모두 포함
     })
   }, [initiallyValidImages, imageExistsMap])
 
@@ -64,10 +65,16 @@ export function ImageGallery({
 
     const checkImages = async () => {
       console.log(`🔍 ImageGallery: ${initiallyValidImages.length}개 이미지 존재 여부 확인 시작`)
+      console.log(`📋 ImageGallery: 초기 유효 이미지들:`, initiallyValidImages.map(img => ({
+        id: img.id,
+        media_path: img.media_path,
+        alt: img.alt
+      })))
       
       const promises = initiallyValidImages.map(async (media) => {
         try {
           const exists = await checkImageExists(media.media_path)
+          console.log(`🔍 이미지 확인 결과: ${media.media_path} -> ${exists ? '존재' : '없음'}`)
           return { media_path: media.media_path, exists }
         } catch (error) {
           console.warn(`⚠️ 이미지 확인 실패: ${media.media_path}`, error)
@@ -86,10 +93,26 @@ export function ImageGallery({
       
       const existingCount = results.filter(r => r.exists).length
       console.log(`✅ ImageGallery: 이미지 존재 여부 확인 완료 - ${existingCount}/${results.length}개 존재`)
+      console.log(`📋 ImageGallery: 존재 여부 맵:`, Object.fromEntries(newExistsMap))
     }
 
     checkImages()
   }, [isOpen, initiallyValidImages])
+
+  // 디버깅: validImages 상태 로깅
+  useEffect(() => {
+    console.log(`🖼️ ImageGallery: validImages 상태 업데이트`, {
+      totalImages: images.length,
+      initiallyValid: initiallyValidImages.length,
+      validImages: validImages.length,
+      imageExistsMapSize: imageExistsMap.size,
+      validImagesList: validImages.map(img => ({
+        id: img.id,
+        media_path: img.media_path,
+        alt: img.alt
+      }))
+    })
+  }, [images.length, initiallyValidImages.length, validImages.length, imageExistsMap.size, validImages])
 
   // 이미지 상세 보기 열기
   const openImageDetail = (index: number) => {
@@ -255,6 +278,7 @@ export function ImageGallery({
                           quality={85}
                           format="avif"
                           autoPreload={false}
+                          showLoadingState={false}
                         />
                       </div>
                     ))}
@@ -290,6 +314,7 @@ export function ImageGallery({
                       format="avif"
                       priority={true}
                       autoPreload={false}
+                      showLoadingState={false}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -342,6 +367,7 @@ export function ImageGallery({
                             quality={85}
                             format="avif"
                             autoPreload={false}
+                            showLoadingState={false}
                           />
                         </button>
                       ))}

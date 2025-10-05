@@ -8,8 +8,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { createSupabaseImageUrl } from '@/lib/supabase-image-loader';
 import { isValidImageUrl } from '@/lib/image-utils';
-import { ImageErrorBoundary, ImageLoadingState } from './image-error-boundary';
-import { useImageLoading } from '@/hooks/use-image-loading';
+import { ImageErrorBoundary } from './image-error-boundary';
 
 interface SmartImageProps {
   src: string;
@@ -55,25 +54,6 @@ export function SmartImage({
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // 이미지 로딩 훅 사용
-  const {
-    preloadImage,
-    isImageLoading,
-    isImageLoaded: hookImageLoaded,
-    isImageError: hookImageError
-  } = useImageLoading({
-    preloadOnMount: autoPreload,
-    checkExistence: true,
-    onLoad: (loadedSrc) => {
-      setImageLoaded(true);
-      onLoad?.(loadedSrc);
-    },
-    onError: (errorSrc, error) => {
-      setImageError(true);
-      onError?.(errorSrc, error);
-    }
-  });
-
   // 이미지 로드 핸들러
   const handleLoad = useCallback(() => {
     setImageLoaded(true);
@@ -112,12 +92,16 @@ export function SmartImage({
     ? createSupabaseImageUrl(decodedSrc, width, quality, format)
     : decodedSrc;
 
-  // 로딩 상태 결정
-  const isLoading = showLoadingState && (isImageLoading(src) || (!imageLoaded && !imageError));
-  const hasError = imageError || hookImageError(src);
+  // 디버깅 로그
+  console.log(`🖼️ SmartImage 렌더링:`, {
+    src: src.substring(src.lastIndexOf('/') + 1),
+    optimizedSrc: optimizedSrc.substring(optimizedSrc.lastIndexOf('/') + 1),
+    imageLoaded,
+    imageError
+  });
 
   // 에러 상태일 때 fallback 컴포넌트 표시
-  if (hasError) {
+  if (imageError) {
     return fallbackComponent || (
       <div 
         className={cn(
@@ -137,29 +121,23 @@ export function SmartImage({
 
   return (
     <ImageErrorBoundary src={optimizedSrc} alt={alt} className={className}>
-      <ImageLoadingState 
-        isLoading={isLoading} 
-        hasError={hasError}
-        className={className}
-      >
-        <Image
-          src={optimizedSrc}
-          alt={alt}
-          width={fill ? undefined : width}
-          height={fill ? undefined : height}
-          fill={fill}
-          className={cn(className)}
-          priority={priority}
-          quality={quality}
-          sizes={sizes}
-          placeholder={placeholder}
-          blurDataURL={blurDataURL}
-          style={fill ? { objectFit } : undefined}
-          onLoad={handleLoad}
-          onError={handleError}
-          unoptimized={false}
-        />
-      </ImageLoadingState>
+      <Image
+        src={optimizedSrc}
+        alt={alt}
+        width={fill ? undefined : width}
+        height={fill ? undefined : height}
+        fill={fill}
+        className={cn(className)}
+        priority={priority}
+        quality={quality}
+        sizes={sizes}
+        placeholder={placeholder}
+        blurDataURL={blurDataURL}
+        style={fill ? { objectFit } : undefined}
+        onLoad={handleLoad}
+        onError={handleError}
+        unoptimized={false}
+      />
     </ImageErrorBoundary>
   );
 }
