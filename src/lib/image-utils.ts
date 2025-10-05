@@ -98,6 +98,15 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
 // 이미지 URL을 안전하게 처리하는 함수
 export function getSafeImageUrl(url: string | null | undefined, fallback: string = '/placeholder.svg'): string {
   if (isValidImageUrl(url)) {
+    // Supabase Storage URL인 경우 URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+    if (url && url.includes('supabase.co/storage/v1/object/public/')) {
+      const decodedUrl = decodeURIComponent(url);
+      
+      // 디버깅 로그 제거됨
+      
+      return decodedUrl;
+    }
+    
     return url!
   }
   

@@ -503,17 +503,13 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   const [imageLoadingStates, setImageLoadingStates] = useState<Map<string, 'loading' | 'loaded' | 'error'>>(new Map())
 
   // ===== 유틸리티 함수들 =====
-  const preloadImage = useCallback((src: string) => {
+  const preloadImage = useCallback(async (src: string) => {
     // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
     const decodedSrc = src.includes('supabase.co/storage/v1/object/public/') 
       ? decodeURIComponent(src) 
       : src;
     
-    console.log('🔄 preloadImage URL 처리:', {
-      originalSrc: src,
-      decodedSrc: decodedSrc,
-      hasSpecialChars: src !== decodedSrc
-    });
+    // 디버깅 로그 제거됨
     
     // 현재 상태를 함수 내부에서 확인하여 의존성 제거
     setPreloadedImages(prev => {
@@ -522,27 +518,39 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       // 로딩 상태 설정
       setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loading'))
       
-      // 이미지 로드 시작
-      const img = new window.Image()
-      img.onload = () => {
-        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
-        console.log(`✅ 이미지 preload 완료: ${decodedSrc}`)
-      }
-      img.onerror = (error) => {
-        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
+      // 이미지 존재 여부를 먼저 확인 (캐싱된 결과 사용)
+      import('@/lib/image-cache').then(({ checkImageExists }) => {
+        return checkImageExists(decodedSrc);
+      }).then((exists) => {
+        if (!exists) {
+          // 이미지가 존재하지 않으면 preload하지 않음
+          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
+          console.log(`⏭️ 이미지 존재하지 않음, preload 건너뜀: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`);
+          return;
+        }
         
-        // 이미지 preload 실패는 페이지 기능에 영향을 주지 않으므로 warn 레벨로 처리
-        console.warn(`⚠️ 이미지 preload 실패 (페이지 기능에는 영향 없음): ${decodedSrc}`, {
-          error: error,
-          errorType: typeof error,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-          imageSrc: decodedSrc,
-          timestamp: new Date().toISOString(),
-          note: '이미지 preload 실패는 페이지 기능에 영향을 주지 않습니다. 이미지는 필요할 때 lazy loading됩니다.'
-        })
-      }
-      img.src = decodedSrc
+        // 이미지가 존재하면 preload 진행
+        const img = new window.Image()
+        img.onload = () => {
+          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
+          console.log(`✅ 이미지 preload 완료: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
+        }
+        img.onerror = (error) => {
+          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
+          
+          console.warn(`⚠️ 이미지 preload 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`, {
+            error: error,
+            errorType: typeof error,
+            errorMessage: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString(),
+            note: '이미지 preload 실패는 페이지 기능에 영향을 주지 않습니다.'
+          })
+        }
+        img.src = decodedSrc
+      }).catch((error) => {
+        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
+        console.warn(`⚠️ 이미지 존재 여부 확인 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`, error);
+      });
       
       return new Set([...prev, decodedSrc])
     })
@@ -708,51 +716,69 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   
   // 이미지 데이터 우선순위: Supabase Storage 모든 이미지 > 기본 Storage 이미지 > select_hotels 이미지 > hotel_media
   const displayImages = useMemo(() => {
-    console.log('🔄 displayImages 계산 중...', {
-      allStorageImagesLength: allStorageImagesData?.images.length || 0,
+    console.log('🔄 displayImages 계산 시작...', {
+      allStorageImagesData: allStorageImagesData,
+      allStorageImagesLength: allStorageImagesData?.images?.length || 0,
       storageImagesLength: storageImages.length,
       hotelImagesLength: hotelImages.length,
-      hotelMediaLength: hotelMedia.length
+      hotelMediaLength: hotelMedia.length,
+      loadingAllImages: loadingAllImages,
+      allImagesError: allImagesError
     });
 
-    // 1순위: Supabase Storage의 모든 이미지
-    if (allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
-      console.log('✅ Supabase Storage 모든 이미지 사용');
+    // 1순위: Supabase Storage의 모든 이미지 (로딩 중이 아니고 에러가 없을 때)
+    if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
+      console.log('✅ Supabase Storage 모든 이미지 사용 (우선순위 1)');
       const convertedImages = allStorageImagesData.images.map((img) => ({
         id: img.id,
-        media_path: img.url,
+        media_path: img.media_path || img.url, // API 응답에서 media_path 우선, 없으면 url 사용
         alt: img.alt,
         isMain: img.isMain,
         sequence: img.sequence,
         filename: img.filename
       }));
-      console.log('📋 변환된 모든 Storage 이미지들:', convertedImages);
+      console.log('📋 변환된 모든 Storage 이미지들:', {
+        count: convertedImages.length,
+        images: convertedImages.map(img => ({ id: img.id, media_path: img.media_path, sequence: img.sequence }))
+      });
       return convertedImages;
+    }
+
+    // 1순위 대기 중이거나 실패한 경우 로그
+    if (loadingAllImages) {
+      console.log('⏳ Supabase Storage 모든 이미지 로딩 중...');
+    } else if (allImagesError) {
+      console.log('❌ Supabase Storage 모든 이미지 에러:', allImagesError);
+    } else if (!allStorageImagesData?.images || allStorageImagesData.images.length === 0) {
+      console.log('⚠️ Supabase Storage 모든 이미지가 비어있음');
     }
 
     // 2순위: 기본 Supabase Storage 이미지 (5개)
     if (storageImages.length > 0) {
-      console.log('✅ 기본 Supabase Storage 이미지 사용');
+      console.log('✅ 기본 Supabase Storage 이미지 사용 (우선순위 2)');
       const convertedImages = storageImages.map((url, index) => ({
         id: `storage-${index}`,
         media_path: url,
         alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
         isMain: index === 0
       }));
-      console.log('📋 변환된 기본 Storage 이미지들:', convertedImages);
+      console.log('📋 변환된 기본 Storage 이미지들:', {
+        count: convertedImages.length,
+        images: convertedImages.map(img => ({ id: img.id, media_path: img.media_path }))
+      });
       return convertedImages;
     }
     
     // 3순위: select_hotels 이미지
     if (hotelImages.length > 0) {
-      console.log('✅ select_hotels 이미지 사용');
+      console.log('✅ select_hotels 이미지 사용 (우선순위 3)');
       return hotelImages;
     }
     
     // 4순위: hotel_media 이미지
-    console.log('✅ hotel_media 이미지 사용');
+    console.log('✅ hotel_media 이미지 사용 (우선순위 4)');
     return hotelMedia;
-  }, [allStorageImagesData, storageImages, hotelImages, hotelMedia, hotel]);
+  }, [allStorageImagesData, storageImages, hotelImages, hotelMedia, hotel, loadingAllImages, allImagesError]);
   
   // 이미지 preloading useEffect (개선된 버전)
   useEffect(() => {

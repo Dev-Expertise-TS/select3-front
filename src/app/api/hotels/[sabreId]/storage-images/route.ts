@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { generateHotelImageUrl } from '@/lib/supabase-image-loader';
 
 export async function GET(
   request: NextRequest,
@@ -41,45 +42,33 @@ export async function GET(
       sabreId: parseInt(sabreId)
     });
 
-    // 실제 존재하는 이미지만 확인하여 반환
+    // 이전 방식: 모든 시퀀스에 대해 URL 생성 (존재 여부 확인은 클라이언트에서)
     const images = [];
     const maxSequence = 11; // 최대 시퀀스 번호
     
     for (let sequence = 1; sequence <= maxSequence; sequence++) {
-      const fileName = `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`;
-      const imageUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`;
+      // 기본 generateHotelImageUrl 사용 (서버사이드에서 안전)
+      const imageUrl = generateHotelImageUrl(hotel.slug, parseInt(sabreId), sequence);
       
-      try {
-        // 이미지 존재 여부 확인 (HEAD 요청)
-        const response = await fetch(imageUrl, { method: 'HEAD' });
+      if (imageUrl) {
+        // URL에서 파일명 추출
+        const fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
         
-        if (response.ok) {
-          console.log(`✅ 이미지 존재 확인: ${fileName}`);
-          images.push({
-            id: `storage-${sequence}`,
-            filename: fileName,
-            sequence: sequence,
-            media_path: imageUrl, // OptimizedImage에서 사용할 원본 URL
-            url: imageUrl, // 호환성을 위해 유지
-            alt: `${hotel.property_name_ko} 이미지 ${sequence}`,
-            isMain: sequence === 1,
-            size: 0,
-            lastModified: new Date().toISOString()
-          });
-        } else {
-          console.log(`❌ 이미지 없음 (${response.status}): ${fileName}`);
-          // 이미지가 없으면 더 이상 시퀀스를 확인하지 않음 (연속된 시퀀스라고 가정)
-          if (sequence > 1) {
-            console.log(`🛑 시퀀스 ${sequence}에서 이미지 없음, 더 이상 확인하지 않음`);
-            break;
-          }
-        }
-      } catch (error) {
-        console.warn(`⚠️ 이미지 확인 오류: ${fileName}`, error);
-        // 네트워크 오류 등으로 확인할 수 없는 경우도 더 이상 확인하지 않음
-        if (sequence > 1) {
-          break;
-        }
+        images.push({
+          id: `storage-${sequence}`,
+          filename: fileName,
+          sequence: sequence,
+          media_path: imageUrl, // OptimizedImage에서 사용할 원본 URL
+          url: imageUrl, // 호환성을 위해 유지
+          alt: `${hotel.property_name_ko} 이미지 ${sequence}`,
+          isMain: sequence === 1,
+          size: 0,
+          lastModified: new Date().toISOString()
+        });
+        
+        console.log(`✅ 이미지 URL 생성: ${fileName}`);
+      } else {
+        console.log(`⚠️ 이미지 URL 생성 실패: 시퀀스 ${sequence}`);
       }
     }
 

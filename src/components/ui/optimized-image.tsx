@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { createSupabaseImageUrl } from '@/lib/supabase-image-loader';
 import { cn } from '@/lib/utils';
+import { ImageErrorBoundary, ImageLoadingState } from './image-error-boundary';
 
 interface OptimizedImageProps {
   src: string;
@@ -16,6 +17,9 @@ interface OptimizedImageProps {
   blurDataURL?: string;
   fill?: boolean;
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  loading?: 'loading' | 'loaded' | 'error';
+  onError?: () => void;
+  onLoad?: () => void;
 }
 
 export function OptimizedImage({
@@ -32,10 +36,12 @@ export function OptimizedImage({
   blurDataURL,
   fill = false,
   objectFit = 'cover',
+  loading,
+  onError,
+  onLoad,
 }: OptimizedImageProps) {
   // src가 유효하지 않은 경우 렌더링하지 않음
   if (!src || src.trim() === '') {
-    console.warn('OptimizedImage: src가 비어있거나 유효하지 않습니다', { src, alt });
     return (
       <div 
         className={cn(
@@ -59,35 +65,39 @@ export function OptimizedImage({
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
   const decodedSrc = isSupabaseImage ? decodeURIComponent(src) : src;
   
-  console.log('🖼️ OptimizedImage URL 처리:', {
-    originalSrc: src,
-    decodedSrc: decodedSrc,
-    hasSpecialChars: src !== decodedSrc,
-    isSupabaseImage,
-    alt
-  });
+  // 디버깅 로그 제거됨
   
   const optimizedSrc = isSupabaseImage 
     ? createSupabaseImageUrl(decodedSrc, width, quality, format)
     : decodedSrc;
   
   return (
-    <Image
-      src={optimizedSrc}
-      alt={alt}
-      width={fill ? undefined : width}
-      height={fill ? undefined : height}
-      fill={fill}
-      className={cn(className)}
-      priority={priority}
-      quality={quality}
-      sizes={sizes}
-      placeholder={placeholder}
-      blurDataURL={blurDataURL}
-      style={fill ? { objectFit } : undefined}
-      // AVIF/WebP 최적화를 위한 추가 props
-      unoptimized={false}
-    />
+    <ImageErrorBoundary src={optimizedSrc} alt={alt} className={className}>
+      <ImageLoadingState 
+        isLoading={loading === 'loading'} 
+        hasError={loading === 'error'}
+        className={className}
+      >
+        <Image
+          src={optimizedSrc}
+          alt={alt}
+          width={fill ? undefined : width}
+          height={fill ? undefined : height}
+          fill={fill}
+          className={cn(className)}
+          priority={priority}
+          quality={quality}
+          sizes={sizes}
+          placeholder={placeholder}
+          blurDataURL={blurDataURL}
+          style={fill ? { objectFit } : undefined}
+          onError={onError}
+          onLoad={onLoad}
+          // AVIF/WebP 최적화를 위한 추가 props
+          unoptimized={false}
+        />
+      </ImageLoadingState>
+    </ImageErrorBoundary>
   );
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { Star, MapPin } from "lucide-react"
-import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+// import { handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { HotelHeroImage, HotelThumbnail, OptimizedImage } from "@/components/ui/optimized-image"
 
 interface ImageItem {
@@ -117,7 +117,7 @@ export function HotelInfo({
                       return null
                     })()}
                     <HotelHeroImage
-                      src={getSafeImageUrl(images[selectedImage]?.media_path || images[0]?.media_path)}
+                      src={images[selectedImage]?.media_path || images[0]?.media_path}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                       className="object-cover transition-opacity duration-300"
                       width={800}
@@ -176,7 +176,7 @@ export function HotelInfo({
                             </div>
                           ) : (
                             <HotelThumbnail
-                              src={getSafeImageUrl(media.media_path)}
+                              src={media.media_path}
                               alt={media.alt || '썸네일'}
                               className="object-cover"
                               onClick={() => onImageSelect(index)}
@@ -231,7 +231,7 @@ export function HotelInfo({
                       return null
                     })()}
                     <HotelHeroImage
-                      src={getSafeImageUrl(images[selectedImage]?.media_path || images[0]?.media_path)}
+                      src={images[selectedImage]?.media_path || images[0]?.media_path}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                       width={1920}
                       height={1080}
@@ -280,13 +280,16 @@ export function HotelInfo({
                           )}
                           
                           <OptimizedImage
-                            src={getSafeImageUrl(media.media_path)}
+                            src={media.media_path}
                             alt={media.alt || `Gallery ${index + 2}`}
                             fill
                             className="object-cover transition-opacity duration-300"
                             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
                             quality={85}
                             format="webp"
+                            loading={isLoading ? 'loading' : hasError ? 'error' : undefined}
+                            // onLoad={() => handleImageLoad(media.media_path)}
+                            // onError={handleImageError}
                           />
                         </div>
                       )

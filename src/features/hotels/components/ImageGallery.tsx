@@ -1,11 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { X, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
-import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { Button } from "@/components/ui/button"
 import { OptimizedImage } from "@/components/ui/optimized-image"
+import { checkImageExists } from "@/lib/image-cache"
+import { isValidImageUrl } from "@/lib/image-utils"
 
 interface ImageItem {
   id: string
@@ -37,6 +38,59 @@ export function ImageGallery({
 }: ImageGalleryProps) {
   const [showImageDetail, setShowImageDetail] = useState(false)
   const [selectedDetailImage, setSelectedDetailImage] = useState(0)
+  const [imageExistsMap, setImageExistsMap] = useState<Map<string, boolean>>(new Map())
+
+  // 기본 유효성 검사로 필터링
+  const initiallyValidImages = useMemo(() => {
+    return images.filter((media) => {
+      return media.media_path && 
+             media.media_path.trim() !== '' && 
+             !media.media_path.includes('placeholder') &&
+             !media.media_path.includes('undefined') &&
+             isValidImageUrl(media.media_path);
+    })
+  }, [images])
+
+  // 실제 존재하는 이미지들만 필터링
+  const validImages = useMemo(() => {
+    return initiallyValidImages.filter((media) => {
+      const exists = imageExistsMap.get(media.media_path)
+      return exists === true // 명시적으로 true인 경우만 포함
+    })
+  }, [initiallyValidImages, imageExistsMap])
+
+  // 이미지 존재 여부 확인
+  useEffect(() => {
+    if (!isOpen || initiallyValidImages.length === 0) return
+
+    const checkImages = async () => {
+      console.log(`🔍 ImageGallery: ${initiallyValidImages.length}개 이미지 존재 여부 확인 시작`)
+      
+      const promises = initiallyValidImages.map(async (media) => {
+        try {
+          const exists = await checkImageExists(media.media_path)
+          return { media_path: media.media_path, exists }
+        } catch (error) {
+          console.warn(`⚠️ 이미지 확인 실패: ${media.media_path}`, error)
+          return { media_path: media.media_path, exists: false }
+        }
+      })
+
+      const results = await Promise.all(promises)
+      const newExistsMap = new Map<string, boolean>()
+      
+      results.forEach(({ media_path, exists }) => {
+        newExistsMap.set(media_path, exists)
+      })
+
+      setImageExistsMap(newExistsMap)
+      
+      const existingCount = results.filter(r => r.exists).length
+      console.log(`✅ ImageGallery: 이미지 존재 여부 확인 완료 - ${existingCount}/${results.length}개 존재`)
+    }
+
+    checkImages()
+  }, [isOpen, initiallyValidImages])
 
   // 이미지 상세 보기 열기
   const openImageDetail = (index: number) => {
@@ -51,12 +105,12 @@ export function ImageGallery({
 
   // 이전 이미지
   const prevImage = () => {
-    setSelectedDetailImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+    setSelectedDetailImage((prev) => (prev === 0 ? validImages.length - 1 : prev - 1))
   }
 
   // 다음 이미지
   const nextImage = () => {
-    setSelectedDetailImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    setSelectedDetailImage((prev) => (prev === validImages.length - 1 ? 0 : prev + 1))
   }
 
   // 키보드 이벤트 처리
@@ -81,20 +135,7 @@ export function ImageGallery({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, showImageDetail, onClose])
 
-  // 디버깅: 전달받은 이미지 정보 로깅
-  useEffect(() => {
-    if (isOpen) {
-      console.log('🖼️ ImageGallery 열림:', {
-        totalImages: images.length,
-        images: images.map((img, idx) => ({
-          index: idx,
-          id: img.id,
-          media_path: img.media_path,
-          hasValidPath: !!(img.media_path && img.media_path.trim() !== '')
-        }))
-      });
-    }
-  }, [isOpen, images]);
+  // 디버깅 로그 제거됨
 
   if (!isOpen) return null
 
@@ -173,38 +214,50 @@ export function ImageGallery({
                   </div>
                 )}
 
-                {/* 이미지 그리드 */}
-                {!loading && !error && images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4">
-                    {images.filter((media) => {
-                      // 유효한 이미지 경로가 있는 것만 필터링
-                      return media.media_path && 
-                             media.media_path.trim() !== '' && 
-                             !media.media_path.includes('placeholder') &&
-                             !media.media_path.includes('undefined');
-                    }).map((media, index) => {
-                      console.log(`🖼️ ImageGallery 렌더링: ${media.media_path}`);
+                {/* 이미지 존재 여부 확인 중 */}
+                {!loading && !error && images.length > 0 && initiallyValidImages.length > 0 && validImages.length === 0 && imageExistsMap.size === 0 && (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <div className="text-gray-600">이미지를 확인하는 중...</div>
+                    </div>
+                  </div>
+                )}
 
-                      return (
-                        <div 
-                          key={media.id} 
-                          className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
-                          onClick={() => openImageDetail(index)}
-                        >
-                          <OptimizedImage
-                            src={getSafeImageUrl(media.media_path)}
-                            alt={media.alt || `Gallery ${index + 1}`}
-                            fill
-                            className="object-cover transition-all duration-300 group-hover:scale-105"
-                            placeholder="blur"
-                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                            quality={85}
-                            format="avif"
-                          />
-                        </div>
-                      );
-                    })}
+                {/* 존재하지 않는 이미지들만 있을 때 */}
+                {!loading && !error && images.length > 0 && initiallyValidImages.length > 0 && validImages.length === 0 && imageExistsMap.size > 0 && (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <div className="text-gray-400 text-4xl mb-4">🖼️</div>
+                      <div className="text-gray-600 font-medium mb-2">표시할 이미지가 없습니다</div>
+                      <div className="text-gray-500 text-sm">유효한 호텔 이미지를 찾을 수 없습니다</div>
+                      <div className="text-gray-400 text-xs mt-2">
+                        확인된 이미지: {initiallyValidImages.length}개 중 {[...imageExistsMap.values()].filter(Boolean).length}개 존재
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 이미지 그리드 */}
+                {!loading && !error && validImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-4">
+                    {validImages.map((media, index) => (
+                      <div 
+                        key={media.id} 
+                        className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
+                        onClick={() => openImageDetail(index)}
+                      >
+                        <OptimizedImage
+                          src={media.media_path}
+                          alt={media.alt || `Gallery ${index + 1}`}
+                          fill
+                          className="object-cover transition-all duration-300 group-hover:scale-105"
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                          quality={85}
+                          format="avif"
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
@@ -221,16 +274,16 @@ export function ImageGallery({
                     <span>갤러리로 돌아가기</span>
                   </button>
                   <div className="text-sm text-gray-500">
-                    {selectedDetailImage + 1} / {images.length}
+                    {selectedDetailImage + 1} / {validImages.length}
                   </div>
                 </div>
 
                 {/* Main Image */}
                 <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-100">
-                  {images.length > 0 ? (
+                  {validImages.length > 0 ? (
                     <OptimizedImage
-                      src={getSafeImageUrl(images[selectedDetailImage]?.media_path)}
-                      alt={images[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
+                      src={validImages[selectedDetailImage]?.media_path}
+                      alt={validImages[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
                       fill
                       className="object-contain"
                       quality={90}
@@ -248,7 +301,7 @@ export function ImageGallery({
                 </div>
 
                 {/* Navigation Controls */}
-                {images.length > 1 && (
+                {validImages.length > 1 && (
                   <div className="flex items-center justify-between mt-4">
                     <button
                       onClick={prevImage}
@@ -268,45 +321,28 @@ export function ImageGallery({
                 )}
 
                 {/* Thumbnail Navigation */}
-                {images.length > 1 && (
+                {validImages.length > 1 && (
                   <div className="mt-4">
                     <div className="flex gap-2 overflow-x-auto pb-2">
-                      {images.map((media, index) => {
-                        // 빈 이미지 경로 확인
-                        if (!media.media_path || media.media_path.trim() === '') {
-                          return (
-                            <button
-                              key={media.id || index}
-                              onClick={() => setSelectedDetailImage(index)}
-                              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all bg-gray-200 flex items-center justify-center ${
-                                index === selectedDetailImage ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="text-center text-gray-400">
-                                <div className="text-lg">📷</div>
-                              </div>
-                            </button>
-                          );
-                        }
-
-                        return (
-                          <button
-                            key={media.id}
-                            onClick={() => setSelectedDetailImage(index)}
-                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                              index === selectedDetailImage ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <Image
-                              src={media.media_path}
-                              alt={media.alt || `Thumbnail ${index + 1}`}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        );
-                      })}
+                      {validImages.map((media, index) => (
+                        <button
+                          key={media.id}
+                          onClick={() => setSelectedDetailImage(index)}
+                          className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                            index === selectedDetailImage ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <OptimizedImage
+                            src={media.media_path}
+                            alt={media.alt || `Thumbnail ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                            quality={85}
+                            format="avif"
+                          />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}

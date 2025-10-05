@@ -130,9 +130,27 @@ export default function DebugPage() {
             </Link>
             <Link 
               href="/test-image-exists" 
-              className="inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors"
+              className="inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors mr-2"
             >
               이미지 존재 확인
+            </Link>
+            <Link 
+              href="/debug-grand-hyatt-images" 
+              className="inline-block bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 transition-colors mr-2"
+            >
+              Grand Hyatt Taipei 디버깅
+            </Link>
+            <Link 
+              href="/debug-gallery-images" 
+              className="inline-block bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 transition-colors mr-2"
+            >
+              갤러리 이미지 디버깅
+            </Link>
+            <Link 
+              href="/test-storage-api" 
+              className="inline-block bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors"
+            >
+              Storage API 테스트
             </Link>
           </div>
         </div>

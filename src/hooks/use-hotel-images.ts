@@ -30,27 +30,20 @@ export function useHotelImages(
 
     const { count = 5, ...imageOptions } = options || {};
     
-    // 실제 존재하는 이미지만 생성하도록 수정
-    // API에서 이미 존재 여부를 확인했으므로, 여기서는 기본적으로 빈 배열 반환
-    // 필요시 API 결과를 기반으로 이미지 URL 생성
-    console.log('⚠️ useHotelImages: API에서 실제 존재하는 이미지만 사용하도록 변경됨');
-    const images: string[] = [];
-    console.log('📋 useHotelImages 빈 배열 반환 (API에서 실제 존재하는 이미지 사용):', images);
+    // 이전 방식: generateHotelImageUrls 사용
+    const images = generateHotelImageUrls(hotelSlug, sabreId, count, imageOptions);
+    console.log('📋 useHotelImages 이미지 URL들 생성:', { count: images.length, images });
     
-    // API에서 실제 존재하는 이미지만 사용하므로 null 반환
     const getImageUrl = (sequence: number, customOptions?: typeof imageOptions) => {
-      console.log('⚠️ getImageUrl: API에서 실제 존재하는 이미지만 사용하도록 변경됨');
-      return null;
+      return generateHotelImageUrl(hotelSlug, sabreId, sequence, customOptions);
     };
     
     const getHeroImageUrl = (customOptions?: typeof imageOptions) => {
-      console.log('⚠️ getHeroImageUrl: API에서 실제 존재하는 이미지만 사용하도록 변경됨');
-      return null;
+      return generateHotelImageUrl(hotelSlug, sabreId, 1, customOptions);
     };
     
     const getThumbnailUrl = (sequence: number, customOptions?: typeof imageOptions) => {
-      console.log('⚠️ getThumbnailUrl: API에서 실제 존재하는 이미지만 사용하도록 변경됨');
-      return null;
+      return generateHotelImageUrl(hotelSlug, sabreId, sequence, customOptions);
     };
 
     return {

@@ -18,25 +18,33 @@ export const createSupabaseImageUrl = (
   }
 
   try {
-    const url = new URL(src);
+    // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+    const decodedSrc = decodeURIComponent(src);
     
-    // 이미지 변환 파라미터 추가
+  // 디버깅 로그 제거됨
+    
+    // URL 생성 시 인코딩 방지를 위해 수동으로 파라미터 추가
+    // 기존 쿼리 파라미터가 있는지 확인
+    const [baseUrl, existingQuery] = decodedSrc.split('?');
+    const params = new URLSearchParams(existingQuery || '');
+    
+    // 이미지 변환 파라미터 추가 (기존 파라미터 덮어쓰기)
     if (width) {
-      url.searchParams.set('width', String(width));
+      params.set('width', String(width));
     }
-    url.searchParams.set('quality', String(quality));
+    params.set('quality', String(quality));
     
     // 포맷 설정 (AVIF 우선, WebP 대체)
     if (format === 'avif') {
-      url.searchParams.set('format', 'avif');
+      params.set('format', 'avif');
     } else if (format === 'webp') {
-      url.searchParams.set('format', 'webp');
+      params.set('format', 'webp');
     } else {
       // auto: AVIF 지원 브라우저는 AVIF, 아니면 WebP
-      url.searchParams.set('format', 'auto');
+      params.set('format', 'auto');
     }
 
-    return url.toString();
+    return `${baseUrl}?${params.toString()}`;
   } catch (error) {
     console.warn('Supabase 이미지 URL 생성 에러:', error);
     return src;
@@ -76,8 +84,8 @@ export const generateHotelImageUrl = (
     return null;
   }
 
-  // 유효한 시퀀스 번호 검증
-  if (sequence < 1 || sequence > 10) {
+  // 유효한 시퀀스 번호 검증 (11까지 확장)
+  if (sequence < 1 || sequence > 11) {
     console.warn('generateHotelImageUrl: 유효하지 않은 시퀀스 번호', { sequence });
     return null;
   }
@@ -85,13 +93,7 @@ export const generateHotelImageUrl = (
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
   const decodedSlug = decodeURIComponent(hotelSlug);
   
-  console.log('🖼️ 이미지 URL 생성:', {
-    originalSlug: hotelSlug,
-    decodedSlug: decodedSlug,
-    hasSpecialChars: hotelSlug !== decodedSlug,
-    sabreId,
-    sequence
-  });
+  // 디버깅 로그 제거됨
 
   const { width, height, quality = 85, format = 'auto' } = options || {};
   
@@ -144,4 +146,67 @@ export const generateHotelImageUrls = (
     }
   }
   return urls;
+};
+
+/**
+ * 다양한 파일명 패턴으로 호텔 이미지 URL 생성 시도
+ */
+export const generateHotelImageUrlWithPatterns = async (
+  hotelSlug: string | undefined | null,
+  sabreId: number | undefined | null,
+  sequence: number = 1,
+  options?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    format?: 'webp' | 'avif' | 'auto';
+  }
+): Promise<string | null> => {
+  if (!hotelSlug || !sabreId) {
+    return null;
+  }
+
+  const decodedSlug = decodeURIComponent(hotelSlug);
+  
+  // 다양한 파일명 패턴들
+  const patterns = [
+    `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // 기본 패턴
+    `${decodedSlug}-${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // 하이픈 패턴
+    `${decodedSlug}_${sabreId}_${sequence}_1600w.avif`, // 패딩 없는 패턴
+    `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}.avif`, // width 없는 패턴
+    `${decodedSlug}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // sabre_id 없는 패턴
+  ];
+
+  // 각 패턴을 시도해서 존재하는 이미지 찾기
+  for (const fileName of patterns) {
+    const imagePath = `public/${decodedSlug}/${fileName}`;
+    const baseUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${imagePath}`;
+    
+    try {
+      // 이미지 존재 여부 확인
+      const response = await fetch(baseUrl, { method: 'HEAD' });
+      if (response.ok) {
+        console.log(`✅ 이미지 패턴 발견: ${fileName}`);
+        
+        const { width, height, quality = 85, format = 'auto' } = options || {};
+        
+        if (width || height || quality !== 85 || format !== 'auto') {
+          return createSupabaseImageUrl(
+            baseUrl,
+            width || 1600,
+            quality,
+            format
+          );
+        }
+        
+        return baseUrl;
+      }
+    } catch (error) {
+      // 계속 다음 패턴 시도
+      continue;
+    }
+  }
+  
+  console.warn(`❌ 모든 패턴에서 이미지를 찾을 수 없음: ${hotelSlug}, ${sabreId}, ${sequence}`);
+  return null;
 };
