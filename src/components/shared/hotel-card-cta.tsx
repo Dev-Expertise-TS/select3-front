@@ -1,11 +1,12 @@
 'use client'
 
-import Image from "next/image"
 import Link from "next/link"
 import { MapPin, Coffee, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { useState, useEffect, useCallback, useRef } from "react"
+import { OptimizedImage } from "@/components/ui/optimized-image"
+import { generateHotelImageUrl } from "@/lib/supabase-image-loader"
 
 // CTA용 호텔 데이터 타입 정의
 export interface HotelCardCtaData {
@@ -121,20 +122,39 @@ export function HotelCardCta({
             "aspect-[4/3] sm:aspect-auto sm:min-h-[200px]",
             imageClassName
           )}>
-            <Image
-              src={getSafeImageUrl(hotel.image)}
-              alt={`${hotel.property_name_ko} - ${hotel.city}`}
-              fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
-              priority={variant === 'featured' || variant === 'promotion'}
-              quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
-              placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxH/xAAAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-              loading={variant === 'featured' || variant === 'promotion' ? 'eager' : 'lazy'}
-              onLoad={() => handleImageLoad(hotel.image)}
-              onError={handleImageError}
-            />
+            {/* Supabase Storage 이미지 우선 사용, 없으면 기존 이미지 사용 */}
+            {hotel.slug ? (
+              <OptimizedImage
+                src={generateHotelImageUrl(hotel.slug, hotel.sabre_id, 1, {
+                  width: 600,
+                  height: 400,
+                  quality: variant === 'featured' || variant === 'promotion' ? 85 : 75,
+                  format: 'webp'
+                }) || getSafeImageUrl(hotel.image)}
+                alt={`${hotel.property_name_ko} - ${hotel.city}`}
+                fill
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                priority={variant === 'featured' || variant === 'promotion'}
+                quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
+                format="webp"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxH/xAAAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              />
+            ) : (
+              <OptimizedImage
+                src={getSafeImageUrl(hotel.image)}
+                alt={`${hotel.property_name_ko} - ${hotel.city}`}
+                fill
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                priority={variant === 'featured' || variant === 'promotion'}
+                quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
+                format="webp"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxH/xAAAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              />
+            )}
             
             {/* 이미지 오버레이 */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />

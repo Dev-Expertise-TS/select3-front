@@ -1,0 +1,1 @@
+export { HotelNotFound } from './HotelNotFound';

@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
 // React
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 
 // External libraries
 import { useQuery } from "@tanstack/react-query"
@@ -24,11 +24,15 @@ import { RoomRatesTable } from "./components/RoomRatesTable"
 
 // Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
+import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
 
 // Utils & Services
 import { supabase } from "@/lib/supabase"
 import { processHotelImages, getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+import { useHotelImages } from "@/hooks/use-hotel-images"
+import { useHotelStorageImages } from "@/hooks/use-hotel-storage-images"
+import { HotelHeroImage, HotelThumbnail } from "@/components/ui/optimized-image"
 
 // Types
 interface HotelDetailProps {
@@ -434,6 +438,15 @@ interface SearchDates {
 export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   // URL 쿼리 파라미터
   const searchParams = useSearchParams()
+  
+  // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+  const decodedSlug = decodeURIComponent(hotelSlug)
+  
+  console.log('🏨 HotelDetail 컴포넌트:', {
+    originalSlug: hotelSlug,
+    decodedSlug: decodedSlug,
+    hasSpecialChars: hotelSlug !== decodedSlug
+  })
 
   // UI 상태 관리
   const [selectedImage, setSelectedImage] = useState(0)
@@ -490,33 +503,72 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   const [imageLoadingStates, setImageLoadingStates] = useState<Map<string, 'loading' | 'loaded' | 'error'>>(new Map())
 
   // ===== 유틸리티 함수들 =====
-  const preloadImage = (src: string) => {
-    if (preloadedImages.has(src)) return Promise.resolve(null)
+  const preloadImage = useCallback((src: string) => {
+    // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+    const decodedSrc = src.includes('supabase.co/storage/v1/object/public/') 
+      ? decodeURIComponent(src) 
+      : src;
     
-    // 로딩 상태 설정
-    setImageLoadingStates(prev => new Map(prev).set(src, 'loading'))
+    console.log('🔄 preloadImage URL 처리:', {
+      originalSrc: src,
+      decodedSrc: decodedSrc,
+      hasSpecialChars: src !== decodedSrc
+    });
     
-    return new Promise<HTMLImageElement | null>((resolve, reject) => {
+    // 현재 상태를 함수 내부에서 확인하여 의존성 제거
+    setPreloadedImages(prev => {
+      if (prev.has(decodedSrc)) return prev
+      
+      // 로딩 상태 설정
+      setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loading'))
+      
+      // 이미지 로드 시작
       const img = new window.Image()
       img.onload = () => {
-        setPreloadedImages(prev => new Set([...prev, src]))
-        setImageLoadingStates(prev => new Map(prev).set(src, 'loaded'))
-        console.log(`✅ 이미지 preload 완료: ${src}`)
-        resolve(img)
+        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
+        console.log(`✅ 이미지 preload 완료: ${decodedSrc}`)
       }
       img.onerror = (error) => {
-        setImageLoadingStates(prev => new Map(prev).set(src, 'error'))
-        console.error(`❌ 이미지 preload 실패: ${src}`, error)
-        reject(error)
+        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
+        
+        // 이미지 preload 실패는 페이지 기능에 영향을 주지 않으므로 warn 레벨로 처리
+        console.warn(`⚠️ 이미지 preload 실패 (페이지 기능에는 영향 없음): ${decodedSrc}`, {
+          error: error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          imageSrc: decodedSrc,
+          timestamp: new Date().toISOString(),
+          note: '이미지 preload 실패는 페이지 기능에 영향을 주지 않습니다. 이미지는 필요할 때 lazy loading됩니다.'
+        })
       }
-      img.src = src
+      img.src = decodedSrc
+      
+      return new Set([...prev, decodedSrc])
     })
-  }
+    
+    return Promise.resolve(null)
+  }, []) // 의존성 완전 제거
 
-  // 이미지 로딩 상태 확인
-  const isImageLoading = (src: string) => imageLoadingStates.get(src) === 'loading'
-  const isImageLoaded = (src: string) => imageLoadingStates.get(src) === 'loaded'
-  const isImageError = (src: string) => imageLoadingStates.get(src) === 'error'
+  // 이미지 로딩 상태 확인 (디코딩된 URL 사용)
+  const isImageLoading = (src: string) => {
+    const decodedSrc = src.includes('supabase.co/storage/v1/object/public/') 
+      ? decodeURIComponent(src) 
+      : src;
+    return imageLoadingStates.get(decodedSrc) === 'loading';
+  }
+  const isImageLoaded = (src: string) => {
+    const decodedSrc = src.includes('supabase.co/storage/v1/object/public/') 
+      ? decodeURIComponent(src) 
+      : src;
+    return imageLoadingStates.get(decodedSrc) === 'loaded';
+  }
+  const isImageError = (src: string) => {
+    const decodedSrc = src.includes('supabase.co/storage/v1/object/public/') 
+      ? decodeURIComponent(src) 
+      : src;
+    return imageLoadingStates.get(decodedSrc) === 'error';
+  }
 
   
   // URL에서 sabreId 읽기
@@ -526,6 +578,20 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   const { data: hotelBySlug, isLoading, error } = useHotelBySlug(hotelSlug)
   const { data: hotelById } = useHotel(sabreIdParam)
   const hotel = initialHotel || hotelById || hotelBySlug
+
+  // 에러 처리: 호텔 데이터 조회 실패 시
+  useEffect(() => {
+    if (error && !initialHotel) {
+      // 호텔을 찾을 수 없는 경우는 정상적인 상황이므로 경고 수준으로 로깅
+      console.warn('호텔 데이터 조회 실패 (클라이언트):', {
+        originalSlug: hotelSlug,
+        decodedSlug: decodedSlug,
+        sabreIdParam,
+        error: error.message || error,
+        stack: error.stack
+      })
+    }
+  }, [error, hotelSlug, decodedSlug, sabreIdParam, initialHotel])
   
   // 페이지 렌더링/리프레시 시 자동으로 검색 실행 상태로 전환 (테이블 데이터 자동 로드)
   useEffect(() => {
@@ -533,7 +599,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       setHasSearched(true)
     }
   }, [hotel?.sabre_id, hasSearched])
-
+  
   // ===== 프로모션 관련 함수들 =====
   const fetchHotelPromotions = async (sabreId: number) => {
     console.log('🎯 fetchHotelPromotions 호출됨:', { sabreId })
@@ -562,7 +628,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         return []
       }
       
-      const promotionIds = promotionMapData.map(item => item.promotion_id)
+      const promotionIds = promotionMapData.map((item: any) => item.promotion_id)
       console.log('📋 조회된 프로모션 ID들:', promotionIds)
       
       // 2단계: select_hotel_promotions 테이블에서 프로모션 상세 정보 조회
@@ -603,8 +669,90 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     return processHotelImages(hotel)
   }, [hotel])
   
-  // 이미지 데이터 우선순위: select_hotels 이미지 > hotel_media
-  const displayImages = hotelImages.length > 0 ? hotelImages : hotelMedia
+  // Supabase Storage 기반 호텔 이미지 URL 생성 (기본 5개)
+  // hotel?.slug가 있으면 사용, 없으면 디코딩된 slug 사용
+  const slugForImages = hotel?.slug || decodedSlug
+  const { images: storageImages, getHeroImageUrl, getThumbnailUrl } = useHotelImages(
+    slugForImages,
+    hotel?.sabre_id,
+    {
+      count: 5,
+      format: 'avif',
+      quality: 85,
+    }
+  )
+
+  // Supabase Storage의 모든 이미지 조회
+  const { data: allStorageImagesData, loading: loadingAllImages, error: allImagesError } = useHotelStorageImages(
+    hotel?.sabre_id
+  )
+
+  // 디버깅: 이미지 데이터 로깅
+  useEffect(() => {
+    console.log('🔍 호텔 이미지 디버깅 정보:', {
+      hotel: hotel ? {
+        slug: hotel.slug,
+        sabre_id: hotel.sabre_id,
+        property_name_ko: hotel.property_name_ko
+      } : null,
+      storageImages: storageImages,
+      storageImagesLength: storageImages.length,
+      allStorageImages: allStorageImagesData?.images,
+      allStorageImagesLength: allStorageImagesData?.images.length,
+      hotelImages: hotelImages,
+      hotelImagesLength: hotelImages.length,
+      hotelMedia: hotelMedia,
+      hotelMediaLength: hotelMedia.length,
+    });
+  }, [hotel, storageImages, allStorageImagesData, hotelImages, hotelMedia]);
+  
+  // 이미지 데이터 우선순위: Supabase Storage 모든 이미지 > 기본 Storage 이미지 > select_hotels 이미지 > hotel_media
+  const displayImages = useMemo(() => {
+    console.log('🔄 displayImages 계산 중...', {
+      allStorageImagesLength: allStorageImagesData?.images.length || 0,
+      storageImagesLength: storageImages.length,
+      hotelImagesLength: hotelImages.length,
+      hotelMediaLength: hotelMedia.length
+    });
+
+    // 1순위: Supabase Storage의 모든 이미지
+    if (allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
+      console.log('✅ Supabase Storage 모든 이미지 사용');
+      const convertedImages = allStorageImagesData.images.map((img) => ({
+        id: img.id,
+        media_path: img.url,
+        alt: img.alt,
+        isMain: img.isMain,
+        sequence: img.sequence,
+        filename: img.filename
+      }));
+      console.log('📋 변환된 모든 Storage 이미지들:', convertedImages);
+      return convertedImages;
+    }
+
+    // 2순위: 기본 Supabase Storage 이미지 (5개)
+    if (storageImages.length > 0) {
+      console.log('✅ 기본 Supabase Storage 이미지 사용');
+      const convertedImages = storageImages.map((url, index) => ({
+        id: `storage-${index}`,
+        media_path: url,
+        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
+        isMain: index === 0
+      }));
+      console.log('📋 변환된 기본 Storage 이미지들:', convertedImages);
+      return convertedImages;
+    }
+    
+    // 3순위: select_hotels 이미지
+    if (hotelImages.length > 0) {
+      console.log('✅ select_hotels 이미지 사용');
+      return hotelImages;
+    }
+    
+    // 4순위: hotel_media 이미지
+    console.log('✅ hotel_media 이미지 사용');
+    return hotelMedia;
+  }, [allStorageImagesData, storageImages, hotelImages, hotelMedia, hotel]);
   
   // 이미지 preloading useEffect (개선된 버전)
   useEffect(() => {
@@ -612,23 +760,20 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       console.log(`🖼️ 이미지 preloading 시작: ${displayImages.length}개 이미지`)
       
       // 모든 이미지를 순차적으로 preload (첫 번째는 이미 priority로 로드됨)
-      const preloadPromises = displayImages.map((media, index) => {
-        if (media.media_path && !preloadedImages.has(media.media_path)) {
+      const preloadPromises = displayImages.map((media: any, index: number) => {
+        if (media.media_path) {
           console.log(`🔄 이미지 preloading 중 (${index + 1}번째): ${media.media_path}`)
-          return preloadImage(media.media_path).catch(error => {
-            console.warn(`이미지 preload 실패 (${index + 1}번째):`, error)
-            return null
-          })
+          return preloadImage(media.media_path)
         }
         return Promise.resolve(null)
       })
       
       // 모든 preload 완료 후 로그
       Promise.allSettled(preloadPromises).then(() => {
-        console.log(`✅ 모든 이미지 preloading 완료: ${preloadedImages.size}개 성공`)
+        console.log(`✅ 모든 이미지 preloading 완료`)
       })
     }
-  }, [displayImages, preloadedImages])
+  }, [displayImages]) // preloadedImages 의존성 제거하여 무한 루프 방지
 
   // 모달이 열릴 때 body 스크롤 막기
   useEffect(() => {
@@ -935,7 +1080,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     hasRatePlans: !!sabreData?.ratePlans,
     sabreDataStructure: sabreData ? Object.keys(sabreData) : 'no sabreData',
     ratePlansStructure: sabreData?.ratePlans ? Object.keys(sabreData.ratePlans) : 'no ratePlans',
-    ratePlanCodesLength: ratePlanCodes.length,
+        ratePlanCodesLength: ratePlanCodes.length,
     ratePlanCodes: ratePlanCodes.slice(0, 3) // 처음 3개만 로그
   })
 
@@ -993,6 +1138,11 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     )
   }
 
+  // 호텔 데이터가 없는 경우 HotelNotFound 컴포넌트 표시
+  if (!hotel) {
+    return <HotelNotFound slug={hotelSlug} />
+  }
+
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Header with Back Button */}
@@ -1032,6 +1182,8 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         onClose={closeImageGallery}
         selectedImage={selectedImage}
         onImageSelect={handleImageSelect}
+        loading={loadingAllImages}
+        error={allImagesError}
       />
 
       {/* Promotion */}
@@ -1083,35 +1235,35 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">객실 타입별 요금 상세</h3>
               
               {/* 객실 정보 표시 */}
-              {sabreLoading ? (
+                {sabreLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="flex items-center gap-3 text-blue-600">
+                    <div className="flex items-center gap-3 text-blue-600">
                     <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <span className="text-lg font-medium">객실 정보를 불러오는 중...</span>
+                    </div>
                   </div>
-                </div>
-              ) : sabreError ? (
+                ) : sabreError ? (
                 <div className="text-center py-12">
                   <div className="text-red-500 mb-4">
                     <span className="text-4xl">⚠️</span>
-                  </div>
+                    </div>
                   <p className="text-lg text-red-600 mb-3">객실 정보를 불러올 수 없습니다.</p>
                   <div className="text-sm text-gray-500 space-y-1 mb-4">
-                    <p>• 네트워크 연결을 확인해주세요</p>
-                    <p>• 잠시 후 다시 시도해주세요</p>
+                      <p>• 네트워크 연결을 확인해주세요</p>
+                      <p>• 잠시 후 다시 시도해주세요</p>
                     <p>• 검색 버튼을 다시 클릭해주세요</p>
-                  </div>
+                    </div>
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
                     <div className="flex items-center mb-2">
                       <span className="text-yellow-600 text-lg mr-2">ℹ️</span>
                       <h4 className="text-sm font-medium text-yellow-800">서비스 상태</h4>
-                    </div>
+                  </div>
                     <p className="text-xs text-yellow-700">
                       호텔 정보 서버에 일시적인 문제가 있습니다. 기본 호텔 정보는 정상적으로 표시됩니다.
                     </p>
+                    </div>
                   </div>
-                </div>
-              ) : ratePlanCodes && ratePlanCodes.length > 0 ? (
+                ) : ratePlanCodes && ratePlanCodes.length > 0 ? (
                 <div className="space-y-8">
                   {/* 객실 카드 리스트 */}
                   <div>
@@ -1132,8 +1284,8 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                         processSingleRoomIntro(ratePlanCodes, hotel.property_name_ko, index, searchDates.checkIn, searchDates.checkOut)
                       }}
                     />
-                  </div>
-
+                    </div>
+                    
                   {/* 객실 요금 상세 테이블, 데이터 테이블, 필터 영역 (비표시)
                     - 향후 재사용을 위해 코드 흔적만 남김
                     - 아래 블록 전체를 비활성화
@@ -1160,32 +1312,32 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                         checkIn={searchDates.checkIn}
                         checkOut={searchDates.checkOut}
                       />
-                    </div>
+                              </div>
                   )}
-                </div>
+                              </div>
               ) : hasSearched ? (
                 <div className="text-center py-12">
                   <div className="text-gray-500 mb-4">
                     <span className="text-4xl">🏨</span>
-                  </div>
+                              </div>
                   <p className="text-lg text-gray-600 mb-3">해당 날짜에 이용 가능한 객실이 없습니다.</p>
                   <div className="text-sm text-gray-500 space-y-1">
                     <p>• 다른 날짜로 검색해보세요</p>
                     <p>• 호텔에 직접 문의해보세요</p>
+                              </div>
                   </div>
-                </div>
-              ) : (
+                ) : (
                 <div className="text-center py-12">
                   <div className="text-gray-500 mb-4">
                     <span className="text-4xl">🔍</span>
-                  </div>
+                    </div>
                   <p className="text-lg text-gray-600 mb-3">검색 버튼을 클릭하여 객실 정보를 확인하세요.</p>
                   <div className="text-sm text-gray-500">
                     <p>위의 검색 영역에서 날짜를 선택하고 검색해주세요.</p>
+                    </div>
                   </div>
-                </div>
-              )}
-              
+                )}
+                
 
             </div>
           </div>

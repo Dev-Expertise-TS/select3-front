@@ -4,26 +4,50 @@ import { ScrollToTop } from "@/features/scroll-to-top"
 import { HotelDetail } from "@/features/hotels/hotel-detail"
 import { createClient } from "@/lib/supabase/server"
 import { Metadata } from "next"
+import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 
 // 호텔 데이터를 서버사이드에서 미리 페칭
 async function getHotelBySlug(slug: string) {
   try {
     const supabase = await createClient()
     
+    // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+    const decodedSlug = decodeURIComponent(slug)
+    
+    console.log('🔍 호텔 검색:', {
+      originalSlug: slug,
+      decodedSlug: decodedSlug,
+      hasSpecialChars: slug !== decodedSlug
+    })
+    
     const { data: hotel, error } = await supabase
       .from('select_hotels')
       .select('*, image_1, image_2, image_3, image_4, image_5, property_location, property_address, city, city_ko, city_en')
-      .eq('slug', slug)
+      .eq('slug', decodedSlug)
       .single()
     
     if (error) {
-      console.error('호텔 데이터 조회 실패:', error)
+      // 호텔을 찾을 수 없는 경우는 정상적인 상황이므로 경고 수준으로 로깅
+      console.warn('호텔 데이터 조회 실패:', {
+        originalSlug: slug,
+        decodedSlug: decodedSlug,
+        error: error.message || error,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
       return null
     }
     
     return hotel
   } catch (error) {
-    console.error('getHotelBySlug 에러:', error)
+    // 예상치 못한 오류만 error로 로깅
+    console.error('getHotelBySlug 예상치 못한 오류:', {
+      originalSlug: slug,
+      decodedSlug: decodeURIComponent(slug),
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return null
   }
 }
@@ -31,6 +55,7 @@ async function getHotelBySlug(slug: string) {
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
+  const decodedSlug = decodeURIComponent(slug)
   const hotel = await getHotelBySlug(slug)
   
   if (!hotel) {
@@ -68,7 +93,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: hotel.image_1 ? [hotel.image_1] : [],
     },
     alternates: {
-      canonical: `https://select-hotels.com/hotel/${slug}`,
+      canonical: `https://select-hotels.com/hotel/${decodedSlug}`,
     },
   }
 }
@@ -88,12 +113,13 @@ export const revalidate = 300
 function generateHotelStructuredData(hotel: any, slug: string) {
   if (!hotel) return null
 
+  const decodedSlug = decodeURIComponent(slug)
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Hotel",
     "name": hotel.property_name_ko || hotel.property_name_en,
     "description": hotel.description_ko || hotel.description_en,
-    "url": `https://select-hotels.com/hotel/${slug}`,
+    "url": `https://select-hotels.com/hotel/${decodedSlug}`,
     "image": hotel.image_1 ? [hotel.image_1] : [],
     "address": {
       "@type": "PostalAddress",
@@ -122,6 +148,11 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
   
   // 서버사이드에서 호텔 데이터 미리 페칭
   const hotel = await getHotelBySlug(slug)
+  
+  // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시
+  if (!hotel) {
+    return <HotelNotFound slug={slug} />
+  }
   
   // 구조화된 데이터 생성
   const structuredData = generateHotelStructuredData(hotel, slug)

@@ -55,14 +55,30 @@ export function useHotelBySlug(slug: string) {
   return useQuery({
     queryKey: ['hotel-by-slug', slug],
     queryFn: async () => {
+      // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+      const decodedSlug = decodeURIComponent(slug)
+      
+      console.log('🔍 클라이언트 호텔 검색:', {
+        originalSlug: slug,
+        decodedSlug: decodedSlug,
+        hasSpecialChars: slug !== decodedSlug
+      })
+      
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .eq('slug', slug)
+        .eq('slug', decodedSlug)
         .single()
       
       if (error) {
-        console.error('호텔 slug 조회 오류:', error)
+        console.error('호텔 slug 조회 오류:', {
+          originalSlug: slug,
+          decodedSlug: decodedSlug,
+          error: error.message || error,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
         throw error
       }
       return data

@@ -51,7 +51,9 @@ export async function POST(request: NextRequest) {
     // 여러 Sabre API 엔드포인트를 시도하여 객실 상세 정보 가져오기
     let descriptiveData = null
     
-    // 1. hotel-avail API 시도 (객실 가용성 및 상세 정보)
+    // 1. hotel-avail API 시도 (일시 비활성화 - 404 오류)
+    // TODO: API 서버 복구 후 다시 활성화
+    /*
     try {
       console.log('📤 Hotel Avail API 요청:', {
         HotelCode: body.hotelCode.toString(),
@@ -87,14 +89,22 @@ export async function POST(request: NextRequest) {
         console.warn('Hotel Avail API 호출 실패:', {
           status: availResponse.status,
           statusText: availResponse.statusText,
-          url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail'
+          url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail',
+          hotelCode: body.hotelCode
         })
+        // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
+        if (availResponse.status === 404) {
+          console.warn('Sabre API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
+        }
       }
     } catch (error) {
       console.warn('Hotel Avail API 호출 오류:', error)
     }
+    */
     
-    // 2. hotel-info API 시도
+    // 2. hotel-info API 시도 (일시 비활성화 - 404 오류)
+    // TODO: API 서버 복구 후 다시 활성화
+    /*
     if (!descriptiveData) {
       try {
         console.log('📤 Hotel Info API 요청:', {
@@ -119,19 +129,27 @@ export async function POST(request: NextRequest) {
             resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
             fullResponse: descriptiveData
           })
-        } else {
-          console.warn('Hotel Info API 호출 실패:', {
-            status: infoResponse.status,
-            statusText: infoResponse.statusText,
-            url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-info'
-          })
+      } else {
+        console.warn('Hotel Info API 호출 실패:', {
+          status: infoResponse.status,
+          statusText: infoResponse.statusText,
+          url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-info',
+          hotelCode: body.hotelCode
+        })
+        // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
+        if (infoResponse.status === 404) {
+          console.warn('Sabre Hotel Info API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
         }
+      }
       } catch (error) {
         console.warn('Hotel Info API 호출 오류:', error)
       }
     }
+    */
     
-    // 3. hotel-search API 시도
+    // 3. hotel-search API 시도 (일시 비활성화 - 404 오류)
+    // TODO: API 서버 복구 후 다시 활성화
+    /*
     if (!descriptiveData) {
       try {
         console.log('📤 Hotel Search API 요청:', {
@@ -154,17 +172,23 @@ export async function POST(request: NextRequest) {
             resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
             fullResponse: descriptiveData
           })
-        } else {
-          console.warn('Hotel Search API 호출 실패:', {
-            status: searchResponse.status,
-            statusText: searchResponse.statusText,
-            url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-search'
-          })
+      } else {
+        console.warn('Hotel Search API 호출 실패:', {
+          status: searchResponse.status,
+          statusText: searchResponse.statusText,
+          url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-search',
+          hotelCode: body.hotelCode
+        })
+        // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
+        if (searchResponse.status === 404) {
+          console.warn('Sabre Hotel Search API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
         }
+      }
       } catch (error) {
         console.warn('Hotel Search API 호출 오류:', error)
       }
     }
+    */
 
     // 기존 hotel-details API 호출
     let response: Response

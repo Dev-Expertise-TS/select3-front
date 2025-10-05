@@ -1,8 +1,8 @@
 "use client"
 
-import Image from "next/image"
 import { Star, MapPin } from "lucide-react"
 import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+import { HotelHeroImage, HotelThumbnail, OptimizedImage } from "@/components/ui/optimized-image"
 
 interface ImageItem {
   id: string
@@ -116,17 +116,12 @@ export function HotelInfo({
                       
                       return null
                     })()}
-                    <Image
+                    <HotelHeroImage
                       src={getSafeImageUrl(images[selectedImage]?.media_path || images[0]?.media_path)}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
-                      fill
                       className="object-cover transition-opacity duration-300"
-                      priority={selectedImage === 0}
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 60vw"
-                      onLoad={() => handleImageLoad(images[selectedImage]?.media_path || images[0]?.media_path)}
-                      onError={handleImageError}
+                      width={800}
+                      height={600}
                     />
                     
                     
@@ -180,14 +175,12 @@ export function HotelInfo({
                               <div className="text-gray-400 text-xs">❌</div>
                             </div>
                           ) : (
-                            <Image
+                            <HotelThumbnail
                               src={getSafeImageUrl(media.media_path)}
                               alt={media.alt || '썸네일'}
-                              fill
                               className="object-cover"
-                              sizes="56px"
-                              onLoad={() => handleImageLoad(media.media_path)}
-                              onError={handleImageError}
+                              onClick={() => onImageSelect(index)}
+                              isActive={index === selectedImage}
                             />
                           )}
                         </div>
@@ -237,17 +230,12 @@ export function HotelInfo({
                       
                       return null
                     })()}
-                    <Image
+                    <HotelHeroImage
                       src={getSafeImageUrl(images[selectedImage]?.media_path || images[0]?.media_path)}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
-                      fill
+                      width={1920}
+                      height={1080}
                       className="object-cover transition-opacity duration-300"
-                      priority={selectedImage === 0}
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 60vw"
-                      onLoad={() => handleImageLoad(images[selectedImage]?.media_path || images[0]?.media_path)}
-                      onError={handleImageError}
                     />
                   </div>
                 ) : (
@@ -271,7 +259,7 @@ export function HotelInfo({
                       return (
                         <div
                           key={media.id}
-                          className="relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100"
+                          className="relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100 w-full h-full min-h-0"
                           onClick={() => {
                             onImageSelect(index + 1)
                             onGalleryOpen()
@@ -291,17 +279,14 @@ export function HotelInfo({
                             </div>
                           )}
                           
-                          <Image
+                          <OptimizedImage
                             src={getSafeImageUrl(media.media_path)}
                             alt={media.alt || `Gallery ${index + 2}`}
                             fill
                             className="object-cover transition-opacity duration-300"
-                            placeholder="blur"
-                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
-                            loading={index < 2 ? "eager" : "lazy"}
-                            onLoad={() => handleImageLoad(media.media_path)}
-                            onError={handleImageError}
+                            quality={85}
+                            format="webp"
                           />
                         </div>
                       )
