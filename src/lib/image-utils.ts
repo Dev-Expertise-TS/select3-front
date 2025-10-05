@@ -172,6 +172,19 @@ export function updateImageLoadingState(
   return newStates
 }
 
+// 이미지 로딩 상태를 Map에서 조회하는 함수
+export function getImageLoadingState(
+  states: Map<string, ImageLoadingState>,
+  key: string
+): ImageLoadingState | undefined {
+  return states.get(key)
+}
+
+// 이미지 로딩 상태를 초기화하는 함수
+export function resetImageLoadingStates(): Map<string, ImageLoadingState> {
+  return new Map()
+}
+
 // 이미지 오류 핸들러
 export function handleImageError(
   e: React.SyntheticEvent<HTMLImageElement, Event>,

@@ -1,10 +1,9 @@
 "use client"
 
-import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import { X, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { OptimizedImage } from "@/components/ui/optimized-image"
+import { SmartImage } from "@/components/ui/smart-image"
 import { checkImageExists } from "@/lib/image-cache"
 import { isValidImageUrl } from "@/lib/image-utils"
 
@@ -247,7 +246,7 @@ export function ImageGallery({
                         className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
                         onClick={() => openImageDetail(index)}
                       >
-                        <OptimizedImage
+                        <SmartImage
                           src={media.media_path}
                           alt={media.alt || `Gallery ${index + 1}`}
                           fill
@@ -255,6 +254,7 @@ export function ImageGallery({
                           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
                           quality={85}
                           format="avif"
+                          autoPreload={false}
                         />
                       </div>
                     ))}
@@ -281,7 +281,7 @@ export function ImageGallery({
                 {/* Main Image */}
                 <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-100">
                   {validImages.length > 0 ? (
-                    <OptimizedImage
+                    <SmartImage
                       src={validImages[selectedDetailImage]?.media_path}
                       alt={validImages[selectedDetailImage]?.alt || `Detail ${selectedDetailImage + 1}`}
                       fill
@@ -289,6 +289,7 @@ export function ImageGallery({
                       quality={90}
                       format="avif"
                       priority={true}
+                      autoPreload={false}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -332,7 +333,7 @@ export function ImageGallery({
                             index === selectedDetailImage ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          <OptimizedImage
+                          <SmartImage
                             src={media.media_path}
                             alt={media.alt || `Thumbnail ${index + 1}`}
                             fill
@@ -340,6 +341,7 @@ export function ImageGallery({
                             sizes="80px"
                             quality={85}
                             format="avif"
+                            autoPreload={false}
                           />
                         </button>
                       ))}

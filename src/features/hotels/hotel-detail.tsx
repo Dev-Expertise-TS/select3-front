@@ -32,7 +32,7 @@ import { supabase } from "@/lib/supabase"
 import { processHotelImages, getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { useHotelImages } from "@/hooks/use-hotel-images"
 import { useHotelStorageImages } from "@/hooks/use-hotel-storage-images"
-import { HotelHeroImage, HotelThumbnail } from "@/components/ui/optimized-image"
+import { HotelHeroImage, HotelThumbnail } from "@/components/ui/smart-image"
 
 // Types
 interface HotelDetailProps {
@@ -498,7 +498,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>([])
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(false)
 
-  // 이미지 preloading을 위한 상태
+  // 이미지 로딩 상태 관리 (기존 로직 유지)
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())
   const [imageLoadingStates, setImageLoadingStates] = useState<Map<string, 'loading' | 'loaded' | 'error'>>(new Map())
 
