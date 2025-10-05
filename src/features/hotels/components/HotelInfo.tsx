@@ -206,6 +206,7 @@ export function HotelInfo({
                       const isLoading = isImageLoading?.(currentImageSrc) || (!preloadedImages.has(currentImageSrc) && !isImageLoaded?.(currentImageSrc))
                       const hasError = isImageError?.(currentImageSrc)
                       
+                      
                       if (hasError) {
                         return (
                           <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
@@ -235,7 +236,7 @@ export function HotelInfo({
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                       width={1920}
                       height={1080}
-                      className="object-cover transition-opacity duration-300"
+                      className="w-full h-full object-cover transition-opacity duration-300"
                     />
                   </div>
                 ) : (

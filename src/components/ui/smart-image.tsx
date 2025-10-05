@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * 통합된 스마트 이미지 컴포넌트
  * 로딩 상태, 에러 처리, 최적화를 모두 포함
@@ -92,13 +94,7 @@ export function SmartImage({
     ? createSupabaseImageUrl(decodedSrc, width, quality, format)
     : decodedSrc;
 
-  // 디버깅 로그
-  console.log(`🖼️ SmartImage 렌더링:`, {
-    src: src.substring(src.lastIndexOf('/') + 1),
-    optimizedSrc: optimizedSrc.substring(optimizedSrc.lastIndexOf('/') + 1),
-    imageLoaded,
-    imageError
-  });
+
 
   // 에러 상태일 때 fallback 컴포넌트 표시
   if (imageError) {
@@ -119,6 +115,28 @@ export function SmartImage({
     );
   }
 
+  // 로딩 상태 표시
+  const shouldShowLoading = showLoadingState && !imageLoaded && !imageError;
+
+  if (shouldShowLoading) {
+    return (
+      <div 
+        className={cn(
+          "bg-gray-200 flex items-center justify-center text-gray-400 rounded-lg",
+          fill ? "absolute inset-0" : "",
+          className
+        )}
+        style={fill ? { width, height } : undefined}
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto mb-2"></div>
+          <div className="text-sm">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <ImageErrorBoundary src={optimizedSrc} alt={alt} className={className}>
       <Image
@@ -127,16 +145,15 @@ export function SmartImage({
         width={fill ? undefined : width}
         height={fill ? undefined : height}
         fill={fill}
-        className={cn(className)}
+        className={className}
         priority={priority}
         quality={quality}
         sizes={sizes}
         placeholder={placeholder}
         blurDataURL={blurDataURL}
         style={fill ? { objectFit } : undefined}
-        onLoad={handleLoad}
-        onError={handleError}
-        unoptimized={false}
+          onLoad={handleLoad}
+          onError={handleError}
       />
     </ImageErrorBoundary>
   );
@@ -164,8 +181,7 @@ export function HotelHeroImage({
     <SmartImage
       src={src}
       alt={alt}
-      width={width}
-      height={height}
+      fill={true}
       className={className}
       priority={true}
       quality={90}
@@ -174,6 +190,7 @@ export function HotelHeroImage({
       placeholder="blur"
       blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
       autoPreload={true}
+      showLoadingState={false}
     />
   );
 }
@@ -200,19 +217,19 @@ export function HotelThumbnail({
     <SmartImage
       src={src}
       alt={alt}
-      width={120}
-      height={90}
+      fill
       className={cn(
-        "cursor-pointer rounded-lg transition-all duration-200 hover:scale-105",
+        "cursor-pointer rounded-lg transition-all duration-200 hover:scale-105 object-cover",
         isActive ? "ring-2 ring-blue-500" : "opacity-70 hover:opacity-100",
         className
       )}
       quality={80}
       format="webp"
-      sizes="120px"
+      sizes="56px"
       placeholder="empty"
       onClick={onClick}
       autoPreload={false}
+      showLoadingState={false}
     />
   );
 }
