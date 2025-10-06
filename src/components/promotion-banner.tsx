@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { usePromotionHotels } from "@/features/promotion-section"
+import { useTopBannerHotels } from "@/features/promotion-section"
 import { useHotelPromotionDetails } from "@/hooks/use-hotel-promotion-details"
 
 // 상수
@@ -32,27 +32,16 @@ function PromotionDetails({ sabreId }: { sabreId?: number }) {
     }
   }
   
+  const first = promotions[0]
+
   return (
     <span className="truncate">
-      {promotions.map((promotion, index) => (
-        <span key={index} className="inline-block">
-          <span className="hidden sm:inline">{promotion.promotion}</span>
-          <span className="sm:hidden">{promotion.promotion.length > 15 ? promotion.promotion.substring(0, 15) + '...' : promotion.promotion}</span>
-          {promotion.booking_date && (
-            <span className="hidden sm:inline">
-              {` (예약일: ~${formatDate(promotion.booking_date)})`}
-            </span>
-          )}
-          {promotion.check_in_date && (
-            <span className="hidden sm:inline">
-              {` (투숙일: ~${formatDate(promotion.check_in_date)})`}
-            </span>
-          )}
-          {index < promotions.length - 1 ? (
-            <span className="hidden sm:inline">, </span>
-          ) : null}
-        </span>
-      ))}
+      <span className="hidden sm:inline">
+        {first.promotion.length > 50 ? first.promotion.substring(0, 50) + '...' : first.promotion}
+      </span>
+      <span className="sm:hidden">
+        {first.promotion.length > 15 ? first.promotion.substring(0, 15) + '...' : first.promotion}
+      </span>
     </span>
   )
 }
@@ -63,8 +52,8 @@ export function PromotionBanner() {
   const [animationKey, setAnimationKey] = useState(0)
   const [isSticky, setIsSticky] = useState(false)
 
-  // 프로모션 호텔 데이터 조회
-  const { data: promotionHotels = [] } = usePromotionHotels()
+  // 띠베너 노출 대상 호텔 데이터 조회 (KST 날짜 필터 적용)
+  const { data: promotionHotels = [] } = useTopBannerHotels()
 
   useEffect(() => {
     if (showPromoBanner && promotionHotels.length > 0) {
