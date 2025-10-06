@@ -56,21 +56,31 @@ export async function GET(
       /\.(avif|webp|jpg|jpeg|png)$/i.test(f.name)
     );
 
+    // 파일명에서 숫자 추출하여 정렬 (예: _01_, _02_, _11_ 등)
+    const sortedImageFiles = imageFiles.sort((a, b) => {
+      // 파일명에서 숫자 부분 추출 (예: "slug_62024_05_1600w.avif" -> 5)
+      const getNumber = (name: string) => {
+        const match = name.match(/_(\d+)_/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getNumber(a.name) - getNumber(b.name);
+    });
+
     console.log('✅ Storage list() API 호출 완료:', {
       slug: decodedSlug,
       sabreId,
       totalFiles: files?.length || 0,
-      imageFiles: imageFiles.length,
-      images: imageFiles.map(f => f.name)
+      imageFiles: sortedImageFiles.length,
+      images: sortedImageFiles.map(f => f.name)
     });
 
-    // 이미지 메타데이터 생성
-    const images = imageFiles.map((file, idx) => {
+    // 이미지 메타데이터 생성 (순차적으로 번호 부여)
+    const images = sortedImageFiles.map((file, idx) => {
       const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${file.name}`;
       return {
         id: `storage-${idx + 1}`,
         filename: file.name,
-        sequence: idx + 1,
+        sequence: idx + 1, // 순차 번호 (1, 2, 3, 4, ... 연속)
         media_path: url,
         url,
         alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
