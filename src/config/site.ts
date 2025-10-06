@@ -13,7 +13,7 @@ export const navConfig = {
   mainNav: [
     {
       title: "Hotels",
-      href: "/hotels",
+      href: "/hotel",
     },
     {
       title: "Destinations",
@@ -21,7 +21,7 @@ export const navConfig = {
     },
     {
       title: "Brands",
-      href: "/brands",
+      href: "/brand",
     },
   ],
 }

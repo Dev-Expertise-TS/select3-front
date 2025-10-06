@@ -100,7 +100,7 @@ export function TrendingDestinationsSection() {
             })
             
             return (
-              <Link key={destination.id} href={`/all-hotel-resort?${filterParams.toString()}`}>
+              <Link key={destination.id} href={`/hotel?${filterParams.toString()}`}>
                 <div className="group cursor-pointer bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <Image

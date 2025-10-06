@@ -25,16 +25,16 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-white uppercase tracking-wide">ALL MENUS</h3>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 <div className="space-y-2">
-                  <Link href="/introduction" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                  <Link href="/about" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     셀렉트 소개
                   </Link>
                   <Link href="/with-kids" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     아이와 함께
                   </Link>
-                  <Link href="/hotels" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                  <Link href="/hotel" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     호텔 & 리조트
                   </Link>
-                  <Link href="/promotions" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                  <Link href="/promotion" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     프로모션
                   </Link>
                   <Link href="/blog" className="block text-sm text-gray-300 hover:text-white transition-colors">

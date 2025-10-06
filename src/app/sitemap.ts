@@ -10,13 +10,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: 'https://select-hotels.com/brands',
+      url: 'https://select-hotels.com/brand',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: 'https://select-hotels.com/all-hotel-resort',
+      url: 'https://select-hotels.com/hotel',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,

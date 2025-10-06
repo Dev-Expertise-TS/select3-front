@@ -9,11 +9,11 @@ import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigationItems = [
-  { href: "/fine-hotels", label: "셀렉트 소개" },
-  { href: "/destinations", label: "프로모션" },
-  { href: "/brands", label: "브랜드 & 프로그램" },
+  { href: "/about", label: "셀렉트 소개" },
+  { href: "/promotion", label: "프로모션" },
+  { href: "/brand", label: "브랜드 & 프로그램" },
   { href: "/blog", label: "아티클" },
-  { href: "/all-hotel-resort", label: "호텔 & 리조트 전체보기" },
+  { href: "/hotel", label: "호텔 & 리조트 전체보기" },
   { href: "/support", label: "투어비스" },
 ]
 
