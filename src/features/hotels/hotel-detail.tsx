@@ -669,10 +669,30 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         day: '2-digit',
       }).format(new Date())
 
-      // 날짜 범위 포함 여부 판단 함수
+      // 날짜 정규화(모든 입력을 KST YYYY-MM-DD로)
+      const toKstYmd = (value?: string | null): string => {
+        if (!value) return ''
+        try {
+          const d = new Date(value)
+          return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
+        } catch {
+          // value가 이미 YYYY-MM-DD라면 그대로 사용(자리수 보정)
+          const v = value.toString().slice(0, 10)
+          const parts = v.split('-')
+          if (parts.length === 3) {
+            const [y,m,d] = parts
+            const mm = m.padStart(2,'0')
+            const dd = d.padStart(2,'0')
+            return `${y}-${mm}-${dd}`
+          }
+          return v
+        }
+      }
+
+      // 날짜 범위 포함 여부 판단 함수(경계 포함)
       const isInRange = (start?: string | null, end?: string | null): boolean => {
-        const s = (start ?? '').toString().slice(0, 10)
-        const e = (end ?? '').toString().slice(0, 10)
+        const s = toKstYmd(start)
+        const e = toKstYmd(end)
         if (!s && !e) return true
         if (s && todayKst < s) return false
         if (e && todayKst > e) return false
@@ -682,13 +702,10 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       const filtered = (promotionData || []).filter((p: any) => {
         // 컬럼 이름이 다를 수 있어 유연하게 접근
         const bookingStart = p.booking_start_date ?? p.bookingStartDate ?? null
-        const bookingEnd = p.booking_end_date ?? p.bookingEndDate ?? null
-        const checkinStart = p.check_in_start_date ?? p.checkInStartDate ?? null
         const checkinEnd = p.check_in_end_date ?? p.checkInEndDate ?? null
 
-        const bookingActive = isInRange(bookingStart, bookingEnd)
-        const checkinActive = isInRange(checkinStart, checkinEnd)
-        return bookingActive || checkinActive
+        // 새로운 규칙: 예약 시작일 ~ 투숙 종료일 범위에 오늘 포함 시 노출(경계 포함)
+        return isInRange(bookingStart, checkinEnd)
       })
 
       // 표준화된 키로 매핑 (컴포넌트에서 일관 사용)

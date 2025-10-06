@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateHotelImageUrl } from '@/lib/supabase-image-loader';
 
 export async function GET(
   request: NextRequest,
@@ -31,50 +30,40 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // 기존 이미지 갤러리와 동일한 방식으로 이미지 URL 생성 (1~11 시퀀스)
-    // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
+    // 서버에서 실제 스토리지 파일을 조회하여 존재하는 파일만 반환
     const decodedSlug = decodeURIComponent(hotel.slug);
-    
-    console.log('🔍 기존 방식으로 이미지 URL 생성 중...', {
-      originalSlug: hotel.slug,
-      decodedSlug: decodedSlug,
-      hasSpecialChars: hotel.slug !== decodedSlug,
-      sabreId: parseInt(sabreId)
-    });
+    const supa = await createClient();
+    const listResult = await supa.storage
+      .from('hotel-media')
+      .list(`public/${decodedSlug}`, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
 
-    // 이전 방식: 모든 시퀀스에 대해 URL 생성 (존재 여부 확인은 클라이언트에서)
-    const images = [];
-    const maxSequence = 11; // 최대 시퀀스 번호
-    
-    for (let sequence = 1; sequence <= maxSequence; sequence++) {
-      // 기본 generateHotelImageUrl 사용 (서버사이드에서 안전)
-      const imageUrl = generateHotelImageUrl(hotel.slug, parseInt(sabreId), sequence);
-      
-      if (imageUrl) {
-        // URL에서 파일명 추출
-        const fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
-        
-        images.push({
-          id: `storage-${sequence}`,
-          filename: fileName,
-          sequence: sequence,
-          media_path: imageUrl, // OptimizedImage에서 사용할 원본 URL
-          url: imageUrl, // 호환성을 위해 유지
-          alt: `${hotel.property_name_ko} 이미지 ${sequence}`,
-          isMain: sequence === 1,
-          size: 0,
-          lastModified: new Date().toISOString()
-        });
-        
-        console.log(`✅ 이미지 URL 생성: ${fileName}`);
-      } else {
-        console.log(`⚠️ 이미지 URL 생성 실패: 시퀀스 ${sequence}`);
-      }
+    if (listResult.error) {
+      console.error('스토리지 목록 조회 오류:', listResult.error);
+      return NextResponse.json({ success: true, data: { hotel, images: [], totalCount: 0 } });
     }
 
-    console.log('📋 생성된 이미지 목록:', {
+    const files = listResult.data || [];
+    const images = files
+      .filter(f => !f.name.endsWith('/') && /(avif|webp|jpg|jpeg|png)$/i.test(f.name))
+      .map((f, idx) => {
+        const path = `public/${decodedSlug}/${f.name}`;
+        const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${path}`;
+        return {
+          id: `storage-${idx + 1}`,
+          filename: f.name,
+          sequence: idx + 1,
+          media_path: url,
+          url,
+          alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
+          isMain: idx === 0,
+          size: f.metadata?.size ?? 0,
+          lastModified: f.updated_at ?? new Date().toISOString(),
+        };
+      });
+
+    console.log('📋 스토리지에서 조회된 실제 이미지 목록:', {
       totalImages: images.length,
-      sequences: images.map(img => ({ filename: img.filename, sequence: img.sequence }))
+      files: images.map(img => img.filename),
     });
 
 
@@ -87,7 +76,7 @@ export async function GET(
           property_name_ko: hotel.property_name_ko,
           property_name_en: hotel.property_name_en
         },
-        images: images,
+        images,
         totalCount: images.length
       }
     });
