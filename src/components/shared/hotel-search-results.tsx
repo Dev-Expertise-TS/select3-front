@@ -71,31 +71,31 @@ function useFilterOptions() {
         brands = brandData || []
       }
       
-      // 도시 옵션 생성 (카운트 제거)
-      const citySet = new Set()
+      // 도시 옵션 생성 (city_kr로 그룹핑 및 표시)
+      const citySet = new Set<string>()
       hotels?.forEach((hotel: any) => {
-        const city = hotel.city_ko || hotel.city || hotel.city_en
-        if (city) {
-          citySet.add(city)
+        const cityKr = hotel.city_kr || hotel.city_ko || hotel.city || hotel.city_en
+        if (cityKr) {
+          citySet.add(cityKr)
         }
       })
-      const cities = Array.from(citySet).map(city => ({
-        id: city,
-        label: city
-      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+      const cities = Array.from(citySet).map(cityKr => ({
+        id: cityKr,
+        label: cityKr
+      })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
       
-      // 국가 옵션 생성 (카운트 제거)
-      const countrySet = new Set()
+      // 국가 옵션 생성 (country_kr로 그룹핑 및 표시)
+      const countrySet = new Set<string>()
       hotels?.forEach((hotel: any) => {
-        const country = hotel.country_ko || hotel.country_en
-        if (country) {
-          countrySet.add(country)
+        const countryKr = hotel.country_kr || hotel.country_ko || hotel.country_en
+        if (countryKr) {
+          countrySet.add(countryKr)
         }
       })
-      const countries = Array.from(countrySet).map(country => ({
-        id: country,
-        label: country
-      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+      const countries = Array.from(countrySet).map(countryKr => ({
+        id: countryKr,
+        label: countryKr
+      })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
       
       // 브랜드 옵션 생성 (카운트 제거)
       const brandSet = new Set()
@@ -528,14 +528,20 @@ export function HotelSearchResults({
     }
     
     return allHotels.filter(hotel => {
-      // 도시 필터
-      if (filters.city && !hotel.city_ko?.includes(filters.city) && !hotel.city?.includes(filters.city)) {
-        return false
+      // 도시 필터 (선택된 id값과 city_kr 비교)
+      if (filters.city) {
+        const hotelCityKr = hotel.city_kr || hotel.city_ko || hotel.city || hotel.city_en
+        if (hotelCityKr !== filters.city) {
+          return false
+        }
       }
       
-      // 국가 필터
-      if (filters.country && !hotel.country_ko?.includes(filters.country) && !hotel.country_en?.includes(filters.country)) {
-        return false
+      // 국가 필터 (선택된 id값과 country_kr 비교)
+      if (filters.country) {
+        const hotelCountryKr = hotel.country_kr || hotel.country_ko || hotel.country_en
+        if (hotelCountryKr !== filters.country) {
+          return false
+        }
       }
       
       // 브랜드 필터

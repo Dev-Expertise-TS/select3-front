@@ -62,31 +62,31 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
           brands = brandData || []
         }
         
-        // 도시 옵션 생성
-        const cityMap = new Map()
+        // 도시 옵션 생성 (city_kr로 그룹핑 및 표시)
+        const citySet = new Set<string>()
         hotels?.forEach((hotel: any) => {
-          const city = hotel.city_ko || hotel.city || hotel.city_en
-          if (city) {
-            cityMap.set(city, (cityMap.get(city) || 0) + 1)
+          const cityKr = hotel.city_kr || hotel.city_ko || hotel.city || hotel.city_en
+          if (cityKr) {
+            citySet.add(cityKr)
           }
         })
-        const cities = Array.from(cityMap.entries()).map(([label, count]) => ({
-          id: label,
-          label
-        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+        const cities = Array.from(citySet).map(cityKr => ({
+          id: cityKr,
+          label: cityKr
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
         
-        // 국가 옵션 생성
-        const countryMap = new Map()
+        // 국가 옵션 생성 (country_kr로 그룹핑 및 표시)
+        const countrySet = new Set<string>()
         hotels?.forEach((hotel: any) => {
-          const country = hotel.country_ko || hotel.country_en
-          if (country) {
-            countryMap.set(country, (countryMap.get(country) || 0) + 1)
+          const countryKr = hotel.country_kr || hotel.country_ko || hotel.country_en
+          if (countryKr) {
+            countrySet.add(countryKr)
           }
         })
-        const countries = Array.from(countryMap.entries()).map(([label, count]) => ({
-          id: label,
-          label
-        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+        const countries = Array.from(countrySet).map(countryKr => ({
+          id: countryKr,
+          label: countryKr
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
         
         // 브랜드 옵션 생성
         const brandMap = new Map()
