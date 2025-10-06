@@ -27,18 +27,25 @@ export function useHotelPromotionDetails(sabreId: number) {
         
         const promotionIds = promotionMap.map(item => item.promotion_id)
         
-        // 2. select_hotel_promotions에서 프로모션 상세 정보 조회
+        // 2. select_hotel_promotions에서 프로모션 상세 정보 조회 (전 컬럼 조회 + 정렬)
         const { data: promotions, error: promotionError } = await supabase
           .from('select_hotel_promotions')
-          .select('promotion, booking_date, check_in_date')
+          .select('*')
           .in('promotion_id', promotionIds)
+          .order('promotion_id', { ascending: true })
         
         if (promotionError) throw promotionError
         if (!promotions) return []
         
         return promotions
       } catch (error) {
-        console.error('프로모션 상세 정보 조회 실패:', error)
+        const err: any = error
+        console.error('프로모션 상세 정보 조회 실패:', {
+          message: err?.message,
+          code: err?.code,
+          details: err?.details,
+          hint: err?.hint,
+        })
         return []
       }
     },
