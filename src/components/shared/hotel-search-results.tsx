@@ -207,18 +207,35 @@ function useBannerHotel() {
     queryKey: ['banner-hotel'],
     queryFn: async () => {
       try {
-        // 1. select_feature_slots에서 surface가 "상단베너"인 sabre_id 조회
+        // 한국 시간(KST)의 오늘 날짜 (YYYY-MM-DD)
+        const now = new Date()
+        const kstMs = now.getTime() + 9 * 60 * 60 * 1000
+        const todayKst = new Date(kstMs).toISOString().slice(0, 10)
+
+        // 1) select_feature_slots에서 surface가 "상단베너"이고 start_date/end_date 범위에 포함되는 항목 조회
         const { data: featureSlots, error: featureError } = await supabase
           .from('select_feature_slots')
-          .select('sabre_id')
+          .select('sabre_id, start_date, end_date')
           .eq('surface', '상단베너')
-        
+
         if (featureError) throw featureError
         if (!featureSlots || featureSlots.length === 0) return null
+
+        // 2) KST 오늘 날짜 기준으로 필터링 (start_date/end_date 모두 YYYY-MM-DD 가정)
+        const activeSlots = featureSlots.filter((slot: any) => {
+          const start = (slot.start_date ?? '').toString().slice(0, 10)
+          const end = (slot.end_date ?? '').toString().slice(0, 10)
+          if (!start && !end) return true
+          if (start && todayKst < start) return false
+          if (end && todayKst > end) return false
+          return true
+        })
+
+        if (activeSlots.length === 0) return null
+
+        const sabreIds = activeSlots.map((slot: any) => slot.sabre_id)
         
-        const sabreIds = featureSlots.map((slot: any) => slot.sabre_id)
-        
-        // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
+        // 3) select_hotels에서 해당 sabre_id의 호텔 정보 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, brand_id')
@@ -228,7 +245,7 @@ function useBannerHotel() {
         if (hotelsError) throw hotelsError
         if (!hotels || hotels.length === 0) return null
         
-        // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
+        // 4) hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
         const brandIds = hotels.map((hotel: any) => hotel.brand_id).filter((id: any) => id !== null && id !== undefined)
         let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
         if (brandIds.length > 0) {
@@ -241,7 +258,7 @@ function useBannerHotel() {
           brandsData = data || []
         }
         
-        // 4. hotel_chains에서 chain_id로 체인 정보 조회
+        // 5) hotel_chains에서 chain_id로 체인 정보 조회
         const chainIds = brandsData?.map(brand => brand.chain_id).filter(Boolean) || []
         const { data: chainsData, error: chainsError } = await supabase
           .from('hotel_chains')
@@ -250,7 +267,7 @@ function useBannerHotel() {
         
         if (chainsError) throw chainsError
         
-        // 5. 랜덤하게 하나 선택하고 브랜드 정보 매핑
+        // 6) 활성 슬롯 안에서 랜덤하게 하나 선택하고 브랜드 정보 매핑
         const randomHotel = hotels[Math.floor(Math.random() * hotels.length)]
         const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
         const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
