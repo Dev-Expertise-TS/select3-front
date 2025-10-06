@@ -3,9 +3,12 @@
 interface HotelPromotion {
   promotion_id: number;
   promotion: string;
-  promotion_description: string;
-  booking_date: string;
-  check_in_date: string;
+  promotion_description?: string;
+  booking_start_date?: string | null;
+  booking_end_date?: string | null;
+  check_in_start_date?: string | null;
+  check_in_end_date?: string | null;
+  note?: string | null;
 }
 
 interface HotelPromotionProps {
@@ -14,11 +17,22 @@ interface HotelPromotionProps {
 }
 
 export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
+  const formatKstDate = (value?: string | null) => {
+    if (!value) return ''
+    try {
+      const d = new Date(value)
+      return new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).format(d)
+    } catch {
+      return value
+    }
+  }
   if (isLoading) {
     return (
-      <div className="bg-gray-100 py-3 sm:py-4 mt-1.5">
+      <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
         <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-          <div className="bg-blue-600 text-white p-4 sm:p-6 rounded-lg">
+          <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-lg">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <span className="font-medium text-base sm:text-lg">프로모션</span>
               <div className="flex items-center gap-2">
@@ -37,9 +51,9 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
   }
 
   return (
-    <div className="bg-gray-100 py-3 sm:py-4 mt-1.5">
+    <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
       <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-        <div className="bg-blue-600 text-white p-4 sm:p-6 rounded-lg">
+        <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-lg">
           {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             {/* 프로모션 제목 */}
@@ -47,9 +61,9 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
               <span className="font-medium text-base sm:text-lg">프로모션</span>
             </div>
             
-            {/* 프로모션 배너들 */}
-            <div className="flex flex-col sm:flex-row sm:gap-2 sm:flex-wrap sm:items-center gap-2">
-              {promotions.map((promotion, index) => (
+            {/* 프로모션 목록: 1행 1개 */}
+            <div className="flex flex-col gap-2">
+              {promotions.map((promotion) => (
                 <div key={promotion.promotion_id} className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                   {/* 주요 프로모션 배너 */}
                   <span className="bg-red-500 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left">
@@ -63,23 +77,25 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
                     </span>
                   )}
                   
-                  {/* 날짜 정보들 */}
+                  {/* 날짜 정보들 (KST, 범위 표기) */}
                   <div className="flex flex-row items-center justify-center sm:justify-start gap-2 text-xs text-blue-100">
-                    {promotion.booking_date && (
+                    {(promotion.booking_start_date || promotion.booking_end_date) && (
                       <span className="whitespace-nowrap">
-                        예약: ~{new Date(promotion.booking_date).toLocaleDateString('ko-KR')}
+                        예약일: {formatKstDate(promotion.booking_start_date)} ~ {formatKstDate(promotion.booking_end_date)}
                       </span>
                     )}
-                    {promotion.check_in_date && (
+                    {(promotion.check_in_start_date || promotion.check_in_end_date) && (
                       <span className="whitespace-nowrap">
-                        투숙: ~{new Date(promotion.check_in_date).toLocaleDateString('ko-KR')}
+                        투숙일: {formatKstDate(promotion.check_in_start_date)} ~ {formatKstDate(promotion.check_in_end_date)}
                       </span>
                     )}
                   </div>
-                  
-                  {/* 구분자 - 데스크톱에서만 표시 */}
-                  {index < promotions.length - 1 && (
-                    <span className="hidden sm:inline text-blue-200 mx-1">|</span>
+
+                  {/* 비고(note) */}
+                  {promotion.note && (
+                    <div className="text-[11px] sm:text-xs text-blue-100">
+                      {promotion.note}
+                    </div>
                   )}
                 </div>
               ))}

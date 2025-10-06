@@ -639,15 +639,20 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       const promotionIds = promotionMapData.map((item: any) => item.promotion_id)
       console.log('📋 조회된 프로모션 ID들:', promotionIds)
       
-      // 2단계: select_hotel_promotions 테이블에서 프로모션 상세 정보 조회
+      // 2단계: select_hotel_promotions 테이블에서 프로모션 상세 정보 조회 (전 컬럼 조회로 스키마 차이 안전하게 처리)
       const { data: promotionData, error: promotionError } = await supabase
         .from('select_hotel_promotions')
-        .select('promotion_id, promotion, promotion_description, booking_date, check_in_date')
+        .select('*')
         .in('promotion_id', promotionIds)
         .order('promotion_id', { ascending: true })
       
       if (promotionError) {
-        console.error('❌ 프로모션 상세 정보 조회 오류:', promotionError)
+        console.error('❌ 프로모션 상세 정보 조회 오류:', {
+          message: (promotionError as any)?.message,
+          details: (promotionError as any)?.details,
+          hint: (promotionError as any)?.hint,
+          code: (promotionError as any)?.code,
+        })
         return []
       }
       
@@ -656,8 +661,50 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         return []
       }
       
-      console.log('✅ 프로모션 데이터 조회 완료:', promotionData)
-      return promotionData as HotelPromotion[]
+      // KST 기준 오늘 날짜 (YYYY-MM-DD) - 타임존 안전 방식
+      const todayKst = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date())
+
+      // 날짜 범위 포함 여부 판단 함수
+      const isInRange = (start?: string | null, end?: string | null): boolean => {
+        const s = (start ?? '').toString().slice(0, 10)
+        const e = (end ?? '').toString().slice(0, 10)
+        if (!s && !e) return true
+        if (s && todayKst < s) return false
+        if (e && todayKst > e) return false
+        return true
+      }
+
+      const filtered = (promotionData || []).filter((p: any) => {
+        // 컬럼 이름이 다를 수 있어 유연하게 접근
+        const bookingStart = p.booking_start_date ?? p.bookingStartDate ?? null
+        const bookingEnd = p.booking_end_date ?? p.bookingEndDate ?? null
+        const checkinStart = p.check_in_start_date ?? p.checkInStartDate ?? null
+        const checkinEnd = p.check_in_end_date ?? p.checkInEndDate ?? null
+
+        const bookingActive = isInRange(bookingStart, bookingEnd)
+        const checkinActive = isInRange(checkinStart, checkinEnd)
+        return bookingActive || checkinActive
+      })
+
+      // 표준화된 키로 매핑 (컴포넌트에서 일관 사용)
+      const normalized = filtered.map((p: any) => ({
+        promotion_id: p.promotion_id,
+        promotion: p.promotion,
+        promotion_description: p.promotion_description ?? p.description ?? '',
+        booking_start_date: p.booking_start_date ?? p.bookingStartDate ?? null,
+        booking_end_date: p.booking_end_date ?? p.bookingEndDate ?? null,
+        check_in_start_date: p.check_in_start_date ?? p.checkInStartDate ?? null,
+        check_in_end_date: p.check_in_end_date ?? p.checkInEndDate ?? null,
+        note: p.note ?? null,
+      }))
+
+      console.log('✅ 프로모션 데이터 조회 완료(필터+정규화):', normalized)
+      return normalized as any
       
     } catch (error) {
       console.error('❌ 프로모션 데이터 조회 중 오류:', error)
