@@ -3,8 +3,13 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { usePromotionHotels } from "@/features/promotion-section"
 import { useHotelPromotionDetails } from "@/hooks/use-hotel-promotion-details"
+
+// 상수
+const BANNER_HEIGHT = 60
+const SLIDE_INTERVAL = 5000
 
 // 프로모션 상세 정보 컴포넌트
 function PromotionDetails({ sabreId }: { sabreId?: number }) {
@@ -56,6 +61,7 @@ export function PromotionBanner() {
   const [showPromoBanner, setShowPromoBanner] = useState(true)
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0)
   const [animationKey, setAnimationKey] = useState(0)
+  const [isSticky, setIsSticky] = useState(false)
 
   // 프로모션 호텔 데이터 조회
   const { data: promotionHotels = [] } = usePromotionHotels()
@@ -64,11 +70,21 @@ export function PromotionBanner() {
     if (showPromoBanner && promotionHotels.length > 0) {
       const interval = setInterval(() => {
         setCurrentPromoIndex((prev) => (prev + 1) % promotionHotels.length)
-        setAnimationKey(prev => prev + 1) // 애니메이션 키 업데이트
-      }, 5000)
+        setAnimationKey(prev => prev + 1)
+      }, SLIDE_INTERVAL)
       return () => clearInterval(interval)
     }
   }, [showPromoBanner, promotionHotels.length])
+
+  // 스크롤 감지 로직
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > BANNER_HEIGHT)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // 수동 네비게이션 시에도 애니메이션 재실행
   const handleSlideChange = (newIndex: number) => {
@@ -83,7 +99,10 @@ export function PromotionBanner() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
+    <div className={cn(
+      "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white transition-all duration-300",
+      isSticky ? "sticky top-16 z-40 shadow-lg" : "relative"
+    )}>
       <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
         <div className="flex items-center justify-center py-2 sm:py-3 relative">
           <div key={animationKey} className="flex items-center space-x-2 sm:space-x-4">

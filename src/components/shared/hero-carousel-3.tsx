@@ -130,11 +130,12 @@ export function HeroCarousel3() {
 
   return (
     <div className="w-full">
-      <section className="relative">
-        {/* 3개의 큰 이미지 카드 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+      <section className="relative py-6 sm:py-8">
+        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
+          {/* 3개의 큰 이미지 카드 그리드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
           {carouselSlides.map((slide, index) => (
-            <div key={slide.id} className="relative aspect-[4/3] overflow-hidden group cursor-pointer">
+            <div key={slide.id} className="relative aspect-[4/3] overflow-hidden group cursor-pointer rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <Link href={`/hotel/${slide.hotelId}`}>
                 <div className="relative w-full h-full">
                   {/* Background Image */}
@@ -185,6 +186,7 @@ export function HeroCarousel3() {
               </Link>
             </div>
           ))}
+          </div>
         </div>
       </section>
     </div>

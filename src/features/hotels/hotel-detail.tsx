@@ -778,11 +778,18 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     // 4순위: hotel_media 이미지
     console.log('✅ hotel_media 이미지 사용 (우선순위 4)');
     return hotelMedia;
-  }, [allStorageImagesData, storageImages, hotelImages, hotelMedia, hotel, loadingAllImages, allImagesError]);
+  }, [allStorageImagesData?.images, storageImages, hotelImages, hotelMedia, hotel?.property_name_ko, hotel?.property_name_en, loadingAllImages, allImagesError]);
   
-  // 이미지 preloading useEffect (개선된 버전)
+  // 이미지 preloading useEffect (최적화된 버전)
   useEffect(() => {
     if (displayImages.length > 0) {
+      // 이미지 경로들을 문자열로 변환해서 비교
+      const currentImagePaths = displayImages.map((img: any) => img.media_path).join(',')
+      const lastPreloadedPaths = Array.from(preloadedImages).join(',')
+      
+      // 이미지 경로가 동일하면 다시 preload하지 않음
+      if (currentImagePaths === lastPreloadedPaths) return
+
       console.log(`🖼️ 이미지 preloading 시작: ${displayImages.length}개 이미지`)
       
       // 모든 이미지를 순차적으로 preload (첫 번째는 이미 priority로 로드됨)
@@ -799,7 +806,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         console.log(`✅ 모든 이미지 preloading 완료`)
       })
     }
-  }, [displayImages]) // preloadedImages 의존성 제거하여 무한 루프 방지
+  }, [displayImages.map((img: any) => img.media_path).join(',')]) // 이미지 경로만 의존성으로 사용
 
   // 모달이 열릴 때 body 스크롤 막기
   useEffect(() => {

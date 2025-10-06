@@ -47,9 +47,16 @@ export function ImageGallery({
     })
   }, [images, imageExistsMap])
 
-  // 이미지 존재 여부 확인
+  // 이미지 존재 여부 확인 (이미지가 실제로 변경될 때만)
   useEffect(() => {
     if (!isOpen || images.length === 0) return
+
+    // 이미지 경로들을 문자열로 변환해서 비교
+    const currentImagePaths = images.map(img => img.media_path).join(',')
+    const lastCheckedPaths = Array.from(imageExistsMap.keys()).join(',')
+    
+    // 이미지 경로가 동일하면 다시 확인하지 않음
+    if (currentImagePaths === lastCheckedPaths) return
 
     const checkImages = async () => {
       const promises = images.map(async (image) => {
@@ -72,7 +79,7 @@ export function ImageGallery({
     }
 
     checkImages()
-  }, [isOpen, images])
+  }, [isOpen, images.map(img => img.media_path).join(',')])
 
   // selectedImage prop이 변경될 때 currentImageIndex 업데이트
   useEffect(() => {
@@ -211,14 +218,6 @@ export function ImageGallery({
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         quality={85}
                       />
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="bg-white/90 rounded-full p-2">
-                            <ChevronRight className="h-6 w-6 text-gray-700" />
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -243,16 +242,30 @@ export function ImageGallery({
 
               {/* Main Image */}
               <div className="flex-1 relative bg-gray-100 min-h-0">
-                {validImages[currentImageIndex] && (
-                  <Image
-                    src={validImages[currentImageIndex].media_path}
-                    alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
-                    fill
-                    className="object-contain"
-                    quality={90}
-                    priority={true}
-                  />
-                )}
+                {validImages.map((image, index) => (
+                  <div
+                    key={image.id}
+                    className={cn(
+                      "absolute inset-0 transition-opacity duration-200 ease-in-out",
+                      currentImageIndex === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                    )}
+                  >
+                    <Image
+                      src={image.media_path}
+                      alt={image.alt || `Detail ${index + 1}`}
+                      fill
+                      className="object-contain"
+                      quality={90}
+                      priority={index === 0} // 첫 번째 이미지만 priority
+                      loading={index <= 2 ? "eager" : "lazy"} // 처음 3개 이미지는 즉시 로드
+                    />
+                  </div>
+                ))}
+                
+                {/* 로딩 인디케이터 (이미지 전환 시) */}
+                <div className="absolute top-4 right-4 z-20">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin opacity-0 transition-opacity duration-200" />
+                </div>
               </div>
 
               {/* Navigation Controls */}
@@ -289,6 +302,7 @@ export function ImageGallery({
                           currentImageIndex === index && "ring-2 ring-blue-500"
                         )}
                         onClick={() => {
+                          // 즉시 상태 업데이트로 UI 반응성 향상
                           setCurrentImageIndex(index)
                           onImageSelect(index)
                         }}
@@ -297,9 +311,10 @@ export function ImageGallery({
                           src={image.media_path}
                           alt={image.alt || `Thumbnail ${index + 1}`}
                           fill
-                          className="object-cover"
+                          className="object-cover transition-transform duration-200 hover:scale-105"
                           sizes="64px"
                           quality={80}
+                          loading="eager"
                         />
                       </div>
                     ))}
