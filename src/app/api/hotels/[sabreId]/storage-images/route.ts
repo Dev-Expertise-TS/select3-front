@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(
   request: NextRequest,
@@ -30,42 +31,54 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // 서버에서 실제 스토리지 파일을 조회하여 존재하는 파일만 반환
     const decodedSlug = decodeURIComponent(hotel.slug);
-    const supa = await createClient();
-    const listResult = await supa.storage
+
+    // Service Role 클라이언트로 Storage list() API 사용
+    const adminClient = createAdminClient();
+    const { data: files, error: listError } = await adminClient.storage
       .from('hotel-media')
-      .list(`public/${decodedSlug}`, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
-
-    if (listResult.error) {
-      console.error('스토리지 목록 조회 오류:', listResult.error);
-      return NextResponse.json({ success: true, data: { hotel, images: [], totalCount: 0 } });
-    }
-
-    const files = listResult.data || [];
-    const images = files
-      .filter(f => !f.name.endsWith('/') && /(avif|webp|jpg|jpeg|png)$/i.test(f.name))
-      .map((f, idx) => {
-        const path = `public/${decodedSlug}/${f.name}`;
-        const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${path}`;
-        return {
-          id: `storage-${idx + 1}`,
-          filename: f.name,
-          sequence: idx + 1,
-          media_path: url,
-          url,
-          alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
-          isMain: idx === 0,
-          size: f.metadata?.size ?? 0,
-          lastModified: f.updated_at ?? new Date().toISOString(),
-        };
+      .list(`public/${decodedSlug}`, {
+        limit: 1000,
+        sortBy: { column: 'name', order: 'asc' }
       });
 
-    console.log('📋 스토리지에서 조회된 실제 이미지 목록:', {
-      totalImages: images.length,
-      files: images.map(img => img.filename),
+    if (listError) {
+      console.error('Storage list 오류:', listError);
+      return NextResponse.json({
+        success: false,
+        error: 'Storage 파일 목록 조회 실패',
+        details: listError.message
+      }, { status: 500 });
+    }
+
+    // 이미지 파일만 필터링
+    const imageFiles = (files || []).filter(f => 
+      /\.(avif|webp|jpg|jpeg|png)$/i.test(f.name)
+    );
+
+    console.log('✅ Storage list() API 호출 완료:', {
+      slug: decodedSlug,
+      sabreId,
+      totalFiles: files?.length || 0,
+      imageFiles: imageFiles.length,
+      images: imageFiles.map(f => f.name)
     });
 
+    // 이미지 메타데이터 생성
+    const images = imageFiles.map((file, idx) => {
+      const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${file.name}`;
+      return {
+        id: `storage-${idx + 1}`,
+        filename: file.name,
+        sequence: idx + 1,
+        media_path: url,
+        url,
+        alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
+        isMain: idx === 0,
+        size: file.metadata?.size ?? 0,
+        lastModified: file.updated_at ?? new Date().toISOString(),
+      };
+    });
 
     return NextResponse.json({
       success: true,

@@ -1273,7 +1273,16 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
       {/* Image Gallery Modal */}
       <ImageGallery
-        images={displayImages}
+        images={(allStorageImagesData?.images && allStorageImagesData.images.length > 0)
+          ? allStorageImagesData.images.map((img: any) => ({
+              id: img.id,
+              media_path: img.media_path || img.url,
+              alt: img.alt || `${hotel.property_name_ko || hotel.property_name_en} 이미지 ${img.sequence || ''}`,
+              isMain: img.isMain,
+              sequence: img.sequence,
+              filename: img.filename,
+            }))
+          : displayImages}
         hotelName={hotel.property_name_ko || hotel.property_name_en || '호텔명'}
         isOpen={showImageGallery}
         onClose={closeImageGallery}

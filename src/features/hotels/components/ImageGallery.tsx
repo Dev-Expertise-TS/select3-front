@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 import { checkImageExists } from "@/lib/image-cache"
 
@@ -23,6 +23,7 @@ interface ImageGalleryProps {
   onImageSelect: (index: number) => void
   loading?: boolean
   error?: Error | null
+  sabreId?: number
 }
 
 export function ImageGallery({ 
@@ -33,33 +34,53 @@ export function ImageGallery({
   selectedImage, 
   onImageSelect,
   loading = false,
-  error = null
+  error = null,
+  sabreId
 }: ImageGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(selectedImage)
   const [showDetailView, setShowDetailView] = useState(false)
   const [imageExistsMap, setImageExistsMap] = useState<Map<string, boolean>>(new Map())
+  const thumbnailListRef = useRef<HTMLDivElement | null>(null)
+  const preloadedSrcSetRef = useRef<Set<string>>(new Set())
+  const [remoteImages, setRemoteImages] = useState<ImageItem[] | null>(null)
+
+  const preloadImage = (src: string) => {
+    if (!src || preloadedSrcSetRef.current.has(src)) return
+    const img = new Image()
+    img.decoding = 'async'
+    img.loading = 'eager' as any
+    img.src = src
+    img.onload = () => preloadedSrcSetRef.current.add(src)
+    img.onerror = () => preloadedSrcSetRef.current.add(src)
+  }
+
+  const sourceImages = remoteImages ?? images
 
   // 실제 존재하는 이미지들만 필터링
   const validImages = useMemo(() => {
-    return images.filter((image) => {
+    // 존재 여부를 아직 모르면 일단 표시하고, 명시적으로 false인 것만 제외
+    return sourceImages.filter((image) => {
       const exists = imageExistsMap.get(image.media_path)
-      return exists === true // true인 경우만 포함
+      return exists !== false
     })
-  }, [images, imageExistsMap])
+  }, [sourceImages, imageExistsMap])
 
   // 이미지 존재 여부 확인 (이미지가 실제로 변경될 때만)
   useEffect(() => {
-    if (!isOpen || images.length === 0) return
+    if (!isOpen || sourceImages.length === 0) return
+
+    // 서버에서 스토리지 목록(실존 파일)으로 전달된 경우(filename 존재)에는 재확인 스킵
+    if (sourceImages.some((img: any) => typeof (img as any).filename === 'string')) return
 
     // 이미지 경로들을 문자열로 변환해서 비교
-    const currentImagePaths = images.map(img => img.media_path).join(',')
+    const currentImagePaths = sourceImages.map(img => img.media_path).join(',')
     const lastCheckedPaths = Array.from(imageExistsMap.keys()).join(',')
     
     // 이미지 경로가 동일하면 다시 확인하지 않음
     if (currentImagePaths === lastCheckedPaths) return
 
     const checkImages = async () => {
-      const promises = images.map(async (image) => {
+      const promises = sourceImages.map(async (image) => {
         try {
           const exists = await checkImageExists(image.media_path)
           return { media_path: image.media_path, exists }
@@ -79,7 +100,56 @@ export function ImageGallery({
     }
 
     checkImages()
-  }, [isOpen, images.map(img => img.media_path).join(',')])
+  }, [isOpen, sourceImages.map(img => img.media_path).join(',')])
+
+  // 팝업 open 시 서버에서 직접 전체 이미지 목록 가져오기
+  useEffect(() => {
+    if (!isOpen || !sabreId) return
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/hotels/${sabreId}/storage-images`, { cache: 'no-store' })
+        const json = await res.json()
+        if (res.ok && json?.success && Array.isArray(json.data?.images) && json.data.images.length > 0) {
+          const mapped: ImageItem[] = json.data.images.map((img: any) => ({
+            id: img.id,
+            media_path: img.media_path || img.url,
+            alt: img.alt || `${hotelName} 이미지 ${img.sequence || ''}`,
+            isMain: img.isMain,
+          }))
+          setRemoteImages(mapped)
+        }
+      } catch {}
+    })()
+  }, [isOpen, sabreId, hotelName])
+
+  // 현재 선택 인덱스 주변 이미지 프리로드 (즉시 반응성 향상)
+  useEffect(() => {
+    if (!isOpen || validImages.length === 0) return
+    const neighbors = [currentImageIndex, currentImageIndex + 1, currentImageIndex + 2]
+      .map(i => (i + validImages.length) % validImages.length)
+    neighbors.forEach(i => preloadImage(validImages[i]?.media_path))
+  }, [isOpen, currentImageIndex, validImages])
+
+  // 썸네일 가시성 기반 프리로드 (뷰포트 근처 이미지 선로딩)
+  useEffect(() => {
+    if (!isOpen || !thumbnailListRef.current) return
+    const container = thumbnailListRef.current
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const idxAttr = (entry.target as HTMLElement).getAttribute('data-index')
+          const idx = idxAttr ? parseInt(idxAttr, 10) : NaN
+          const src = isNaN(idx) ? undefined : validImages[idx]?.media_path
+          if (src) preloadImage(src)
+        }
+      })
+    }, { root: container, rootMargin: '200px', threshold: 0 })
+
+    const items = container.querySelectorAll('[data-thumb="true"]')
+    items.forEach(el => io.observe(el))
+
+    return () => io.disconnect()
+  }, [isOpen, validImages.length])
 
   // selectedImage prop이 변경될 때 currentImageIndex 업데이트
   useEffect(() => {
@@ -210,7 +280,7 @@ export function ImageGallery({
                       className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer bg-gray-100"
                       onClick={() => openDetailView(index)}
                     >
-                      <Image
+                      <NextImage
                         src={image.media_path}
                         alt={image.alt || `Gallery ${index + 1}`}
                         fill
@@ -240,32 +310,21 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* Main Image */}
+              {/* Main Image (현재 선택된 한 장만 렌더링) */}
               <div className="flex-1 relative bg-gray-100 min-h-0">
-                {validImages.map((image, index) => (
-                  <div
-                    key={image.id}
-                    className={cn(
-                      "absolute inset-0 transition-opacity duration-200 ease-in-out",
-                      currentImageIndex === index ? "opacity-100 z-10" : "opacity-0 z-0"
-                    )}
-                  >
-                    <Image
-                      src={image.media_path}
-                      alt={image.alt || `Detail ${index + 1}`}
-                      fill
-                      className="object-contain"
-                      quality={90}
-                      priority={index === 0} // 첫 번째 이미지만 priority
-                      loading={index <= 2 ? "eager" : "lazy"} // 처음 3개 이미지는 즉시 로드
-                    />
-                  </div>
-                ))}
-                
-                {/* 로딩 인디케이터 (이미지 전환 시) */}
-                <div className="absolute top-4 right-4 z-20">
-                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin opacity-0 transition-opacity duration-200" />
-                </div>
+                {validImages[currentImageIndex] && (
+                    <NextImage
+                    key={validImages[currentImageIndex].id}
+                    src={validImages[currentImageIndex].media_path}
+                    alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
+                    fill
+                    className="object-contain"
+                    quality={85}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                )}
               </div>
 
               {/* Navigation Controls */}
@@ -293,7 +352,7 @@ export function ImageGallery({
               {/* Thumbnail Navigation */}
               {validImages.length > 1 && (
                 <div className="p-4 border-t border-gray-200 flex-shrink-0">
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                  <div ref={thumbnailListRef} className="flex gap-2 overflow-x-auto pb-2">
                     {validImages.map((image, index) => (
                       <div
                         key={image.id}
@@ -301,13 +360,15 @@ export function ImageGallery({
                           "relative flex-shrink-0 w-16 h-16 cursor-pointer rounded-lg overflow-hidden bg-gray-100",
                           currentImageIndex === index && "ring-2 ring-blue-500"
                         )}
+                        data-thumb="true"
+                        data-index={index}
                         onClick={() => {
                           // 즉시 상태 업데이트로 UI 반응성 향상
                           setCurrentImageIndex(index)
                           onImageSelect(index)
                         }}
                       >
-                        <Image
+                        <NextImage
                           src={image.media_path}
                           alt={image.alt || `Thumbnail ${index + 1}`}
                           fill

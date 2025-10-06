@@ -28,11 +28,12 @@ export function useHeroImages() {
     queryKey: ['hero-images'],
     queryFn: async (): Promise<HeroImageData[]> => {
       try {
-        // 1. select_feature_slots에서 surface가 "히어로"인 sabre_id 조회
+        // 1. select_feature_slots에서 surface가 "히어로"인 sabre_id, slot_key 조회 (slot_key 오름차순 정렬)
         const { data: featureSlots, error: featureError } = await supabase
           .from('select_feature_slots')
-          .select('sabre_id')
+          .select('sabre_id, slot_key')
           .eq('surface', '히어로')
+          .order('slot_key', { ascending: true })
         
         if (featureError) {
           console.error('❌ 히어로 feature slots 조회 실패:', featureError)
@@ -88,6 +89,10 @@ export function useHeroImages() {
           throw chainsError
         }
         
+        // slot_key 기준으로 정렬된 순서를 유지하기 위해 맵 구성
+        const orderMap = new Map<number, number>()
+        featureSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
+
         // 5. 데이터 조합 - 각 호텔마다 image_1 사용 (유효성 검증 포함)
         const heroImages: HeroImageData[] = hotels.map(hotel => {
           
@@ -152,7 +157,10 @@ export function useHeroImages() {
             brand_name_en: getBrandDisplayName(),
           }
         })
-        
+
+        // 6. slot_key 순서대로 최종 정렬
+        heroImages.sort((a, b) => (orderMap.get(a.sabre_id) ?? 0) - (orderMap.get(b.sabre_id) ?? 0))
+
         return heroImages
       } catch (error) {
         console.error('❌ 히어로 이미지 조회 실패:', error instanceof Error ? error.message : String(error))
