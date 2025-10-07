@@ -49,6 +49,13 @@ interface HotelTabsProps {
 export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId, hotelBlogs }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
   
+  // 접기/펼치기 상태 추가
+  const [isIntroExpanded, setIsIntroExpanded] = useState(false)
+  const [isLocationExpanded, setIsLocationExpanded] = useState(false)
+  
+  // 탭 메뉴 ref 추가
+  const tabMenuRef = useRef<HTMLDivElement>(null)
+  
   // 아티클 관련 상태
   const [articles, setArticles] = useState<BlogContent[]>([])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
@@ -62,6 +69,13 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   // 중복 호출 방지를 위한 ref
   const benefitsFetchedRef = useRef(false)
   const articlesFetchedRef = useRef(false)
+  
+  // 탭 메뉴로 스크롤하는 함수
+  const scrollToTabMenu = () => {
+    if (tabMenuRef.current) {
+      tabMenuRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   // 호텔별 혜택 데이터 가져오기
   const fetchHotelBenefits = useCallback(async () => {
@@ -198,34 +212,33 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
         <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm p-3 sm:p-6">
           {/* Tab Navigation */}
-          <div className="flex items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 overflow-x-auto">
+          <div ref={tabMenuRef} className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 px-1 sm:px-0">
             <button
               onClick={() => setActiveTab("benefits")}
-              className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
                 activeTab === "benefits"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
-              <span className="text-xl">🏆</span>
               예약시 제공 혜택
             </button>
             <button
               onClick={() => setActiveTab("introduction")}
-              className={`pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
                 activeTab === "introduction"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               호텔 상세 정보
             </button>
             <button
               onClick={() => setActiveTab("transportation")}
-              className={`pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
                 activeTab === "transportation"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               위치 및 교통
@@ -233,10 +246,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             {hotelBlogs && (
               <button
                 onClick={() => setActiveTab("articles")}
-                className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
+                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-colors ${
                   activeTab === "articles"
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
+                    ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-blue-600"
                 }`}
               >
                 <FileText className="h-4 w-4" />
@@ -245,13 +258,12 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             )}
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`flex items-center gap-1 sm:gap-2 pb-2 sm:pb-3 font-semibold text-sm sm:text-base whitespace-nowrap ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
                 activeTab === "reviews"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
-              <span className="text-xl">⭐</span>
               리뷰 평가 분석
             </button>
           </div>
@@ -291,7 +303,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                   {benefits.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center justify-center gap-1.5 p-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex-1 min-w-[150px] shadow-sm hover:shadow-md transition-shadow">
+                        <div key={index} className="flex items-center justify-center gap-1.5 p-3 bg-slate-50/80 rounded-lg border-2 border-slate-200/60 flex-1 min-w-[150px] shadow-sm hover:shadow-md transition-shadow">
                           <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
                             <benefit.icon className={`h-3.5 w-3.5 ${benefit.iconColor}`} />
                           </div>
@@ -312,92 +324,148 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
           {activeTab === "introduction" && (
             <div className="space-y-4">
-              <div className="prose max-w-none">
-                {/* Property Details 표시 */}
-                {introHtml ? (
-                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
-                    <div
-                      className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                      dangerouslySetInnerHTML={{ __html: introHtml }}
-                    />
-                  </div>
-                ) : (
-                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
-                    <p className="text-gray-700 leading-relaxed">
-                      {propertyDescription || `${hotelName}의 상세 정보가 아직 제공되지 않았습니다.`}
-                    </p>
-                  </div>
-                )}
+              {/* 더보기 버튼 */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setIsIntroExpanded(!isIntroExpanded)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  {isIntroExpanded ? '내용 접기' : '펼쳐 보기'}
+                </button>
               </div>
+
+              {/* 접기/펼치기 콘텐츠 */}
+              {isIntroExpanded && (
+                <>
+                  <div className="prose max-w-none">
+                    {/* Property Details 표시 */}
+                    {introHtml ? (
+                      <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
+                        <div
+                          className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
+                          dangerouslySetInnerHTML={{ __html: introHtml }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
+                        <p className="text-gray-700 leading-relaxed">
+                          {propertyDescription || `${hotelName}의 상세 정보가 아직 제공되지 않았습니다.`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 하단 접기 버튼 */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        setIsIntroExpanded(false)
+                        scrollToTabMenu()
+                      }}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    >
+                      내용 접기
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {activeTab === "transportation" && (
             <div className="space-y-3 sm:space-y-6">
-              {locationHtml ? (
-                <div className="prose max-w-none">
-                  <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-3 sm:mb-6">
-                    <div
-                      className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                      dangerouslySetInnerHTML={{ __html: locationHtml }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-lg mb-2">📍</div>
-                  <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
-                </div>
-              )}
+              {/* 더보기 버튼 */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setIsLocationExpanded(!isLocationExpanded)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  {isLocationExpanded ? '내용 접기' : '펼쳐 보기'}
+                </button>
+              </div>
 
-              {/* 구글 지도 */}
-              {propertyAddress && (
-                <div className="mt-4 sm:mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-4">호텔 위치</h3>
-                  <div className="bg-gray-100 rounded-lg p-2 sm:p-4">
-                    <div className="mb-2 sm:mb-4">
-                      <p className="text-sm text-gray-600 mb-2">
-                        <span className="font-medium">주소:</span> {propertyAddress}
-                      </p>
-                    </div>
-                    <div className="relative w-full h-64 sm:h-96 bg-gray-200 rounded-lg overflow-hidden">
-                      {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                        <iframe
-                          src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(propertyAddress)}`}
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          allowFullScreen
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          title={`${hotelName} 위치`}
+              {/* 접기/펼치기 콘텐츠 */}
+              {isLocationExpanded && (
+                <>
+                  {locationHtml ? (
+                    <div className="prose max-w-none">
+                      <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-3 sm:mb-6">
+                        <div
+                          className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
+                          dangerouslySetInnerHTML={{ __html: locationHtml }}
                         />
-                      ) : (
-                        <div className="flex items-center justify-center h-full bg-gray-100">
-                          <div className="text-center">
-                            <div className="text-gray-400 text-4xl mb-2">🗺️</div>
-                            <p className="text-gray-500 text-sm">구글 맵스 API 키가 설정되지 않았습니다.</p>
-                            <p className="text-gray-400 text-xs mt-1">환경 변수에 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY를 추가해주세요.</p>
-                          </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-gray-400 text-lg mb-2">📍</div>
+                      <p className="text-gray-500">위치 및 교통 정보가 준비 중입니다.</p>
+                    </div>
+                  )}
+
+                  {/* 구글 지도 */}
+                  {propertyAddress && (
+                    <div className="mt-4 sm:mt-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-4">호텔 위치</h3>
+                      <div className="bg-gray-100 rounded-lg p-2 sm:p-4">
+                        <div className="mb-2 sm:mb-4">
+                          <p className="text-sm text-gray-600 mb-2">
+                            <span className="font-medium">주소:</span> {propertyAddress}
+                          </p>
                         </div>
-                      )}
+                        <div className="relative w-full h-64 sm:h-96 bg-gray-200 rounded-lg overflow-hidden">
+                          {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+                            <iframe
+                              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(propertyAddress)}`}
+                              width="100%"
+                              height="100%"
+                              style={{ border: 0 }}
+                              allowFullScreen
+                              loading="lazy"
+                              referrerPolicy="no-referrer-when-downgrade"
+                              title={`${hotelName} 위치`}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-gray-100">
+                              <div className="text-center">
+                                <div className="text-gray-400 text-4xl mb-2">🗺️</div>
+                                <p className="text-gray-500 text-sm">구글 맵스 API 키가 설정되지 않았습니다.</p>
+                                <p className="text-gray-400 text-xs mt-1">환경 변수에 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY를 추가해주세요.</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4">
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(propertyAddress)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            구글 지도에서 보기
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-4">
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(propertyAddress)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        구글 지도에서 보기
-                      </a>
-                    </div>
+                  )}
+                  
+                  {/* 하단 접기 버튼 */}
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={() => {
+                        setIsLocationExpanded(false)
+                        scrollToTabMenu()
+                      }}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    >
+                      내용 접기
+                    </button>
                   </div>
-                </div>
+                </>
               )}
             </div>
           )}

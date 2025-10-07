@@ -365,7 +365,7 @@ export function CommonSearchBar({
   }
 
   return (
-      <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-none sm:rounded-xl p-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2 ${className}`}
+      <div className={`${className} bg-blue-50 sm:bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#E6CDB5' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 위치 검색 영역 */}

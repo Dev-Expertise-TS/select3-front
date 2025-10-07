@@ -193,7 +193,12 @@ export function HotelInfo({
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm">{hotel.property_address || '주소 정보 없음'}</span>
                 </div>
-                <a href="#" className="text-blue-600 text-sm hover:underline">
+                <a 
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.property_address || hotel.property_name_ko || hotel.property_name_en || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 text-sm hover:underline"
+                >
                   지도에서 호텔보기
                 </a>
               </div>
