@@ -1,7 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { PageBanner } from "@/components/shared/page-banner"
 
 interface HotelChain {
   chain_id: number
@@ -77,18 +76,18 @@ export async function BrandProgramPage() {
   
   return (
     <>
-      {/* Page Banner */}
-      <PageBanner
-        title="Brand & Program"
-        subtitle="셀렉트에서 추천하는 최고의 브랜드와 프로그램"
-      />
-
       {/* Main Content */}
       <section className="py-8 pb-[100px] bg-white">
         <div className="container mx-auto px-4 max-w-[1440px]">
           <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">Premium Hotel Brands</h2>
-            <p className="text-base text-gray-600">각 브랜드의 고유한 특성과 서비스를 경험해보세요</p>
+            <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">Premium Brand & Benefit</h2>
+            <p className="text-base text-gray-600">
+              <span className="hidden sm:inline">투어비스 셀렉트와 제휴된 프리미엄 호텔 브랜드와 혜택을 경험해 보세요.</span>
+              <span className="sm:hidden">
+                투어비스 셀렉트와 제휴된 <br />
+                프리미엄 호텔 브랜드와 혜택을 경험해 보세요.
+              </span>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

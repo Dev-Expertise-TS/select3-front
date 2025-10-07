@@ -145,13 +145,13 @@ export function HeroCarousel4() {
 
   return (
     <div className="w-full">
-      <section className="relative py-6 sm:py-8">
-        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
+      <section className="relative py-3 sm:py-8">
+        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           {/* 모바일: 1개 슬라이드, PC: 4개 그리드 */}
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
             <div className="lg:hidden">
-              <div className="relative aspect-[4/3] overflow-hidden group rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="relative aspect-[4/3] overflow-hidden group rounded-none sm:rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <Link href={`/hotel/${carouselSlides[currentSlide].hotelId}`}>
                   <div className="relative w-full h-full">
                     {/* Background Image */}
