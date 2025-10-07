@@ -487,7 +487,7 @@ export function RoomRatesTable({
               // AI 처리 함수들과 동일한 키 생성 방식 사용
               const rowKey = `${roomType}-${roomName}`
               const introKey = `${roomType}-${roomName}-${rp.RateKey || ''}` // AI 처리 함수와 동일한 방식
-              const roomIntroduction = roomIntroductions.get(introKey) || 'AI가 객실 소개를 생성 중입니다...'
+              const roomIntroduction = roomIntroductions.get(introKey) || '호텔 전문 AI가 객실 소개를 준비 중입니다...'
               
               // 디버깅: 키와 Map 상태 확인
               if (idx >= 3) { // 4행부터 디버깅
@@ -537,14 +537,14 @@ export function RoomRatesTable({
                           console.log(`🔍 ${idx + 1}행 객실 소개 렌더링:`, {
                             introKey,
                             roomIntroduction: roomIntroduction.substring(0, 50) + '...',
-                            hasValidIntro: roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...',
+                            hasValidIntro: roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...',
                             isGenerating: isGeneratingIntroductions,
                             currentRow: currentProcessingRow,
                             idx
                           })
                         }
                         
-                        if (roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...') {
+                        if (roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...') {
                           return roomIntroduction
                         } else if (isGeneratingIntroductions && currentProcessingRow === idx) {
                           return (

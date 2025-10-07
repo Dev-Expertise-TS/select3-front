@@ -109,7 +109,7 @@ export function RoomCard({
 
   const displayIntroduction = roomIntroduction && 
     roomIntroduction !== 'N/A' && 
-    !roomIntroduction.includes('AI가 객실 소개를 생성 중입니다')
+    !roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다')
     ? roomIntroduction 
     : description || ''
   
@@ -189,7 +189,7 @@ export function RoomCard({
               {isGenerating ? (
                 <div className="flex items-center gap-2 h-full">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-gray-500">AI가 객실 소개를 생성 중입니다...</span>
+                  <span className="text-gray-500">호텔 전문 AI가 객실 소개를 준비 중입니다...</span>
                 </div>
               ) : (
                 <div className={isExpanded ? '' : 'h-full overflow-hidden'}>

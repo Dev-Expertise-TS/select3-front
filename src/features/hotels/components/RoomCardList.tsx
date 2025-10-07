@@ -123,7 +123,7 @@ export function RoomCardList({
         // AI 처리 중인지 확인 - 더 정확한 조건
         const isGenerating = isGeneratingIntroductions && 
           currentProcessingRow === idx && 
-          (!roomIntroduction || roomIntroduction.includes('AI가 객실 소개를 생성 중입니다'))
+          (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
 
         return (
           <RoomCard
@@ -143,7 +143,7 @@ export function RoomCardList({
             checkOut={checkOut}
             view={view}
             isBeyondFirstRow={idx >= 3}
-            hasIntro={!!(roomIntroduction && roomIntroduction !== 'AI가 객실 소개를 생성 중입니다...')}
+            hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
             onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
           />
         )
