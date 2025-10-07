@@ -198,8 +198,8 @@ export function SimpleHotelSearch({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 ${className}`}>
-      <div className="flex items-center gap-2 sm:gap-3">
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-1.5 sm:p-4 ${className}`}>
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* 검색 입력 영역 */}
         <div className="flex-1 relative">
           <div className="flex items-center gap-1.5 sm:gap-2 relative">
@@ -307,8 +307,8 @@ export function SimpleHotelSearch({
         {/* 검색 버튼 */}
         <Button 
           variant="default"
-          size="lg"
-          className="font-medium px-4 sm:px-6 text-sm sm:text-base flex items-center justify-center shrink-0"
+          size="sm"
+          className="font-medium px-3 sm:px-6 text-xs sm:text-base flex items-center justify-center shrink-0 h-7 sm:h-10"
           onClick={handleSearch}
           disabled={isSearching}
         >
