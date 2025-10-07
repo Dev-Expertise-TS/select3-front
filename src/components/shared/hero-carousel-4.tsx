@@ -151,7 +151,7 @@ export function HeroCarousel4() {
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
             <div className="lg:hidden">
-              <div className="relative aspect-[4/3] overflow-hidden group cursor-pointer rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="relative aspect-[4/3] overflow-hidden group rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <Link href={`/hotel/${carouselSlides[currentSlide].hotelId}`}>
                   <div className="relative w-full h-full">
                     {/* Background Image */}
@@ -178,7 +178,7 @@ export function HeroCarousel4() {
                     )}
                     
                     {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-between">
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                       {/* Top: Category Badge */}
                       <div className="flex justify-start p-4">
                         <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
@@ -199,42 +199,53 @@ export function HeroCarousel4() {
                     </div>
                   </div>
                 </Link>
-              </div>
-              
-              {/* 슬라이드 네비게이션 */}
-              <div className="flex justify-center items-center mt-4 gap-4">
+
+                {/* 좌우 네비게이션 버튼 (이미지 영역 내부) */}
                 <button
-                  onClick={prevSlide}
-                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    prevSlide()
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                   aria-label="Previous slide"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 
-                <div className="flex gap-2">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    nextSlide()
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Next slide"
+                >
+                  <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* 하단 도트 인디케이터 */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
                   {carouselSlides.map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => changeSlide(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentSlide ? 'bg-blue-600 w-6' : 'bg-gray-300'
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        changeSlide(index)
+                      }}
+                      className={`h-1.5 rounded-full transition-all ${
+                        index === currentSlide ? 'bg-white w-8' : 'bg-white/60 w-1.5'
                       }`}
                       aria-label={`Go to slide ${index + 1}`}
                     />
                   ))}
                 </div>
-                
-                <button
-                  onClick={nextSlide}
-                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
-                  aria-label="Next slide"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
             </div>
 
