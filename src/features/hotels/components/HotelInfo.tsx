@@ -177,10 +177,10 @@ export function HotelInfo({
           {/* Hotel Info Header - 아래로 이동 */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-3 sm:px-0">
             <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>
                 {hotel.property_name_en && (
-                  <span className="text-lg sm:text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
+                  <span className="text-base sm:text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
                 )}
                 <div className="flex items-center">
                   {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
@@ -188,19 +188,9 @@ export function HotelInfo({
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-gray-600">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm">{hotel.property_address || '주소 정보 없음'}</span>
-                </div>
-                <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.property_address || hotel.property_name_ko || hotel.property_name_en || '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 text-sm hover:underline"
-                >
-                  지도에서 호텔보기
-                </a>
+              <div className="flex items-center gap-2 text-gray-600">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm">{hotel.property_address || '주소 정보 없음'}</span>
               </div>
             </div>
           </div>

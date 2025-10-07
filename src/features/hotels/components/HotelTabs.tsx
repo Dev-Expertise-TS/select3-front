@@ -216,30 +216,30 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
           <div ref={tabMenuRef} className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 px-1 sm:px-0">
             <button
               onClick={() => setActiveTab("benefits")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
                 activeTab === "benefits"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
               }`}
             >
               예약시 제공 혜택
             </button>
             <button
               onClick={() => setActiveTab("introduction")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
                 activeTab === "introduction"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
               }`}
             >
               호텔 상세 정보
             </button>
             <button
               onClick={() => setActiveTab("transportation")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
                 activeTab === "transportation"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
               }`}
             >
               위치 및 교통
@@ -247,10 +247,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             {hotelBlogs && (
               <button
                 onClick={() => setActiveTab("articles")}
-                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-colors ${
+                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
                   activeTab === "articles"
-                    ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-blue-600"
+                    ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                    : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
                 }`}
               >
                 <FileText className="h-4 w-4" />
@@ -259,10 +259,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             )}
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-colors ${
+              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
                 activeTab === "reviews"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-blue-600"
+                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
               }`}
             >
               리뷰 평가 분석
