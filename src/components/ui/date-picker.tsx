@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Calendar, Users } from "lucide-react"
 import { Button } from "./button"
 import { cn } from "@/lib/utils"
@@ -98,6 +98,37 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     return days
   }, [currentMonth])
 
+  // 추가 달들 데이터 생성 (3~6번째 달)
+  const additionalMonthsData = useMemo(() => {
+    const months = []
+    for (let i = 2; i < 6; i++) {
+      // JavaScript Date 객체를 사용하여 올바른 월과 년도 계산
+      const targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + i, 1)
+      const year = targetDate.getFullYear()
+      const month = targetDate.getMonth()
+      
+      const firstDay = new Date(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0)
+      const startDate = new Date(firstDay)
+      startDate.setDate(startDate.getDate() - firstDay.getDay())
+      
+      const days = []
+      const currentDate = new Date(startDate)
+      
+      while (currentDate <= lastDay || days.length < 42) {
+        days.push(new Date(currentDate))
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+      
+      months.push({
+        month: month,
+        year: year,
+        days: days
+      })
+    }
+    return months
+  }, [currentMonth])
+
   // 날짜를 YYYY-MM-DD 형식으로 변환하는 유틸리티 함수 (로컬 시간 기준)
   const formatDateToLocalString = (date: Date) => {
     const year = date.getFullYear()
@@ -164,6 +195,11 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     return date.getMonth() === currentMonth.getMonth() + 1
   }
 
+  // 날짜가 특정 달에 속하는지 확인
+  const isSpecificMonth = (date: Date, targetMonth: number, targetYear: number) => {
+    return date.getMonth() === targetMonth && date.getFullYear() === targetYear
+  }
+
   // 특별한 날짜 (프로모션이나 특별 요금이 있는 날짜)
   const getSpecialDates = () => {
     const specialDates = ['2025-10-03', '2025-10-06', '2025-10-07', '2025-10-08', '2025-10-09']
@@ -175,70 +211,73 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     return getSpecialDates().includes(dateStr)
   }
 
+  // 캘린더가 열릴 때 body 스크롤 막기 및 하단 네비게이터 숨기기
+  useEffect(() => {
+    // body 스크롤 막기
+    document.body.style.overflow = 'hidden'
+    
+    // 하단 네비게이터 숨기기
+    const bottomNav = document.querySelector('[data-bottom-nav]')
+    if (bottomNav) {
+      (bottomNav as HTMLElement).style.display = 'none'
+    }
+
+    // cleanup function
+    return () => {
+      document.body.style.overflow = 'unset'
+      if (bottomNav) {
+        (bottomNav as HTMLElement).style.display = 'flex'
+      }
+    }
+  }, [])
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 pt-20 pb-20 sm:pt-0 sm:pb-0">
-      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-2 sm:mx-4 max-h-full sm:max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+      <div className="bg-white w-full h-[calc(100vh-4rem)] sm:h-auto sm:rounded-lg sm:shadow-2xl sm:max-w-4xl sm:w-full sm:mx-2 sm:mx-4 sm:max-h-[90vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
-        <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-2 text-gray-700">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-sm sm:text-base">
-                  {selectedCheckIn && selectedCheckOut 
-                    ? `${formatDateForDisplay(selectedCheckIn)} - ${formatDateForDisplay(selectedCheckOut)} ${calculateNights()}박`
-                    : selectedCheckIn 
-                      ? `${formatDateForDisplay(selectedCheckIn)} ~ 체크아웃 날짜 선택`
-                      : "체크인 날짜 선택"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Users className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">{guests || "객실 1개, 성인 2명"}</span>
-              </div>
-            </div>
-            {/* 닫기 버튼 */}
+        <div className="bg-white border-b border-gray-200 p-4 sm:p-4">
+          <div className="flex items-center justify-between mb-4 sm:mb-0">
+            <button
+              onClick={() => {
+                setSelectedCheckIn("")
+                setSelectedCheckOut("")
+              }}
+              className="text-black font-medium text-sm"
+            >
+              초기화
+            </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              className="text-black text-xl font-medium"
               aria-label="닫기"
             >
-              <span className="text-2xl text-gray-500 hover:text-gray-700">×</span>
+              ×
             </button>
+          </div>
+          
+          {/* 요일 표시 */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {['일', '월', '화', '수', '목', '금', '토'].map(day => (
+              <div key={day} className={cn(
+                "h-8 flex items-center justify-center text-sm font-medium",
+                day === '일' ? "text-orange-500" : "text-black"
+              )}>
+                {day}
+              </div>
+            ))}
           </div>
         </div>
 
         {/* 캘린더 */}
-        <div className="p-3 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="p-4 space-y-6">
             {/* 첫 번째 달 */}
             <div>
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={goToPreviousMonth}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                  {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
-                </h3>
-                <div className="w-8"></div>
-              </div>
+              <h3 className="text-lg font-semibold text-black mb-4 text-center">
+                {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
+              </h3>
               
               <div className="grid grid-cols-7 gap-1">
-                {['일', '월', '화', '수', '목', '금', '토'].map(day => (
-                  <div key={day} className={cn(
-                    "h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm font-medium",
-                    day === '일' ? "text-red-500" : "text-gray-500"
-                  )}>
-                    {day}
-                  </div>
-                ))}
-                
                 {calendarData.slice(0, 42).map((date, index) => {
                   const today = new Date()
                   today.setHours(0, 0, 0, 0)
@@ -253,19 +292,19 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                       onClick={() => handleDateClick(date)}
                       disabled={!isCurrentMonth(date) || isPastOrToday}
                       className={cn(
-                        "h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 relative",
+                        "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
                         !isCurrentMonth(date) && "text-gray-300 cursor-not-allowed",
-                        isCurrentMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-50",
-                        isCurrentMonth(date) && !isPastOrToday && "hover:bg-gray-100",
-                        isSelected(date) && "bg-blue-600 text-white hover:bg-blue-700",
-                        isInRange(date) && !isSelected(date) && "bg-blue-100 text-blue-900",
-                        date.getDay() === 0 && isCurrentMonth(date) && !isSelected(date) && !isPastOrToday && "text-red-500",
+                        isCurrentMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
+                        isCurrentMonth(date) && !isPastOrToday && "hover:bg-gray-100 text-black",
+                        isSelected(date) && "bg-orange-500 text-white",
+                        isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
+                        date.getDay() === 0 && isCurrentMonth(date) && !isSelected(date) && !isPastOrToday && "text-orange-500",
                         isToday && "bg-yellow-100 text-yellow-700 font-bold"
                       )}
                     >
                       {date.getDate()}
                       {isSpecialDate(date) && (
-                        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-400 rounded-full"></div>
+                        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-purple-400 rounded-full"></div>
                       )}
                     </button>
                   )
@@ -273,104 +312,106 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               </div>
             </div>
 
-            {/* 두 번째 달 */}
-            <div>
-              <div className="flex items-center justify-between mb-2 sm:mb-4">
-                <div className="w-8"></div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                  {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 2}월
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={goToNextMonth}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-7 gap-1">
-                {['일', '월', '화', '수', '목', '금', '토'].map(day => (
-                  <div key={day} className={cn(
-                    "h-8 sm:h-10 flex items-center justify-center text-xs sm:text-sm font-medium",
-                    day === '일' ? "text-red-500" : "text-gray-500"
-                  )}>
-                    {day}
-                  </div>
-                ))}
-                
-                {secondMonthData.slice(0, 42).map((date, index) => {
-                  const today = new Date()
-                  today.setHours(0, 0, 0, 0)
-                  const tomorrow = new Date(today)
-                  tomorrow.setDate(tomorrow.getDate() + 1)
-                  const isToday = date.getTime() === today.getTime()
-                  const isPastOrToday = date < tomorrow
-                  
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleDateClick(date)}
-                      disabled={!isSecondMonth(date) || isPastOrToday}
-                      className={cn(
-                        "h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 relative",
-                        !isSecondMonth(date) && "text-gray-300 cursor-not-allowed",
-                        isSecondMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-50",
-                        isSecondMonth(date) && !isPastOrToday && "hover:bg-gray-100",
-                        isSelected(date) && "bg-blue-600 text-white hover:bg-blue-700",
-                        isInRange(date) && !isSelected(date) && "bg-blue-100 text-blue-900",
-                        date.getDay() === 0 && isSecondMonth(date) && !isSelected(date) && !isPastOrToday && "text-red-500",
-                        isToday && "bg-yellow-100 text-yellow-700 font-bold"
-                      )}
-                    >
-                      {date.getDate()}
-                      {isSpecialDate(date) && (
-                        <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-400 rounded-full"></div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 하단 정보 */}
-        <div className="bg-gray-50 border-t border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span>• 마우스를 위로 올려 휴일 확인</span>
-            </div>
-            <div className="text-right">
-                             <div className="font-medium text-gray-900 text-xs sm:text-sm">
-                 {selectedCheckIn && selectedCheckOut 
-                   ? `${formatDateForDisplay(selectedCheckIn)} ~ ${formatDateForDisplay(selectedCheckOut)} (${calculateNights()}박)`
-                   : selectedCheckIn 
-                     ? "체크아웃 날짜를 선택해주세요"
-                     : "체크인 날짜를 선택해주세요"
-                 }
+             {/* 두 번째 달 */}
+             <div>
+               <h3 className="text-lg font-semibold text-black mb-4 text-center">
+                 {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 2}월
+               </h3>
+               
+               <div className="grid grid-cols-7 gap-1">
+                 {secondMonthData.slice(0, 42).map((date, index) => {
+                   const today = new Date()
+                   today.setHours(0, 0, 0, 0)
+                   const tomorrow = new Date(today)
+                   tomorrow.setDate(tomorrow.getDate() + 1)
+                   const isToday = date.getTime() === today.getTime()
+                   const isPastOrToday = date < tomorrow
+                   
+                   return (
+                     <button
+                       key={index}
+                       onClick={() => handleDateClick(date)}
+                       disabled={!isSecondMonth(date) || isPastOrToday}
+                       className={cn(
+                         "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
+                         !isSecondMonth(date) && "text-gray-300 cursor-not-allowed",
+                         isSecondMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
+                         isSecondMonth(date) && !isPastOrToday && "hover:bg-gray-100 text-black",
+                         isSelected(date) && "bg-orange-500 text-white",
+                         isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
+                         date.getDay() === 0 && isSecondMonth(date) && !isSelected(date) && !isPastOrToday && "text-orange-500",
+                         isToday && "bg-yellow-100 text-yellow-700 font-bold"
+                       )}
+                     >
+                       {date.getDate()}
+                       {isSpecialDate(date) && (
+                         <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-purple-400 rounded-full"></div>
+                       )}
+                     </button>
+                   )
+                 })}
                </div>
-              <div className="text-xs text-gray-500 mt-1">
-                ※ 체크인 및 체크아웃은 현지 시각 기준입니다. 선택한 통화: KRW
-              </div>
-              <div className="text-xs text-gray-500">
-                표시된 요금은 세금 포함 1박 기준으로, 참고용입니다.
-              </div>
-            </div>
+             </div>
+
+             {/* 추가 달들 (3~6번째 달) */}
+             {additionalMonthsData.map((monthData, monthIndex) => (
+               <div key={`month-${monthData.month}`}>
+                 <h3 className="text-lg font-semibold text-black mb-4 text-center">
+                   {monthData.year}년 {monthData.month + 1}월
+                 </h3>
+                 
+                 <div className="grid grid-cols-7 gap-1">
+                   {monthData.days.slice(0, 42).map((date, index) => {
+                     const today = new Date()
+                     today.setHours(0, 0, 0, 0)
+                     const tomorrow = new Date(today)
+                     tomorrow.setDate(tomorrow.getDate() + 1)
+                     const isToday = date.getTime() === today.getTime()
+                     const isPastOrToday = date < tomorrow
+                     
+                     return (
+                       <button
+                         key={index}
+                         onClick={() => handleDateClick(date)}
+                         disabled={!isSpecificMonth(date, monthData.month, monthData.year) || isPastOrToday}
+                         className={cn(
+                           "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
+                           !isSpecificMonth(date, monthData.month, monthData.year) && "text-gray-300 cursor-not-allowed",
+                           isSpecificMonth(date, monthData.month, monthData.year) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
+                           isSpecificMonth(date, monthData.month, monthData.year) && !isPastOrToday && "hover:bg-gray-100 text-black",
+                           isSelected(date) && "bg-orange-500 text-white",
+                           isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
+                           date.getDay() === 0 && isSpecificMonth(date, monthData.month, monthData.year) && !isSelected(date) && !isPastOrToday && "text-orange-500",
+                           isToday && "bg-yellow-100 text-yellow-700 font-bold"
+                         )}
+                       >
+                         {date.getDate()}
+                         {isSpecialDate(date) && (
+                           <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-purple-400 rounded-full"></div>
+                         )}
+                       </button>
+                     )
+                   })}
+                 </div>
+               </div>
+             ))}
           </div>
         </div>
 
-        {/* 닫기 버튼 */}
-        <div className="absolute top-4 right-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+        {/* 적용하기 버튼 */}
+        <div className="bg-white border-t border-gray-200 p-4">
+          <button
+            onClick={() => {
+              if (selectedCheckIn && selectedCheckOut) {
+                onDatesChange({ checkIn: selectedCheckIn, checkOut: selectedCheckOut })
+                onClose()
+              }
+            }}
+            disabled={!selectedCheckIn || !selectedCheckOut}
+            className="w-full bg-black text-white font-medium py-3 px-4 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            ×
-          </Button>
+            적용하기
+          </button>
         </div>
       </div>
     </div>

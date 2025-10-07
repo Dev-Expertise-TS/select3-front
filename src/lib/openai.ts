@@ -230,6 +230,18 @@ export async function generateGlobalOTAStyleRoomName(roomType: string, roomName:
         throw new Error(`OpenAI API 키 인증 실패 (401): API 키가 유효하지 않거나 만료되었습니다.`);
       }
       
+      // 503 서비스 이용 불가 오류 처리
+      if (response.status === 503) {
+        console.error('🚫 OpenAI API 서비스 일시적 이용 불가 (503)');
+        throw new Error(`OpenAI API 서비스 일시적 이용 불가 (503): 네트워크 연결 문제 또는 서버 과부하입니다. 잠시 후 다시 시도해주세요.`);
+      }
+      
+      // 429 요청 한도 초과 오류 처리
+      if (response.status === 429) {
+        console.error('⏰ OpenAI API 요청 한도 초과 (429)');
+        throw new Error(`OpenAI API 요청 한도 초과 (429): API 사용량 한도를 초과했습니다. 잠시 후 다시 시도해주세요.`);
+      }
+      
       throw new Error(`OpenAI API 오류: ${response.status} - ${errorText}`);
     }
 

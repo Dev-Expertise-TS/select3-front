@@ -15,6 +15,42 @@ interface CacheData {
   data: string
 }
 
+// 재시도 로직 함수 (지수 백오프)
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> => {
+  let lastError: Error
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error as Error
+      
+      // 마지막 시도인 경우 에러를 던짐
+      if (attempt === maxRetries) {
+        throw lastError
+      }
+      
+      // 503, 429 에러인 경우에만 재시도
+      const errorMessage = lastError.message
+      if (!errorMessage.includes('503') && !errorMessage.includes('429')) {
+        throw lastError
+      }
+      
+      // 지수 백오프로 대기 시간 계산 (1초, 2초, 4초...)
+      const delay = baseDelay * Math.pow(2, attempt)
+      console.log(`🔄 OpenAI API 재시도 ${attempt + 1}/${maxRetries} - ${delay}ms 후 재시도...`)
+      
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  
+  throw lastError!
+}
+
 // 원 데이터 해시 생성 함수 (날짜 정보 포함)
 const generateDataHash = (roomType: string, roomName: string, description: string, hotelName: string, checkIn?: string, checkOut?: string): string => {
   const dataString = `${roomType}|${roomName}|${description}|${hotelName}|${checkIn || ''}|${checkOut || ''}`
@@ -436,7 +472,11 @@ export function useRoomAIProcessing() {
         // }))
         
         try {
-          const otaStyleName = await generateGlobalOTAStyleRoomName(roomType, roomName, enhancedDescription, hotelName)
+          const otaStyleName = await retryWithBackoff(
+            () => generateGlobalOTAStyleRoomName(roomType, roomName, enhancedDescription, hotelName),
+            3, // 최대 3회 재시도
+            1000 // 1초부터 시작
+          )
           
           // 캐시에 저장
           setCachedData(cacheKey, otaStyleName)
