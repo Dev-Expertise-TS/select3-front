@@ -83,7 +83,7 @@ export async function BrandProgramPage() {
       />
 
       {/* Main Content */}
-      <section className="py-8 bg-white">
+      <section className="py-8 pb-[100px] bg-white">
         <div className="container mx-auto px-4 max-w-[1440px]">
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-700 mb-2">Premium Hotel Brands</h2>
@@ -106,9 +106,6 @@ export async function BrandProgramPage() {
                   <h3 className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                     {chain.chain_name_en}
                   </h3>
-                  {chain.chain_name_kr && (
-                    <p className="text-xs text-gray-500 mt-1">{chain.chain_name_kr}</p>
-                  )}
                 </div>
               </Link>
             ))}
