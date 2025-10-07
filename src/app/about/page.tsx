@@ -239,11 +239,11 @@ const brandLogos = [
   { name: "Hilton", image: "/brand-image/hilton.avif" },
   { name: "Mandarin Oriental", image: "/brand-image/mandarin.avif" },
   { name: "Shangri-La", image: "/brand-image/shangri-la.avif" },
-  { name: "Pan Pacific", image: "/brand-image/pan-pacific.avif" },
-  { name: "Leading Hotels of the World", image: "/brand-image/LW.avif" },
+  { name: "Pan Pacific", image: "/brand-image/pacific.avif" },
+  { name: "Leading Hotels of the World", image: "/brand-image/lhw-vita.avif" },
   { name: "Virtuoso", image: "/brand-image/virtuoso.avif" },
   { name: "Capella", image: "/brand-image/capella.avif" },
-  { name: "Bravos", image: "/brand-image/bravos.avif" },
+  { name: "Melia", image: "/brand-image/melia.avif" },
   { name: "Platinum", image: "/brand-image/platinum.avif" }
 ]
 

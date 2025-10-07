@@ -40,7 +40,7 @@ function PromotionDetails({ sabreId }: { sabreId?: number }) {
         {first.promotion.length > 50 ? first.promotion.substring(0, 50) + '...' : first.promotion}
       </span>
       <span className="sm:hidden">
-        {first.promotion.length > 15 ? first.promotion.substring(0, 15) + '...' : first.promotion}
+        {first.promotion.length > 27 ? first.promotion.substring(0, 27) + '...' : first.promotion}
       </span>
     </span>
   )
@@ -92,8 +92,8 @@ export function PromotionBanner() {
       "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white transition-all duration-300",
       isSticky ? "sticky top-16 z-40 shadow-lg" : "relative"
     )}>
-      <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-        <div className="flex items-center justify-center py-2 sm:py-3 relative">
+      <div className="container mx-auto max-w-[1440px] pl-[10px] pr-1 sm:px-4">
+        <div className="flex items-center justify-start sm:justify-center py-2 sm:py-3 relative">
           <div key={animationKey} className="flex items-center space-x-2 sm:space-x-4">
             <div className="relative w-12 h-8 sm:w-20 sm:h-13 rounded-lg overflow-hidden shadow-md animate-slide-in-left">
               <Image
@@ -111,7 +111,7 @@ export function PromotionBanner() {
                   {currentPromo?.property_name_ko || "프로모션 호텔"}
                 </h3>
                 {currentPromo?.property_name_en && (
-                  <span className="text-xs sm:text-lg font-bold text-white sm:ml-2 animate-typewriter-delay-1">
+                  <span className="hidden sm:inline text-lg font-bold text-white sm:ml-2 animate-typewriter-delay-1">
                     {currentPromo.property_name_en}
                   </span>
                 )}
@@ -122,7 +122,7 @@ export function PromotionBanner() {
             </div>
           </div>
 
-          <div className="absolute right-2 sm:right-4 flex items-center space-x-1 sm:space-x-2">
+          <div className="absolute right-1 sm:right-4 flex items-center space-x-1 sm:space-x-2">
             <button
               className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-white hover:bg-white/20 transition-colors"
               onClick={() =>

@@ -18,9 +18,10 @@ async function getHotelChains() {
     .select('chain_id, chain_name_en, chain_name_kr, slug')
     .order('chain_name_en')
 
-  if (error || !data) {
+  // 임시로 fallback 데이터만 사용 (이미지 경로 문제 해결용)
+  if (true || error || !data) {
     console.warn('[ Server ] 호텔 체인 조회 실패 또는 빈 결과. 로컬 폴백을 사용합니다.')
-    // 실제 이미지 파일이 있는 브랜드만 포함
+    // 실제 이미지 파일이 있는 브랜드만 포함 (파일명 기준)
     const fallback: HotelChain[] = [
       { chain_id: 1, chain_name_en: 'Accor Hotels', chain_name_kr: '아코르 호텔 그룹', slug: 'accor', logo_path: '/brand-image/accor.avif' },
       { chain_id: 8, chain_name_en: 'Aman Resorts International', chain_name_kr: '아만 리조트 인터네셔널', slug: 'aman', logo_path: '/brand-image/aman.avif' },

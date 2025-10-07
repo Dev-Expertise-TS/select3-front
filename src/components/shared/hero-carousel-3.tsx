@@ -132,60 +132,151 @@ export function HeroCarousel3() {
     <div className="w-full">
       <section className="relative py-6 sm:py-8">
         <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-          {/* 3개의 큰 이미지 카드 그리드 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-          {carouselSlides.map((slide, index) => (
-            <div key={slide.id} className="relative aspect-[4/3] overflow-hidden group cursor-pointer rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <Link href={`/hotel/${slide.hotelId}`}>
-                <div className="relative w-full h-full">
-                  {/* Background Image */}
-                  {isLoading ? (
-                    <div className="w-full h-full bg-gray-300 animate-pulse" />
-                  ) : error ? (
-                    <div className="w-full h-full bg-gray-400 flex items-center justify-center">
-                      <p className="text-gray-600">이미지를 불러올 수 없습니다.</p>
-                    </div>
-                  ) : (
-                    <Image
-                      src={slide.image || "/placeholder.svg"}
-                      alt={`${slide.hotelName} - Premium Hotel Property`}
-                      fill
-                      priority={index < 2}
-                      className="object-cover transition-all duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      onError={(e) => {
-                        console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
-                        const target = e.target as HTMLImageElement
-                        target.src = '/placeholder.svg'
-                      }}
-                    />
-                  )}
-                  
-                  {/* Content Overlay */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {/* Top: Category Badge */}
-                    <div className="flex justify-start p-4">
-                      <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
-                        {slide.brand_name_en || slide.chain_name_en || 'LUXURY'}
-                      </span>
-                    </div>
+          {/* 모바일: 1개 슬라이드, PC: 3개 그리드 */}
+          <div className="relative">
+            {/* 모바일 슬라이드 뷰 */}
+            <div className="lg:hidden">
+              <div className="relative aspect-[4/3] overflow-hidden group cursor-pointer rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Link href={`/hotel/${carouselSlides[currentSlide].hotelId}`}>
+                  <div className="relative w-full h-full">
+                    {/* Background Image */}
+                    {isLoading ? (
+                      <div className="w-full h-full bg-gray-300 animate-pulse" />
+                    ) : error ? (
+                      <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                        <p className="text-gray-600">이미지를 불러올 수 없습니다.</p>
+                      </div>
+                    ) : (
+                      <Image
+                        src={carouselSlides[currentSlide].image || "/placeholder.svg"}
+                        alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
+                        fill
+                        priority
+                        className="object-cover transition-all duration-300 group-hover:scale-105"
+                        sizes="100vw"
+                        onError={(e) => {
+                          console.error(`❌ 히어로 이미지 로딩 실패: ${carouselSlides[currentSlide].image}`)
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder.svg'
+                        }}
+                      />
+                    )}
                     
-                    {/* Bottom: Title and Date with dark overlay only for text area */}
-                    <div className="relative">
-                      {/* Dark overlay only for bottom text area - full width and height with no margins */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
-                      <div className="relative text-white p-4">
-                        <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
-                          {slide.hotelName}({slide.location})
-                        </h2>
-                        <p className="text-xs opacity-90">{slide.city}</p>
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 flex flex-col justify-between">
+                      {/* Top: Category Badge */}
+                      <div className="flex justify-start p-4">
+                        <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
+                          {carouselSlides[currentSlide].brand_name_en || carouselSlides[currentSlide].chain_name_en || 'LUXURY'}
+                        </span>
+                      </div>
+                      
+                      {/* Bottom: Title and Date */}
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+                        <div className="relative text-white p-4">
+                          <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                            {carouselSlides[currentSlide].hotelName}({carouselSlides[currentSlide].location})
+                          </h2>
+                          <p className="text-xs opacity-90">{carouselSlides[currentSlide].city}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </Link>
+              </div>
+              
+              {/* 슬라이드 네비게이션 */}
+              <div className="flex justify-center items-center mt-4 gap-4">
+                <button
+                  onClick={prevSlide}
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  aria-label="Previous slide"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <div className="flex gap-2">
+                  {carouselSlides.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => changeSlide(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentSlide ? 'bg-blue-600 w-6' : 'bg-gray-300'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
                 </div>
-              </Link>
+                
+                <button
+                  onClick={nextSlide}
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  aria-label="Next slide"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          ))}
+
+            {/* PC 그리드 뷰 (3개) */}
+            <div className="hidden lg:grid lg:grid-cols-3 gap-3">
+              {carouselSlides.map((slide, index) => (
+                <div key={slide.id} className="relative aspect-[4/3] overflow-hidden group cursor-pointer rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <Link href={`/hotel/${slide.hotelId}`}>
+                    <div className="relative w-full h-full">
+                      {/* Background Image */}
+                      {isLoading ? (
+                        <div className="w-full h-full bg-gray-300 animate-pulse" />
+                      ) : error ? (
+                        <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                          <p className="text-gray-600">이미지를 불러올 수 없습니다.</p>
+                        </div>
+                      ) : (
+                        <Image
+                          src={slide.image || "/placeholder.svg"}
+                          alt={`${slide.hotelName} - Premium Hotel Property`}
+                          fill
+                          priority={index < 2}
+                          className="object-cover transition-all duration-300 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          onError={(e) => {
+                            console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
+                            const target = e.target as HTMLImageElement
+                            target.src = '/placeholder.svg'
+                          }}
+                        />
+                      )}
+                      
+                      {/* Content Overlay */}
+                      <div className="absolute inset-0 flex flex-col justify-between">
+                        {/* Top: Category Badge */}
+                        <div className="flex justify-start p-4">
+                          <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
+                            {slide.brand_name_en || slide.chain_name_en || 'LUXURY'}
+                          </span>
+                        </div>
+                        
+                        {/* Bottom: Title and Date */}
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+                          <div className="relative text-white p-4">
+                            <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                              {slide.hotelName}({slide.location})
+                            </h2>
+                            <p className="text-xs opacity-90">{slide.city}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
