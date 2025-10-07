@@ -38,7 +38,7 @@ export function HotelBannerSection({
   }
 
   return (
-    <section className={`py-8 ${className || ''}`}>
+    <section className={`py-4 sm:py-8 ${className || ''}`}>
       <div className="container mx-auto max-w-[1440px] px-4">
         <HotelAdBanner 
           hotel={bannerHotel}

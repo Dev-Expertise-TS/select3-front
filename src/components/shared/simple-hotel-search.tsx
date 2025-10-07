@@ -14,19 +14,32 @@ interface SimpleHotelSearchProps {
   className?: string
   initialQuery?: string
   placeholder?: string
+  mobilePlaceholder?: string
 }
 
 export function SimpleHotelSearch({
   onSearch,
   className = "",
   initialQuery = "",
-  placeholder = "호텔명, 국가, 또는 지역으로 검색하세요"
+  placeholder = "호텔명, 국가, 또는 지역으로 검색하세요",
+  mobilePlaceholder = "호텔명 또는 지역 검색"
 }: SimpleHotelSearchProps) {
   const router = useRouter()
   const supabase = createClient()
   
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialQuery || "")
+  const [isMobile, setIsMobile] = useState(false)
+
+  // 모바일 화면 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640) // sm breakpoint
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [hotelSuggestions, setHotelSuggestions] = useState<Array<{
@@ -185,15 +198,15 @@ export function SimpleHotelSearch({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 ${className}`}>
-      <div className="flex items-center gap-3">
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 ${className}`}>
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* 검색 입력 영역 */}
         <div className="flex-1 relative">
-          <div className="flex items-center gap-2 relative">
-            <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 sm:gap-2 relative">
+            <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
             <Input
               type="text"
-              placeholder={placeholder}
+              placeholder={isMobile ? mobilePlaceholder : placeholder}
               value={searchQuery}
               onChange={(e) => {
                 const value = e.target.value
@@ -204,7 +217,7 @@ export function SimpleHotelSearch({
               onFocus={() => setShowSuggestions(searchQuery.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none"
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none"
               disabled={isSearching}
             />
             
@@ -233,13 +246,13 @@ export function SimpleHotelSearch({
           {showSuggestions && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
               {isSuggesting && hotelSuggestions.length === 0 && (
-                <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
+                <div className="p-2.5 sm:p-3 text-xs sm:text-sm text-gray-500">불러오는 중...</div>
               )}
               {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
-                <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
+                <div className="p-2.5 sm:p-3 text-xs sm:text-sm text-gray-500">검색 결과가 없습니다</div>
               )}
               {suggestionError && (
-                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
+                <div className="p-2.5 sm:p-3 text-xs sm:text-sm text-red-500 bg-red-50 border border-red-200 rounded">
                   <div className="flex items-center justify-between">
                     <span>⚠️ {suggestionError}</span>
                     <button
@@ -266,7 +279,7 @@ export function SimpleHotelSearch({
                   <div
                     key={`${h.slug || h.sabre_id}`}
                     className={cn(
-                      "flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0",
+                      "flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0",
                       highlightIndex === idx && "bg-gray-50"
                     )}
                     onClick={() => {
@@ -276,14 +289,14 @@ export function SimpleHotelSearch({
                       setHighlightIndex(-1)
                     }}
                   >
-                    <span className="text-lg">🏨</span>
+                    <span className="text-base sm:text-lg">🏨</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">{highlightText(primary, searchQuery)}</div>
+                      <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{highlightText(primary, searchQuery)}</div>
                       {location && (
-                        <div className="text-sm text-gray-500 truncate">{highlightText(location, searchQuery)}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 truncate">{highlightText(location, searchQuery)}</div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400">#{h.sabre_id}</span>
+                    <span className="text-[10px] sm:text-xs text-gray-400">#{h.sabre_id}</span>
                   </div>
                 )
               })}
@@ -295,14 +308,15 @@ export function SimpleHotelSearch({
         <Button 
           variant="default"
           size="lg"
-          className="font-medium px-6 flex items-center justify-center shrink-0"
+          className="font-medium px-4 sm:px-6 text-sm sm:text-base flex items-center justify-center shrink-0"
           onClick={handleSearch}
           disabled={isSearching}
         >
           {isSearching ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              검색 중...
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin mr-1.5 sm:mr-2" />
+              <span className="hidden sm:inline">검색 중...</span>
+              <span className="sm:hidden">검색중</span>
             </>
           ) : (
             "검색"

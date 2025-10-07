@@ -16,6 +16,7 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search"
 import { ImageGallery } from "./components/ImageGallery"
+import { MobileImageGrid } from "@/components/hotel/MobileImageGrid"
 import { HotelPromotion } from "./components/HotelPromotion"
 import { HotelTabs } from "./components/HotelTabs"
 import { HotelInfo } from "./components/HotelInfo"
@@ -1249,8 +1250,8 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
             <Link href="/hotel">
               <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 px-2 sm:px-3">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">모든 숙소</span>
-                <span className="sm:hidden">뒤로</span>
+                <span className="hidden sm:inline">전체 호텔</span>
+                <span className="sm:hidden">전체 호텔</span>
               </Button>
             </Link>
           </div>

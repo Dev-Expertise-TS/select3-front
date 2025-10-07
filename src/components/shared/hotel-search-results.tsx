@@ -713,7 +713,7 @@ export function HotelSearchResults({
         
         {/* 검색 영역 - showAllHotels가 true일 때만 표시 */}
         {showAllHotels && (
-          <section className="bg-gray-50 py-8">
+          <section className="bg-gray-50 py-4 sm:py-8">
             <div className="container mx-auto max-w-[1440px] px-4">
               <SimpleHotelSearch 
                 onSearch={handleSearch}
@@ -726,18 +726,18 @@ export function HotelSearchResults({
 
 
         {/* 검색 결과 */}
-        <section className="py-8">
+        <section className="py-4 sm:py-8">
           <div className="container mx-auto max-w-[1440px] px-4">
             {showAllHotels ? (
               <div className="space-y-4">
                 {/* 제목 및 필터 영역 */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 py-2">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 py-1 sm:py-2">
                   {/* 텍스트 영역 */}
                   <div className="flex-1 text-center lg:text-left">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">
                       {title}
                     </h1>
-                    <p className="text-base text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                       {subtitle}
                     </p>
                   </div>

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
+import { BottomNav } from "@/components/bottom-nav"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,9 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="min-h-screen bg-background text-foreground antialiased pb-16 lg:pb-0">
         <QueryProvider>
           {children}
+          <BottomNav />
         </QueryProvider>
       </body>
     </html>
