@@ -52,6 +52,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   // 접기/펼치기 상태 추가
   const [isIntroExpanded, setIsIntroExpanded] = useState(false)
   const [isLocationExpanded, setIsLocationExpanded] = useState(false)
+  const [isArticlesExpanded, setIsArticlesExpanded] = useState(false)
   
   // 탭 메뉴 ref 추가
   const tabMenuRef = useRef<HTMLDivElement>(null)
@@ -472,68 +473,91 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
           {activeTab === "articles" && (
             <div className="space-y-6">
-              {isLoadingArticles ? (
-                <div className="text-center py-12">
-                  <div className="flex items-center justify-center gap-3 text-blue-600">
-                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-sm">아티클을 불러오는 중...</span>
-                  </div>
-                </div>
-              ) : articlesError ? (
-                <div className="text-center py-12">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-8">
-                    <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
-                    <p className="text-red-600 mb-4">{articlesError}</p>
-                    <button
-                      onClick={fetchHotelArticles}
-                      className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      다시 시도
-                    </button>
-                  </div>
-                </div>
-              ) : articles.length > 0 ? (
-                <div className="space-y-8">
-                  <div className="text-center">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">관련 아티클</h3>
-                    <p className="text-gray-600">{hotelName}과 관련된 아티클을 확인하세요</p>
-                  </div>
-                  
-                  {articles.map((article, index) => (
-                    <div key={article.slug} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="max-w-4xl mx-auto">
-                        <BlogContentRenderer 
-                          blog={article}
-                          showHeader={true}
-                          showImage={true}
-                          showDate={true}
-                          className="space-y-4"
-                          imageClassName="mb-12"
-                          contentClassName="prose prose-lg max-w-none"
-                        />
-                      </div>
-                      
-                      {/* 아티클 링크 */}
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <a
-                          href={`/blog/${article.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          전체 아티클 보기
-                        </a>
+              {/* 더보기 버튼 */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setIsArticlesExpanded(!isArticlesExpanded)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  {isArticlesExpanded ? '내용 접기' : '펼쳐 보기'}
+                </button>
+              </div>
+
+              {/* 접기/펼치기 콘텐츠 */}
+              {isArticlesExpanded && (
+                <>
+                  {isLoadingArticles ? (
+                    <div className="text-center py-12">
+                      <div className="flex items-center justify-center gap-3 text-blue-600">
+                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm">아티클을 불러오는 중...</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 text-lg mb-2">📝</div>
-                  <p className="text-gray-500">{hotelName}과 관련된 아티클이 없습니다.</p>
-                  <p className="text-gray-400 text-sm mt-2">다른 호텔의 아티클을 확인해보세요.</p>
-                </div>
+                  ) : articlesError ? (
+                    <div className="text-center py-12">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-8">
+                        <h3 className="text-lg font-semibold text-red-800 mb-2">오류가 발생했습니다</h3>
+                        <p className="text-red-600 mb-4">{articlesError}</p>
+                        <button
+                          onClick={fetchHotelArticles}
+                          className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          다시 시도
+                        </button>
+                      </div>
+                    </div>
+                  ) : articles.length > 0 ? (
+                    <div className="space-y-8">
+                      {articles.map((article, index) => (
+                        <div key={article.slug} className="space-y-6">
+                          <div className="max-w-[95%] sm:max-w-[70%] mx-auto">
+                            <BlogContentRenderer 
+                              blog={article}
+                              showHeader={true}
+                              showImage={true}
+                              showDate={true}
+                              className="space-y-4"
+                              imageClassName="mb-12"
+                              contentClassName="prose prose-lg max-w-none"
+                            />
+                          </div>
+                          
+                          {/* 아티클 링크 */}
+                          <div className="flex justify-center">
+                            <a
+                              href={`/blog/${article.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              전체 아티클 보기
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-gray-400 text-lg mb-2">📝</div>
+                      <p className="text-gray-500">{hotelName}과 관련된 아티클이 없습니다.</p>
+                      <p className="text-gray-400 text-sm mt-2">다른 호텔의 아티클을 확인해보세요.</p>
+                    </div>
+                  )}
+
+                  {/* 하단 접기 버튼 */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        setIsArticlesExpanded(false)
+                        scrollToTabMenu()
+                      }}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    >
+                      내용 접기
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}
