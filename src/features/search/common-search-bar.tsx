@@ -365,7 +365,7 @@ export function CommonSearchBar({
   }
 
   return (
-      <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-4 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 ${className}`}
+      <div className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-none sm:rounded-xl p-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2 ${className}`}
       style={{ borderColor: '#E6CDB5' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 위치 검색 영역 */}
@@ -476,57 +476,61 @@ export function CommonSearchBar({
           )}
         </div>
 
-          {/* 날짜 입력 영역 */}
-          <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-2 sm:pt-0 sm:pl-4"
-          style={{ borderTopColor: '#E6CDB5', borderLeftColor: '#E6CDB5' }}>
-          <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
-            <Calendar className="h-4 w-4" />
-          </div>
-          
-          <div 
-            className={cn(
-              "flex items-center gap-2 flex-1 rounded p-1",
-              isSearching 
-                ? "cursor-not-allowed opacity-50" 
-                : "cursor-pointer hover:bg-gray-50"
-            )}
-            onClick={() => !isSearching && setShowDatePicker(true)}
-          >
-            <span className="text-gray-900 font-medium text-sm sm:text-base">
-              {localCheckIn && localCheckOut
-                ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
-                : variant === "destination"
-                  ? "Anytime"
-                  : "날짜 선택"}
-            </span>
-            {variant !== "destination" && localCheckIn && localCheckOut && (
-              <span className="ml-2 sm:ml-4 px-2 py-1 bg-blue-50 text-blue-700 font-medium rounded-md border border-blue-200 text-xs sm:text-sm">
-                {calculateNights()}박
-              </span>
-            )}
-          </div>
-        </div>
+          {/* 날짜 & 게스트 정보 영역 (모바일 1행) */}
+          <div className="flex flex-row sm:flex-row items-center gap-1 sm:gap-0 w-full sm:flex-[1.6] border-t sm:border-t-0 pt-2 sm:pt-0">
+            {/* 날짜 입력 영역 */}
+            <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+              <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+              </div>
+              
+              <div 
+                className={cn(
+                  "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
+                  isSearching 
+                    ? "cursor-not-allowed opacity-50" 
+                    : "cursor-pointer hover:bg-gray-50"
+                )}
+                onClick={() => !isSearching && setShowDatePicker(true)}
+              >
+                <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
+                  {localCheckIn && localCheckOut
+                    ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
+                    : variant === "destination"
+                      ? "Anytime"
+                      : "날짜 선택"}
+                </span>
+                {variant !== "destination" && localCheckIn && localCheckOut && (
+                  <span className="ml-1 sm:ml-2 px-1 py-0.5 sm:px-2 sm:py-1 bg-blue-50 text-blue-700 font-medium rounded-md border border-blue-200 text-[10px] sm:text-xs whitespace-nowrap">
+                    {calculateNights()}박
+                  </span>
+                )}
+              </div>
+            </div>
 
-          {/* 게스트 정보 영역 */}
-          <div className="flex items-center gap-2 w-full sm:flex-[0.8] border-t sm:border-t-0 sm:border-l-2 pt-2 sm:pt-0 sm:pl-4"
-          style={{ borderTopColor: '#E6CDB5', borderLeftColor: '#E6CDB5' }}>
-          <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
-            <Users className="h-4 w-4" />
+            {/* 구분선 */}
+            <div className="h-4 w-px bg-gray-300 mx-1 sm:hidden"></div>
+
+            {/* 게스트 정보 영역 */}
+            <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+              <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              </div>
+              <div 
+                className={cn(
+                  "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
+                  isSearching 
+                    ? "cursor-not-allowed opacity-50" 
+                    : "cursor-pointer hover:bg-gray-50"
+                )}
+                onClick={() => !isSearching && setShowGuestSelector(true)}
+              >
+                <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
+                  {getGuestDisplayText()}
+                </span>
+              </div>
+            </div>
           </div>
-          <div 
-            className={cn(
-              "flex items-center gap-2 flex-1 rounded p-1",
-              isSearching 
-                ? "cursor-not-allowed opacity-50" 
-                : "cursor-pointer hover:bg-gray-50"
-            )}
-            onClick={() => !isSearching && setShowGuestSelector(true)}
-          >
-            <span className="text-gray-900 font-medium text-sm sm:text-base">
-              {getGuestDisplayText()}
-            </span>
-          </div>
-        </div>
 
         {/* 검색 버튼 */}
         <Button 

@@ -176,8 +176,8 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 pt-20 pb-20 sm:pt-0 sm:pb-0">
+      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-2 sm:mx-4 max-h-full sm:max-h-[90vh] overflow-hidden">
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
           <div className="flex items-center justify-between">

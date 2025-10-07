@@ -1244,9 +1244,9 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Header with Back Button */}
-      <div className="py-2 sm:py-3">
-        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-          <div className="flex items-center gap-2 sm:gap-3">
+      <div className="py-1">
+        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-0">
             <Link href="/hotel">
               <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 px-2 sm:px-3">
                 <ArrowLeft className="h-4 w-4 mr-1" />
@@ -1312,7 +1312,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
       {/* Search Bar - Sticky */}
       <div className="sticky top-14 sm:top-16 z-40 bg-gray-100 py-3 sm:py-4">
-        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
+        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <CommonSearchBar
             variant="hotel-detail"
             location={hotel.city_ko || hotel.city_eng || '도시'}
@@ -1333,12 +1333,12 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
       {/* Room types & rates */}
       <div className="bg-gray-100 py-3 sm:py-4">
-        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-          <div className="bg-white rounded-lg shadow-sm">
+        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+          <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm">
 
 
             {/* Room Details and Pricing Table */}
-            <div className="p-4 sm:p-6">
+            <div className="p-3 sm:p-6">
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">객실 타입별 요금 상세</h3>
               
               {/* 객실 정보 표시 */}

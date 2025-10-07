@@ -45,11 +45,11 @@ export function HotelInfo({
   isImageError
 }: HotelInfoProps) {
   return (
-    <div className="bg-gray-100 py-1.5">
-      <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+    <div className="bg-gray-100 py-0.5">
+      <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+        <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm pt-1.5 px-0 pb-3 sm:pt-3 sm:px-6 sm:pb-6">
           {/* Image Gallery - 위로 이동 */}
-          <div className="rounded-lg overflow-hidden mb-4 sm:mb-6">
+          <div className="rounded-none sm:rounded-lg overflow-hidden mb-2 sm:mb-3 px-0 sm:px-0">
             {/* 모바일: MobileImageGrid 컴포넌트 사용 */}
             <MobileImageGrid
               images={images}
@@ -175,7 +175,7 @@ export function HotelInfo({
           </div>
 
           {/* Hotel Info Header - 아래로 이동 */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-3 sm:px-0">
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>

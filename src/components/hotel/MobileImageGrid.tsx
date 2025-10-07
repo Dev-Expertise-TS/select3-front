@@ -53,7 +53,7 @@ export function MobileImageGrid({
     <>
       {/* 모바일 이미지 그리드 */}
       <div className={cn("lg:hidden", className)}>
-        <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
+        <div className="relative aspect-[4/3] rounded-none sm:rounded-lg overflow-hidden">
           <Image
             src={currentImage.media_path}
             alt={hotelName}
@@ -134,7 +134,7 @@ export function MobileImageGrid({
 
             {/* 썸네일 영역 */}
             {totalImages > 1 && (
-              <div className="bg-white p-4">
+              <div className="bg-white p-4 pb-20">
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {images.map((image, index) => (
                     <button

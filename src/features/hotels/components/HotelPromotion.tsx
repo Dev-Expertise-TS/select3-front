@@ -31,8 +31,8 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
   if (isLoading) {
     return (
       <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
-        <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-          <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-lg">
+        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+          <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-none sm:rounded-lg">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <span className="font-medium text-base sm:text-lg">프로모션</span>
               <div className="flex items-center gap-2">
@@ -52,8 +52,8 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
 
   return (
     <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
-      <div className="container mx-auto max-w-[1440px] px-3 sm:px-4">
-        <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-lg">
+      <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+        <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-none sm:rounded-lg">
           {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             {/* 프로모션 제목 */}

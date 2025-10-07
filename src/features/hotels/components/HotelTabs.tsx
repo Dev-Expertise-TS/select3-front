@@ -195,8 +195,8 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
   return (
     <div className="bg-gray-100 py-4">
-      <div className="container mx-auto max-w-[1440px] px-2 sm:px-4">
-        <div className="bg-white rounded-lg shadow-sm p-2 sm:p-6">
+      <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+        <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm p-3 sm:p-6">
           {/* Tab Navigation */}
           <div className="flex items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 overflow-x-auto">
             <button
