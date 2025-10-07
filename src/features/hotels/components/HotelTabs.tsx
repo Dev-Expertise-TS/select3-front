@@ -321,15 +321,14 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                   {benefits.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1.5 px-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-0">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-slate-50 rounded-md sm:rounded-lg border border-slate-200 sm:border-2 sm:border-slate-200/60 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-shadow ${
+                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-blue-50 rounded-md sm:rounded-lg border border-blue-100 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-shadow ${
                           index % 2 === 0 ? 'mr-1 sm:mr-0' : 'ml-1 sm:ml-0'
                         }`}>
                           <div className={`hidden sm:flex w-6 h-6 ${benefit.bgColor} rounded-md items-center justify-center flex-shrink-0 sm:mr-1.5`}>
                             <benefit.icon className={`h-3.5 w-3.5 ${benefit.iconColor}`} />
                           </div>
                           <div className="text-xs sm:text-xs font-medium text-gray-800 leading-tight text-center">
-                            <span className="block sm:inline">{formatBenefitText(benefit.text)}</span>
-                            <span className="hidden sm:inline">{benefit.text}</span>
+                            {formatBenefitText(benefit.text)}
                           </div>
                         </div>
                       ))}

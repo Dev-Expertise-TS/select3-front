@@ -211,21 +211,23 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     return getSpecialDates().includes(dateStr)
   }
 
-  // 캘린더가 열릴 때 body 스크롤 막기 및 하단 네비게이터 숨기기
+  // 캘린더가 열릴 때 body 스크롤 막기 및 하단 네비게이터 숨기기 (모바일에서만)
   useEffect(() => {
     // body 스크롤 막기
     document.body.style.overflow = 'hidden'
     
-    // 하단 네비게이터 숨기기
+    // 모바일에서만 하단 네비게이터 숨기기
+    const isMobile = window.innerWidth < 1024 // lg 브레이크포인트
     const bottomNav = document.querySelector('[data-bottom-nav]')
-    if (bottomNav) {
+    if (isMobile && bottomNav) {
       (bottomNav as HTMLElement).style.display = 'none'
     }
 
     // cleanup function
     return () => {
       document.body.style.overflow = 'unset'
-      if (bottomNav) {
+      // 모바일에서만 하단 네비게이터 다시 표시
+      if (isMobile && bottomNav) {
         (bottomNav as HTMLElement).style.display = 'flex'
       }
     }
@@ -233,7 +235,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-      <div className="bg-white w-full h-[calc(100vh-4rem)] sm:h-auto sm:rounded-lg sm:shadow-2xl sm:max-w-4xl sm:w-full sm:mx-2 sm:mx-4 sm:max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white w-full h-[calc(100vh-4rem)] sm:h-auto sm:rounded-lg sm:shadow-2xl sm:max-w-2xl sm:w-auto sm:mx-2 sm:mx-4 sm:max-h-[60vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 p-4 sm:p-4">
           <div className="flex items-center justify-between mb-4 sm:mb-0">
@@ -408,7 +410,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
               }
             }}
             disabled={!selectedCheckIn || !selectedCheckOut}
-            className="w-full bg-black text-white font-medium py-3 px-4 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             적용하기
           </button>
