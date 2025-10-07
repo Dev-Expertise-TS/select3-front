@@ -208,38 +208,55 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   // 사용할 혜택 결정 (데이터베이스에서 가져온 혜택만 사용, 없으면 빈 배열)
   const benefits = hotelBenefits
 
+  // 혜택 텍스트 포맷팅 함수 (괄호 앞에 줄바꿈 추가)
+  const formatBenefitText = (text: string) => {
+    // 괄호가 있는 경우 괄호 앞에서 줄바꿈
+    const parts = text.split(/(\([^)]+\))/g)
+    return parts.map((part, index) => {
+      if (part.startsWith('(') && part.endsWith(')')) {
+        return (
+          <span key={index}>
+            <br />
+            {part}
+          </span>
+        )
+      }
+      return <span key={index}>{part}</span>
+    })
+  }
+
   return (
-    <div className="bg-gray-100 py-4">
+    <div className="bg-gray-100 py-0 sm:py-4">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
-        <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm p-3 sm:p-6">
+        <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm py-4 px-0 sm:p-6">
           {/* Tab Navigation */}
-          <div ref={tabMenuRef} className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-8 border-b mb-3 sm:mb-6 px-1 sm:px-0">
+          <div ref={tabMenuRef} className="grid grid-cols-2 sm:flex sm:items-center gap-0 sm:gap-8 border-b mb-3 sm:mb-6 px-0 sm:px-0">
             <button
               onClick={() => setActiveTab("benefits")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
+              className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "benefits"
                   ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
-                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               예약시 제공 혜택
             </button>
             <button
               onClick={() => setActiveTab("introduction")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
+              className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "introduction"
                   ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
-                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               호텔 상세 정보
             </button>
             <button
               onClick={() => setActiveTab("transportation")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
+              className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "transportation"
                   ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
-                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               위치 및 교통
@@ -247,10 +264,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             {hotelBlogs && (
               <button
                 onClick={() => setActiveTab("articles")}
-                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
+                className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all ${
                   activeTab === "articles"
                     ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
-                    : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
+                    : "text-gray-500 hover:text-blue-600"
                 }`}
               >
                 <FileText className="h-4 w-4" />
@@ -259,10 +276,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             )}
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`pb-2 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all rounded-t-md sm:rounded-none ${
+              className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "reviews"
                   ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
-                  : "text-gray-500 hover:text-blue-600 bg-gray-100 sm:bg-transparent"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
             >
               리뷰 평가 분석
@@ -302,13 +319,18 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               {!isLoadingBenefits && !benefitsError && (
                 <>
                   {benefits.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-1.5 px-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-0">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center justify-center gap-1.5 p-3 bg-slate-50/80 rounded-lg border-2 border-slate-200/60 flex-1 min-w-[150px] shadow-sm hover:shadow-md transition-shadow">
-                          <div className={`w-6 h-6 ${benefit.bgColor} rounded-md flex items-center justify-center flex-shrink-0`}>
+                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-slate-50 rounded-md sm:rounded-lg border border-slate-200 sm:border-2 sm:border-slate-200/60 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-shadow ${
+                          index % 2 === 0 ? 'mr-1 sm:mr-0' : 'ml-1 sm:ml-0'
+                        }`}>
+                          <div className={`hidden sm:flex w-6 h-6 ${benefit.bgColor} rounded-md items-center justify-center flex-shrink-0 sm:mr-1.5`}>
                             <benefit.icon className={`h-3.5 w-3.5 ${benefit.iconColor}`} />
                           </div>
-                          <div className="text-xs font-medium text-gray-800 leading-tight text-center">{benefit.text}</div>
+                          <div className="text-xs sm:text-xs font-medium text-gray-800 leading-tight text-center">
+                            <span className="block sm:inline">{formatBenefitText(benefit.text)}</span>
+                            <span className="hidden sm:inline">{benefit.text}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
