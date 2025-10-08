@@ -235,7 +235,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("benefits")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "benefits"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -245,7 +245,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("introduction")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "introduction"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -255,7 +255,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("transportation")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "transportation"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -266,7 +266,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                 onClick={() => setActiveTab("articles")}
                 className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all ${
                   activeTab === "articles"
-                    ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                    ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                     : "text-gray-500 hover:text-blue-600"
                 }`}
               >
@@ -278,7 +278,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("reviews")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "reviews"
-                  ? "text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent"
+                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -585,7 +585,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
 
           {activeTab === "reviews" && (
             <div className="space-y-6">
-              <div className="text-center py-12">
+              <div className="text-center py-2">
                 <div className="text-gray-400 text-lg mb-2">⭐</div>
                 <p className="text-gray-500">리뷰 평가 분석이 준비 중입니다.</p>
               </div>
