@@ -36,13 +36,13 @@ function useSearchResults(query: string, tick: number) {
       // 클라이언트에서 publish 필터링 (false 제외)
       const filteredData = data.filter((hotel: any) => hotel.publish !== false)
       
-      // 호텔 미디어 조회
-      const sabreIds = filteredData.map((hotel: any) => hotel.sabre_id)
+      // 호텔 미디어 조회 (select_hotel_media 테이블, 첫 번째 이미지만)
+      const sabreIds = filteredData.map((hotel: any) => String(hotel.sabre_id))
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
-        .select('sabre_id, media_path, sort_order')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .in('sabre_id', sabreIds)
-        .order('sort_order', { ascending: true })
+        .eq('image_seq', 1)  // 첫 번째 이미지만 (카드용)
       
       // 데이터 변환
       return transformSearchResultsToCardData(filteredData, mediaData || [])
@@ -176,13 +176,13 @@ function useAllHotels() {
         // 클라이언트 측에서 publish 필터링 (publish가 false인 것 제외)
         const filteredData = data.filter((hotel: any) => hotel.publish !== false)
       
-      // 호텔 미디어 조회
-      const sabreIds = filteredData.map((hotel: any) => hotel.sabre_id)
+      // 호텔 미디어 조회 (select_hotel_media 테이블, 첫 번째 이미지만)
+      const sabreIds = filteredData.map((hotel: any) => String(hotel.sabre_id))
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
-        .select('sabre_id, media_path, sort_order')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .in('sabre_id', sabreIds)
-        .order('sort_order', { ascending: true })
+        .eq('image_seq', 1)  // 첫 번째 이미지만 (카드용)
       
       // 브랜드 정보 조회
       const brandIds = filteredData.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)

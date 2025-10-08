@@ -95,6 +95,26 @@ function useHotelData(sabreId: number | null) {
           return null
         }
         
+        // select_hotel_media에서 이미지 조회 (첫 번째 이미지만)
+        if (data) {
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('select_hotel_media')
+            .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
+            .eq('sabre_id', String(sabreId))
+            .eq('image_seq', 1)  // 첫 번째 이미지만
+            .maybeSingle()
+          
+          if (mediaError) {
+            console.error('호텔 미디어 조회 오류:', mediaError)
+          }
+          
+          // 이미지 경로를 호텔 데이터에 추가
+          return {
+            ...data,
+            image_url: mediaData?.public_url || mediaData?.storage_path || '/placeholder.svg'
+          }
+        }
+        
         return data
       } catch (err) {
         // 예외 객체를 안전하게 직렬화
@@ -146,7 +166,7 @@ function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
     city: hotelData.city,
     city_ko: hotelData.city_ko,
     property_address: hotelData.property_address,
-    image: '/placeholder.svg', // Storage에서 동적으로 로드
+    image: hotelData.image_url || '/placeholder.svg', // select_hotel_media에서 조회한 이미지
     benefits,
     slug: hotelData.slug,
     rating: 4.5, // 기본값

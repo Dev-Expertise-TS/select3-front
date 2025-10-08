@@ -64,12 +64,12 @@ export function useHeroImages() {
         // 클라이언트에서 publish 필터링 (false 제외)
         const filteredHotels = hotels.filter((h: any) => h.publish !== false)
         
-        // 2-1. select_hotel_media에서 해당 호텔들의 이미지 조회
+        // 2-1. select_hotel_media에서 해당 호텔들의 이미지 조회 (첫 번째 이미지만)
         const { data: mediaData, error: mediaError } = await supabase
           .from('select_hotel_media')
-          .select('*')
-          .in('sabre_id', sabreIds)
-          .order('sort_order', { ascending: true })
+          .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
+          .in('sabre_id', sabreIds.map(id => String(id)))
+          .eq('image_seq', 1)  // 첫 번째 이미지만 (히어로 캐러셀용)
         
         if (mediaError) {
           console.error('❌ 히어로 미디어 데이터 조회 실패:', mediaError)
@@ -129,8 +129,9 @@ export function useHeroImages() {
           }
           
           // select_hotel_media에서 해당 호텔의 첫 번째 이미지 찾기
-          const hotelMedia = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
-          let mediaPath = hotelMedia?.media_path || '/placeholder.svg'
+          const hotelMedia = mediaData?.find(m => String(m.sabre_id) === String(hotel.sabre_id))
+          // public_url 우선, 없으면 storage_path, 둘 다 없으면 placeholder
+          let mediaPath = hotelMedia?.public_url || hotelMedia?.storage_path || '/placeholder.svg'
           
           // 미디어가 없으면 도시별 fallback 이미지 사용
           if (mediaPath === '/placeholder.svg') {

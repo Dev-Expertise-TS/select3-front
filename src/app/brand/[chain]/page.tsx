@@ -126,21 +126,21 @@ async function getChainHotels(chainSlug: string) {
     }
   }
   
-  // 5. select_hotel_media에서 호텔 이미지 조회
+  // 5. select_hotel_media에서 호텔 이미지 조회 (첫 번째 이미지만)
   let hotelMediaData: any[] = []
   if (hotels.length > 0) {
-    const hotelSabreIds = hotels.map(h => h.sabre_id)
+    const hotelSabreIds = hotels.map(h => String(h.sabre_id))
     const { data: mediaData, error: mediaError } = await supabase
       .from('select_hotel_media')
-      .select('*')
+      .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
       .in('sabre_id', hotelSabreIds)
-      .order('sort_order', { ascending: true })
+      .eq('image_seq', 1)  // 첫 번째 이미지만 조회 (카드용)
     
     if (mediaError) {
       console.error('[ Server ] 호텔 미디어 조회 에러:', mediaError)
     } else {
       hotelMediaData = mediaData || []
-      console.log(`[ Server ] 호텔 미디어 ${hotelMediaData.length}개 조회`)
+      console.log(`[ Server ] 호텔 미디어 ${hotelMediaData.length}개 조회 (image_seq=1)`)
     }
   }
   

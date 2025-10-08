@@ -89,8 +89,20 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       // 클라이언트에서 publish 필터링 (false 제외)
       const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
 
-      // 3. 카드 데이터 형식으로 변환 (image_1을 직접 사용)
-      return transformHotelsToCardData(filteredHotels, undefined, true)
+      // 3. select_hotel_media에서 호텔 이미지 조회 (첫 번째 이미지만)
+      const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
+      const { data: mediaData, error: mediaError } = await supabase
+        .from('select_hotel_media')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
+        .in('sabre_id', hotelSabreIds)
+        .eq('image_seq', 1)  // 첫 번째 이미지만 (프로모션 카드용)
+      
+      if (mediaError) {
+        console.error('프로모션 미디어 조회 오류:', mediaError)
+      }
+
+      // 4. 카드 데이터 형식으로 변환 (select_hotel_media 사용)
+      return transformHotelsToCardData(filteredHotels, mediaData || [], true)
     },
     staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })

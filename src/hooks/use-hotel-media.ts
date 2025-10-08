@@ -10,12 +10,21 @@ export function useHotelMedia(sabreId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotel_media')
-        .select('*')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .eq('sabre_id', sabreId)
-        .order('sort_order', { ascending: true })
+        .order('image_seq', { ascending: true })
       
-      if (error) throw error
-      return data
+      if (error) {
+        console.error('select_hotel_media 조회 오류:', error)
+        throw error
+      }
+      
+      console.log('📸 select_hotel_media 조회 결과:', {
+        sabreId,
+        count: data?.length || 0
+      })
+      
+      return data || []
     },
     enabled: !!sabreId,
     staleTime: 10 * 60 * 1000, // 10분
@@ -29,13 +38,16 @@ export function useHotelMainImage(sabreId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotel_media')
-        .select('*')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .eq('sabre_id', sabreId)
-        .order('sort_order', { ascending: true })
-        .limit(1)
+        .eq('image_seq', 1)  // 첫 번째 이미지만
         .maybeSingle()
       
-      if (error) throw error
+      if (error) {
+        console.error('select_hotel_media 메인 이미지 조회 오류:', error)
+        throw error
+      }
+      
       return data || null
     },
     enabled: !!sabreId,
