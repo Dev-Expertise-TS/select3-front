@@ -50,7 +50,7 @@ export function useHeroImages() {
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id, image_1')
-          .neq('publish', false)
+          .or('publish.is.null,publish.eq.true')
           .in('sabre_id', sabreIds)
         
         if (hotelsError) {

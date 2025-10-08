@@ -101,7 +101,7 @@ export function SimpleHotelSearch({
         const { data, error } = await supabase
           .from('select_hotels')
           .select('slug,sabre_id,property_name_ko,property_name_en,city,city_ko,city_en,country_ko,country_en')
-          .neq('publish', false)
+          .or('publish.is.null,publish.eq.true')
           .or(`property_name_ko.ilike.%${q}%,property_name_en.ilike.%${q}%,city.ilike.%${q}%,city_ko.ilike.%${q}%,city_en.ilike.%${q}%,country_ko.ilike.%${q}%,country_en.ilike.%${q}%`)
           .limit(20)
           .order('property_name_ko')

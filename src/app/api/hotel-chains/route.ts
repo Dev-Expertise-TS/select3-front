@@ -43,7 +43,7 @@ export async function GET(): Promise<NextResponse<{
         const { count, error } = await supabase
           .from('select_hotels')
           .select('*', { count: 'exact', head: true })
-          .neq('publish', false)
+          .or('publish.is.null,publish.eq.true')
           .eq('chain', chain.chain_name_en)
 
         return {

@@ -67,7 +67,7 @@ function useHotelData(sabreId: number | null) {
         const { data, error } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, city, city_ko, property_address, image_1, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
-          .neq('publish', false)
+          .or('publish.is.null,publish.eq.true')
           .eq('sabre_id', sabreId)
           .single()
         

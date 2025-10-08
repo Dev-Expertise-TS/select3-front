@@ -14,7 +14,7 @@ export async function GET(
     const { data: hotel, error: hotelError } = await supabase
       .from('select_hotels')
       .select('slug, property_name_ko, property_name_en')
-      .neq('publish', false)
+      .or('publish.is.null,publish.eq.true')
       .eq('sabre_id', parseInt(sabreId))
       .single();
 

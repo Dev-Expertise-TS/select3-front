@@ -213,17 +213,17 @@ export function CommonSearchBar({
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .neq('publish', false)
+            .or('publish.is.null,publish.eq.true')
             .ilike('property_name_ko', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .neq('publish', false)
+            .or('publish.is.null,publish.eq.true')
             .ilike('property_name_en', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .neq('publish', false)
+            .or('publish.is.null,publish.eq.true')
             .ilike('city', `%${q}%`)
         ]
         
