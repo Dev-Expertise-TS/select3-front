@@ -112,18 +112,9 @@ export function HotelCard({
           isThreeGrid ? HOTEL_CARD_CONFIG.IMAGE_ASPECT.THREE_GRID : imageAspectClasses[variant],
           imageClassName
         )}>
-          {/* Supabase Storage 이미지 우선 사용, 없으면 기존 이미지 사용 */}
+          {/* select_hotel_media 테이블의 이미지 우선 사용 (호텔 카드와 동일) */}
           <OptimizedImage
-            src={
-              hotel.slug 
-                ? (generateHotelImageUrl(hotel.slug, hotel.sabre_id, 1, {
-                    width: 800,
-                    height: 600,
-                    quality: variant === 'featured' || variant === 'promotion' ? 90 : 80,
-                    format: 'webp'
-                  }) || getSafeImageUrl(hotel.image))
-                : getSafeImageUrl(hotel.image)
-            }
+            src={getSafeImageUrl(hotel.image)}
             alt={`${hotel.property_name_ko} - ${hotel.city}`}
             fill
             className="object-cover object-center group-hover:scale-110 transition-transform duration-500"

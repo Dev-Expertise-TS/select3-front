@@ -88,45 +88,22 @@ function HotelImageSection({
         borderRadius: '8px' // CSS로 라운딩 강제 적용
       }}
     >
-      {/* Supabase Storage 이미지 우선 사용, 없으면 기존 이미지 사용 */}
-      {hotel.slug ? (
-        <OptimizedImage
-          src={generateHotelImageUrl(hotel.slug, hotel.sabre_id, 1, {
-            width: 400,
-            height: 400,
-            quality: variant === 'featured' || variant === 'promotion' ? 85 : 75,
-            format: 'webp'
-          }) || getSafeImageUrl(hotel.image)}
-          alt={`${hotel.property_name_ko} - ${hotel.city}`}
-          fill
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-          style={{
-            borderRadius: '8px' // 이미지에도 CSS로 라운딩 강제 적용
-          }}
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          priority={variant === 'featured' || variant === 'promotion'}
-          quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
-          format="webp"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-        />
-      ) : (
-        <OptimizedImage
-          src={getSafeImageUrl(hotel.image)}
-          alt={`${hotel.property_name_ko} - ${hotel.city}`}
-          fill
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-          style={{
-            borderRadius: '8px' // 이미지에도 CSS로 라운딩 강제 적용
-          }}
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          priority={variant === 'featured' || variant === 'promotion'}
-          quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
-          format="webp"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-        />
-      )}
+      {/* select_hotel_media 테이블의 이미지 직접 사용 */}
+      <OptimizedImage
+        src={getSafeImageUrl(hotel.image)}
+        alt={`${hotel.property_name_ko} - ${hotel.city}`}
+        fill
+        className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+        style={{
+          borderRadius: '8px' // 이미지에도 CSS로 라운딩 강제 적용
+        }}
+        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        priority={variant === 'featured' || variant === 'promotion'}
+        quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
+        format="webp"
+        placeholder="blur"
+        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+      />
       
       {/* 배지들 */}
       <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">

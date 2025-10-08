@@ -95,13 +95,14 @@ function useHotelData(sabreId: number | null) {
           return null
         }
         
-        // select_hotel_media에서 이미지 조회 (첫 번째 이미지만)
+        // select_hotel_media에서 이미지 조회 (image_seq가 가장 작은 것)
         if (data) {
-          const { data: mediaData, error: mediaError } = await supabase
+          const { data: rawMediaData, error: mediaError } = await supabase
             .from('select_hotel_media')
             .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
             .eq('sabre_id', String(sabreId))
-            .eq('image_seq', 1)  // 첫 번째 이미지만
+            .order('image_seq', { ascending: true })
+            .limit(1)
             .maybeSingle()
           
           if (mediaError) {
@@ -111,7 +112,7 @@ function useHotelData(sabreId: number | null) {
           // 이미지 경로를 호텔 데이터에 추가
           return {
             ...data,
-            image_url: mediaData?.public_url || mediaData?.storage_path || '/placeholder.svg'
+            image_url: rawMediaData?.public_url || rawMediaData?.storage_path || '/placeholder.svg'
           }
         }
         

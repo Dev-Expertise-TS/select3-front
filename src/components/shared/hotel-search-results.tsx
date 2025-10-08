@@ -10,6 +10,7 @@ import { BrandArticlesSection } from "@/features/brands/brand-articles-section"
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { transformSearchResultsToCardData, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { HotelBannerSection } from './hotel-banner-section'
 import { HotelListSection } from './hotel-list-section'
 import { HotelListSectionAllView } from './hotel-list-section-all-view'
@@ -36,16 +37,19 @@ function useSearchResults(query: string, tick: number) {
       // 클라이언트에서 publish 필터링 (false 제외)
       const filteredData = data.filter((hotel: any) => hotel.publish !== false)
       
-      // 호텔 미디어 조회 (select_hotel_media 테이블, 첫 번째 이미지만)
+      // 호텔 미디어 조회 (select_hotel_media 테이블, 각 호텔의 첫 번째 이미지)
       const sabreIds = filteredData.map((hotel: any) => String(hotel.sabre_id))
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
         .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .in('sabre_id', sabreIds)
-        .eq('image_seq', 1)  // 첫 번째 이미지만 (카드용)
+        .order('image_seq', { ascending: true })
+      
+      // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
+      const firstImages = getFirstImagePerHotel(mediaData || [])
       
       // 데이터 변환
-      return transformSearchResultsToCardData(filteredData, mediaData || [])
+      return transformSearchResultsToCardData(filteredData, firstImages)
     },
     enabled: query.trim().length > 0,
     staleTime: 5 * 60 * 1000, // 5분
@@ -176,13 +180,16 @@ function useAllHotels() {
         // 클라이언트 측에서 publish 필터링 (publish가 false인 것 제외)
         const filteredData = data.filter((hotel: any) => hotel.publish !== false)
       
-      // 호텔 미디어 조회 (select_hotel_media 테이블, 첫 번째 이미지만)
+      // 호텔 미디어 조회 (select_hotel_media 테이블, 각 호텔의 첫 번째 이미지)
       const sabreIds = filteredData.map((hotel: any) => String(hotel.sabre_id))
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
         .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .in('sabre_id', sabreIds)
-        .eq('image_seq', 1)  // 첫 번째 이미지만 (카드용)
+        .order('image_seq', { ascending: true })
+      
+      // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
+      const firstImages = getFirstImagePerHotel(mediaData || [])
       
       // 브랜드 정보 조회
       const brandIds = filteredData.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
@@ -201,7 +208,7 @@ function useAllHotels() {
       }
       
         // 데이터 변환 (전체보기용) - 브랜드 정보 포함
-        return transformHotelsToAllViewCardData(filteredData, mediaData || [], brandData)
+        return transformHotelsToAllViewCardData(filteredData, firstImages, brandData)
       } catch (error) {
         console.error('전체 호텔 조회 중 오류 발생:', error)
         throw error

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getFirstImagePerHotel } from '@/lib/media-utils'
 
 const supabase = createClient()
 
@@ -64,12 +65,15 @@ export function useHeroImages() {
         // 클라이언트에서 publish 필터링 (false 제외)
         const filteredHotels = hotels.filter((h: any) => h.publish !== false)
         
-        // 2-1. select_hotel_media에서 해당 호텔들의 이미지 조회 (첫 번째 이미지만)
-        const { data: mediaData, error: mediaError } = await supabase
+        // 2-1. select_hotel_media에서 해당 호텔들의 이미지 조회 (각 호텔의 첫 번째 이미지)
+        const { data: rawMediaData, error: mediaError } = await supabase
           .from('select_hotel_media')
           .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
           .in('sabre_id', sabreIds.map(id => String(id)))
-          .eq('image_seq', 1)  // 첫 번째 이미지만 (히어로 캐러셀용)
+          .order('image_seq', { ascending: true })
+        
+        // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
+        const mediaData = getFirstImagePerHotel(rawMediaData || [])
         
         if (mediaError) {
           console.error('❌ 히어로 미디어 데이터 조회 실패:', mediaError)

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ChainPageClient } from "./chain-page-client"
+import { getFirstImagePerHotel } from "@/lib/media-utils"
 
 interface HotelRow {
   sabre_id: number
@@ -126,21 +127,24 @@ async function getChainHotels(chainSlug: string) {
     }
   }
   
-  // 5. select_hotel_media에서 호텔 이미지 조회 (첫 번째 이미지만)
+  // 5. select_hotel_media에서 호텔 이미지 조회 (각 호텔의 첫 번째 이미지)
   let hotelMediaData: any[] = []
   if (hotels.length > 0) {
     const hotelSabreIds = hotels.map(h => String(h.sabre_id))
+    
+    // 모든 이미지를 가져온 후 각 호텔별로 image_seq가 가장 작은 것 선택
     const { data: mediaData, error: mediaError } = await supabase
       .from('select_hotel_media')
       .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
       .in('sabre_id', hotelSabreIds)
-      .eq('image_seq', 1)  // 첫 번째 이미지만 조회 (카드용)
+      .order('image_seq', { ascending: true })
     
     if (mediaError) {
       console.error('[ Server ] 호텔 미디어 조회 에러:', mediaError)
     } else {
-      hotelMediaData = mediaData || []
-      console.log(`[ Server ] 호텔 미디어 ${hotelMediaData.length}개 조회 (image_seq=1)`)
+      // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
+      hotelMediaData = getFirstImagePerHotel(mediaData || [])
+      console.log(`[ Server ] 호텔 미디어 ${hotelMediaData.length}개 조회 (각 호텔의 가장 작은 image_seq)`)
     }
   }
   

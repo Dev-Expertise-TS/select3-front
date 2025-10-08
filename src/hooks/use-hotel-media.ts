@@ -40,7 +40,8 @@ export function useHotelMainImage(sabreId: string | null) {
         .from('select_hotel_media')
         .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
         .eq('sabre_id', sabreId)
-        .eq('image_seq', 1)  // 첫 번째 이미지만
+        .order('image_seq', { ascending: true })
+        .limit(1)  // 가장 작은 image_seq 하나만
         .maybeSingle()
       
       if (error) {

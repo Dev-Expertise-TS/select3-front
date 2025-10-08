@@ -32,9 +32,13 @@ export function ChainPageClient({
   console.log(`[ Client ] ChainPageClient 렌더링:`, {
     chainName: chainRow.chain_name_en,
     hotelsCount: transformedHotels.length,
-    hotel991: transformedHotels.find(h => h.id === 991) ? 'EXISTS' : 'NOT FOUND',
-    hotel99999: transformedHotels.find(h => h.id === 99999) ? 'EXISTS' : 'NOT FOUND',
-    sampleHotels: transformedHotels.slice(0, 2).map(h => ({ id: h.id, name: h.nameKo, image: h.image }))
+    hotel991: transformedHotels.find(h => h.sabre_id === 991) ? 'EXISTS' : 'NOT FOUND',
+    hotel99999: transformedHotels.find(h => h.sabre_id === 99999) ? 'EXISTS' : 'NOT FOUND',
+    sampleHotels: transformedHotels.slice(0, 2).map(h => ({ 
+      sabre_id: h.sabre_id, 
+      property_name_ko: h.property_name_ko, 
+      image: h.image 
+    }))
   })
 
   // 체인 변경 핸들러 - 고정된 페이지로 이동
