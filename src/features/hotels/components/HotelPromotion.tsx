@@ -77,23 +77,23 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
                     </span>
                   )}
                   
-                  {/* 날짜 정보들 (KST, 범위 표기) */}
-                  <div className="flex flex-row items-center justify-center sm:justify-start gap-2 text-xs text-blue-100">
+                  {/* 날짜 정보들 (KST, 범위 표기) - 모바일: 세로 정렬, 데스크톱: 가로 정렬 */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 text-xs text-blue-100">
                     {(promotion.booking_start_date || promotion.booking_end_date) && (
-                      <span className="whitespace-nowrap">
+                      <span className="text-center sm:text-left whitespace-nowrap">
                         예약일: {formatKstDate(promotion.booking_start_date)} ~ {formatKstDate(promotion.booking_end_date)}
                       </span>
                     )}
                     {(promotion.check_in_start_date || promotion.check_in_end_date) && (
-                      <span className="whitespace-nowrap">
+                      <span className="text-center sm:text-left whitespace-nowrap">
                         투숙일: {formatKstDate(promotion.check_in_start_date)} ~ {formatKstDate(promotion.check_in_end_date)}
                       </span>
                     )}
                   </div>
 
-                  {/* 비고(note) */}
+                  {/* 비고(note) - 모바일: 가운데 정렬 */}
                   {promotion.note && (
-                    <div className="text-[11px] sm:text-xs text-blue-100">
+                    <div className="text-[11px] sm:text-xs text-blue-100 text-center sm:text-left">
                       {promotion.note}
                     </div>
                   )}
