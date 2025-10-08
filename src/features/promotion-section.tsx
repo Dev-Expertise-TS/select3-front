@@ -28,7 +28,7 @@ export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
         .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
-        .eq('publish', true)
+        .neq('publish', false)
         .in('sabre_id', sabreIds)
         .limit(hotelCount)
       
@@ -78,7 +78,7 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
         .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
-        .eq('publish', true)
+        .neq('publish', false)
         .in('sabre_id', activeSabreIds)
         .limit(hotelCount)
 

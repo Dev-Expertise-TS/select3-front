@@ -27,7 +27,7 @@ function useSearchResults(query: string, tick: number) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5')
-        .eq('publish', true)
+        .neq('publish', false)
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%,city_ko.ilike.%${query}%,city_en.ilike.%${query}%,country_ko.ilike.%${query}%,country_en.ilike.%${query}%`)
       
       if (error) throw error
@@ -58,7 +58,7 @@ function useFilterOptions() {
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
         .select('city, city_ko, city_en, country_ko, country_en, brand_id, chain_ko, chain_en')
-        .eq('publish', true)
+        .neq('publish', false)
       
       if (hotelsError) throw hotelsError
       
@@ -160,7 +160,7 @@ function useAllHotels() {
         const { data, error } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5, chain_ko, chain_en, brand_id')
-          .eq('publish', true)
+          .neq('publish', false)
           .order('sabre_id')
         
         if (error) {
@@ -242,7 +242,7 @@ function useBannerHotel() {
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, brand_id')
-          .eq('publish', true)
+          .neq('publish', false)
           .in('sabre_id', sabreIds)
           .not('image_1', 'is', null) // image_1이 있는 호텔만
         
@@ -315,7 +315,7 @@ function useChainBrandHotels(selectedChainId: string | null) {
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
           .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, brand_id')
-          .eq('publish', true)
+          .neq('publish', false)
           .in('brand_id', brandIds)
           .not('image_1', 'is', null) // 이미지가 있는 호텔만
         
@@ -344,7 +344,7 @@ function useBrandHotels(brandId: string | null) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*, image_1, image_2, image_3, image_4, image_5')
-        .eq('publish', true)
+        .neq('publish', false)
         .eq('brand_id', parseInt(brandId))
         .order('property_name_ko')
       

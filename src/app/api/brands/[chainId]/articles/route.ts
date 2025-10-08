@@ -45,7 +45,7 @@ export async function GET(
     const { data: hotels, error: hotelsError } = await supabase
       .from('select_hotels')
       .select('sabre_id, property_name_ko, property_name_en, brand_id, blogs')
-      .eq('publish', true)
+      .neq('publish', false)
       .in('brand_id', brandIds)
       .not('blogs', 'is', null)
     
