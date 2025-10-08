@@ -235,7 +235,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("benefits")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "benefits"
-                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
+                  ? "text-white sm:text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -245,7 +245,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("introduction")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "introduction"
-                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
+                  ? "text-white sm:text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -255,7 +255,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("transportation")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "transportation"
-                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
+                  ? "text-white sm:text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -266,7 +266,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                 onClick={() => setActiveTab("articles")}
                 className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all ${
                   activeTab === "articles"
-                    ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
+                    ? "text-white sm:text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                     : "text-gray-500 hover:text-blue-600"
                 }`}
               >
@@ -278,7 +278,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
               onClick={() => setActiveTab("reviews")}
               className={`py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base text-center sm:text-left whitespace-nowrap transition-all ${
                 activeTab === "reviews"
-                  ? "text-white border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
+                  ? "text-white sm:text-blue-600 border-b-3 sm:border-b-2 border-blue-600 bg-blue-600 sm:bg-transparent"
                   : "text-gray-500 hover:text-blue-600"
               }`}
             >
@@ -321,9 +321,9 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                   {benefits.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1.5 px-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-0">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 rounded-md sm:rounded-lg border border-slate-400 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-all duration-300 ${
+                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-md h-[42px] sm:h-[56px] sm:flex-1 sm:min-w-[150px] shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden ${
                           index % 2 === 0 ? 'mr-1 sm:mr-0' : 'ml-1 sm:ml-0'
-                        }`}>
+                        }`} style={{ borderColor: '#E6CDB5' }}>
                           <div className={`hidden sm:flex w-6 h-6 ${benefit.bgColor} rounded-md items-center justify-center flex-shrink-0 sm:mr-1.5`}>
                             <benefit.icon className={`h-3.5 w-3.5 ${benefit.iconColor}`} />
                           </div>
