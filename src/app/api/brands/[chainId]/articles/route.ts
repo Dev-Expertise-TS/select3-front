@@ -14,7 +14,7 @@ export async function GET(
     // 1. 해당 체인의 브랜드들 조회
     const { data: brands, error: brandsError } = await supabase
       .from('hotel_brands')
-      .select('brand_id, brand_name_en, brand_name_kr')
+      .select('brand_id, brand_name_en, brand_name_ko')
       .eq('chain_id', parseInt(chainId))
     
     if (brandsError) {
@@ -44,8 +44,7 @@ export async function GET(
     // 2. 해당 브랜드들의 호텔들 조회
     const { data: hotels, error: hotelsError } = await supabase
       .from('select_hotels')
-      .select('sabre_id, property_name_ko, property_name_en, brand_id, blogs')
-      .or('publish.is.null,publish.eq.true')
+      .select('*')
       .in('brand_id', brandIds)
       .not('blogs', 'is', null)
     
@@ -57,7 +56,10 @@ export async function GET(
       )
     }
     
-    if (!hotels || hotels.length === 0) {
+    // 클라이언트에서 publish 필터링 (false 제외)
+    const filteredHotels = (hotels || []).filter((h: any) => h.publish !== false)
+    
+    if (filteredHotels.length === 0) {
       console.log(`[ API ] 체인 ${chainId}에 아티클이 있는 호텔이 없음`)
       return NextResponse.json({
         success: true,
@@ -75,7 +77,7 @@ export async function GET(
     const allBlogSlugs = new Set<string>()
     const hotelBlogMap = new Map<string, string[]>() // 호텔명 -> 블로그 슬러그 배열
     
-    hotels.forEach(hotel => {
+    filteredHotels.forEach(hotel => {
       if (hotel.blogs) {
         let blogSlugs: string[] = []
         
@@ -111,7 +113,7 @@ export async function GET(
           count: 0,
           chainId: parseInt(chainId),
           brands: brands,
-          hotels: hotels.length,
+          hotels: filteredHotels.length,
           blogSlugs: []
         }
       })
@@ -149,7 +151,7 @@ export async function GET(
         count: blogs?.length || 0,
         chainId: parseInt(chainId),
         brands: brands,
-        hotels: hotels.length,
+        hotels: filteredHotels.length,
         blogSlugs: uniqueBlogSlugs.length,
         requestedSlugs: uniqueBlogSlugs.slice(0, 10) // 디버깅용
       }

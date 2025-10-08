@@ -42,8 +42,8 @@ function makeHotelHref(hotel: Hotel) {
 interface BrandHotelsClientProps {
   hotels: Hotel[]
   displayName: string
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
-  selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
 }
 
 export function BrandHotelsClient({ hotels, displayName, allChains, selectedChainBrands }: BrandHotelsClientProps) {
@@ -91,7 +91,7 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
   // 현재 선택된 체인의 영문 이름
   const currentChainName = useMemo(() => {
     const currentChain = allChains.find(chain => chain.chain_name_en === displayName)
-    return currentChain?.chain_name_en || currentChain?.chain_name_kr || displayName
+    return currentChain?.chain_name_en || currentChain?.chain_name_ko || displayName
   }, [allChains, displayName])
 
   const filteredHotels = useMemo(() => {
@@ -189,13 +189,13 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
                       {allChains
                         .filter(chain => chain.slug !== '') // 빈 slug 제외
                         .sort((a, b) => {
-                          const aName = a.chain_name_en || a.chain_name_kr || ''
-                          const bName = b.chain_name_en || b.chain_name_kr || ''
+                          const aName = a.chain_name_en || a.chain_name_ko || ''
+                          const bName = b.chain_name_en || b.chain_name_ko || ''
                           return aName.localeCompare(bName)
                         })
                         .map((chain) => (
                           <option key={chain.chain_id} value={chain.slug}>
-                            {chain.chain_name_en || chain.chain_name_kr}
+                            {chain.chain_name_en || chain.chain_name_ko}
                           </option>
                         ))}
                     </select>

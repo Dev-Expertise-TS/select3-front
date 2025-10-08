@@ -24,20 +24,20 @@ function useSearchResults(query: string, tick: number) {
     queryFn: async () => {
       if (!query.trim()) return []
       
-      // publish가 null 또는 true인 호텔만 조회
-      let query1 = supabase
+      // 호텔 검색 (publish 컬럼 포함)
+      const { data, error } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5')
-        .or('publish.is.null,publish.eq.true')
+        .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, slug, image_1, image_2, image_3, image_4, image_5, publish')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%,city_ko.ilike.%${query}%,city_en.ilike.%${query}%,country_ko.ilike.%${query}%,country_en.ilike.%${query}%`)
-      
-      const { data, error } = await query1
       
       if (error) throw error
       if (!data) return []
       
+      // 클라이언트에서 publish 필터링 (false 제외)
+      const filteredData = data.filter((hotel: any) => hotel.publish !== false)
+      
       // 호텔 미디어 조회
-      const sabreIds = data.map((hotel: any) => hotel.sabre_id)
+      const sabreIds = filteredData.map((hotel: any) => hotel.sabre_id)
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
         .select('sabre_id, media_path, sort_order')
@@ -45,7 +45,7 @@ function useSearchResults(query: string, tick: number) {
         .order('sort_order', { ascending: true })
       
       // 데이터 변환
-      return transformSearchResultsToCardData(data, mediaData || [])
+      return transformSearchResultsToCardData(filteredData, mediaData || [])
     },
     enabled: query.trim().length > 0,
     staleTime: 5 * 60 * 1000, // 5분
@@ -57,16 +57,18 @@ function useFilterOptions() {
   return useQuery({
     queryKey: ['filter-options'],
     queryFn: async () => {
-      // 호텔 데이터 조회 (publish가 null 또는 true인 것만)
+      // 호텔 데이터 조회 (publish 컬럼 포함)
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('city, city_ko, city_en, country_ko, country_en, brand_id, chain_ko, chain_en')
-        .or('publish.is.null,publish.eq.true')
+        .select('city, city_ko, city_en, country_ko, country_en, brand_id, chain_ko, chain_en, publish')
       
       if (hotelsError) throw hotelsError
       
+      // 클라이언트에서 publish 필터링 (false 제외)
+      const filteredHotels = (hotels || []).filter((h: any) => h.publish !== false)
+      
       // 브랜드 데이터 조회
-      const brandIds = hotels?.filter((h: any) => h.brand_id).map((h: any) => h.brand_id) || []
+      const brandIds = filteredHotels.filter((h: any) => h.brand_id).map((h: any) => h.brand_id)
       let brands: any[] = []
       if (brandIds.length > 0) {
         const { data: brandData } = await supabase
@@ -78,7 +80,7 @@ function useFilterOptions() {
       
       // 도시 옵션 생성 (city_kr로 그룹핑 및 표시)
       const citySet = new Set<string>()
-      hotels?.forEach((hotel: any) => {
+      filteredHotels.forEach((hotel: any) => {
         const cityKr = hotel.city_kr || hotel.city_ko || hotel.city || hotel.city_en
         if (cityKr) {
           citySet.add(cityKr)
@@ -91,7 +93,7 @@ function useFilterOptions() {
       
       // 국가 옵션 생성 (country_kr로 그룹핑 및 표시)
       const countrySet = new Set<string>()
-      hotels?.forEach((hotel: any) => {
+      filteredHotels.forEach((hotel: any) => {
         const countryKr = hotel.country_kr || hotel.country_ko || hotel.country_en
         if (countryKr) {
           countrySet.add(countryKr)
@@ -104,7 +106,7 @@ function useFilterOptions() {
       
       // 브랜드 옵션 생성 (카운트 제거)
       const brandSet = new Set()
-      hotels?.forEach((hotel: any) => {
+      filteredHotels.forEach((hotel: any) => {
         if (hotel.brand_id) {
           const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
           if (brand) {
@@ -121,11 +123,11 @@ function useFilterOptions() {
       // 체인 옵션 생성 (hotel_chains 테이블에서 조회)
       const { data: hotelChains } = await supabase
         .from('hotel_chains')
-        .select('chain_id, chain_name_en, chain_name_kr, slug')
+        .select('chain_id, chain_name_en, chain_name_ko, slug')
         .order('chain_name_en')
       
       const chainMap = new Map()
-      hotels?.forEach((hotel: any) => {
+      filteredHotels.forEach((hotel: any) => {
         const chain = hotel.chain_ko || hotel.chain_en
         if (chain) {
           chainMap.set(chain, (chainMap.get(chain) || 0) + 1)
@@ -134,7 +136,7 @@ function useFilterOptions() {
       
       // hotel_chains 테이블의 체인 목록 사용 (영문 표시, 카운트 제거)
       const chains = (hotelChains || []).map((chain: any) => {
-        const chainName = chain.chain_name_en || chain.chain_name_kr
+        const chainName = chain.chain_name_en || chain.chain_name_ko
         return {
           id: String(chain.chain_id),
           label: chainName
@@ -162,18 +164,20 @@ function useAllHotels() {
       try {
         const { data, error } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, image_2, image_3, image_4, image_5, chain_ko, chain_en, brand_id')
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .order('sabre_id')
         
         if (error) {
-          console.error('호텔 목록 조회 오류:', error)
+          console.error('호텔 목록 조회 오류:', error, JSON.stringify(error))
           throw error
         }
         if (!data) return []
+        
+        // 클라이언트 측에서 publish 필터링 (publish가 false인 것 제외)
+        const filteredData = data.filter((hotel: any) => hotel.publish !== false)
       
       // 호텔 미디어 조회
-      const sabreIds = data.map((hotel: any) => hotel.sabre_id)
+      const sabreIds = filteredData.map((hotel: any) => hotel.sabre_id)
       const { data: mediaData } = await supabase
         .from('select_hotel_media')
         .select('sabre_id, media_path, sort_order')
@@ -181,7 +185,7 @@ function useAllHotels() {
         .order('sort_order', { ascending: true })
       
       // 브랜드 정보 조회
-      const brandIds = data.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+      const brandIds = filteredData.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
       let brandData = []
       if (brandIds.length > 0) {
         const { data: brandResult, error: brandError } = await supabase
@@ -197,7 +201,7 @@ function useAllHotels() {
       }
       
         // 데이터 변환 (전체보기용) - 브랜드 정보 포함
-        return transformHotelsToAllViewCardData(data, mediaData || [], brandData)
+        return transformHotelsToAllViewCardData(filteredData, mediaData || [], brandData)
       } catch (error) {
         console.error('전체 호텔 조회 중 오류 발생:', error)
         throw error
@@ -244,16 +248,19 @@ function useBannerHotel() {
         // 3) select_hotels에서 해당 sabre_id의 호텔 정보 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, brand_id')
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .in('sabre_id', sabreIds)
           .not('image_1', 'is', null) // image_1이 있는 호텔만
         
         if (hotelsError) throw hotelsError
         if (!hotels || hotels.length === 0) return null
         
+        // 클라이언트에서 publish 필터링 (false 제외)
+        const filteredHotels = hotels.filter((h: any) => h.publish !== false)
+        if (filteredHotels.length === 0) return null
+        
         // 4) hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
-        const brandIds = hotels.map((hotel: any) => hotel.brand_id).filter((id: any) => id !== null && id !== undefined)
+        const brandIds = filteredHotels.map((hotel: any) => hotel.brand_id).filter((id: any) => id !== null && id !== undefined)
         let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
         if (brandIds.length > 0) {
           const { data, error: brandsError } = await supabase
@@ -275,7 +282,7 @@ function useBannerHotel() {
         if (chainsError) throw chainsError
         
         // 6) 활성 슬롯 안에서 랜덤하게 하나 선택하고 브랜드 정보 매핑
-        const randomHotel = hotels[Math.floor(Math.random() * hotels.length)]
+        const randomHotel = filteredHotels[Math.floor(Math.random() * filteredHotels.length)]
         const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
         const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
         
@@ -306,7 +313,7 @@ function useChainBrandHotels(selectedChainId: string | null) {
         // 1. hotel_brands에서 해당 chain_id를 가진 브랜드들 조회
         const { data: brands, error: brandsError } = await supabase
           .from('hotel_brands')
-          .select('brand_id, brand_name_en, brand_name_kr')
+          .select('brand_id, brand_name_en, brand_name_ko')
           .eq('chain_id', parseInt(selectedChainId))
         
         if (brandsError) throw brandsError
@@ -317,15 +324,17 @@ function useChainBrandHotels(selectedChainId: string | null) {
         // 2. select_hotels에서 해당 brand_id를 가진 호텔들 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1, brand_id')
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .in('brand_id', brandIds)
           .not('image_1', 'is', null) // 이미지가 있는 호텔만
         
         if (hotelsError) throw hotelsError
         
+        // 클라이언트에서 publish 필터링 (false 제외)
+        const filteredHotels = (hotels || []).filter((h: any) => h.publish !== false)
+        
         // 데이터 변환
-        return transformSearchResultsToCardData(hotels || [], undefined)
+        return transformSearchResultsToCardData(filteredHotels, undefined)
       } catch (error) {
         console.error('체인 브랜드 호텔 조회 오류:', error)
         return []
@@ -347,12 +356,13 @@ function useBrandHotels(brandId: string | null) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*, image_1, image_2, image_3, image_4, image_5')
-        .or('publish.is.null,publish.eq.true')
         .eq('brand_id', parseInt(brandId))
         .order('property_name_ko')
       
       if (error) throw error
-      return data || []
+      
+      // 클라이언트에서 publish 필터링 (false 제외)
+      return (data || []).filter((h: any) => h.publish !== false)
     },
     enabled: !!brandId,
     staleTime: 5 * 60 * 1000, // 5분
@@ -370,7 +380,7 @@ function useChainBrands(chainId: string | null) {
         // hotel_brands에서 해당 chain_id를 가진 브랜드들 조회
         const { data: brands, error: brandsError } = await supabase
           .from('hotel_brands')
-          .select('brand_id, brand_name_en, brand_name_kr')
+          .select('brand_id, brand_name_en, brand_name_ko')
           .eq('chain_id', parseInt(chainId))
         
         if (brandsError) throw brandsError
@@ -393,8 +403,8 @@ interface HotelSearchResultsProps {
   showFilters?: boolean
   // 체인 페이지용 props
   initialHotels?: any[]
-  allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
-  selectedChainBrands?: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string }>
+  allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  selectedChainBrands?: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
   currentChainName?: string
   currentChainId?: string
   onChainChange?: (chainId: string) => void
@@ -680,14 +690,35 @@ export function HotelSearchResults({
     })
   }, [initialHotels, filters, finalFilterOptions])
 
-  // 표시할 데이터 결정 (우선순위: 검색 > 체인 선택 > 브랜드 선택 > 전체 호텔)
+  // 표시할 데이터 결정 (우선순위: 검색 > 체인 선택 > 브랜드 선택 > initialHotels > 전체 호텔)
   const allData = searchQuery.trim() 
     ? searchResults 
     : selectedChainId 
       ? chainBrandHotels 
       : selectedBrandId 
         ? brandHotels 
-        : (showAllHotels ? filteredData : (initialHotels.length > 0 ? filteredChainHotels : []))
+        : (initialHotels.length > 0 
+            ? filteredChainHotels  // 서버에서 전달된 initialHotels 우선 사용
+            : (showAllHotels ? filteredData : []))
+  
+  console.log('🔍 [ allData 결정 로직 ]', {
+    searchQuery: searchQuery.trim(),
+    selectedChainId,
+    selectedBrandId,
+    initialHotelsLength: initialHotels.length,
+    showAllHotels,
+    dataSource: searchQuery.trim() 
+      ? 'searchResults'
+      : selectedChainId 
+        ? 'chainBrandHotels'
+        : selectedBrandId 
+          ? 'brandHotels'
+          : (initialHotels.length > 0 
+              ? 'filteredChainHotels (initialHotels)'
+              : (showAllHotels ? 'filteredData (전체)' : '빈 배열')),
+    resultCount: allData?.length || 0,
+    filters
+  })
   
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount

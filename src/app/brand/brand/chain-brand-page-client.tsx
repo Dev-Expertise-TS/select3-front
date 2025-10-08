@@ -5,8 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
 
 interface ChainBrandPageClientProps {
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
-  allBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string; chain_id: number }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  allBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string; chain_id: number }>
 }
 
 export function ChainBrandPageClient({ 
@@ -86,11 +86,11 @@ export function ChainBrandPageClient({
         cities: [],
         brands: allBrands.map(brand => ({
           id: String(brand.brand_id),
-          label: brand.brand_name_en || brand.brand_name_kr
+          label: brand.brand_name_en || brand.brand_name_ko
         })),
         chains: allChains.map(chain => ({
           id: String(chain.chain_id),
-          label: chain.chain_name_en || chain.chain_name_kr
+          label: chain.chain_name_en || chain.chain_name_ko
         }))
       }}
     />

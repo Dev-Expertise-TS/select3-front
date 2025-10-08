@@ -66,6 +66,8 @@ export const supabaseLoader = ({ src, width, quality = 85, format = 'auto' }: {
 
 /**
  * 호텔 이미지 URL 생성 헬퍼
+ * select_hotel_media 테이블의 media_path를 우선 사용하고,
+ * 없을 경우 Storage 파일명 패턴으로 URL 생성
  */
 export const generateHotelImageUrl = (
   hotelSlug: string | undefined | null,
@@ -93,15 +95,15 @@ export const generateHotelImageUrl = (
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
   const decodedSlug = decodeURIComponent(hotelSlug);
   
-  // 디버깅 로그 제거됨
-
   const { width, height, quality = 85, format = 'auto' } = options || {};
   
   try {
-    // 기본 이미지 파일명 패턴: slug_sabre_id-seq (디코딩된 slug 사용)
-    const fileName = `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`;
+    // 기본 이미지 파일명 패턴: slug_sabreId_seq_1600w.avif
+    // 다양한 포맷 지원: avif, webp, jpg, jpeg, png
+    const seqStr = sequence.toString().padStart(2, '0');
+    const fileName = `${decodedSlug}_${sabreId}_${seqStr}_1600w.avif`;
     
-    // Supabase Storage 공개 URL (디코딩된 slug 사용)
+    // Supabase Storage 공개 URL
     const baseUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`;
     
     if (width || height || quality !== 85 || format !== 'auto') {
@@ -149,7 +151,8 @@ export const generateHotelImageUrls = (
 };
 
 /**
- * 다양한 파일명 패턴으로 호텔 이미지 URL 생성 시도
+ * 다양한 파일명 패턴과 포맷으로 호텔 이미지 URL 생성 시도
+ * 여러 이미지 확장자 (avif, webp, jpg, jpeg, png)를 지원
  */
 export const generateHotelImageUrlWithPatterns = async (
   hotelSlug: string | undefined | null,
@@ -167,15 +170,22 @@ export const generateHotelImageUrlWithPatterns = async (
   }
 
   const decodedSlug = decodeURIComponent(hotelSlug);
+  const seqStr = sequence.toString().padStart(2, '0');
   
-  // 다양한 파일명 패턴들
-  const patterns = [
-    `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // 기본 패턴
-    `${decodedSlug}-${sabreId}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // 하이픈 패턴
-    `${decodedSlug}_${sabreId}_${sequence}_1600w.avif`, // 패딩 없는 패턴
-    `${decodedSlug}_${sabreId}_${sequence.toString().padStart(2, '0')}.avif`, // width 없는 패턴
-    `${decodedSlug}_${sequence.toString().padStart(2, '0')}_1600w.avif`, // sabre_id 없는 패턴
-  ];
+  // 지원하는 이미지 확장자 (우선순위 순서)
+  const imageExtensions = ['avif', 'webp', 'jpg', 'jpeg', 'png'];
+  
+  // 다양한 파일명 패턴들 (각 확장자별로)
+  const patterns: string[] = [];
+  
+  for (const ext of imageExtensions) {
+    patterns.push(
+      `${decodedSlug}_${sabreId}_${seqStr}_1600w.${ext}`, // 기본 패턴
+      `${decodedSlug}_${sabreId}_${seqStr}.${ext}`,        // width 없는 패턴
+      `${decodedSlug}-${sabreId}_${seqStr}.${ext}`,        // 하이픈 패턴
+      `${decodedSlug}_${seqStr}.${ext}`,                   // sabre_id 없는 패턴
+    );
+  }
 
   // 각 패턴을 시도해서 존재하는 이미지 찾기
   for (const fileName of patterns) {
@@ -209,4 +219,53 @@ export const generateHotelImageUrlWithPatterns = async (
   
   console.warn(`❌ 모든 패턴에서 이미지를 찾을 수 없음: ${hotelSlug}, ${sabreId}, ${sequence}`);
   return null;
+};
+
+/**
+ * Storage에서 실제로 존재하는 호텔 이미지 URL을 동기적으로 생성
+ * (여러 포맷 시도)
+ */
+export const generateHotelImageUrlMultiFormat = (
+  hotelSlug: string | undefined | null,
+  sabreId: number | undefined | null,
+  sequence: number = 1,
+  options?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    format?: 'webp' | 'avif' | 'auto';
+  }
+): string[] => {
+  if (!hotelSlug || !sabreId) {
+    return [];
+  }
+
+  const decodedSlug = decodeURIComponent(hotelSlug);
+  const seqStr = sequence.toString().padStart(2, '0');
+  const { width, height, quality = 85, format = 'auto' } = options || {};
+  
+  // 지원하는 이미지 확장자 (우선순위 순서)
+  const imageExtensions = ['avif', 'webp', 'jpg', 'jpeg', 'png'];
+  
+  const urls: string[] = [];
+  
+  for (const ext of imageExtensions) {
+    const patterns = [
+      `${decodedSlug}_${sabreId}_${seqStr}.${ext}`,        // width 없는 패턴 (우선)
+      `${decodedSlug}_${sabreId}_${seqStr}_1600w.${ext}`, // 기본 패턴
+      `${decodedSlug}-${sabreId}_${seqStr}.${ext}`,        // 하이픈 패턴
+    ];
+    
+    for (const fileName of patterns) {
+      const baseUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`;
+      
+      if (width || height || quality !== 85 || format !== 'auto') {
+        urls.push(createSupabaseImageUrl(baseUrl, width || 1600, quality, format));
+      } else {
+        urls.push(baseUrl);
+      }
+    }
+  }
+  
+  return urls;
 };

@@ -9,7 +9,7 @@ async function getAllChainsAndBrands() {
   // 1. 모든 체인 조회
   const { data: allChains, error: chainsError } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_kr, slug')
+    .select('chain_id, chain_name_en, chain_name_ko, slug')
     .order('chain_name_en')
   
   console.log(`[ Server ] 모든 체인 조회 결과:`, { data: allChains, error: chainsError })
@@ -22,7 +22,7 @@ async function getAllChainsAndBrands() {
   // 2. 모든 브랜드 조회
   const { data: allBrands, error: brandsError } = await supabase
     .from('hotel_brands')
-    .select('brand_id, brand_name_en, brand_name_kr, chain_id')
+    .select('brand_id, brand_name_en, brand_name_ko, chain_id')
     .order('brand_name_en')
   
   console.log(`[ Server ] 모든 브랜드 조회 결과:`, { data: allBrands, error: brandsError })

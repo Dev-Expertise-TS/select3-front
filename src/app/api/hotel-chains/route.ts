@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export interface HotelChainFilter {
   chain_id: number
   chain_name_en: string
-  chain_name_kr?: string | null
+  chain_name_ko?: string | null
   count: number
 }
 
@@ -19,7 +19,7 @@ export async function GET(): Promise<NextResponse<{
     // 호텔 체인 목록과 각 체인별 호텔 수 조회
     const { data: chains, error: chainsError } = await supabase
       .from('hotel_chains')
-      .select('chain_id, chain_name_en, chain_name_kr')
+      .select('chain_id, chain_name_en, chain_name_ko')
       .order('chain_name_en')
 
     if (chainsError) {
@@ -40,17 +40,20 @@ export async function GET(): Promise<NextResponse<{
     // 각 체인별 호텔 수 조회
     const chainCounts = await Promise.all(
       chains.map(async (chain) => {
-        const { count, error } = await supabase
+        // 모든 호텔 조회 후 클라이언트에서 필터링
+        const { data, error } = await supabase
           .from('select_hotels')
-          .select('*', { count: 'exact', head: true })
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .eq('chain', chain.chain_name_en)
+
+        // 클라이언트에서 publish 필터링 (false 제외)
+        const filteredCount = error ? 0 : (data || []).filter((h: any) => h.publish !== false).length
 
         return {
           chain_id: chain.chain_id,
           chain_name_en: chain.chain_name_en,
-          chain_name_kr: chain.chain_name_kr,
-          count: error ? 0 : (count || 0)
+          chain_name_ko: chain.chain_name_ko,
+          count: filteredCount
         }
       })
     )

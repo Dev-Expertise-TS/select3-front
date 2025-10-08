@@ -29,15 +29,17 @@ function usePromotionPageHotels() {
       // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
-        .or('publish.is.null,publish.eq.true')
+        .select('*')
         .in('sabre_id', uniqueSabreIds)
       
       if (hotelsError) throw hotelsError
       if (!hotels) return []
       
+      // 클라이언트에서 publish 필터링 (false 제외)
+      const filteredHotels = hotels.filter((h: any) => h.publish !== false)
+      
       // 3. 데이터 변환 (image_1 직접 사용)
-      return transformHotelsToCardData(hotels, undefined, true)
+      return transformHotelsToCardData(filteredHotels, undefined, true)
     },
     staleTime: 5 * 60 * 1000, // 5분
   })

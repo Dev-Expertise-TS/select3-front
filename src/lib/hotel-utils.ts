@@ -24,7 +24,7 @@ export function transformHotelToCardData(
     property_name_en: hotel.property_name_en || undefined,
     city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
     property_address: hotel.property_address || '주소 정보 없음',
-    image: hotel.image_1 || imageUrl || '/placeholder.svg',
+    image: imageUrl || '/placeholder.svg', // image_1 사용 제거, mediaData의 imageUrl 우선
     benefits: benefits || [
       hotel.benefit,
       hotel.benefit_1,
@@ -62,9 +62,9 @@ export function transformHotelsToCardData(
   isPromotion: boolean = false
 ): HotelCardData[] {
   return hotels.map(hotel => {
-    // image_1을 우선적으로 사용
-    const imageUrl = hotel.image_1 || '/placeholder.svg'
-    
+    // mediaData에서 해당 호텔의 첫 번째 이미지 찾기
+    const hotelMedia = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
+    const imageUrl = hotelMedia?.media_path || '/placeholder.svg'
     
     // 혜택 정보 정리
     const benefits = [
@@ -136,7 +136,7 @@ export function transformHotelToAllViewCardData(
     city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
     city_ko: hotel.city_ko || undefined,
     property_address: hotel.property_address || '주소 정보 없음',
-    image: hotel.image_1 || imageUrl || '/placeholder.svg',
+    image: imageUrl || '/placeholder.svg', // image_1 사용 제거, mediaData의 imageUrl 우선
     benefits: [
       hotel.benefit,
       hotel.benefit_1,
@@ -177,8 +177,9 @@ export function transformHotelsToAllViewCardData(
   brandData?: any[]
 ): HotelCardAllViewData[] {
   return hotels.map(hotel => {
-    // image_1을 우선적으로 사용
-    const imageUrl = hotel.image_1 || '/placeholder.svg'
+    // mediaData에서 해당 호텔의 첫 번째 이미지 찾기
+    const hotelMedia = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
+    const imageUrl = hotelMedia?.media_path || '/placeholder.svg'
     
     // 브랜드 정보 찾기
     const brand = brandData?.find(b => b.brand_id === hotel.brand_id)

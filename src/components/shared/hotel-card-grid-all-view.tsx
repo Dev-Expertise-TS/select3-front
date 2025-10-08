@@ -108,7 +108,7 @@ export function HotelCardGridAllView({
     )}>
       {hotels.map((hotel) => (
         <HotelCardAllView
-          key={hotel.sabre_id}
+          key={hotel.sabre_id || hotel.id}
           hotel={hotel}
           variant={variant}
           showBenefits={showBenefits}

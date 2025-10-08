@@ -13,15 +13,22 @@ export async function GET(
     // 호텔 정보 조회 (slug 필요)
     const { data: hotel, error: hotelError } = await supabase
       .from('select_hotels')
-      .select('slug, property_name_ko, property_name_en')
-      .or('publish.is.null,publish.eq.true')
+      .select('*')
       .eq('sabre_id', parseInt(sabreId))
-      .single();
+      .maybeSingle();
 
     if (hotelError || !hotel) {
       return NextResponse.json({
         success: false,
         error: '호텔 정보를 찾을 수 없습니다'
+      }, { status: 404 });
+    }
+
+    // publish가 false면 404 반환
+    if (hotel.publish === false) {
+      return NextResponse.json({
+        success: false,
+        error: '호텔이 공개되지 않았습니다'
       }, { status: 404 });
     }
 

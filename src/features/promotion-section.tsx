@@ -27,16 +27,18 @@ export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회 (image_1 포함)
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
-        .or('publish.is.null,publish.eq.true')
+        .select('*')
         .in('sabre_id', sabreIds)
-        .limit(hotelCount)
+        .limit(hotelCount * 2) // 필터링 고려하여 더 많이 가져오기
       
       if (hotelsError) throw hotelsError
       if (!hotels) return []
       
+      // 클라이언트에서 publish 필터링 (false 제외)
+      const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
+      
       // 3. 데이터 변환 (image_1 직접 사용)
-      return transformHotelsToCardData(hotels, undefined, true)
+      return transformHotelsToCardData(filteredHotels, undefined, true)
     },
     staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })
@@ -77,16 +79,18 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       // 2. select_hotels에서 해당 sabre_id의 호텔들 조회 (image_1 필요)
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, property_name_en, city, property_address, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug, image_1')
-        .or('publish.is.null,publish.eq.true')
+        .select('*')
         .in('sabre_id', activeSabreIds)
-        .limit(hotelCount)
+        .limit(hotelCount * 2) // 필터링 고려하여 더 많이 가져오기
 
       if (hotelsError) throw hotelsError
       if (!hotels) return []
 
+      // 클라이언트에서 publish 필터링 (false 제외)
+      const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
+
       // 3. 카드 데이터 형식으로 변환 (image_1을 직접 사용)
-      return transformHotelsToCardData(hotels, undefined, true)
+      return transformHotelsToCardData(filteredHotels, undefined, true)
     },
     staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })

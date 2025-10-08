@@ -22,7 +22,7 @@ interface HotelFilterSectionProps {
   onChainChange?: (slug: string) => void
   
   // 브랜드 선택용 props
-  selectedChainBrands?: Array<{brand_id: number, brand_name_en: string, brand_name_kr?: string}>
+  selectedChainBrands?: Array<{brand_id: number, brand_name_en: string, brand_name_ko?: string}>
   selectedBrandId?: string | null
   selectedChainId?: string | null
   onBrandChange?: (brandId: string) => void
@@ -120,10 +120,10 @@ export function HotelFilterSection({
                   >
                     <option value="">브랜드 선택</option>
                     {selectedChainBrands
-                      .sort((a, b) => (a.brand_name_en || a.brand_name_kr || '').localeCompare(b.brand_name_en || b.brand_name_kr || ''))
+                      .sort((a, b) => (a.brand_name_en || a.brand_name_ko || '').localeCompare(b.brand_name_en || b.brand_name_ko || ''))
                       .map((brand) => (
                         <option key={brand.brand_id} value={String(brand.brand_id)}>
-                          {brand.brand_name_en || brand.brand_name_kr}
+                          {brand.brand_name_en || brand.brand_name_ko}
                         </option>
                       ))}
                   </select>

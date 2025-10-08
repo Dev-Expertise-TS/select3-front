@@ -22,10 +22,9 @@ async function getHotelBySlug(slug: string) {
     
     const { data: hotel, error } = await supabase
       .from('select_hotels')
-      .select('*, image_1, image_2, image_3, image_4, image_5, property_location, property_address, city, city_ko, city_en')
-      .or('publish.is.null,publish.eq.true')
+      .select('*')
       .eq('slug', decodedSlug)
-      .single()
+      .maybeSingle()
     
     if (error) {
       // 호텔을 찾을 수 없는 경우는 정상적인 상황이므로 경고 수준으로 로깅
@@ -37,6 +36,12 @@ async function getHotelBySlug(slug: string) {
         details: error.details,
         hint: error.hint
       })
+      return null
+    }
+    
+    // publish가 false면 null 반환
+    if (hotel && hotel.publish === false) {
+      console.log('호텔이 publish=false로 숨겨짐:', { slug, sabre_id: hotel.sabre_id })
       return null
     }
     
@@ -78,20 +83,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'website',
       locale: 'ko_KR',
       siteName: 'Select Hotels',
-      images: hotel.image_1 ? [
-        {
-          url: hotel.image_1,
-          width: 1200,
-          height: 630,
-          alt: title,
-        }
-      ] : [],
+      images: [], // 이미지는 동적으로 로드되므로 메타데이터에서 제외
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: hotel.image_1 ? [hotel.image_1] : [],
+      images: [], // 이미지는 동적으로 로드되므로 메타데이터에서 제외
     },
     alternates: {
       canonical: `https://select-hotels.com/hotel/${decodedSlug}`,
@@ -121,7 +119,7 @@ function generateHotelStructuredData(hotel: any, slug: string) {
     "name": hotel.property_name_ko || hotel.property_name_en,
     "description": hotel.description_ko || hotel.description_en,
     "url": `https://select-hotels.com/hotel/${decodedSlug}`,
-    "image": hotel.image_1 ? [hotel.image_1] : [],
+    "image": [], // 이미지는 동적으로 로드되므로 구조화 데이터에서 제외
     "address": {
       "@type": "PostalAddress",
       "addressLocality": hotel.city,

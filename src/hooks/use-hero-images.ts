@@ -46,11 +46,10 @@ export function useHeroImages() {
         
         const sabreIds = featureSlots.map(slot => slot.sabre_id)
         
-        // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회 (image_1 포함)
+        // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, slug, city, brand_id, image_1')
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .in('sabre_id', sabreIds)
         
         if (hotelsError) {
@@ -62,8 +61,22 @@ export function useHeroImages() {
           return []
         }
         
+        // 클라이언트에서 publish 필터링 (false 제외)
+        const filteredHotels = hotels.filter((h: any) => h.publish !== false)
+        
+        // 2-1. select_hotel_media에서 해당 호텔들의 이미지 조회
+        const { data: mediaData, error: mediaError } = await supabase
+          .from('select_hotel_media')
+          .select('*')
+          .in('sabre_id', sabreIds)
+          .order('sort_order', { ascending: true })
+        
+        if (mediaError) {
+          console.error('❌ 히어로 미디어 데이터 조회 실패:', mediaError)
+        }
+        
         // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
-        const brandIds = hotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
+        const brandIds = filteredHotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
         let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
         if (brandIds.length > 0) {
           const { data, error: brandsError } = await supabase
@@ -94,8 +107,8 @@ export function useHeroImages() {
         const orderMap = new Map<number, number>()
         featureSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
 
-        // 5. 데이터 조합 - 각 호텔마다 image_1 사용 (유효성 검증 포함)
-        const heroImages: HeroImageData[] = hotels.map(hotel => {
+        // 5. 데이터 조합 - select_hotel_media 또는 fallback 사용
+        const heroImages: HeroImageData[] = filteredHotels.map(hotel => {
           
           // 브랜드 정보 찾기
           const brand = brandsData?.find(b => b.brand_id === hotel.brand_id)
@@ -115,25 +128,12 @@ export function useHeroImages() {
             return 'LUXURY'
           }
           
-          // 이미지 경로 유효성 검증
-          const isValidImagePath = (path: string | null | undefined): boolean => {
-            if (!path) return false
-            // 존재하지 않는 이미지 경로들 필터링
-            const invalidPaths = [
-              '/park-hyatt-tokyo-city-view.png',
-              '/ritz-carlton-laguna-niguel-ocean-view.png',
-              '/four-seasons-new-york-luxury-suite.png',
-              '/mandarin-oriental-bangkok-riverside-view.png'
-            ]
-            return !invalidPaths.includes(path)
-          }
+          // select_hotel_media에서 해당 호텔의 첫 번째 이미지 찾기
+          const hotelMedia = mediaData?.find(m => m.sabre_id === hotel.sabre_id)
+          let mediaPath = hotelMedia?.media_path || '/placeholder.svg'
           
-          // 유효한 이미지 경로 선택 또는 fallback
-          let mediaPath = '/placeholder.svg'
-          if (isValidImagePath(hotel.image_1)) {
-            mediaPath = hotel.image_1
-          } else {
-            // 도시별 fallback 이미지 매핑
+          // 미디어가 없으면 도시별 fallback 이미지 사용
+          if (mediaPath === '/placeholder.svg') {
             const cityFallbacks: Record<string, string> = {
               'Tokyo': '/destination-image/tokyo.jpg',
               'London': '/destination-image/london.jpg',

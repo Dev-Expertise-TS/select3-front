@@ -732,15 +732,15 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     }
   }
   
-  // 호텔 미디어 이미지 조회 (기존 방식)
+  // 호텔 미디어 이미지 조회 (select_hotel_media 테이블)
   const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
   
-  // select_hotels 테이블의 이미지 컬럼들을 사용한 이미지 배열 생성 (안전한 처리)
+  // select_hotel_media 테이블 데이터를 사용한 이미지 배열 생성
   const hotelImages = useMemo(() => {
     if (!hotel) return []
     
-    return processHotelImages(hotel)
-  }, [hotel])
+    return processHotelImages(hotel, hotelMedia)
+  }, [hotel, hotelMedia])
   
   // Supabase Storage 기반 호텔 이미지 URL 생성 (기본 5개)
   // hotel?.slug가 있으면 사용, 없으면 디코딩된 slug 사용

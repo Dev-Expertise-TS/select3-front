@@ -100,10 +100,9 @@ export function SimpleHotelSearch({
         // 단일 쿼리로 최적화하여 성능 향상
         const { data, error } = await supabase
           .from('select_hotels')
-          .select('slug,sabre_id,property_name_ko,property_name_en,city,city_ko,city_en,country_ko,country_en')
-          .or('publish.is.null,publish.eq.true')
+          .select('slug,sabre_id,property_name_ko,property_name_en,city,city_ko,city_en,country_ko,country_en,publish')
           .or(`property_name_ko.ilike.%${q}%,property_name_en.ilike.%${q}%,city.ilike.%${q}%,city_ko.ilike.%${q}%,city_en.ilike.%${q}%,country_ko.ilike.%${q}%,country_en.ilike.%${q}%`)
-          .limit(20)
+          .limit(50) // 필터링 고려하여 더 많이 가져오기
           .order('property_name_ko')
         
         if (error) {
@@ -111,8 +110,11 @@ export function SimpleHotelSearch({
           throw error
         }
         
+        // 클라이언트에서 publish 필터링 (false 제외)
+        const filteredData = (data || []).filter((h: any) => h.publish !== false).slice(0, 20)
+        
         if (!cancelled) {
-          setHotelSuggestions(data || [])
+          setHotelSuggestions(filteredData)
         }
       } catch (e) {
         console.error('자동완성 조회 오류:', e)

@@ -253,14 +253,19 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
-      .or('publish.is.null,publish.eq.true')
       .eq('id', id)
-      .single()
+      .maybeSingle()
     
     if (error) {
       console.error('Error fetching select_hotel by id:', error)
       throw error
     }
+    
+    // publish가 false면 null 반환
+    if (data && data.publish === false) {
+      return null
+    }
+    
     return data
   },
 
@@ -269,7 +274,6 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
-      .or('publish.is.null,publish.eq.true')
       .ilike('property_name_kor', `%${brandName}%`)
       .order('property_name_kor')
     
@@ -277,7 +281,9 @@ export const selectHotelUtils = {
       console.error('Error fetching select_hotels by brand:', error)
       throw error
     }
-    return data || []
+    
+    // 클라이언트에서 publish 필터링 (false 제외)
+    return (data || []).filter((h: any) => h.publish !== false)
   },
 
   // 도시별 select_hotels 조회
@@ -285,7 +291,6 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
-      .or('publish.is.null,publish.eq.true')
       .ilike('location', `%${location}%`)
       .order('property_name_kor')
     
@@ -293,7 +298,9 @@ export const selectHotelUtils = {
       console.error('Error fetching select_hotels by location:', error)
       throw error
     }
-    return data || []
+    
+    // 클라이언트에서 publish 필터링 (false 제외)
+    return (data || []).filter((h: any) => h.publish !== false)
   },
 
   // select_hotels 검색
@@ -301,7 +308,6 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
-      .or('publish.is.null,publish.eq.true')
       .or(`property_name_kor.ilike.%${query}%,location.ilike.%${query}%,description.ilike.%${query}%`)
       .order('property_name_kor')
     
@@ -309,7 +315,9 @@ export const selectHotelUtils = {
       console.error('Error searching select_hotels:', error)
       throw error
     }
-    return data || []
+    
+    // 클라이언트에서 publish 필터링 (false 제외)
+    return (data || []).filter((h: any) => h.publish !== false)
   },
 
   // select_hotels 테이블 존재 여부 확인

@@ -7,11 +7,11 @@ interface ChainPageClientProps {
   chainRow: {
     chain_id: number
     chain_name_en: string
-    chain_name_kr?: string
+    chain_name_ko?: string
   }
   transformedHotels: any[]
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_kr?: string; slug: string }>
-  selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_kr?: string }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
   serverFilterOptions: {
     countries: Array<{ id: string; label: string; count: number }>
     cities: Array<{ id: string; label: string; count: number }>
@@ -29,6 +29,14 @@ export function ChainPageClient({
 }: ChainPageClientProps) {
   const router = useRouter()
 
+  console.log(`[ Client ] ChainPageClient 렌더링:`, {
+    chainName: chainRow.chain_name_en,
+    hotelsCount: transformedHotels.length,
+    hotel991: transformedHotels.find(h => h.id === 991) ? 'EXISTS' : 'NOT FOUND',
+    hotel99999: transformedHotels.find(h => h.id === 99999) ? 'EXISTS' : 'NOT FOUND',
+    sampleHotels: transformedHotels.slice(0, 2).map(h => ({ id: h.id, name: h.nameKo, image: h.image }))
+  })
+
   // 체인 변경 핸들러 - 고정된 페이지로 이동
   const handleChainChange = (chainId: string) => {
     router.push(`/brand/brand?chain=${chainId}`)
@@ -44,8 +52,9 @@ export function ChainPageClient({
       initialHotels={transformedHotels}
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}
-      currentChainName={chainRow.chain_name_en || chainRow.chain_name_kr}
-      currentChainId={String(chainRow.chain_id)}
+      currentChainName={chainRow.chain_name_en || chainRow.chain_name_ko}
+      // currentChainId를 전달하지 않음 (initialHotels 사용하도록)
+      // currentChainId={String(chainRow.chain_id)}
       onChainChange={handleChainChange}
       serverFilterOptions={serverFilterOptions}
       // 아티클 섹션 표시

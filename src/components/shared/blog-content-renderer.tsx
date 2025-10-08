@@ -66,10 +66,9 @@ function useHotelData(sabreId: number | null) {
         
         const { data, error } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, property_name_en, city, city_ko, property_address, image_1, benefit, benefit_1, benefit_2, benefit_3, benefit_4, benefit_5, benefit_6, slug')
-          .or('publish.is.null,publish.eq.true')
+          .select('*')
           .eq('sabre_id', sabreId)
-          .single()
+          .maybeSingle()
         
         console.log('호텔 데이터 조회 결과:', { 
           hasData: !!data, 
@@ -88,6 +87,11 @@ function useHotelData(sabreId: number | null) {
             timestamp: new Date().toISOString()
           }
           console.error('호텔 데이터 조회 오류:', errorInfo)
+          return null
+        }
+        
+        // publish가 false면 null 반환
+        if (data && data.publish === false) {
           return null
         }
         
@@ -142,7 +146,7 @@ function HotelCardCtaWrapper({ sabreId }: { sabreId: number | null }) {
     city: hotelData.city,
     city_ko: hotelData.city_ko,
     property_address: hotelData.property_address,
-    image: hotelData.image_1 || '/placeholder.svg',
+    image: '/placeholder.svg', // Storage에서 동적으로 로드
     benefits,
     slug: hotelData.slug,
     rating: 4.5, // 기본값

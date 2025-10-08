@@ -122,40 +122,25 @@ export function filterValidImageUrls(urls: (string | null | undefined)[]): strin
 }
 
 // 호텔 이미지 데이터를 안전하게 처리하는 함수
-export function processHotelImages(hotel: any): Array<{
+export function processHotelImages(hotel: any, mediaData?: any[]): Array<{
   id: string
   media_path: string
   alt: string
   isMain: boolean
 }> {
   if (!hotel) return []
-
-  const images = []
   
-  // image_1을 가장 큰 그리드에 사용하기 위해 첫 번째로 추가
-  if (isValidImageUrl(hotel.image_1)) {
-    images.push({
-      id: 'image_1',
-      media_path: hotel.image_1,
-      alt: `${hotel.property_name_ko} - 메인 이미지`,
-      isMain: true
-    })
+  // select_hotel_media 테이블 데이터를 갤러리 형식으로 변환
+  if (mediaData && mediaData.length > 0) {
+    return mediaData.map((media, index) => ({
+      id: `media_${media.id || index}`,
+      media_path: media.media_path,
+      alt: `${hotel.property_name_ko} - 이미지 ${index + 1}`,
+      isMain: index === 0
+    }))
   }
   
-  // 나머지 이미지들 추가
-  const imageFields = ['image_2', 'image_3', 'image_4', 'image_5']
-  imageFields.forEach((field, index) => {
-    if (isValidImageUrl(hotel[field])) {
-      images.push({
-        id: field,
-        media_path: hotel[field],
-        alt: `${hotel.property_name_ko} - 갤러리 이미지 ${index + 2}`,
-        isMain: false
-      })
-    }
-  })
-  
-  return images
+  return []
 }
 
 // 이미지 로딩 상태를 관리하는 타입

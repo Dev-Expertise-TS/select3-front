@@ -212,18 +212,15 @@ export function CommonSearchBar({
         const queries = [
           supabase
             .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .or('publish.is.null,publish.eq.true')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
             .ilike('property_name_ko', `%${q}%`),
           supabase
             .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .or('publish.is.null,publish.eq.true')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
             .ilike('property_name_en', `%${q}%`),
           supabase
             .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city')
-            .or('publish.is.null,publish.eq.true')
+            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
             .ilike('city', `%${q}%`)
         ]
         
@@ -234,6 +231,7 @@ export function CommonSearchBar({
           property_name_ko: string | null
           property_name_en: string | null
           city?: string | null
+          publish?: boolean | null
         }> = []
         
         // 결과 병합 및 중복 제거
@@ -247,10 +245,12 @@ export function CommonSearchBar({
           }
         })
         
-        // 중복 제거 (sabre_id 기준)
-        const uniqueHotels = allHotels.filter((hotel, index, self) => 
-          index === self.findIndex(h => h.sabre_id === hotel.sabre_id)
-        )
+        // 중복 제거 (sabre_id 기준) 및 publish 필터링 (false 제외)
+        const uniqueHotels = allHotels
+          .filter((hotel, index, self) => 
+            index === self.findIndex(h => h.sabre_id === hotel.sabre_id)
+          )
+          .filter((hotel) => hotel.publish !== false)
         
         // 정렬
         const sortedHotels = uniqueHotels

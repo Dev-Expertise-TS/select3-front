@@ -11,15 +11,16 @@ export function useHotels() {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or('publish.is.null,publish.eq.true')
-        .limit(50)
+        .limit(100) // 필터링 고려하여 더 많이 가져오기
         .order('property_name_ko')
       
       if (error) {
         console.error('호텔 목록 조회 오류:', error)
         throw error
       }
-      return data || []
+      
+      // 클라이언트에서 publish 필터링 (false 제외)
+      return (data || []).filter((h: any) => h.publish !== false).slice(0, 50)
     },
     staleTime: 5 * 60 * 1000, // 5분
     retry: 3,
@@ -35,14 +36,19 @@ export function useHotel(sabreId: number) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or('publish.is.null,publish.eq.true')
         .eq('sabre_id', sabreId)
-        .single()
+        .maybeSingle()
       
       if (error) {
         console.error('호텔 조회 오류:', error)
         throw error
       }
+      
+      // publish가 false면 null 반환
+      if (data && data.publish === false) {
+        return null
+      }
+      
       return data
     },
     enabled: !!sabreId,
@@ -69,9 +75,8 @@ export function useHotelBySlug(slug: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or('publish.is.null,publish.eq.true')
         .eq('slug', decodedSlug)
-        .single()
+        .maybeSingle()
       
       if (error) {
         console.error('호텔 slug 조회 오류:', {
@@ -84,6 +89,12 @@ export function useHotelBySlug(slug: string) {
         })
         throw error
       }
+      
+      // publish가 false면 null 반환
+      if (data && data.publish === false) {
+        return null
+      }
+      
       return data
     },
     enabled: !!slug,
@@ -120,7 +131,6 @@ export function useHotelSearch(query: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or('publish.is.null,publish.eq.true')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
         .order('property_name_ko')
       
@@ -128,7 +138,9 @@ export function useHotelSearch(query: string) {
         console.error('호텔 검색 오류:', error)
         throw error
       }
-      return data || []
+      
+      // 클라이언트에서 publish 필터링 (false 제외)
+      return (data || []).filter((h: any) => h.publish !== false)
     },
     enabled: query.length > 0,
     staleTime: 2 * 60 * 1000, // 2분
@@ -147,7 +159,6 @@ export function useBrandHotels(brandId: string | null) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
-        .or('publish.is.null,publish.eq.true')
         .eq('brand_id', parseInt(brandId))
         .order('property_name_ko')
       
@@ -155,7 +166,9 @@ export function useBrandHotels(brandId: string | null) {
         console.error('브랜드 호텔 조회 오류:', error)
         throw error
       }
-      return data || []
+      
+      // 클라이언트에서 publish 필터링 (false 제외)
+      return (data || []).filter((h: any) => h.publish !== false)
     },
     enabled: !!brandId,
     staleTime: 5 * 60 * 1000, // 5분
