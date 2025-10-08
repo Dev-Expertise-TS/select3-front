@@ -104,18 +104,28 @@ export function useHotelBySlug(slug: string) {
   })
 }
 
-// 호텔 미디어 이미지 조회
+// 호텔 미디어 이미지 조회 (select_hotel_media 테이블 사용)
 export function useHotelMedia(sabreId: number) {
   return useQuery({
     queryKey: ['hotel-media', sabreId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('select_hotel_media')
-        .select('*')
-        .eq('sabre_id', sabreId)
-        .order('id', { ascending: true })
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
+        .eq('sabre_id', String(sabreId))
+        .order('image_seq', { ascending: true })
       
-      if (error) throw error
+      if (error) {
+        console.error('select_hotel_media 조회 오류:', error)
+        throw error
+      }
+      
+      console.log('📸 select_hotel_media 조회 결과:', {
+        sabreId,
+        count: data?.length || 0,
+        images: data?.map(d => ({ image_seq: d.image_seq, public_url: d.public_url }))
+      })
+      
       return data || []
     },
     enabled: !!sabreId,

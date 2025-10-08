@@ -779,71 +779,82 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     });
   }, [hotel, storageImages, allStorageImagesData, hotelImages, hotelMedia]);
   
-  // 이미지 데이터 우선순위: Supabase Storage 모든 이미지 > 기본 Storage 이미지 > select_hotels 이미지 > hotel_media
+  // 이미지 데이터 우선순위: select_hotel_media 테이블 > Storage API > Storage URL 패턴 > select_hotels 이미지 > placeholder
   const displayImages = useMemo(() => {
-    console.log('🔄 displayImages 계산 시작...', {
-      allStorageImagesData: allStorageImagesData,
+    console.log('🔄 displayImages 계산 시작... (호텔 카드와 동일 방식)', {
+      hotelMediaLength: hotelMedia?.length || 0,
       allStorageImagesLength: allStorageImagesData?.images?.length || 0,
       storageImagesLength: storageImages.length,
       hotelImagesLength: hotelImages.length,
-      hotelMediaLength: hotelMedia.length,
       loadingAllImages: loadingAllImages,
       allImagesError: allImagesError
     });
 
-    // 1순위: Supabase Storage의 모든 이미지 (로딩 중이 아니고 에러가 없을 때)
+    // 1순위: select_hotel_media 테이블 (호텔 카드와 동일)
+    if (hotelMedia && hotelMedia.length > 0) {
+      console.log('✅ select_hotel_media 테이블 사용 (우선순위 1) - 호텔 카드와 동일');
+      const convertedImages = hotelMedia.map((media: any, index: number) => ({
+        id: media.id || `media-${index}`,
+        media_path: media.public_url || media.storage_path || '/placeholder.svg',
+        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${media.image_seq || index + 1}`,
+        isMain: media.image_seq === 1 || index === 0,
+        sequence: media.image_seq || index + 1,
+        filename: media.file_name
+      }));
+      console.log('📋 select_hotel_media 이미지들:', {
+        count: convertedImages.length,
+        images: convertedImages.map((img: any) => ({ 
+          id: img.id, 
+          media_path: img.media_path, 
+          sequence: img.sequence 
+        }))
+      });
+      return convertedImages;
+    }
+    console.log('⚠️ select_hotel_media 테이블이 비어있음 (호텔 카드와 동일 방식)');
+
+    // 2순위: Supabase Storage API 모든 이미지 (fallback)
     if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
-      console.log('✅ Supabase Storage 모든 이미지 사용 (우선순위 1)');
+      console.log('✅ Supabase Storage API 사용 (우선순위 2 - fallback)');
       const convertedImages = allStorageImagesData.images.map((img) => ({
         id: img.id,
-        media_path: img.media_path || img.url, // API 응답에서 media_path 우선, 없으면 url 사용
-        alt: img.alt,
+        media_path: img.media_path || img.url,
+        alt: img.alt || `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지`,
         isMain: img.isMain,
         sequence: img.sequence,
         filename: img.filename
       }));
-      console.log('📋 변환된 모든 Storage 이미지들:', {
-        count: convertedImages.length,
-        images: convertedImages.map(img => ({ id: img.id, media_path: img.media_path, sequence: img.sequence }))
-      });
+      console.log('📋 Storage API fallback 이미지들:', { count: convertedImages.length });
       return convertedImages;
     }
 
-    // 1순위 대기 중이거나 실패한 경우 로그
-    if (loadingAllImages) {
-      console.log('⏳ Supabase Storage 모든 이미지 로딩 중...');
-    } else if (allImagesError) {
-      console.log('❌ Supabase Storage 모든 이미지 에러:', allImagesError);
-    } else if (!allStorageImagesData?.images || allStorageImagesData.images.length === 0) {
-      console.log('⚠️ Supabase Storage 모든 이미지가 비어있음');
-    }
-
-    // 2순위: 기본 Supabase Storage 이미지 (5개)
+    // 3순위: 기본 Supabase Storage URL 패턴 (5개)
     if (storageImages.length > 0) {
-      console.log('✅ 기본 Supabase Storage 이미지 사용 (우선순위 2)');
+      console.log('✅ Storage URL 패턴 사용 (우선순위 3)');
       const convertedImages = storageImages.map((url, index) => ({
         id: `storage-${index}`,
         media_path: url,
         alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
         isMain: index === 0
       }));
-      console.log('📋 변환된 기본 Storage 이미지들:', {
-        count: convertedImages.length,
-        images: convertedImages.map(img => ({ id: img.id, media_path: img.media_path }))
-      });
       return convertedImages;
     }
     
-    // 3순위: select_hotels 이미지
+    // 4순위: select_hotels 이미지
     if (hotelImages.length > 0) {
-      console.log('✅ select_hotels 이미지 사용 (우선순위 3)');
+      console.log('✅ select_hotels 이미지 사용 (우선순위 4)');
       return hotelImages;
     }
     
-    // 4순위: hotel_media 이미지
-    console.log('✅ hotel_media 이미지 사용 (우선순위 4)');
-    return hotelMedia;
-  }, [allStorageImagesData?.images, storageImages, hotelImages, hotelMedia, hotel?.property_name_ko, hotel?.property_name_en, loadingAllImages, allImagesError]);
+    // 5순위: placeholder
+    console.log('⚠️ 모든 이미지 소스 실패, placeholder 사용');
+    return [{
+      id: 'placeholder',
+      media_path: '/placeholder.svg',
+      alt: '이미지 없음',
+      isMain: true
+    }];
+  }, [hotelMedia, allStorageImagesData?.images, storageImages, hotelImages, hotel?.property_name_ko, hotel?.property_name_en, loadingAllImages, allImagesError]);
   
   // 이미지 preloading useEffect (최적화된 버전)
   useEffect(() => {
