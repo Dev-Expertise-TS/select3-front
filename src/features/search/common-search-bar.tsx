@@ -213,14 +213,17 @@ export function CommonSearchBar({
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .eq('publish', true)
             .ilike('property_name_ko', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .eq('publish', true)
             .ilike('property_name_en', `%${q}%`),
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city')
+            .eq('publish', true)
             .ilike('city', `%${q}%`)
         ]
         

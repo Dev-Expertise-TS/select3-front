@@ -65,6 +65,7 @@ async function getChainHotels(chainSlug: string) {
     const { data: hotelData, error: hotelsError } = await supabase
       .from('select_hotels')
       .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, brand_id, slug, image_1')
+      .eq('publish', true)
       .in('brand_id', brandIdStrings)
     
     console.log(`[ Server ] select_hotels (brand_id) 조회 결과:`, { data: hotelData, error: hotelsError })
@@ -81,6 +82,7 @@ async function getChainHotels(chainSlug: string) {
     const { data: chainHotels, error: chainHotelsError } = await supabase
       .from('select_hotels')
       .select('sabre_id, property_name_ko, property_name_en, city, city_ko, city_en, property_address, brand_id, slug, image_1')
+      .eq('publish', true)
       .or(`chain_en.ilike.%${matchedChain.chain_name_en}%,chain_ko.ilike.%${matchedChain.chain_name_kr || matchedChain.chain_name_en}%`)
     
     console.log(`[ Server ] select_hotels (chain_en/ko) 조회 결과:`, { data: chainHotels, error: chainHotelsError })

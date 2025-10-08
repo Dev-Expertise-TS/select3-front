@@ -253,6 +253,7 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
+      .eq('publish', true)
       .eq('id', id)
       .single()
     
@@ -268,6 +269,7 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
+      .eq('publish', true)
       .ilike('property_name_kor', `%${brandName}%`)
       .order('property_name_kor')
     
@@ -283,6 +285,7 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
+      .eq('publish', true)
       .ilike('location', `%${location}%`)
       .order('property_name_kor')
     
@@ -298,6 +301,7 @@ export const selectHotelUtils = {
     const { data, error } = await supabase
       .from('select_hotels')
       .select('*')
+      .eq('publish', true)
       .or(`property_name_kor.ilike.%${query}%,location.ilike.%${query}%,description.ilike.%${query}%`)
       .order('property_name_kor')
     

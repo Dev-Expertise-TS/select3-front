@@ -11,6 +11,7 @@ export function useHotels() {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
+        .eq('publish', true)
         .limit(50)
         .order('property_name_ko')
       
@@ -34,6 +35,7 @@ export function useHotel(sabreId: number) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
+        .eq('publish', true)
         .eq('sabre_id', sabreId)
         .single()
       
@@ -67,6 +69,7 @@ export function useHotelBySlug(slug: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
+        .eq('publish', true)
         .eq('slug', decodedSlug)
         .single()
       
@@ -117,6 +120,7 @@ export function useHotelSearch(query: string) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
+        .eq('publish', true)
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%`)
         .order('property_name_ko')
       
@@ -143,6 +147,7 @@ export function useBrandHotels(brandId: string | null) {
       const { data, error } = await supabase
         .from('select_hotels')
         .select('*')
+        .eq('publish', true)
         .eq('brand_id', parseInt(brandId))
         .order('property_name_ko')
       
