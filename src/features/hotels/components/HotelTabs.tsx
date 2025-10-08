@@ -321,7 +321,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                   {benefits.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1.5 px-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-0">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-blue-50 rounded-md sm:rounded-lg border border-blue-100 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-shadow ${
+                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 rounded-md sm:rounded-lg border border-slate-400 min-h-[40px] sm:h-auto sm:flex-1 sm:min-w-[150px] sm:shadow-sm sm:hover:shadow-md transition-all duration-300 ${
                           index % 2 === 0 ? 'mr-1 sm:mr-0' : 'ml-1 sm:ml-0'
                         }`}>
                           <div className={`hidden sm:flex w-6 h-6 ${benefit.bgColor} rounded-md items-center justify-center flex-shrink-0 sm:mr-1.5`}>
