@@ -158,11 +158,8 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
         const newCheckOut = dateStr
         setSelectedCheckOut(newCheckOut)
         
-        // 체크인과 체크아웃이 모두 선택되면 자동으로 날짜 적용 및 팝업 닫기
-        setTimeout(() => {
-          onDatesChange({ checkIn: selectedCheckIn, checkOut: newCheckOut })
-          onClose()
-        }, 300) // 300ms 지연으로 사용자가 선택을 확인할 수 있게 함
+        // 체크인과 체크아웃이 모두 선택되어도 자동으로 팝업을 닫지 않음
+        // 사용자가 "적용" 버튼을 눌러야 팝업이 닫힘
       } else {
         // 체크아웃이 체크인보다 빠르면 체크인으로 설정
         setSelectedCheckOut(dateStr)
