@@ -69,6 +69,7 @@ export function CommonSearchBar({
   const [showGuestSelector, setShowGuestSelector] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialQuery || "")
+  const [displayQuery, setDisplayQuery] = useState(initialQuery || "")
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [hotelSuggestions, setHotelSuggestions] = useState<Array<{
@@ -136,14 +137,20 @@ export function CommonSearchBar({
 
   // initialQuery 변경 시 searchQuery 업데이트
   useEffect(() => {
-    setSearchQuery(initialQuery || "")
+    const query = initialQuery || ""
+    setSearchQuery(query)
+    // 초기 로드 시에도 25자 제한 적용
+    setDisplayQuery(query.length > 25 ? query.substring(0, 25) + '...' : query)
   }, [initialQuery])
 
   // variant가 hotel-detail이고 initialQuery가 있을 때 기본값 설정
   useEffect(() => {
     if (variant === "hotel-detail") {
       // 호텔 상세 페이지에서는 initialQuery가 있으면 그것을 사용, 없으면 빈 문자열
-      setSearchQuery(initialQuery || "")
+      const query = initialQuery || ""
+      setSearchQuery(query)
+      // 초기 로드 시에도 25자 제한 적용
+      setDisplayQuery(query.length > 25 ? query.substring(0, 25) + '...' : query)
     }
   }, [variant, initialQuery])
 
@@ -303,6 +310,8 @@ export function CommonSearchBar({
         const h = hotelSuggestions[highlightIndex]
         const primary = h.property_name_ko || h.property_name_en || '-'
         setSearchQuery(primary)
+        // 선택된 호텔명 필드는 25자로 제한
+        setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
         setShowSuggestions(false)
         setHighlightIndex(-1)
@@ -370,32 +379,150 @@ export function CommonSearchBar({
   return (
       <div className={`${className} bg-blue-50 sm:bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#E6CDB5' }}>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-        {/* 위치 검색 영역 */}
-        <div className="flex items-center gap-2 w-full sm:w-[30%] relative group">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        {/* 호텔명 검색 영역 - 1행 (모바일: 통합 스타일) */}
+        <div className="flex sm:hidden items-center gap-2 w-full relative">
+          <div 
+            className={cn(
+              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-3 relative",
+              isSearching && "cursor-not-allowed opacity-50"
+            )}
+          >
+            <MapPin className="h-4 w-4 text-gray-600 flex-shrink-0 mr-2" />
+            <Input
+              type="text"
+              placeholder="어디로 떠날까요?"
+              value={displayQuery}
+              onChange={(e) => {
+                const value = e.target.value
+                // 전체 텍스트는 searchQuery에 저장 (검색용)
+                setSearchQuery(value)
+                // 화면 표시용은 25글자로 제한
+                const displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value
+                setDisplayQuery(displayValue)
+                setSelectedHotel(null)
+                setShowSuggestions(value.length > 0)
+                
+                // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
+                // onSearch 호출 제거
+              }}
+              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyDown={onKeyDown}
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-xs placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200 flex-1"
+              disabled={isSearching}
+            />
+            {searchQuery && (
+              <button 
+                className={cn(
+                  "text-gray-400 hover:text-gray-600 transition-colors ml-2",
+                  isSearching && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => {
+                  setSearchQuery("")
+                  setDisplayQuery("")
+                  setSelectedHotel(null)
+                  setShowSuggestions(false)
+                  if (onSearch) {
+                    onSearch("", { checkIn: localCheckIn, checkOut: localCheckOut })
+                  }
+                }}
+                disabled={isSearching}
+              >
+                <span className="text-sm">×</span>
+              </button>
+            )}
+            
+            {/* 자동완성 제안 목록 (호텔) */}
+            {showSuggestions && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
+                {isSuggesting && hotelSuggestions.length === 0 && (
+                  <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
+                )}
+                {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+                  <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
+                )}
+                {suggestionError && (
+                  <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
+                    <div className="flex items-center justify-between">
+                      <span>⚠️ {suggestionError}</span>
+                      <button
+                        onClick={() => {
+                          setSuggestionError(null)
+                          // 검색어가 있으면 자동으로 재시도
+                          if (searchQuery.trim()) {
+                            const event = { target: { value: searchQuery } } as React.ChangeEvent<HTMLInputElement>
+                            setSearchQuery(searchQuery)
+                          }
+                        }}
+                        className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+                      >
+                        재시도
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {hotelSuggestions.map((h, idx) => {
+                  const primary = h.property_name_ko || h.property_name_en || '-'
+                  const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''
+                  return (
+                    <div
+                      key={`${h.slug || h.sabre_id}`}
+                      className={cn(
+                        "flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0",
+                        highlightIndex === idx && "bg-gray-50"
+                      )}
+                      onClick={() => {
+                        setSearchQuery(primary)
+                        // 선택된 호텔명 필드는 25자로 제한
+                        setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
+                        setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                        setShowSuggestions(false)
+                        setHighlightIndex(-1)
+                      }}
+                    >
+                      <span className="text-lg">🏨</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{highlightText(primary, searchQuery)}</div>
+                        {secondary && (
+                          <div className="text-sm text-gray-500 truncate">{highlightText(secondary, searchQuery)}</div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 데스크톱용 호텔명 검색 영역 (기존 스타일) */}
+        <div className="hidden sm:flex items-center gap-2 w-full sm:w-[30%] relative group">
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 transition-colors group-focus-within:text-blue-600 flex-shrink-0" />
           <div className="flex-1 relative">
-                         <Input
-               type="text"
-               placeholder="어디로 떠날까요?"
-               value={searchQuery}
-               onChange={(e) => {
-                 const value = e.target.value
-                 setSearchQuery(value)
-                 setSelectedHotel(null)
-                 setShowSuggestions(value.length > 0)
-                 
-                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
-                 // onSearch 호출 제거
-               }}
-               onFocus={() => setShowSuggestions(searchQuery.length > 0)}
-               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-               onKeyDown={onKeyDown}
-               className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none focus:bg-blue-50/30 rounded-md transition-all duration-200"
-               disabled={isSearching}
-             />
-            {/* 포커스 배경 효과 */}
-            <div className="absolute inset-0 bg-blue-50/30 rounded-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none -z-10" />
+            <Input
+              type="text"
+              placeholder="어디로 떠날까요?"
+              value={displayQuery}
+              onChange={(e) => {
+                const value = e.target.value
+                // 전체 텍스트는 searchQuery에 저장 (검색용)
+                setSearchQuery(value)
+                // 화면 표시용은 25글자로 제한
+                const displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value
+                setDisplayQuery(displayValue)
+                setSelectedHotel(null)
+                setShowSuggestions(value.length > 0)
+                
+                // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
+                // onSearch 호출 제거
+              }}
+              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyDown={onKeyDown}
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200"
+              disabled={isSearching}
+            />
           </div>
           
           {searchQuery && (
@@ -406,6 +533,7 @@ export function CommonSearchBar({
               )}
               onClick={() => {
                 setSearchQuery("")
+                setDisplayQuery("")
                 setSelectedHotel(null)
                 setShowSuggestions(false)
                 if (onSearch) {
@@ -418,7 +546,7 @@ export function CommonSearchBar({
             </button>
           )}
           
-          {/* 자동완성 제안 목록 (호텔) */}
+          {/* 자동완성 제안 목록 (호텔) - 데스크톱용 */}
           {showSuggestions && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
               {isSuggesting && hotelSuggestions.length === 0 && (
@@ -459,6 +587,8 @@ export function CommonSearchBar({
                     )}
                     onClick={() => {
                       setSearchQuery(primary)
+                      // 선택된 호텔명 필드는 25자로 제한
+                      setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
                       setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                       setShowSuggestions(false)
                       setHighlightIndex(-1)
@@ -471,7 +601,6 @@ export function CommonSearchBar({
                         <div className="text-sm text-gray-500 truncate">{highlightText(secondary, searchQuery)}</div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400">#{h.sabre_id}</span>
                   </div>
                 )
               })}
@@ -479,67 +608,127 @@ export function CommonSearchBar({
           )}
         </div>
 
-          {/* 날짜 & 게스트 정보 영역 (모바일 1행) */}
-          <div className="flex flex-row sm:flex-row items-center gap-1 sm:gap-0 w-full sm:flex-[1.6] border-t sm:border-t-0 pt-2 sm:pt-0">
-            {/* 날짜 입력 영역 */}
-            <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
-              <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-              </div>
-              
-              <div 
-                className={cn(
-                  "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
-                  isSearching 
-                    ? "cursor-not-allowed opacity-50" 
-                    : "cursor-pointer hover:bg-gray-50"
-                )}
-                onClick={() => !isSearching && setShowDatePicker(true)}
-              >
-                <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
-                  {localCheckIn && localCheckOut
-                    ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
-                    : variant === "destination"
-                      ? "Anytime"
-                      : "날짜 선택"}
-                </span>
-                {variant !== "destination" && localCheckIn && localCheckOut && (
-                  <span className="ml-1 sm:ml-2 px-1 py-0.5 sm:px-2 sm:py-1 bg-blue-50 text-blue-700 font-medium rounded-md border border-blue-200 text-[10px] sm:text-xs whitespace-nowrap">
-                    {calculateNights()}박
-                  </span>
-                )}
-              </div>
+        {/* 캘린더, 인원, 검색 아이콘 영역 - 2행 (모바일만) */}
+        <div className="flex sm:hidden items-center gap-1 w-full">
+          {/* 날짜 입력 영역 */}
+          <div 
+            className={cn(
+              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-2",
+              isSearching 
+                ? "cursor-not-allowed opacity-50" 
+                : "cursor-pointer hover:bg-gray-50"
+            )}
+            onClick={() => !isSearching && setShowDatePicker(true)}
+          >
+            <span className="text-gray-900 font-medium text-xs truncate">
+              {localCheckIn && localCheckOut
+                ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
+                : "날짜 선택"}
+            </span>
+            {localCheckIn && localCheckOut && (
+              <span className="ml-1 px-1 py-0.5 bg-blue-50 text-blue-700 font-medium rounded text-[10px] whitespace-nowrap">
+                {calculateNights()}박
+              </span>
+            )}
+          </div>
+
+          {/* 게스트 정보 영역 */}
+          <div 
+            className={cn(
+              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-2",
+              isSearching 
+                ? "cursor-not-allowed opacity-50" 
+                : "cursor-pointer hover:bg-gray-50"
+            )}
+            onClick={() => !isSearching && setShowGuestSelector(true)}
+          >
+            <span className="text-gray-900 font-medium text-xs truncate">
+              {getGuestDisplayText()}
+            </span>
+          </div>
+
+          {/* 검색 아이콘 버튼 */}
+          <button
+            onClick={handleSearch}
+            disabled={isSearching || isSabreLoading}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-lg transition-colors flex-shrink-0",
+              isSearching || isSabreLoading
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            )}
+          >
+            {(isSearching || isSabreLoading) ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* 데스크톱용 기존 레이아웃 (숨김) */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-0 w-full sm:flex-[1.6] border-t sm:border-t-0 pt-2 sm:pt-0">
+          {/* 날짜 입력 영역 */}
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+            <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
-
-            {/* 구분선 */}
-            <div className="h-4 w-px bg-gray-300 mx-1 sm:hidden"></div>
-
-            {/* 게스트 정보 영역 */}
-            <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
-              <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              </div>
-              <div 
-                className={cn(
-                  "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
-                  isSearching 
-                    ? "cursor-not-allowed opacity-50" 
-                    : "cursor-pointer hover:bg-gray-50"
-                )}
-                onClick={() => !isSearching && setShowGuestSelector(true)}
-              >
-                <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
-                  {getGuestDisplayText()}
+            
+            <div 
+              className={cn(
+                "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
+                isSearching 
+                  ? "cursor-not-allowed opacity-50" 
+                  : "cursor-pointer hover:bg-gray-50"
+              )}
+              onClick={() => !isSearching && setShowDatePicker(true)}
+            >
+              <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
+                {localCheckIn && localCheckOut
+                  ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
+                  : variant === "destination"
+                    ? "Anytime"
+                    : "날짜 선택"}
+              </span>
+              {variant !== "destination" && localCheckIn && localCheckOut && (
+                <span className="ml-1 sm:ml-2 px-1 py-0.5 sm:px-2 sm:py-1 bg-blue-50 text-blue-700 font-medium rounded-md border border-blue-200 text-[10px] sm:text-xs whitespace-nowrap">
+                  {calculateNights()}박
                 </span>
-              </div>
+              )}
             </div>
           </div>
 
-        {/* 검색 버튼 */}
+          {/* 구분선 */}
+          <div className="h-4 w-px bg-gray-300 mx-1 sm:hidden"></div>
+
+          {/* 게스트 정보 영역 */}
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+            <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+            </div>
+            <div 
+              className={cn(
+                "flex items-center gap-1 flex-1 rounded p-0.5 sm:p-1",
+                isSearching 
+                  ? "cursor-not-allowed opacity-50" 
+                  : "cursor-pointer hover:bg-gray-50"
+              )}
+              onClick={() => !isSearching && setShowGuestSelector(true)}
+            >
+              <span className="text-gray-900 font-medium text-xs sm:text-base truncate">
+                {getGuestDisplayText()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 데스크톱용 검색 버튼 */}
         <Button 
           variant="brand"
           size="lg"
-             className="font-bold w-full sm:w-[140px] flex items-center justify-center shrink-0 mt-1 sm:mt-0"
+          className="hidden sm:flex font-bold w-[140px] items-center justify-center shrink-0 mt-1 sm:mt-0"
           onClick={handleSearch}
           disabled={isSearching || isSabreLoading}
         >
