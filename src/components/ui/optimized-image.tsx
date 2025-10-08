@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createSupabaseImageUrl } from '@/lib/supabase-image-loader';
 import { cn } from '@/lib/utils';
@@ -40,8 +41,17 @@ export function OptimizedImage({
   onError,
   onLoad,
 }: OptimizedImageProps) {
-  // src가 유효하지 않은 경우 렌더링하지 않음
-  if (!src || src.trim() === '') {
+  const [imageSrc, setImageSrc] = useState(src)
+  const [hasImageError, setHasImageError] = useState(false)
+
+  // src가 변경되면 상태 리셋
+  useEffect(() => {
+    setImageSrc(src)
+    setHasImageError(false)
+  }, [src])
+
+  // src가 유효하지 않거나 이미지 에러 발생 시
+  if (!src || src.trim() === '' || hasImageError) {
     return (
       <div 
         className={cn(
@@ -60,16 +70,20 @@ export function OptimizedImage({
   }
 
   // Supabase Storage 이미지인 경우 URL에 변환 파라미터 추가
-  const isSupabaseImage = src.includes('supabase.co/storage/v1/object/public/');
+  const isSupabaseImage = imageSrc.includes('supabase.co/storage/v1/object/public/');
   
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
-  const decodedSrc = isSupabaseImage ? decodeURIComponent(src) : src;
-  
-  // 디버깅 로그 제거됨
+  const decodedSrc = isSupabaseImage ? decodeURIComponent(imageSrc) : imageSrc;
   
   const optimizedSrc = isSupabaseImage 
     ? createSupabaseImageUrl(decodedSrc, width, quality, format)
     : decodedSrc;
+
+  const handleImageError = () => {
+    console.warn('이미지 로딩 실패, placeholder로 전환:', imageSrc)
+    setHasImageError(true)
+    onError?.()
+  }
   
   return (
     <ImageErrorBoundary src={optimizedSrc} alt={alt} className={className}>
@@ -91,9 +105,8 @@ export function OptimizedImage({
           placeholder={placeholder}
           blurDataURL={blurDataURL}
           style={fill ? { objectFit } : undefined}
-          onError={onError}
+          onError={handleImageError}
           onLoad={onLoad}
-          // AVIF/WebP 최적화를 위한 추가 props
           unoptimized={false}
         />
       </ImageLoadingState>

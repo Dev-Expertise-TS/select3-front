@@ -55,17 +55,39 @@ export function transformPromotionHotelToCardData(
   }
 }
 
-// 호텔 목록을 카드 데이터로 일괄 변환 (select_hotel_media 테이블 사용)
+// 호텔 목록을 카드 데이터로 일괄 변환 (select_hotel_media 테이블 우선, Storage fallback)
 export function transformHotelsToCardData(
   hotels: any[],
   mediaData?: any[],
   isPromotion: boolean = false
 ): HotelCardData[] {
   return hotels.map(hotel => {
-    // select_hotel_media 테이블에서 해당 호텔의 첫 번째 이미지 찾기
+    // 1순위: select_hotel_media 테이블에서 해당 호텔의 첫 번째 이미지 찾기
     const hotelMedia = mediaData?.find(m => String(m.sabre_id) === String(hotel.sabre_id))
-    // public_url 우선, 없으면 storage_path, 둘 다 없으면 placeholder
-    const imageUrl = hotelMedia?.public_url || hotelMedia?.storage_path || '/placeholder.svg'
+    let imageUrl = hotelMedia?.public_url || hotelMedia?.storage_path
+    
+    // 2순위: select_hotel_media에 데이터가 없으면 Storage URL 패턴 시도
+    if (!imageUrl && hotel.slug && hotel.sabre_id) {
+      const decodedSlug = decodeURIComponent(hotel.slug)
+      // 여러 포맷과 패턴 시도
+      const extensions = ['avif', 'webp', 'jpg', 'jpeg', 'png']
+      for (const ext of extensions) {
+        const patterns = [
+          `${decodedSlug}_${hotel.sabre_id}_01.${ext}`,
+          `${decodedSlug}_${hotel.sabre_id}_01_1600w.${ext}`,
+        ]
+        for (const fileName of patterns) {
+          imageUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`
+          break // 첫 번째 패턴 시도 (클라이언트에서 404 시 fallback)
+        }
+        if (imageUrl) break
+      }
+    }
+    
+    // 3순위: placeholder
+    if (!imageUrl) {
+      imageUrl = '/placeholder.svg'
+    }
     
     // 혜택 정보 정리
     const benefits = [
@@ -171,17 +193,39 @@ export function transformHotelToAllViewCardData(
   }
 }
 
-// 전체보기용 호텔 목록을 카드 데이터로 일괄 변환 (select_hotel_media 테이블 사용)
+// 전체보기용 호텔 목록을 카드 데이터로 일괄 변환 (select_hotel_media 테이블 우선, Storage fallback)
 export function transformHotelsToAllViewCardData(
   hotels: any[],
   mediaData?: any[],
   brandData?: any[]
 ): HotelCardAllViewData[] {
   return hotels.map(hotel => {
-    // select_hotel_media 테이블에서 해당 호텔의 첫 번째 이미지 찾기
+    // 1순위: select_hotel_media 테이블에서 해당 호텔의 첫 번째 이미지 찾기
     const hotelMedia = mediaData?.find(m => String(m.sabre_id) === String(hotel.sabre_id))
-    // public_url 우선, 없으면 storage_path, 둘 다 없으면 placeholder
-    const imageUrl = hotelMedia?.public_url || hotelMedia?.storage_path || '/placeholder.svg'
+    let imageUrl = hotelMedia?.public_url || hotelMedia?.storage_path
+    
+    // 2순위: select_hotel_media에 데이터가 없으면 Storage URL 패턴 시도
+    if (!imageUrl && hotel.slug && hotel.sabre_id) {
+      const decodedSlug = decodeURIComponent(hotel.slug)
+      // 여러 포맷과 패턴 시도
+      const extensions = ['avif', 'webp', 'jpg', 'jpeg', 'png']
+      for (const ext of extensions) {
+        const patterns = [
+          `${decodedSlug}_${hotel.sabre_id}_01.${ext}`,
+          `${decodedSlug}_${hotel.sabre_id}_01_1600w.${ext}`,
+        ]
+        for (const fileName of patterns) {
+          imageUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`
+          break // 첫 번째 패턴 시도 (클라이언트에서 404 시 fallback)
+        }
+        if (imageUrl) break
+      }
+    }
+    
+    // 3순위: placeholder
+    if (!imageUrl) {
+      imageUrl = '/placeholder.svg'
+    }
     
     // 브랜드 정보 찾기
     const brand = brandData?.find(b => b.brand_id === hotel.brand_id)

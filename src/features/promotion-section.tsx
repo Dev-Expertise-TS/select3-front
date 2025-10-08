@@ -38,8 +38,23 @@ export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       // 클라이언트에서 publish 필터링 (false 제외)
       const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
       
-      // 3. 데이터 변환 (image_1 직접 사용)
-      return transformHotelsToCardData(filteredHotels, undefined, true)
+      // 3. select_hotel_media에서 호텔 이미지 조회 (각 호텔의 첫 번째 이미지)
+      const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
+      const { data: rawMediaData, error: mediaError } = await supabase
+        .from('select_hotel_media')
+        .select('id, sabre_id, file_name, public_url, storage_path, image_seq, slug')
+        .in('sabre_id', hotelSabreIds)
+        .order('image_seq', { ascending: true })
+      
+      if (mediaError) {
+        console.error('프로모션 페이지 미디어 조회 오류:', mediaError)
+      }
+      
+      // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
+      const mediaData = getFirstImagePerHotel(rawMediaData || [])
+      
+      // 4. 데이터 변환 (select_hotel_media 사용)
+      return transformHotelsToCardData(filteredHotels, mediaData, true)
     },
     staleTime: PROMOTION_CONFIG.CACHE_TIME,
   })
