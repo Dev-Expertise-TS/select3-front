@@ -32,6 +32,12 @@ export function Header() {
           "sticky top-0 z-50 w-full transition-all duration-300 bg-white border-b border-gray-200",
           isScrolled ? "shadow-md" : "",
         )}
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          willChange: 'transform',
+          backfaceVisibility: 'hidden',
+          perspective: '1000px'
+        }}
               >
           <div className="container mx-auto max-w-[1440px] px-4">
             <div className="flex h-16 items-center justify-between">

@@ -36,7 +36,7 @@ export function BrandCard({
           src={logoPath || "/placeholder.svg"}
           alt={chainName}
           fill
-          className="object-contain p-4 transition-all duration-300 group-hover:scale-110"
+          className="object-contain p-1 md:p-4 transition-all duration-300 group-hover:scale-110"
           sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 15vw"
           priority={false}
           onError={(e) => {

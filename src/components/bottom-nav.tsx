@@ -16,8 +16,17 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav data-bottom-nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav 
+      data-bottom-nav 
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+      style={{
+        transform: 'translate3d(0, 0, 0)',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+        perspective: '1000px'
+      }}
+    >
+      <div className="flex items-center justify-around h-20 px-1">
         {mobileNavItems.map((item) => {
           const Icon = item.icon!
           const isActive = pathname === item.href || 
@@ -35,11 +44,11 @@ export function BottomNav() {
               )}
             >
               <Icon className={cn(
-                "w-6 h-6 mb-1",
+                "w-5 h-5 mb-1",
                 isActive && "stroke-[2.5]"
               )} />
               <span className={cn(
-                "text-xs",
+                "text-xs leading-tight text-center px-1",
                 isActive && "font-semibold"
               )}>
                 {item.mobileLabel || item.label}

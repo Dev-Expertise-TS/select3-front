@@ -22,12 +22,19 @@ export function MobileImageGrid({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-  if (!images || images.length === 0) {
+  // placeholder 이미지 필터링
+  const validImages = images?.filter(img => 
+    img.media_path && 
+    img.media_path !== '/placeholder.svg' &&
+    !img.media_path.includes('placeholder')
+  ) || []
+
+  if (!validImages || validImages.length === 0) {
     return null
   }
 
-  const currentImage = images[currentImageIndex]
-  const totalImages = images.length
+  const currentImage = validImages[currentImageIndex]
+  const totalImages = validImages.length
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % totalImages)
@@ -136,7 +143,7 @@ export function MobileImageGrid({
             {totalImages > 1 && (
               <div className="bg-white p-4 pb-20">
                 <div className="flex gap-2 overflow-x-auto pb-2">
-                  {images.map((image, index) => (
+                  {validImages.map((image, index) => (
                     <button
                       key={image.id}
                       onClick={() => selectImage(index)}

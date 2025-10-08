@@ -148,9 +148,18 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
   // 서버사이드에서 호텔 데이터 미리 페칭
   const hotel = await getHotelBySlug(slug)
   
-  // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시
+  // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시 (Header/Footer 포함)
   if (!hotel) {
-    return <HotelNotFound slug={slug} />
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main>
+          <HotelNotFound slug={slug} />
+        </main>
+        <Footer />
+        <ScrollToTop />
+      </div>
+    )
   }
   
   // 구조화된 데이터 생성

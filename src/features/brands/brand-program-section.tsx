@@ -67,7 +67,7 @@ export async function BrandProgramSection() {
           <p className="text-lg text-gray-600 mb-6">셀렉트와 함께하는 글로벌 Top 호텔 체인 & 브랜드</p>
         </div>
 
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6">
           {chains.map((chain) => (
             <BrandCard
               key={chain.chain_id}

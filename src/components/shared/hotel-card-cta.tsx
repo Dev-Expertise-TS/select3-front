@@ -189,7 +189,7 @@ export function HotelCardCta({
 
               {/* 주소 정보 */}
               {hotel.property_address && hotel.property_address !== '주소 정보 없음' && (
-                <div className="flex items-start text-gray-500 text-sm mb-3">
+                <div className="flex items-start text-gray-500 text-xs mb-3">
                   <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                   <span className="line-clamp-2">{hotel.property_address}</span>
                 </div>

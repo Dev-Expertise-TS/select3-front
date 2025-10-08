@@ -1253,18 +1253,23 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      {/* Header with Back Button */}
-      <div className="py-1">
+    <div className="bg-gray-100 min-h-screen -mt-16 sm:mt-0">
+      {/* Header with Back Button - 데스크톱에서만 표시 */}
+      <div className="hidden sm:block py-1 pb-0 sm:pb-1 bg-white sm:bg-transparent">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-0">
-            <Link href="/hotel">
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 px-2 sm:px-3">
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">전체 호텔</span>
-                <span className="sm:hidden">전체 호텔</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/hotel">
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 px-2 sm:px-3">
+                  <span className="hidden sm:inline">전체 호텔</span>
+                  <span className="sm:hidden">전체 호텔</span>
+                </Button>
+              </Link>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-900 font-normal text-sm">
+                {hotel.property_name_ko}
+              </span>
+            </div>
           </div>
         </div>
       </div>

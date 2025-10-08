@@ -14,7 +14,7 @@ export function HotelNotFound({ slug }: HotelNotFoundProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-200px)] bg-gray-50 flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full text-center">
         {/* 아이콘 */}
         <div className="mb-8">
@@ -33,11 +33,6 @@ export function HotelNotFound({ slug }: HotelNotFoundProps) {
           <p>
             요청하신 호텔 정보를 찾을 수 없습니다.
           </p>
-          {slug && (
-            <p className="text-sm text-gray-500">
-              호텔 슬러그: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{slug}</code>
-            </p>
-          )}
           <p>
             호텔명이 변경되었거나 일시적으로 이용할 수 없을 수 있습니다.
           </p>

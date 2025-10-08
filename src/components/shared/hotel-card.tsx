@@ -195,7 +195,7 @@ export function HotelCard({
             {hotel.property_address && hotel.property_address !== '주소 정보 없음' && (
               <div className={cn(
                 "flex items-start text-gray-500 mb-2",
-                isThreeGrid ? "text-base" : "text-sm"
+                isThreeGrid ? "text-sm" : "text-xs"
               )}>
                 <MapPin className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
                 <span className="truncate">{hotel.property_address}</span>
@@ -255,14 +255,16 @@ export function HotelCard({
                   isThreeGrid ? "text-sm" : "text-xs"
                 )}>프로모션 혜택</p>
                 <div className="flex-1 flex flex-col justify-center">
-                  {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 */}
+                  {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 (27자) */}
                   {promotions.slice(0, 1).map((promotion: any, index: number) => (
                     <div key={index} className="bg-blue-50 p-2 rounded-lg flex flex-col" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.HEIGHT}px` }}>
                       <div className={cn(
                         "text-gray-700 mb-1 font-medium line-clamp-2 flex items-center",
                         isThreeGrid ? "text-sm" : "text-xs"
                       )} style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.TEXT_HEIGHT}px` }} title={promotion.promotion}>
-                        {promotion.promotion}
+                        {promotion.promotion && promotion.promotion.length > 27 
+                          ? `${promotion.promotion.substring(0, 27)}...` 
+                          : promotion.promotion}
                       </div>
                       <div className={cn(
                         "flex items-center gap-4 text-gray-500 mt-auto",
@@ -289,7 +291,7 @@ export function HotelCard({
           )}
 
           {/* 액션 영역 */}
-          <div className="border-t pt-3 mt-auto">
+          <div className="pt-3 mt-auto">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 {variant !== 'promotion' && (
