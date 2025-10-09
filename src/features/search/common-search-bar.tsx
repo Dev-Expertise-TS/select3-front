@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MapPin, Calendar, Loader2, Users } from "lucide-react"
+import { MapPin, Calendar, Loader2, Users, X } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import { GuestSelector } from "@/components/ui/guest-selector"
 import { cn } from "@/lib/utils"
@@ -95,20 +96,32 @@ export function CommonSearchBar({
     return 30
   }
 
-  // Scroll the search bar into view on mobile to avoid keyboard overlap
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const scrollSearchIntoView = () => {
-    if (typeof window === 'undefined') return
-    // Only on mobile screens
-    if (window.matchMedia('(min-width: 640px)').matches) return
-    const el = containerRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    // Account for sticky headers; adjust as needed
-    const headerOffset = 250
-    const targetTop = Math.max(0, window.scrollY + rect.top - headerOffset)
-    window.scrollTo({ top: targetTop, behavior: 'smooth' })
-  }
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Mobile full-screen search overlay
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const original = document.body.style.overflow
+    if (isMobileSearchOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = original || ''
+    }
+    return () => {
+      document.body.style.overflow = original || ''
+    }
+  }, [isMobileSearchOpen])
 
   // 이전 props 값을 추적하여 무한 루프 방지
   const prevCheckInRef = useRef<string | undefined>(checkIn)
@@ -400,7 +413,8 @@ export function CommonSearchBar({
   }
 
   return (
-      <div ref={containerRef} className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
+    <>
+      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#C7D2FE' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
@@ -430,7 +444,13 @@ export function CommonSearchBar({
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
                 // onSearch 호출 제거
               }}
-              onFocus={() => { scrollSearchIntoView(); setShowSuggestions(searchQuery.length > 0) }}
+              onFocus={() => {
+                if (isMobile) {
+                  setIsMobileSearchOpen(true)
+                } else {
+                  setShowSuggestions(searchQuery.length > 0)
+                }
+              }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
               className="border-0 bg-transparent p-0 text-gray-800 font-medium text-xs placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200 flex-1"
@@ -458,7 +478,7 @@ export function CommonSearchBar({
             )}
             
             {/* 자동완성 제안 목록 (호텔) */}
-            {showSuggestions && (
+            {showSuggestions && !isMobileSearchOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-72 overflow-y-auto" style={{ zIndex: 999999, marginTop: '60px' }}>
                 {isSuggesting && hotelSuggestions.length === 0 && (
                   <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
@@ -498,8 +518,8 @@ export function CommonSearchBar({
                       )}
                       onClick={() => {
                         setSearchQuery(primary)
-                        // 선택된 호텔명 필드는 30자로 제한
-                        setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
+                        // 선택된 호텔명 필드는 25자로 제한
+                        setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
                         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                         setShowSuggestions(false)
                         setHighlightIndex(-1)
@@ -541,7 +561,13 @@ export function CommonSearchBar({
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
                 // onSearch 호출 제거
               }}
-              onFocus={() => { scrollSearchIntoView(); setShowSuggestions(searchQuery.length > 0) }}
+              onFocus={() => {
+                if (isMobile) {
+                  setIsMobileSearchOpen(true)
+                } else {
+                  setShowSuggestions(searchQuery.length > 0)
+                }
+              }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
               className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-lg sm:font-bold placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200"
@@ -775,7 +801,11 @@ export function CommonSearchBar({
         <DatePicker
           checkIn={localCheckIn}
           checkOut={localCheckOut}
-          onDatesChange={handleDatesChange}
+          onDatesChange={(d) => {
+            setLocalCheckIn(d.checkIn)
+            setLocalCheckOut(d.checkOut)
+            onDatesChange?.(d)
+          }}
           onClose={() => setShowDatePicker(false)}
           guests={getGuestDisplayText()}
         />
@@ -786,20 +816,109 @@ export function CommonSearchBar({
         <GuestSelector
           rooms={localGuests.rooms}
           adults={localGuests.adults}
-          onGuestsChange={handleGuestsChange}
+          onChange={(g) => {
+            setLocalGuests(g)
+            onGuestsChange?.(g)
+          }}
           onClose={() => setShowGuestSelector(false)}
         />
       )}
-      
-      {/* 검색 중 오버레이 (선택사항) */}
-      {isSearching && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
-          <div className="flex items-center gap-3 text-blue-600">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="font-medium">검색 중...</span>
+      </div>
+
+      {/* Mobile full-screen search UI - render via portal to body */}
+      {isMobileSearchOpen && typeof document !== 'undefined' && createPortal((
+        <div className="fixed inset-0 sm:hidden bg-white" style={{ zIndex: 999999 }}>
+          <div className="flex items-center gap-2 p-3 border-b">
+            <button
+              aria-label="닫기"
+              onClick={() => {
+                setIsMobileSearchOpen(false)
+                setShowSuggestions(false)
+              }}
+              className="p-2"
+            >
+              <X className="w-6 h-6 text-gray-700" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="목적지 또는 숙소를 입력하세요"
+                value={searchQuery}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setSearchQuery(value)
+                  const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
+                  setDisplayQuery(displayValue)
+                  setSelectedHotel(null)
+                  setShowSuggestions(value.length > 0)
+                }}
+                className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none flex-1"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setSelectedHotel(null); setShowSuggestions(false) }}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="지우기"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="overflow-y-auto" style={{ height: 'calc(100vh - 56px)' }}>
+            {isSuggesting && hotelSuggestions.length === 0 && (
+              <div className="p-4 text-sm text-gray-500">불러오는 중...</div>
+            )}
+            {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+              <div className="p-4 text-sm text-gray-500">검색 결과가 없습니다</div>
+            )}
+            {suggestionError && (
+              <div className="p-4 text-sm text-red-500 bg-red-50 border border-red-200 m-3 rounded">
+                <div className="flex items-center justify-between">
+                  <span>⚠️ {suggestionError}</span>
+                  <button
+                    onClick={() => { setSuggestionError(null); if (searchQuery.trim()) setSearchQuery(searchQuery) }}
+                    className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+                  >
+                    재시도
+                  </button>
+                </div>
+              </div>
+            )}
+            {hotelSuggestions.map((h, idx) => {
+              const primary = h.property_name_ko || h.property_name_en || '-'
+              const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''
+              return (
+                <div
+                  key={`${h.slug || h.sabre_id}`}
+                  className={cn(
+                    "flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100",
+                    highlightIndex === idx && "bg-gray-50"
+                  )}
+                  onClick={() => {
+                    setSearchQuery(primary)
+                    setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
+                    setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                    setShowSuggestions(false)
+                    setHighlightIndex(-1)
+                    setIsMobileSearchOpen(false)
+                  }}
+                >
+                  <span className="text-lg">🏨</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{highlightText(primary, searchQuery)}</div>
+                    {secondary && (
+                      <div className="text-sm text-gray-500 truncate">{highlightText(secondary, searchQuery)}</div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
-      )}
-    </div>
+      ), document.body)}
+    </>
   )
 }

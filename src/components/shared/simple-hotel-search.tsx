@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MapPin, Loader2 } from "lucide-react"
+import { MapPin, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -60,6 +60,21 @@ export function SimpleHotelSearch({
     name: string
   } | null>(null)
   const [suggestionError, setSuggestionError] = useState<string | null>(null)
+
+  // Mobile full-screen search overlay
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const original = document.body.style.overflow
+    if (isMobileSearchOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = original || ''
+    }
+    return () => {
+      document.body.style.overflow = original || ''
+    }
+  }, [isMobileSearchOpen])
 
   // 입력어 하이라이트 유틸
   const highlightText = (text: string, q: string) => {
@@ -217,7 +232,10 @@ export function SimpleHotelSearch({
                 setSelectedHotel(null)
                 setShowSuggestions(value.length > 0)
               }}
-              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onFocus={() => {
+                if (isMobile) setIsMobileSearchOpen(true)
+                setShowSuggestions(searchQuery.length > 0)
+              }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
               className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none"
@@ -246,7 +264,7 @@ export function SimpleHotelSearch({
           </div>
           
           {/* 자동완성 제안 목록 */}
-          {showSuggestions && (
+          {showSuggestions && !isMobileSearchOpen && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
               {isSuggesting && hotelSuggestions.length === 0 && (
                 <div className="p-2.5 sm:p-3 text-xs sm:text-sm text-gray-500">불러오는 중...</div>
@@ -326,6 +344,97 @@ export function SimpleHotelSearch({
           )}
         </Button>
       </div>
+
+      {/* Mobile full-screen search overlay */}
+      {isMobile && isMobileSearchOpen && (
+        <div className="fixed inset-0 z-[100000] bg-white sm:hidden">
+          <div className="flex items-center gap-2 p-3 border-b">
+            <button
+              aria-label="닫기"
+              onClick={() => { setIsMobileSearchOpen(false); setShowSuggestions(false) }}
+              className="p-2"
+            >
+              <X className="w-6 h-6 text-gray-700" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder={mobilePlaceholder}
+                value={searchQuery}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setSearchQuery(value)
+                  setSelectedHotel(null)
+                  setShowSuggestions(value.length > 0)
+                }}
+                className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none flex-1"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setSelectedHotel(null); setShowSuggestions(false) }}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="지우기"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="overflow-y-auto" style={{ height: 'calc(100vh - 56px)' }}>
+            {isSuggesting && hotelSuggestions.length === 0 && (
+              <div className="p-4 text-sm text-gray-500">불러오는 중...</div>
+            )}
+            {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+              <div className="p-4 text-sm text-gray-500">검색 결과가 없습니다</div>
+            )}
+            {suggestionError && (
+              <div className="p-4 text-sm text-red-500 bg-red-50 border border-red-200 m-3 rounded">
+                <div className="flex items-center justify-between">
+                  <span>⚠️ {suggestionError}</span>
+                  <button
+                    onClick={() => { setSuggestionError(null); if (searchQuery.trim()) setSearchQuery(searchQuery) }}
+                    className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+                  >
+                    재시도
+                  </button>
+                </div>
+              </div>
+            )}
+            {hotelSuggestions.map((h, idx) => {
+              const primary = h.property_name_ko || h.property_name_en || '-'
+              const country = h.country_ko || h.country_en || ''
+              const city = h.city_ko || h.city || ''
+              const location = country && city ? `${city}, ${country}` : country || city || ''
+              return (
+                <div
+                  key={`${h.slug || h.sabre_id}`}
+                  className={cn(
+                    "flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100",
+                    highlightIndex === idx && "bg-gray-50"
+                  )}
+                  onClick={() => {
+                    setSearchQuery(primary)
+                    setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                    setShowSuggestions(false)
+                    setHighlightIndex(-1)
+                    setIsMobileSearchOpen(false)
+                  }}
+                >
+                  <span className="text-lg">🏨</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{highlightText(primary, searchQuery)}</div>
+                    {location && (
+                      <div className="text-sm text-gray-500 truncate">{highlightText(location, searchQuery)}</div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
