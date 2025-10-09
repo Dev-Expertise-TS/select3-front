@@ -26,7 +26,7 @@ export function BottomNav() {
         perspective: '1000px'
       }}
     >
-      <div className="flex items-center justify-between h-20 px-2">
+      <div className="flex items-center justify-center gap-6 h-20 px-4">
         {mobileNavItems.map((item) => {
           const Icon = item.icon!
           const isActive = pathname === item.href || 
@@ -48,7 +48,7 @@ export function BottomNav() {
                 isActive && "stroke-[2.5]"
               )} />
               <span className={cn(
-                "text-xs leading-tight text-center px-1",
+                "text-xs leading-tight text-center px-0.5",
                 isActive && "font-semibold"
               )}>
                 {item.mobileLabel || item.label}
