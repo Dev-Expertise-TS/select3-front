@@ -51,20 +51,13 @@ export function BenefitsSection() {
     <section className="pt-2 sm:py-8 pb-12 sm:pb-16 bg-white">
       <SectionContainer className="px-3 sm:px-4">
         <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-            <span className="sm:hidden">
-              럭셔리 호텔 & 리조트<br />
-              <span className="text-amex-blue">특별한 혜택과 함께</span>
-            </span>
-            <span className="hidden sm:inline">
-              럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
-            </span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+            럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 sm:mb-1">
-            <span className="sm:hidden">아래 7가지 혜택을 전화 또는 카톡 상담 예약을 통해 받아보세요</span>
-            <span className="hidden sm:inline">지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고</span>
+          <p className="text-sm sm:text-base text-gray-600 leading-tight">
+            지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고 <br className="sm:hidden" />
+            투숙과 함께 아래의 일곱 가지 혜택을 누려보세요
           </p>
-          <p className="hidden sm:block text-sm sm:text-base text-gray-600">투숙과 함께 아래의 일곱 가지 혜택을 누려보세요</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-2 md:gap-3">
