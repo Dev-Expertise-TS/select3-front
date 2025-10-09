@@ -87,6 +87,14 @@ export function CommonSearchBar({
   } | null>(null)
   const [suggestionError, setSuggestionError] = useState<string | null>(null)
 
+  // Display text limit: desktop (>=640px) uses 35, mobile uses 30
+  const getDisplayLimit = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches) {
+      return 35
+    }
+    return 30
+  }
+
   // 이전 props 값을 추적하여 무한 루프 방지
   const prevCheckInRef = useRef<string | undefined>(checkIn)
   const prevCheckOutRef = useRef<string | undefined>(checkOut)
@@ -140,7 +148,7 @@ export function CommonSearchBar({
     const query = initialQuery || ""
     setSearchQuery(query)
     // 초기 로드 시에도 30자 제한 적용
-    setDisplayQuery(query.length > 30 ? query.substring(0, 30) + '...' : query)
+    setDisplayQuery(query.length > getDisplayLimit() ? query.substring(0, getDisplayLimit()) + '...' : query)
   }, [initialQuery])
 
   // variant가 hotel-detail이고 initialQuery가 있을 때 기본값 설정
@@ -150,7 +158,7 @@ export function CommonSearchBar({
       const query = initialQuery || ""
       setSearchQuery(query)
       // 초기 로드 시에도 30자 제한 적용
-      setDisplayQuery(query.length > 30 ? query.substring(0, 30) + '...' : query)
+      setDisplayQuery(query.length > getDisplayLimit() ? query.substring(0, getDisplayLimit()) + '...' : query)
     }
   }, [variant, initialQuery])
 
@@ -311,7 +319,7 @@ export function CommonSearchBar({
         const primary = h.property_name_ko || h.property_name_en || '-'
         setSearchQuery(primary)
         // 선택된 호텔명 필드는 30자로 제한
-        setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
+        setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
         setShowSuggestions(false)
         setHighlightIndex(-1)
@@ -399,7 +407,7 @@ export function CommonSearchBar({
                 // 전체 텍스트는 searchQuery에 저장 (검색용)
                 setSearchQuery(value)
                 // 화면 표시용은 30글자로 제한
-                const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value
+                const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
                 setShowSuggestions(value.length > 0)
@@ -476,7 +484,7 @@ export function CommonSearchBar({
                       onClick={() => {
                         setSearchQuery(primary)
                         // 선택된 호텔명 필드는 30자로 제한
-                        setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
+                        setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
                         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                         setShowSuggestions(false)
                         setHighlightIndex(-1)
@@ -510,7 +518,7 @@ export function CommonSearchBar({
                 // 전체 텍스트는 searchQuery에 저장 (검색용)
                 setSearchQuery(value)
                 // 화면 표시용은 30글자로 제한
-                const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value
+                const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
                 setShowSuggestions(value.length > 0)
@@ -521,7 +529,7 @@ export function CommonSearchBar({
               onFocus={() => setShowSuggestions(searchQuery.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200"
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-lg sm:font-bold placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200"
               disabled={isSearching}
             />
           </div>
@@ -589,7 +597,7 @@ export function CommonSearchBar({
                     onClick={() => {
                       setSearchQuery(primary)
                       // 선택된 호텔명 필드는 30자로 제한
-                      setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
+                      setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
                       setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                       setShowSuggestions(false)
                       setHighlightIndex(-1)
