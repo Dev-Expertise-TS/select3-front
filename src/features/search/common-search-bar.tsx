@@ -386,7 +386,7 @@ export function CommonSearchBar({
 
   return (
       <div className={`${className} bg-blue-50 sm:bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
-      style={{ borderColor: '#E6CDB5' }}>
+      style={{ borderColor: '#C7D2FE' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
         <div className="flex sm:hidden items-center gap-2 w-full relative">
@@ -395,7 +395,7 @@ export function CommonSearchBar({
               "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-3 relative backdrop-blur-sm transition-all duration-500",
               isSearching && "cursor-not-allowed opacity-50"
             )}
-            style={{ borderColor: '#E6CDB5' }}
+            style={{ borderColor: '#C7D2FE' }}
           >
             <MapPin className="h-4 w-4 text-gray-800 flex-shrink-0 mr-2" />
             <Input
@@ -627,7 +627,7 @@ export function CommonSearchBar({
                 ? "cursor-not-allowed opacity-50" 
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
-            style={{ borderColor: '#E6CDB5' }}
+            style={{ borderColor: '#C7D2FE' }}
             onClick={() => !isSearching && setShowDatePicker(true)}
           >
             <span className="text-gray-800 font-medium text-xs truncate">
@@ -650,7 +650,7 @@ export function CommonSearchBar({
                 ? "cursor-not-allowed opacity-50" 
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
-            style={{ borderColor: '#E6CDB5' }}
+            style={{ borderColor: '#C7D2FE' }}
             onClick={() => !isSearching && setShowGuestSelector(true)}
           >
             <span className="text-gray-800 font-medium text-xs truncate text-center w-full">
@@ -683,7 +683,7 @@ export function CommonSearchBar({
         {/* 데스크톱용 기존 레이아웃 (숨김) */}
         <div className="hidden sm:flex items-center gap-1 sm:gap-0 w-full sm:flex-[1.6] border-t sm:border-t-0 pt-2 sm:pt-0">
           {/* 날짜 입력 영역 */}
-          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#C7D2FE' }}>
             <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
@@ -716,7 +716,7 @@ export function CommonSearchBar({
           <div className="h-4 w-px bg-gray-300 mx-1 sm:hidden"></div>
 
           {/* 게스트 정보 영역 */}
-          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#E6CDB5' }}>
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#C7D2FE' }}>
             <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
