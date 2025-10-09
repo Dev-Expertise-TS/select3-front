@@ -62,26 +62,12 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
       {/* 콘텐츠 */}
       <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12">
         <div className="max-w-2xl">
-          {/* 브랜드 뱃지 - 모바일에서 간소화 */}
-          {(hotel.brand_name_en || hotel.chain_name_en) && (
-            <div className="mb-2 sm:mb-3 md:mb-4">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 sm:px-3 sm:py-1.5 border border-white/30">
-                {hotel.brand_name_en && (
-                  <span className="text-white text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-none">
-                    {hotel.brand_name_en}
-                  </span>
-                )}
-                {hotel.brand_name_en && hotel.chain_name_en && (
-                  <span className="text-white/70 text-xs hidden sm:inline">•</span>
-                )}
-                {hotel.chain_name_en && (
-                  <span className="text-white/80 text-xs hidden sm:inline truncate max-w-[100px]">
-                    {hotel.chain_name_en}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          {/* 추천 문구 라벨 */}
+          <div className="mb-2 sm:mb-3 md:mb-4">
+            <span className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 sm:px-3 sm:py-1.5 border border-white/30 text-white text-xs sm:text-sm font-semibold">
+              에디터가 선정한 이주의 추천 호텔
+            </span>
+          </div>
           
           {/* 호텔명 - 모바일에서 작게 */}
           <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1.5 sm:mb-3 md:mb-4 line-clamp-2">
@@ -98,12 +84,7 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
             📍 {hotel.city_ko || hotel.city}
           </p>
           
-          {/* 카피라이터 - 모바일에서 간소화 */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 sm:p-4 md:p-6 border border-white/20">
-            <p className="text-white text-sm sm:text-base md:text-lg font-medium leading-snug sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
-              {displayCopywriter}
-            </p>
-          </div>
+          {/* 카피라이터 영역 제거 */}
         </div>
       </div>
       

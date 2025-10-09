@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { generateSlug } from "@/lib/hotel-utils"
+import { useIsMobile } from "@/hooks/use-is-mobile"
 
 interface CommonSearchBarProps {
   variant?: "landing" | "hotel-detail" | "destination"
@@ -96,16 +97,8 @@ export function CommonSearchBar({
     return 30
   }
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  // Mobile detection (shared hook)
+  const isMobile = useIsMobile()
 
   // Mobile full-screen search overlay
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
@@ -414,17 +407,16 @@ export function CommonSearchBar({
 
   return (
     <>
-      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
+      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2 ${variant === 'hotel-detail' ? 'sm:bg-transparent sm:shadow-none sm:border-0' : ''}`}
       style={{ borderColor: '#C7D2FE' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
         <div className="flex sm:hidden items-center gap-2 w-full relative">
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-3 relative backdrop-blur-sm transition-all duration-500",
+              "flex items-center flex-1 rounded-md bg-transparent shadow-none border-0 h-[42px] px-3 relative backdrop-blur-none transition-all duration-500",
               isSearching && "cursor-not-allowed opacity-50"
             )}
-            style={{ borderColor: '#C7D2FE' }}
           >
             <MapPin className="h-4 w-4 text-gray-800 flex-shrink-0 mr-2" />
             <Input
@@ -663,7 +655,7 @@ export function CommonSearchBar({
           {/* 날짜 입력 영역 */}
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
+              "flex items-center flex-1 rounded-md bg-white shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
               isSearching 
                 ? "cursor-not-allowed opacity-50" 
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"
@@ -686,7 +678,7 @@ export function CommonSearchBar({
           {/* 게스트 정보 영역 */}
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
+              "flex items-center flex-1 rounded-md bg-white shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
               isSearching 
                 ? "cursor-not-allowed opacity-50" 
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"

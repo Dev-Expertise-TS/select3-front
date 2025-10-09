@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useIsMobile } from "@/hooks/use-is-mobile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MapPin, Loader2, X } from "lucide-react"
@@ -29,17 +30,7 @@ export function SimpleHotelSearch({
   
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialQuery || "")
-  const [isMobile, setIsMobile] = useState(false)
-
-  // 모바일 화면 감지
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640) // sm breakpoint
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useIsMobile()
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [hotelSuggestions, setHotelSuggestions] = useState<Array<{
@@ -238,7 +229,7 @@ export function SimpleHotelSearch({
               }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none"
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none shadow-none"
               disabled={isSearching}
             />
             

@@ -2,13 +2,15 @@
 
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/hotel-card"
-import { MapPin, Coffee, Star, Badge, Calendar, Clock } from "lucide-react"
+import { MapPin, Coffee, Star, Badge } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 import { OptimizedImage } from "@/components/ui/optimized-image"
 import { generateHotelImageUrl } from "@/lib/supabase-image-loader"
+import { PromotionBox } from "@/components/shared/promotion-box"
+import { formatDateDot } from "@/lib/date-utils"
 
 // 호텔 데이터 타입 정의
 export interface HotelCardData {
@@ -256,34 +258,14 @@ export function HotelCard({
                 )}>프로모션 혜택</p>
                 <div className="flex-1 flex flex-col justify-center">
                   {/* 첫 번째 프로모션만 표시하고 텍스트 길이 제한 (27자) */}
-                  {promotions.slice(0, 1).map((promotion: any, index: number) => (
-                    <div key={index} className="bg-blue-50 p-2 rounded-lg flex flex-col" style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.HEIGHT}px` }}>
-                      <div className={cn(
-                        "text-gray-700 mb-1 font-medium line-clamp-2 flex items-center",
-                        isThreeGrid ? "text-sm" : "text-xs"
-                      )} style={{ height: `${HOTEL_CARD_CONFIG.PROMOTION_BOX.TEXT_HEIGHT}px` }} title={promotion.promotion}>
-                        {promotion.promotion && promotion.promotion.length > 27 
-                          ? `${promotion.promotion.substring(0, 27)}...` 
-                          : promotion.promotion}
-                      </div>
-                      <div className={cn(
-                        "flex items-center gap-4 text-gray-500 mt-auto",
-                        isThreeGrid ? "text-sm" : "text-xs"
-                      )}>
-                        {promotion.booking_date && (
-                          <div className="flex items-center">
-                            <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">예약일 : ~{formatDate(promotion.booking_date)}</span>
-                          </div>
-                        )}
-                        {promotion.check_in_date && (
-                          <div className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">투숙일 : ~{formatDate(promotion.check_in_date)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {promotions.slice(0, 1).map((p: any, index: number) => (
+                    <PromotionBox
+                      key={index}
+                      text={p.promotion}
+                      bookingDate={p.booking_date}
+                      checkInDate={p.check_in_date}
+                      isThreeGrid={isThreeGrid}
+                    />
                   ))}
                 </div>
               </div>
