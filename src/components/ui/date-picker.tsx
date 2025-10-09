@@ -213,11 +213,13 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     // body 스크롤 막기
     document.body.style.overflow = 'hidden'
     
-    // 모바일에서만 하단 네비게이터 숨기기
+    // 모바일에서만 하단 네비게이터 숨기기 (더 안전한 방법)
     const isMobile = window.innerWidth < 1024 // lg 브레이크포인트
-    const bottomNav = document.querySelector('[data-bottom-nav]')
+    const bottomNav = document.querySelector('[data-bottom-nav]') as HTMLElement
     if (isMobile && bottomNav) {
-      (bottomNav as HTMLElement).style.display = 'none'
+      // visibility를 사용하여 레이아웃을 유지하면서 숨기기
+      bottomNav.style.visibility = 'hidden'
+      bottomNav.style.pointerEvents = 'none'
     }
 
     // cleanup function
@@ -225,7 +227,8 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
       document.body.style.overflow = 'unset'
       // 모바일에서만 하단 네비게이터 다시 표시
       if (isMobile && bottomNav) {
-        (bottomNav as HTMLElement).style.display = 'flex'
+        bottomNav.style.visibility = 'visible'
+        bottomNav.style.pointerEvents = 'auto'
       }
     }
   }, [])
