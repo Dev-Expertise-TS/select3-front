@@ -98,6 +98,7 @@ export async function BrandProgramPage() {
                     src={chain.logo_path || "/placeholder.svg"}
                     alt={chain.chain_name_en}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 20vw"
                     className="object-contain p-4 transition-all duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

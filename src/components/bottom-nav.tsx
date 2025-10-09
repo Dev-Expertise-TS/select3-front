@@ -26,7 +26,7 @@ export function BottomNav() {
         perspective: '1000px'
       }}
     >
-      <div className="flex items-center justify-center gap-6 h-20 px-4">
+      <div className="grid grid-flow-col auto-cols-fr items-center h-20 px-4">
         {mobileNavItems.map((item) => {
           const Icon = item.icon!
           const isActive = pathname === item.href || 
