@@ -139,8 +139,8 @@ export function CommonSearchBar({
   useEffect(() => {
     const query = initialQuery || ""
     setSearchQuery(query)
-    // 초기 로드 시에도 25자 제한 적용
-    setDisplayQuery(query.length > 25 ? query.substring(0, 25) + '...' : query)
+    // 초기 로드 시에도 30자 제한 적용
+    setDisplayQuery(query.length > 30 ? query.substring(0, 30) + '...' : query)
   }, [initialQuery])
 
   // variant가 hotel-detail이고 initialQuery가 있을 때 기본값 설정
@@ -149,8 +149,8 @@ export function CommonSearchBar({
       // 호텔 상세 페이지에서는 initialQuery가 있으면 그것을 사용, 없으면 빈 문자열
       const query = initialQuery || ""
       setSearchQuery(query)
-      // 초기 로드 시에도 25자 제한 적용
-      setDisplayQuery(query.length > 25 ? query.substring(0, 25) + '...' : query)
+      // 초기 로드 시에도 30자 제한 적용
+      setDisplayQuery(query.length > 30 ? query.substring(0, 30) + '...' : query)
     }
   }, [variant, initialQuery])
 
@@ -283,7 +283,7 @@ export function CommonSearchBar({
       } finally {
         if (!cancelled) setIsSuggesting(false)
       }
-    }, 250)
+    }, 300)
     return () => {
       cancelled = true
       clearTimeout(timer)
@@ -310,8 +310,8 @@ export function CommonSearchBar({
         const h = hotelSuggestions[highlightIndex]
         const primary = h.property_name_ko || h.property_name_en || '-'
         setSearchQuery(primary)
-        // 선택된 호텔명 필드는 25자로 제한
-        setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
+        // 선택된 호텔명 필드는 30자로 제한
+        setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
         setShowSuggestions(false)
         setHighlightIndex(-1)
@@ -333,7 +333,7 @@ export function CommonSearchBar({
     if (variant === "destination") {
       return `${safeAdults} adults (${safeRooms} room)`
     }
-    return `객실 ${safeRooms}개, 성인 ${safeAdults}명`
+    return `룸 ${safeRooms}, 성인 ${safeAdults}`
   }
 
   // 검색 핸들러
@@ -379,16 +379,17 @@ export function CommonSearchBar({
   return (
       <div className={`${className} bg-blue-50 sm:bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#E6CDB5' }}>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-        {/* 호텔명 검색 영역 - 1행 (모바일: 통합 스타일) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+        {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
         <div className="flex sm:hidden items-center gap-2 w-full relative">
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-3 relative",
+              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-3 relative backdrop-blur-sm transition-all duration-500",
               isSearching && "cursor-not-allowed opacity-50"
             )}
+            style={{ borderColor: '#E6CDB5' }}
           >
-            <MapPin className="h-4 w-4 text-gray-600 flex-shrink-0 mr-2" />
+            <MapPin className="h-4 w-4 text-gray-800 flex-shrink-0 mr-2" />
             <Input
               type="text"
               placeholder="어디로 떠날까요?"
@@ -397,8 +398,8 @@ export function CommonSearchBar({
                 const value = e.target.value
                 // 전체 텍스트는 searchQuery에 저장 (검색용)
                 setSearchQuery(value)
-                // 화면 표시용은 25글자로 제한
-                const displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value
+                // 화면 표시용은 30글자로 제한
+                const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
                 setShowSuggestions(value.length > 0)
@@ -409,13 +410,13 @@ export function CommonSearchBar({
               onFocus={() => setShowSuggestions(searchQuery.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-xs placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200 flex-1"
+              className="border-0 bg-transparent p-0 text-gray-800 font-medium text-xs placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200 flex-1"
               disabled={isSearching}
             />
             {searchQuery && (
               <button 
                 className={cn(
-                  "text-gray-400 hover:text-gray-600 transition-colors ml-2",
+                  "text-gray-500 hover:text-gray-700 transition-colors ml-2",
                   isSearching && "opacity-50 cursor-not-allowed"
                 )}
                 onClick={() => {
@@ -435,7 +436,7 @@ export function CommonSearchBar({
             
             {/* 자동완성 제안 목록 (호텔) */}
             {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-72 overflow-y-auto" style={{ zIndex: 999999, marginTop: '60px' }}>
                 {isSuggesting && hotelSuggestions.length === 0 && (
                   <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
                 )}
@@ -474,8 +475,8 @@ export function CommonSearchBar({
                       )}
                       onClick={() => {
                         setSearchQuery(primary)
-                        // 선택된 호텔명 필드는 25자로 제한
-                        setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
+                        // 선택된 호텔명 필드는 30자로 제한
+                        setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
                         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                         setShowSuggestions(false)
                         setHighlightIndex(-1)
@@ -508,8 +509,8 @@ export function CommonSearchBar({
                 const value = e.target.value
                 // 전체 텍스트는 searchQuery에 저장 (검색용)
                 setSearchQuery(value)
-                // 화면 표시용은 25글자로 제한
-                const displayValue = value.length > 25 ? value.substring(0, 25) + '...' : value
+                // 화면 표시용은 30글자로 제한
+                const displayValue = value.length > 30 ? value.substring(0, 30) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
                 setShowSuggestions(value.length > 0)
@@ -587,8 +588,8 @@ export function CommonSearchBar({
                     )}
                     onClick={() => {
                       setSearchQuery(primary)
-                      // 선택된 호텔명 필드는 25자로 제한
-                      setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
+                      // 선택된 호텔명 필드는 30자로 제한
+                      setDisplayQuery(primary.length > 30 ? primary.substring(0, 30) + '...' : primary)
                       setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
                       setShowSuggestions(false)
                       setHighlightIndex(-1)
@@ -613,14 +614,15 @@ export function CommonSearchBar({
           {/* 날짜 입력 영역 */}
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-2",
+              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
               isSearching 
                 ? "cursor-not-allowed opacity-50" 
-                : "cursor-pointer hover:bg-gray-50"
+                : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
+            style={{ borderColor: '#E6CDB5' }}
             onClick={() => !isSearching && setShowDatePicker(true)}
           >
-            <span className="text-gray-900 font-medium text-xs truncate">
+            <span className="text-gray-800 font-medium text-xs truncate">
               {localCheckIn && localCheckOut
                 ? `${formatDateForDisplay(localCheckIn)} - ${formatDateForDisplay(localCheckOut)}`
                 : "날짜 선택"}
@@ -635,14 +637,15 @@ export function CommonSearchBar({
           {/* 게스트 정보 영역 */}
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-lg bg-white border border-gray-200 h-10 px-2",
+              "flex items-center flex-1 rounded-md bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
               isSearching 
                 ? "cursor-not-allowed opacity-50" 
-                : "cursor-pointer hover:bg-gray-50"
+                : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
+            style={{ borderColor: '#E6CDB5' }}
             onClick={() => !isSearching && setShowGuestSelector(true)}
           >
-            <span className="text-gray-900 font-medium text-xs truncate">
+            <span className="text-gray-800 font-medium text-xs truncate text-center w-full">
               {getGuestDisplayText()}
             </span>
           </div>
@@ -652,11 +655,12 @@ export function CommonSearchBar({
             onClick={handleSearch}
             disabled={isSearching || isSabreLoading}
             className={cn(
-              "flex items-center justify-center w-10 h-10 rounded-lg transition-colors flex-shrink-0",
+              "flex items-center justify-center w-[42px] h-[42px] rounded-md bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl border border-blue-300/30 transition-all duration-500 flex-shrink-0 backdrop-blur-sm",
               isSearching || isSabreLoading
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "cursor-not-allowed opacity-50"
+                : "hover:scale-105 hover:-translate-y-1 hover:shadow-2xl text-white"
             )}
+            style={{ borderColor: '#E6CDB5' }}
           >
             {(isSearching || isSabreLoading) ? (
               <Loader2 className="h-4 w-4 animate-spin" />
