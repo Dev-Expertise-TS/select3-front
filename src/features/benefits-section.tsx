@@ -47,11 +47,17 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="py-6 sm:py-8 pb-12 sm:pb-16 bg-white">
+    <section className="pt-2 sm:py-8 pb-12 sm:pb-16 bg-white">
               <div className="container mx-auto px-3 sm:px-4 max-w-[1440px]">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-            럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
+            <span className="sm:hidden">
+              럭셔리 호텔 & 리조트<br />
+              <span className="text-amex-blue">특별한 혜택과 함께</span>
+            </span>
+            <span className="hidden sm:inline">
+              럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
+            </span>
           </h2>
           <p className="text-sm sm:text-base text-gray-600 mb-1 sm:mb-2">지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고</p>
           <p className="text-sm sm:text-base text-gray-600">투숙과 함께 아래의 일곱 가지 혜택을 누려보세요</p>

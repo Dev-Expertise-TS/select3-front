@@ -74,6 +74,15 @@ export function HeroCarousel3() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [currentImages, setCurrentImages] = useState<CarouselSlide[]>([])
   const { data: heroImages, isLoading, error, refetch } = useHeroImages()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    setIsMobile(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // 동적 데이터가 있으면 사용, 없으면 기본 데이터 사용 (3개만)
   const carouselSlides: CarouselSlide[] = Array.isArray(heroImages) && heroImages.length > 0 
@@ -111,12 +120,13 @@ export function HeroCarousel3() {
   }, [refreshImages])
 
   useEffect(() => {
+    const intervalMs = isMobile ? 6200 : 5000
     const timer = setInterval(() => {
       const nextSlide = (currentSlide + 1) % carouselSlides.length
       changeSlide(nextSlide)
-    }, 5000)
+    }, intervalMs)
     return () => clearInterval(timer)
-  }, [currentSlide, carouselSlides.length, changeSlide])
+  }, [currentSlide, carouselSlides.length, changeSlide, isMobile])
 
   const nextSlide = () => {
     const nextSlideIndex = (currentSlide + 1) % carouselSlides.length
@@ -130,7 +140,7 @@ export function HeroCarousel3() {
 
   return (
     <div className="w-full">
-      <section className="relative py-3 sm:py-8">
+      <section className="relative mt-0.5 pt-0 pb-3 sm:py-8">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           {/* 모바일: 1개 슬라이드, PC: 3개 그리드 */}
           <div className="relative">
