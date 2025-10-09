@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
+import { BrandProgramPage } from "@/features/brands/brand-program-page"
 
 export const metadata: Metadata = {
   title: 'Brand | Select',
@@ -14,7 +15,7 @@ export default function BrandsPage() {
       <Header />
       <PromotionBanner />
       <main>
-        {/* Brand & Program 영역 삭제됨 */}
+        <BrandProgramPage />
       </main>
       <Footer />
     </div>

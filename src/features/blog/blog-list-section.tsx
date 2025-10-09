@@ -100,10 +100,10 @@ export function BlogListSection() {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-8 sm:py-16 bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4">
         {/* 헤더 섹션 */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 sm:mb-16">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
             투어비스 셀렉트 호텔 전문 매거진
           </h1>
