@@ -1,6 +1,7 @@
 "use client"
 
 import { HotelAdBanner } from './hotel-ad-banner'
+import { SectionContainer } from "@/components/shared/section-container"
 
 interface HotelBannerSectionProps {
   bannerHotel: {
@@ -39,12 +40,12 @@ export function HotelBannerSection({
 
   return (
     <section className={`py-4 sm:py-8 ${className || ''}`}>
-      <div className="container mx-auto max-w-[1440px] px-4">
+      <SectionContainer>
         <HotelAdBanner 
           hotel={bannerHotel}
           copywriter={copywriter}
         />
-      </div>
+      </SectionContainer>
     </section>
   )
 }

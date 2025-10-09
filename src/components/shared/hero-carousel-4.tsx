@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useHeroImages, type HeroImageData } from "@/hooks/use-hero-images"
+import { SectionContainer } from "@/components/shared/section-container"
 
 interface CarouselSlide {
   id: number
@@ -156,7 +157,7 @@ export function HeroCarousel4() {
   return (
     <div className="w-full">
       <section className="relative mt-0.5 pt-0 pb-3 sm:py-8">
-        <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
+        <SectionContainer className="px-0 sm:px-4">
           {/* 모바일: 1개 슬라이드, PC: 4개 그리드 */}
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
@@ -314,7 +315,7 @@ export function HeroCarousel4() {
               ))}
             </div>
           </div>
-        </div>
+        </SectionContainer>
       </section>
     </div>
   )

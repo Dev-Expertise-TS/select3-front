@@ -20,28 +20,16 @@ function PromotionDetails({ sabreId }: { sabreId?: number }) {
     return null
   }
   
-  // 날짜 포맷 함수
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${year}.${month}.${day}`
-    } catch (error) {
-      return dateString
-    }
-  }
-  
   const first = promotions[0]
+  const raw: string = String(first?.promotion_description ?? first?.description ?? first?.promotion ?? "")
 
   return (
     <span className="truncate">
       <span className="hidden sm:inline">
-        {first.promotion.length > 50 ? first.promotion.substring(0, 50) + '...' : first.promotion}
+        {raw.length > 50 ? raw.substring(0, 50) + '...' : raw}
       </span>
       <span className="sm:hidden">
-        {first.promotion.length > 22 ? first.promotion.substring(0, 22) + '...' : first.promotion}
+        {raw.length > 22 ? raw.substring(0, 22) + '...' : raw}
       </span>
     </span>
   )

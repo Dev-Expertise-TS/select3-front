@@ -1,4 +1,5 @@
 import { Coffee, DollarSign, Clock, ArrowUp, Star, Users, CreditCard } from "lucide-react"
+import { SectionContainer } from "@/components/shared/section-container"
 
 const benefits = [
   {
@@ -48,7 +49,7 @@ const benefits = [
 export function BenefitsSection() {
   return (
     <section className="pt-2 sm:py-8 pb-12 sm:pb-16 bg-white">
-              <div className="container mx-auto px-3 sm:px-4 max-w-[1440px]">
+      <SectionContainer className="px-3 sm:px-4">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
             <span className="sm:hidden">
@@ -93,7 +94,7 @@ export function BenefitsSection() {
             )
           })}
         </div>
-      </div>
+      </SectionContainer>
     </section>
   )
 }
