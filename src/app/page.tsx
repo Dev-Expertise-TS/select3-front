@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Hero } from "@/features/hero"
@@ -17,7 +18,9 @@ export default function HomePage() {
       <PromotionBanner />
       <main>
         <Hero />
-        <SearchSection />
+        <Suspense fallback={<div className="bg-white sm:bg-gray-50 pt-3 pb-1 sm:py-6 h-20" />}>
+          <SearchSection />
+        </Suspense>
         <BenefitsSection />
         <PromotionSection hotelCount={3} />
         <BrandProgramSection />

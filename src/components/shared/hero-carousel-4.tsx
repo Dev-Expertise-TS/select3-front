@@ -185,7 +185,7 @@ export function HeroCarousel4() {
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
             <div className="lg:hidden">
-              <div className="relative aspect-[4/3] overflow-hidden group rounded-none sm:rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="relative aspect-[4/2.1] sm:aspect-[4/3] overflow-hidden group rounded-none sm:rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <Link href={`/hotel/${carouselSlides[currentSlide].hotelId}`}>
                   <div className="relative w-full h-full">
                     {/* Background Image */}
