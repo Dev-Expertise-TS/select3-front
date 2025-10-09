@@ -2,11 +2,10 @@ import { Metadata } from 'next'
 import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
-import { BrandProgramPage } from '@/features/brands/brand-program-page'
 
 export const metadata: Metadata = {
-  title: 'Brand & Program | Select',
-  description: '셀렉트에서 추천하는 최고의 브랜드와 프로그램을 만나보세요.',
+  title: 'Brand | Select',
+  description: '브랜드 페이지',
 }
 
 export default function BrandsPage() {
@@ -15,7 +14,7 @@ export default function BrandsPage() {
       <Header />
       <PromotionBanner />
       <main>
-        <BrandProgramPage />
+        {/* Brand & Program 영역 삭제됨 */}
       </main>
       <Footer />
     </div>
