@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
+import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import { SimpleHotelSearch } from "./simple-hotel-search"
 import { HotelCardGrid } from "@/components/shared/hotel-card-grid"
@@ -748,6 +749,7 @@ export function HotelSearchResults({
     <div className="min-h-screen flex flex-col">
       {/* 헤더 */}
       <Header />
+      <PromotionBanner />
       
       {/* 메인 콘텐츠 */}
       <main className="flex-1">

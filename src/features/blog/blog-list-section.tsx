@@ -104,7 +104,7 @@ export function BlogListSection() {
       <div className="container mx-auto max-w-7xl px-4">
         {/* 헤더 섹션 */}
         <div className="text-center mb-8 sm:mb-16">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
             투어비스 셀렉트 호텔 전문 매거진
           </h1>
           <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto">
