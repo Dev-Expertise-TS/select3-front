@@ -40,15 +40,15 @@ export function Header() {
         }}
               >
           <div className="container mx-auto max-w-[1440px] px-4">
-            <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors">
-              <div className="w-24 h-12">
+            <div className="flex h-12 md:h-16 items-center justify-between">
+            <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors py-0 my-0">
+              <div className="w-20 h-10 md:w-28 md:h-14 py-0 my-0">
                 <Image
                   src="/select_logo.avif"
                   alt="Tourvis Select Logo"
-                  width={96}
-                  height={48}
-                  className="w-full h-full object-contain"
+                  width={112}
+                  height={56}
+                  className="w-full h-full object-contain py-0 my-0"
                 />
               </div>
             </Link>
