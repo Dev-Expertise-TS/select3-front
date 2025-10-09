@@ -24,7 +24,7 @@ export const navigationItems: NavigationItem[] = [
   { href: "http://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "예약상담", icon: MessageCircle, mobileOnly: true },
   { href: "/hotel", label: "호텔 & 리조트 전체보기", mobileLabel: "호텔검색", icon: Hotel },
   { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText },
-  { href: "/support", label: "투어비스", mobileLabel: "투어비스", icon: (TourvisIcon as unknown as LucideIcon), mobileOnly: true },
+  { href: "https://tourvis.com", label: "투어비스", mobileLabel: "투어비스", icon: (TourvisIcon as unknown as LucideIcon), mobileOnly: true },
 ]
 
 /**
