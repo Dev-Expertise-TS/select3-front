@@ -4,45 +4,45 @@ import { SectionContainer } from "@/components/shared/section-container"
 const benefits = [
   {
     icon: Coffee,
-    title: "2인 조식",
-    subtitle: "무료 제공",
+    title: "2인 조식 무료 제공",
+    // subtitle: "무료 제공",
     description: "매일 아침 2인 조식을 무료로 제공합니다",
   },
   {
     icon: DollarSign,
     title: "100$ 식음료 크레딧",
-    subtitle: "혹은 유사 혜택 제공",
+    // subtitle: "혹은 유사 혜택 제공",
     description: "호텔 내 시설 이용 시 사용 가능한 크레딧",
   },
   {
     icon: Clock,
-    title: "얼리 체크인",
-    subtitle: "레이트 체크아웃",
+    title: "얼리 체크인 레이트 체크아웃",
+    // subtitle: "레이트 체크아웃",
     description: "현장 가능 시 무료 제공",
   },
   {
     icon: ArrowUp,
-    title: "객실 무료",
-    subtitle: "업그레이드",
+    title: "객실 무료 업그레이드",
+    // subtitle: "업그레이드",
     description: "현장 가능 시 상위 객실로 업그레이드",
   },
   {
     icon: Star,
-    title: "글로벌 체인인",
-    subtitle: "멤버십 포인트 적립",
-    description: "호텔 체인 멤버십 포인트 적립 가능",
+    title: "멤버십 포인트 적립",
+    // subtitle: "멤버십 포인트 적립",
+    description: "글로벌 체인 호텔 체인 멤버십 포인트 적립 가능",
   },
   {
     icon: Users,
-    title: "전문 컨시어지를 통한",
-    subtitle: "1:1 프라이빗 상담 예약",
-    description: "개인 맞춤형 여행 상담 서비스",
+    title: "프라이빗 상담 예약",
+    // subtitle: "1:1 프라이빗 상담 예약",
+    description: "개인 맞춤형  전문 컨시어지 여행 상담 서비스",
   },
   {
     icon: CreditCard,
-    title: "투숙 후 호텔에서",
-    subtitle: "체크아웃 시 결제",
-    description: "안전하고 편리한 현장 결제 시스템",
+    title: "체크 아웃시 결제",
+    // subtitle: "체크아웃 시 결제",
+    description: "안전하고 편리한 투숙 후 호텔에서 현장 결제 시스템",
   },
 ]
 
@@ -74,14 +74,13 @@ export function BenefitsSection() {
                 style={{ borderColor: '#E6CDB5' }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-1 sm:mb-1 md:mb-2 group-hover:from-gray-300/40 group-hover:to-gray-400/60 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 shadow-lg group-hover:shadow-xl border"
+                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-3 sm:mb-3 md:mb-4 group-hover:from-gray-300/40 group-hover:to-gray-400/60 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 shadow-lg group-hover:shadow-xl border"
                     style={{ borderColor: '#E6CDB5' }}>
                     <IconComponent className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-gray-700 transition-colors" />
                   </div>
                   <h3 className="font-bold text-gray-900 text-xs sm:text-xs mb-0.5 sm:mb-0.5 leading-tight group-hover:text-gray-700 transition-colors">
                     {benefit.title}
                   </h3>
-                  <p className="font-semibold text-gray-600 text-xs sm:text-xs mb-0.5 leading-tight">{benefit.subtitle}</p>
                   <p className="text-gray-600 text-xs sm:text-xs leading-snug line-clamp-2 group-hover:text-gray-700 transition-colors">
                     {benefit.description}
                   </p>
