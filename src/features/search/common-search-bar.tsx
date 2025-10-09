@@ -414,9 +414,10 @@ export function CommonSearchBar({
         <div className="flex sm:hidden items-center gap-2 w-full relative">
           <div 
             className={cn(
-              "flex items-center flex-1 rounded-md bg-transparent shadow-none border-0 h-[42px] px-3 relative backdrop-blur-none transition-all duration-500",
+              "flex items-center flex-1 rounded-md bg-white shadow-xl border-2 h-[42px] px-3 relative backdrop-blur-sm transition-all duration-500",
               isSearching && "cursor-not-allowed opacity-50"
             )}
+            style={{ borderColor: '#C7D2FE' }}
           >
             <MapPin className="h-4 w-4 text-gray-800 flex-shrink-0 mr-2" />
             <Input
