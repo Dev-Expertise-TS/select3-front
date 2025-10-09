@@ -26,7 +26,7 @@ export function BottomNav() {
         perspective: '1000px'
       }}
     >
-      <div className="grid grid-flow-col auto-cols-fr items-center h-20 px-4">
+      <div className="grid grid-flow-col auto-cols-fr items-center h-20 px-2">
         {mobileNavItems.map((item) => {
           const Icon = item.icon!
           const isActive = pathname === item.href || 
@@ -37,18 +37,18 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center h-full transition-colors min-w-0",
+                "group flex flex-col items-center justify-center h-full transition-colors min-w-0 active:opacity-80",
                 isActive 
                   ? "text-blue-600" 
                   : "text-gray-600 hover:text-gray-900"
               )}
             >
               <Icon className={cn(
-                "w-5 h-5 mb-1",
+                "w-5 h-5 mb-1 transition-transform group-active:scale-90",
                 isActive && "stroke-[2.5]"
               )} />
               <span className={cn(
-                "text-[10px] leading-tight text-center px-0.5",
+                "text-[10px] leading-tight text-center px-0.5 transition-opacity group-active:opacity-80",
                 isActive && "font-semibold"
               )}>
                 {item.mobileLabel || item.label}

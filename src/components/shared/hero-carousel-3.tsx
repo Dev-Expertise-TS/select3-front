@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { SectionContainer } from "@/components/shared/section-container"
@@ -73,6 +73,7 @@ const defaultCarouselSlides: CarouselSlide[] = [
 
 export function HeroCarousel3() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [shuffleToken] = useState(() => Math.random())
   const [currentImages, setCurrentImages] = useState<CarouselSlide[]>([])
   const { data: heroImages, isLoading, error, refetch } = useHeroImages()
   const [isMobile, setIsMobile] = useState(false)
@@ -86,7 +87,7 @@ export function HeroCarousel3() {
   }, [])
 
   // 동적 데이터가 있으면 사용, 없으면 기본 데이터 사용 (3개만)
-  const carouselSlides: CarouselSlide[] = Array.isArray(heroImages) && heroImages.length > 0 
+  const baseSlides: CarouselSlide[] = Array.isArray(heroImages) && heroImages.length > 0 
     ? heroImages.slice(0, 3).map((image: HeroImageData, index: number) => ({
         id: index + 1,
         title: "Premium Luxury Experience",
@@ -103,6 +104,28 @@ export function HeroCarousel3() {
         brand_name_en: image.brand_name_en,
       }))
     : defaultCarouselSlides
+
+  // 모바일에서는 접속/리프레시마다 무작위 순서
+  const carouselSlides = useMemo(() => {
+    const arr = [...baseSlides]
+    if (isMobile) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const tmp = arr[i]
+        arr[i] = arr[j]
+        arr[j] = tmp
+      }
+    }
+    return arr
+  }, [isMobile, heroImages, shuffleToken])
+
+  // 모바일에서 접속/리프레시 시 시작 슬라이드도 랜덤
+  useEffect(() => {
+    if (isMobile && carouselSlides.length > 0) {
+      setCurrentSlide(Math.floor(Math.random() * carouselSlides.length))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shuffleToken])
 
   // 이미지 전환 시 새로운 랜덤 이미지 가져오기
   const refreshImages = useCallback(async () => {
