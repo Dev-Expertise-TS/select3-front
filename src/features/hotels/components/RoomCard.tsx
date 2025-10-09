@@ -244,9 +244,14 @@ export function RoomCard({
           </div>
 
           {/* 예약 버튼 */}
-          <button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base">
+          <a
+            href="http://pf.kakao.com/_cxmxgNG/chat"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full inline-block text-center bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base"
+          >
             예약 컨시어지
-          </button>
+          </a>
         </div>
       </div>
     </div>

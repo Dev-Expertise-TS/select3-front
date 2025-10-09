@@ -48,7 +48,7 @@ export function BottomNav() {
                 isActive && "stroke-[2.5]"
               )} />
               <span className={cn(
-                "text-xs leading-tight text-center px-0.5",
+                "text-[10px] leading-tight text-center px-0.5",
                 isActive && "font-semibold"
               )}>
                 {item.mobileLabel || item.label}
