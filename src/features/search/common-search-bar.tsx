@@ -95,6 +95,21 @@ export function CommonSearchBar({
     return 30
   }
 
+  // Scroll the search bar into view on mobile to avoid keyboard overlap
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const scrollSearchIntoView = () => {
+    if (typeof window === 'undefined') return
+    // Only on mobile screens
+    if (window.matchMedia('(min-width: 640px)').matches) return
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    // Account for sticky headers; adjust as needed
+    const headerOffset = 250
+    const targetTop = Math.max(0, window.scrollY + rect.top - headerOffset)
+    window.scrollTo({ top: targetTop, behavior: 'smooth' })
+  }
+
   // 이전 props 값을 추적하여 무한 루프 방지
   const prevCheckInRef = useRef<string | undefined>(checkIn)
   const prevCheckOutRef = useRef<string | undefined>(checkOut)
@@ -385,7 +400,7 @@ export function CommonSearchBar({
   }
 
   return (
-      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
+      <div ref={containerRef} className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#C7D2FE' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
@@ -415,7 +430,7 @@ export function CommonSearchBar({
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
                 // onSearch 호출 제거
               }}
-              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onFocus={() => { scrollSearchIntoView(); setShowSuggestions(searchQuery.length > 0) }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
               className="border-0 bg-transparent p-0 text-gray-800 font-medium text-xs placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200 flex-1"
@@ -526,7 +541,7 @@ export function CommonSearchBar({
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
                 // onSearch 호출 제거
               }}
-              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onFocus={() => { scrollSearchIntoView(); setShowSuggestions(searchQuery.length > 0) }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
               className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-lg sm:font-bold placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none transition-all duration-200"
