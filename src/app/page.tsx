@@ -10,6 +10,7 @@ import { BenefitsSection } from "@/features/benefits-section"
 import { PromotionSection } from "@/features/promotion-section"
 import { TrendingDestinationsSection } from "@/features/destinations"
 import { BrandProgramSection } from "@/features/brands"
+import TestimonialsSection from "@/components/shared/testimonials-section"
 
 export default function HomePage() {
   return (
@@ -22,6 +23,7 @@ export default function HomePage() {
           <SearchSection />
         </Suspense>
         <BenefitsSection />
+        <TestimonialsSection />
         <PromotionSection hotelCount={3} />
         <BrandProgramSection />
         <TrendingDestinationsSection />

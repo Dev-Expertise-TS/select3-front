@@ -51,7 +51,7 @@ export function BenefitsSection() {
     <section className="pt-2 sm:py-8 pb-12 sm:pb-16 bg-white">
       <SectionContainer className="px-3 sm:px-4">
         <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
             럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
           </h2>
           <p className="text-sm sm:text-base text-gray-600 leading-tight">
