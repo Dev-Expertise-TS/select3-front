@@ -88,7 +88,7 @@ export function PromotionBanner() {
     <div 
       className={cn(
         "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white transition-all duration-300 cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900",
-        isSticky ? "sticky top-16 z-40 shadow-lg" : "relative"
+        isSticky ? "sticky top-12 md:top-16 z-40 shadow-lg" : "relative"
       )}
       onClick={handleBannerClick}
     >
