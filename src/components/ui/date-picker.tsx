@@ -295,13 +295,18 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                       disabled={!isCurrentMonth(date) || isPastOrToday}
                       className={cn(
                         "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
-                        !isCurrentMonth(date) && "text-gray-300 cursor-not-allowed",
-                        isCurrentMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
-                        isCurrentMonth(date) && !isPastOrToday && "hover:bg-gray-100 text-black",
-                        isSelected(date) && "bg-orange-500 text-white",
-                        isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
-                        date.getDay() === 0 && isCurrentMonth(date) && !isSelected(date) && !isPastOrToday && "text-orange-500",
-                        isToday && "bg-yellow-100 text-yellow-700 font-bold"
+                        // 선택된 날짜는 최우선 적용
+                        isSelected(date) && "!bg-orange-500 !text-white",
+                        // 범위 내 날짜 (선택된 날짜 제외)
+                        isInRange(date) && !isSelected(date) && "!bg-orange-100 !text-orange-900",
+                        // 오늘 날짜 (선택된 날짜 제외)
+                        isToday && !isSelected(date) && "!bg-yellow-100 !text-yellow-700 !font-bold",
+                        // 일요일 (선택된 날짜 제외)
+                        date.getDay() === 0 && isCurrentMonth(date) && !isSelected(date) && !isPastOrToday && "!text-orange-500",
+                        // 기본 상태들
+                        !isCurrentMonth(date) && !isSelected(date) && "text-gray-300 cursor-not-allowed",
+                        isCurrentMonth(date) && isPastOrToday && !isSelected(date) && "text-gray-400 cursor-not-allowed bg-gray-100",
+                        isCurrentMonth(date) && !isPastOrToday && !isSelected(date) && !isToday && "hover:bg-gray-100 text-black"
                       )}
                     >
                       {date.getDate()}
@@ -336,13 +341,18 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                        disabled={!isSecondMonth(date) || isPastOrToday}
                        className={cn(
                          "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
-                         !isSecondMonth(date) && "text-gray-300 cursor-not-allowed",
-                         isSecondMonth(date) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
-                         isSecondMonth(date) && !isPastOrToday && "hover:bg-gray-100 text-black",
-                         isSelected(date) && "bg-orange-500 text-white",
-                         isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
-                         date.getDay() === 0 && isSecondMonth(date) && !isSelected(date) && !isPastOrToday && "text-orange-500",
-                         isToday && "bg-yellow-100 text-yellow-700 font-bold"
+                         // 선택된 날짜는 최우선 적용
+                         isSelected(date) && "!bg-orange-500 !text-white",
+                         // 범위 내 날짜 (선택된 날짜 제외)
+                         isInRange(date) && !isSelected(date) && "!bg-orange-100 !text-orange-900",
+                         // 오늘 날짜 (선택된 날짜 제외)
+                         isToday && !isSelected(date) && "!bg-yellow-100 !text-yellow-700 !font-bold",
+                         // 일요일 (선택된 날짜 제외)
+                         date.getDay() === 0 && isSecondMonth(date) && !isSelected(date) && !isPastOrToday && "!text-orange-500",
+                         // 기본 상태들
+                         !isSecondMonth(date) && !isSelected(date) && "text-gray-300 cursor-not-allowed",
+                         isSecondMonth(date) && isPastOrToday && !isSelected(date) && "text-gray-400 cursor-not-allowed bg-gray-100",
+                         isSecondMonth(date) && !isPastOrToday && !isSelected(date) && !isToday && "hover:bg-gray-100 text-black"
                        )}
                      >
                        {date.getDate()}
@@ -378,13 +388,18 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
                          disabled={!isSpecificMonth(date, monthData.month, monthData.year) || isPastOrToday}
                          className={cn(
                            "h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200 relative flex flex-col items-center justify-center",
-                           !isSpecificMonth(date, monthData.month, monthData.year) && "text-gray-300 cursor-not-allowed",
-                           isSpecificMonth(date, monthData.month, monthData.year) && isPastOrToday && "text-gray-400 cursor-not-allowed bg-gray-100",
-                           isSpecificMonth(date, monthData.month, monthData.year) && !isPastOrToday && "hover:bg-gray-100 text-black",
-                           isSelected(date) && "bg-orange-500 text-white",
-                           isInRange(date) && !isSelected(date) && "bg-orange-100 text-orange-900",
-                           date.getDay() === 0 && isSpecificMonth(date, monthData.month, monthData.year) && !isSelected(date) && !isPastOrToday && "text-orange-500",
-                           isToday && "bg-yellow-100 text-yellow-700 font-bold"
+                           // 선택된 날짜는 최우선 적용
+                           isSelected(date) && "!bg-orange-500 !text-white",
+                           // 범위 내 날짜 (선택된 날짜 제외)
+                           isInRange(date) && !isSelected(date) && "!bg-orange-100 !text-orange-900",
+                           // 오늘 날짜 (선택된 날짜 제외)
+                           isToday && !isSelected(date) && "!bg-yellow-100 !text-yellow-700 !font-bold",
+                           // 일요일 (선택된 날짜 제외)
+                           date.getDay() === 0 && isSpecificMonth(date, monthData.month, monthData.year) && !isSelected(date) && !isPastOrToday && "!text-orange-500",
+                           // 기본 상태들
+                           !isSpecificMonth(date, monthData.month, monthData.year) && !isSelected(date) && "text-gray-300 cursor-not-allowed",
+                           isSpecificMonth(date, monthData.month, monthData.year) && isPastOrToday && !isSelected(date) && "text-gray-400 cursor-not-allowed bg-gray-100",
+                           isSpecificMonth(date, monthData.month, monthData.year) && !isPastOrToday && !isSelected(date) && !isToday && "hover:bg-gray-100 text-black"
                          )}
                        >
                          {date.getDate()}
