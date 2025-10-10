@@ -207,7 +207,7 @@ export function SimpleHotelSearch({
   }
 
   return (
-    <div className={`w-full h-full flex items-center ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-1.5 sm:p-4 w-full h-full flex items-center xl:bg-transparent xl:shadow-none xl:border-none xl:px-0 xl:py-0 ${className}`}>
       <div className="flex items-center gap-1.5 sm:gap-3 w-full h-full">
         {/* 검색 입력 영역 */}
         <div className="flex-1 relative">
