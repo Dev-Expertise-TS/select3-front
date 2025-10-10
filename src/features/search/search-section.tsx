@@ -46,7 +46,9 @@ export function SearchSection() {
     if (guests) {
       params.set('rooms', guests.rooms.toString())
       params.set('adults', guests.adults.toString())
-      params.set('children', guests.children.toString())
+      if (guests.children !== undefined) {
+        params.set('children', guests.children.toString())
+      }
     }
     const target = `/search-results?${params.toString()}`
 

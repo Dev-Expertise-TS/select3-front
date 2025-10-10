@@ -21,6 +21,7 @@ interface RoomCardProps {
   isBeyondFirstRow?: boolean
   hasIntro?: boolean
   onRequestIntro?: () => void
+  rooms?: number
 }
 
 export function RoomCard({
@@ -40,7 +41,8 @@ export function RoomCard({
   view,
   isBeyondFirstRow = false,
   hasIntro = false,
-  onRequestIntro
+  onRequestIntro,
+  rooms = 1
 }: RoomCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -232,12 +234,18 @@ export function RoomCard({
             </span>
             <div className="text-left sm:text-right">
               <div className="text-base sm:text-lg font-bold text-gray-900">
-                {formatAmount(amount, currency)}
+                {formatAmount(Number(amount) * rooms, currency)}
               </div>
+              {/* 룸 개수 표시 */}
+              {rooms > 1 && (
+                <div className="text-xs text-gray-500 mt-0.5">
+                  (1실 {formatAmount(amount, currency)} × {rooms}실)
+                </div>
+              )}
               {/* 1박 평균 금액 - 1박이 아닌 경우에만 표시 */}
               {calculateNights(checkIn, checkOut) > 1 && (
                 <div className="text-xs text-gray-500 mt-1">
-                  {calculateAveragePerNight(amount, checkIn, checkOut, currency)} / 1박 평균가
+                  {calculateAveragePerNight(Number(amount) * rooms, checkIn, checkOut, currency)} / 1박 평균가
                 </div>
               )}
             </div>

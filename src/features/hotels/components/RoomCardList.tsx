@@ -13,6 +13,7 @@ interface RoomCardListProps {
   checkIn?: string
   checkOut?: string
   onRequestIntro?: (index: number) => void
+  rooms?: number
 }
 
 export function RoomCardList({
@@ -24,7 +25,8 @@ export function RoomCardList({
   currentProcessingRow,
   checkIn,
   checkOut,
-  onRequestIntro
+  onRequestIntro,
+  rooms = 1
 }: RoomCardListProps) {
   const [showAll, setShowAll] = useState(false)
   
@@ -145,6 +147,7 @@ export function RoomCardList({
             isBeyondFirstRow={idx >= 3}
             hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
             onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
+            rooms={rooms}
           />
         )
         })}

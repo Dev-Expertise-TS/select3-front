@@ -467,6 +467,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
       checkOut: twoWeeksLaterPlusOne.toISOString().split('T')[0]
     }
   })
+  const [searchGuests, setSearchGuests] = useState({ rooms: 1, adults: 2 })
   const [hasSearched, setHasSearched] = useState(false)
 
   // AI 처리 훅 사용
@@ -1052,7 +1053,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
 
   // Sabre API를 통해 객실 데이터 조회
   const { data: sabreData, isLoading: sabreLoading, error: sabreError } = useQuery({
-    queryKey: ['sabre-hotel-details', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut, hasSearched],
+    queryKey: ['sabre-hotel-details', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut, searchGuests.rooms, searchGuests.adults, hasSearched],
     queryFn: async () => {
       if (!hotel?.sabre_id || !hasSearched) return null
       
@@ -1090,8 +1091,8 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
           hotelCode: hotel.sabre_id.toString(),
           startDate: startDate,
           endDate: endDate,
-          adults: 2,
-          rooms: 1,
+          adults: searchGuests.adults,
+          rooms: searchGuests.rooms,
           // rate_plan_code가 있으면 해당 코드만, 없으면 모든 Rate Plan 조회
           ...(requestRatePlanCodes.length > 0 && { ratePlanCodes: requestRatePlanCodes })
         }
@@ -1136,6 +1137,32 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
           hasGetHotelDetailsRS: !!result.data?.GetHotelDetailsRS,
           responseStructure: result.data ? Object.keys(result.data) : 'no data'
         })
+        
+        // 룸 요금 상세 분석 (클라이언트 측)
+        if (result.data?.GetHotelDetailsRS?.RoomStays?.RoomStay) {
+          const roomStays = Array.isArray(result.data.GetHotelDetailsRS.RoomStays.RoomStay)
+            ? result.data.GetHotelDetailsRS.RoomStays.RoomStay
+            : [result.data.GetHotelDetailsRS.RoomStays.RoomStay]
+          
+          console.log('🏨 클라이언트: 룸 응답 상세 분석:', {
+            requestedRooms: searchGuests.rooms,
+            requestedAdults: searchGuests.adults,
+            totalRoomStays: roomStays.length,
+            sampleRoomRates: roomStays[0]?.RoomRates?.RoomRate ? (
+              Array.isArray(roomStays[0].RoomRates.RoomRate)
+                ? roomStays[0].RoomRates.RoomRate.slice(0, 3).map((rate: any) => ({
+                    roomType: rate.RoomType || 'N/A',
+                    amountAfterTax: rate.Total?.AmountAfterTax || rate.AmountAfterTax || 'N/A',
+                    currency: rate.Total?.CurrencyCode || rate.Currency || 'N/A'
+                  }))
+                : [{
+                    roomType: roomStays[0].RoomRates.RoomRate.RoomType || 'N/A',
+                    amountAfterTax: roomStays[0].RoomRates.RoomRate.Total?.AmountAfterTax || roomStays[0].RoomRates.RoomRate.AmountAfterTax || 'N/A',
+                    currency: roomStays[0].RoomRates.RoomRate.Total?.CurrencyCode || roomStays[0].RoomRates.RoomRate.Currency || 'N/A'
+                  }]
+            ) : 'No rates found'
+          })
+        }
         
         if (result.success && result.data?.GetHotelDetailsRS) {
           const responseData = {
@@ -1334,11 +1361,14 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
             location={hotel.city_ko || hotel.city_eng || '도시'}
             checkIn={searchDates.checkIn}
             checkOut={searchDates.checkOut}
-            guests={{ rooms: 1, adults: 2 }}
+            guests={searchGuests}
             initialQuery={hotel.property_name_ko && hotel.property_name_en ? `${hotel.property_name_ko}(${hotel.property_name_en})` : hotel.property_name_ko || hotel.property_name_en || ''}
             onSearch={(query, dates, guests) => {
               if (dates) {
                 setSearchDates(dates)
+              }
+              if (guests) {
+                setSearchGuests(guests)
               }
               setHasSearched(true)
             }}
@@ -1406,6 +1436,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                         // 해당 index의 카드만 처리
                         processSingleRoomIntro(ratePlanCodes, hotel.property_name_ko, index, searchDates.checkIn, searchDates.checkOut)
                       }}
+                      rooms={searchGuests.rooms}
                     />
                     </div>
                     
@@ -1434,6 +1465,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
                         hotelName={hotel?.property_name_ko || ''}
                         checkIn={searchDates.checkIn}
                         checkOut={searchDates.checkOut}
+                        rooms={searchGuests.rooms}
                       />
                               </div>
                   )}

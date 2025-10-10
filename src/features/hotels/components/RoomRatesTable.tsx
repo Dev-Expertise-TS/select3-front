@@ -28,6 +28,7 @@ interface RoomRatesTableProps {
   hotelName: string
   checkIn: string
   checkOut: string
+  rooms?: number
 }
 
 export function RoomRatesTable({
@@ -47,7 +48,8 @@ export function RoomRatesTable({
   processRemainingRatePlans,
   hotelName,
   checkIn,
-  checkOut
+  checkOut,
+  rooms = 1
 }: RoomRatesTableProps) {
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -560,10 +562,20 @@ export function RoomRatesTable({
                     </div>
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">
-                    {amount && amount !== '' && !isNaN(Number(amount)) && Number(amount) > 0 ? 
-                      `${parseInt(String(amount)).toLocaleString()}` : 
+                    {amount && amount !== '' && !isNaN(Number(amount)) && Number(amount) > 0 ? (
+                      <div className="flex flex-col items-center">
+                        <span className="font-semibold">
+                          {parseInt(String(Number(amount) * rooms)).toLocaleString()}
+                        </span>
+                        {rooms > 1 && (
+                          <span className="text-xs text-gray-500 mt-1">
+                            (1실 {parseInt(String(amount)).toLocaleString()} × {rooms}실)
+                          </span>
+                        )}
+                      </div>
+                    ) : (
                       <span className="text-red-500">요금 정보 없음</span>
-                    }
+                    )}
                   </td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">{currency}</td>
                   <td className="border border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 text-center">

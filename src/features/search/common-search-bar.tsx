@@ -809,7 +809,7 @@ export function CommonSearchBar({
         <GuestSelector
           rooms={localGuests.rooms}
           adults={localGuests.adults}
-          onChange={(g) => {
+          onGuestsChange={(g) => {
             setLocalGuests(g)
             onGuestsChange?.(g)
           }}

@@ -30,15 +30,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const rooms = body.rooms || 1
+    const adultsPerRoom = body.adults || 2
+    
     const requestBody: any = {
       HotelCode: body.hotelCode.toString(),
       CurrencyCode: 'KRW',
       StartDate: body.startDate,
       EndDate: body.endDate,
-      Adults: body.adults || 2,
+      Adults: adultsPerRoom,
       Children: body.children || 0,
-      Rooms: body.rooms || 1
+      Rooms: rooms
     }
+    
+    console.log('🔢 룸 정보:', {
+      rooms,
+      adultsPerRoom,
+      totalAdults: adultsPerRoom * rooms,
+      children: body.children || 0
+    })
     
     // ratePlanCodes가 있으면 추가
     if (body.ratePlanCodes && body.ratePlanCodes.length > 0) {
@@ -257,6 +267,38 @@ export async function POST(request: NextRequest) {
       hasGetHotelDetailsRS: !!result?.GetHotelDetailsRS,
       getHotelDetailsRSKeys: result?.GetHotelDetailsRS ? Object.keys(result.GetHotelDetailsRS) : 'no GetHotelDetailsRS'
     })
+    
+    // 룸 개수별 요금 확인을 위한 상세 로깅
+    const hasRoomStays = result?.GetHotelDetailsRS?.RoomStays?.RoomStay
+    console.log('🔍 RoomStays 존재 여부:', !!hasRoomStays)
+    
+    if (hasRoomStays) {
+      const roomStays = Array.isArray(result.GetHotelDetailsRS.RoomStays.RoomStay) 
+        ? result.GetHotelDetailsRS.RoomStays.RoomStay 
+        : [result.GetHotelDetailsRS.RoomStays.RoomStay]
+      
+      const firstRoomStay = roomStays[0]
+      const roomRates = firstRoomStay?.RoomRates?.RoomRate
+      const firstRate = Array.isArray(roomRates) ? roomRates[0] : roomRates
+      
+      console.log('🏨 룸 응답 상세 분석:', {
+        requestedRooms: rooms,
+        requestedAdultsPerRoom: adultsPerRoom,
+        totalRoomStays: roomStays.length,
+        hasRoomRates: !!roomRates,
+        roomRatesCount: Array.isArray(roomRates) ? roomRates.length : (roomRates ? 1 : 0),
+        firstRateStructure: firstRate ? Object.keys(firstRate) : 'N/A',
+        firstRateAmount: firstRate?.Total?.AmountAfterTax || firstRate?.AmountAfterTax || 'N/A',
+        firstRateCurrency: firstRate?.Total?.CurrencyCode || firstRate?.Currency || 'N/A'
+      })
+    } else {
+      // HotelDetailsInfo 구조 확인
+      const hotelDetailsInfo = result?.GetHotelDetailsRS?.HotelDetailsInfo
+      console.log('🏨 대체 응답 구조 확인:', {
+        hasHotelDetailsInfo: !!hotelDetailsInfo,
+        hotelDetailsInfoKeys: hotelDetailsInfo ? Object.keys(hotelDetailsInfo) : 'N/A'
+      })
+    }
     
     return NextResponse.json<HotelDetailsResponse>(
       {
