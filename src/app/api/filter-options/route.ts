@@ -7,7 +7,7 @@ export async function GET() {
     
     console.log('🔄 필터 옵션 API 호출 시작')
     
-    // 호텔 데이터 조회 (chain_id 컬럼 없음 - chain_ko, chain_en만 존재)
+    // 호텔 데이터 조회 (필터 옵션 생성을 위해 모든 호텔 조회)
     const { data: hotels, error: hotelsError } = await supabase
       .from('select_hotels')
       .select('city_code, city_ko, city_en, country_code, country_ko, country_en, brand_id, chain_ko, chain_en, publish')
@@ -22,25 +22,33 @@ export async function GET() {
       throw hotelsError
     }
     
-    // publish 필터링
-    const filteredHotels = (hotels || []).filter((h: any) => h.publish !== false)
-    console.log('✅ publish 필터링 후:', filteredHotels.length)
+    // 필터 옵션 생성은 모든 호텔 기반 (publish 상관없이)
+    const filteredHotels = hotels || []
     
     // 브랜드 데이터 조회
-    const brandIds = filteredHotels.filter((h: any) => h.brand_id).map((h: any) => h.brand_id)
+    const brandIds = [...new Set(filteredHotels.filter((h: any) => h.brand_id).map((h: any) => h.brand_id))]
+    console.log('🔍 [브랜드] 호텔에서 추출한 고유 brand_id:', brandIds.length, brandIds.slice(0, 10))
+    
     let brands: any[] = []
     if (brandIds.length > 0) {
       const { data: brandData, error: brandError } = await supabase
         .from('hotel_brands')
-        .select('brand_id, brand_name_ko, brand_name_en, chain_id, status')
+        .select('brand_id, brand_name_ko, brand_name_en, chain_id, status, brand_sort_order')
         .in('brand_id', brandIds)
         .eq('status', 'active')
+        .order('brand_sort_order', { ascending: true })
       
       if (brandError) {
         console.error('❌ 브랜드 데이터 조회 오류:', brandError)
       } else {
         brands = brandData || []
-        console.log('🏷️ 브랜드 데이터:', brands.length)
+        console.log('🏷️ 브랜드 데이터 (status=active):', brands.length, '/', brandIds.length)
+        console.log('📋 조회된 브랜드 샘플:', brands.slice(0, 3).map((b: any) => ({
+          id: b.brand_id,
+          ko: b.brand_name_ko,
+          en: b.brand_name_en,
+          status: b.status
+        })))
       }
     }
     
@@ -201,7 +209,7 @@ export async function GET() {
     }
     
     // 브랜드 옵션 (브랜드영문명 (체인영문명) 형식)
-    const brandMap = new Map<string, { id: number; brand_en: string; chain_en: string | null }>()
+    const brandMap = new Map<string, { id: number; brand_name: string; brand_en: string; chain_en: string | null; sort_order: number }>()
     filteredHotels.forEach((hotel: any) => {
       if (hotel.brand_id) {
         const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
@@ -210,23 +218,47 @@ export async function GET() {
             ? hotelChains.find((c: any) => c.chain_id === brand.chain_id)
             : null
           
+          const brandNameEn = brand.brand_name_en || brand.brand_name_ko || ''
+          const chainNameEn = chain?.chain_name_en || ''
+          
           brandMap.set(String(hotel.brand_id), {
             id: hotel.brand_id,
-            brand_en: brand.brand_name_en || brand.brand_name_ko,
-            chain_en: chain?.chain_name_en || null
+            brand_name: brand.brand_name_ko || brand.brand_name_en || '',
+            brand_en: brandNameEn,
+            chain_en: chainNameEn || null,
+            sort_order: brand.brand_sort_order || 9999 // sort_order가 없으면 뒤로
           })
         }
       }
     })
     
-    const brandOptions = Array.from(brandMap.values()).map(brand => ({
-      id: String(brand.id),
-      label: brand.chain_en 
-        ? `${brand.brand_en} (${brand.chain_en})`
-        : brand.brand_en
-    })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'en'))
+    const brandOptions = Array.from(brandMap.values())
+      .filter(brand => brand.brand_en && brand.brand_name) // 브랜드명이 있는 것만
+      .map(brand => {
+        // 표시: 브랜드영문명 (체인영문명)
+        const displayLabel = brand.chain_en 
+          ? `${brand.brand_en} (${brand.chain_en})`
+          : brand.brand_en
+        
+        return {
+          id: String(brand.id),
+          label: displayLabel,
+          brand_name: brand.brand_name,
+          sort_order: brand.sort_order
+        }
+      })
+      .sort((a: any, b: any) => {
+        // brand_sort_order 기준으로 정렬 (낮은 순서부터)
+        return a.sort_order - b.sort_order
+      })
     
-    console.log('🏷️ 브랜드 옵션:', brandOptions.length)
+    console.log('🏷️ 브랜드 옵션:', {
+      총개수: brandOptions.length,
+      샘플: brandOptions.slice(0, 5),
+      원본브랜드데이터: brands.length,
+      브랜드Map크기: brandMap.size,
+      체인데이터: hotelChains.length
+    })
     
     const result = {
       cities,
