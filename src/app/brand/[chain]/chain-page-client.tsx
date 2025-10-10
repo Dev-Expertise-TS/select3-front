@@ -46,6 +46,9 @@ export function ChainPageClient({
     router.push(`/brand/brand?chain=${chainId}`)
   }
 
+  // 체인의 첫 번째 브랜드를 기본 선택 (URL 파라미터가 없는 경우)
+  const defaultBrandId = selectedChainBrands.length > 0 ? String(selectedChainBrands[0].brand_id) : null
+
   return (
     <HotelSearchResults
       title={chainRow.chain_name_en}
@@ -57,8 +60,8 @@ export function ChainPageClient({
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}
       currentChainName={chainRow.chain_name_en || chainRow.chain_name_ko}
-      // currentChainId를 전달하지 않음 (initialHotels 사용하도록)
-      // currentChainId={String(chainRow.chain_id)}
+      currentChainId={String(chainRow.chain_id)} // 체인 필터 자동 선택을 위해 전달
+      initialBrandId={null} // 체인 전체를 보여주므로 브랜드는 선택하지 않음
       onChainChange={handleChainChange}
       serverFilterOptions={serverFilterOptions}
       // 아티클 섹션 표시

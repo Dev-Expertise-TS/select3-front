@@ -196,7 +196,7 @@ export async function GET() {
     if (chainIds.length > 0) {
       const { data: chainData, error: chainError } = await supabase
         .from('hotel_chains')
-        .select('chain_id, chain_name_en, chain_name_ko, slug, status')
+        .select('chain_id, chain_name_en, chain_name_ko, slug, status, chain_sort_order')
         .in('chain_id', chainIds)
         .eq('status', 'active')
       
@@ -209,7 +209,15 @@ export async function GET() {
     }
     
     // 브랜드 옵션 (브랜드영문명 (체인영문명) 형식)
-    const brandMap = new Map<string, { id: number; brand_name: string; brand_en: string; chain_en: string | null; sort_order: number }>()
+    const brandMap = new Map<string, { 
+      id: number; 
+      brand_name: string; 
+      brand_en: string; 
+      chain_id: number | null;
+      chain_en: string | null; 
+      chain_name_ko: string | null;
+      sort_order: number 
+    }>()
     filteredHotels.forEach((hotel: any) => {
       if (hotel.brand_id) {
         const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
@@ -220,12 +228,15 @@ export async function GET() {
           
           const brandNameEn = brand.brand_name_en || brand.brand_name_ko || ''
           const chainNameEn = chain?.chain_name_en || ''
+          const chainNameKo = chain?.chain_name_ko || ''
           
           brandMap.set(String(hotel.brand_id), {
             id: hotel.brand_id,
             brand_name: brand.brand_name_ko || brand.brand_name_en || '',
             brand_en: brandNameEn,
+            chain_id: brand.chain_id || null,
             chain_en: chainNameEn || null,
+            chain_name_ko: chainNameKo || null,
             sort_order: brand.brand_sort_order || 9999 // sort_order가 없으면 뒤로
           })
         }
@@ -244,6 +255,8 @@ export async function GET() {
           id: String(brand.id),
           label: displayLabel,
           brand_name: brand.brand_name,
+          chain_id: brand.chain_id,
+          chain_name_ko: brand.chain_name_ko,
           sort_order: brand.sort_order
         }
       })
@@ -260,16 +273,43 @@ export async function GET() {
       체인데이터: hotelChains.length
     })
     
+    // 체인 옵션 생성
+    const chainMap = new Map<number, { id: number; name_ko: string; name_en: string; sort_order: number }>()
+    hotelChains.forEach((chain: any) => {
+      chainMap.set(chain.chain_id, {
+        id: chain.chain_id,
+        name_ko: chain.chain_name_ko || chain.chain_name_en || '',
+        name_en: chain.chain_name_en || chain.chain_name_ko || '', // 영문명 우선
+        sort_order: chain.chain_sort_order || 9999
+      })
+    })
+    
+    const chainOptions = Array.from(chainMap.values())
+      .map(chain => ({
+        id: String(chain.id),
+        label: chain.name_en,
+        name_en: chain.name_en,
+        sort_order: chain.sort_order
+      }))
+      .sort((a, b) => a.sort_order - b.sort_order)
+    
+    console.log('⛓️ 체인 옵션:', {
+      총개수: chainOptions.length,
+      샘플: chainOptions.slice(0, 5)
+    })
+    
     const result = {
       cities,
       countries,
-      brands: brandOptions
+      brands: brandOptions,
+      chains: chainOptions
     }
     
     console.log('✅ 필터 옵션 API 반환:', {
       도시: result.cities.length,
       국가: result.countries.length,
-      브랜드: result.brands.length
+      브랜드: result.brands.length,
+      체인: result.chains.length
     })
     
     return NextResponse.json({
