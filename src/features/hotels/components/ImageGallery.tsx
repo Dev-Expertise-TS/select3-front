@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 import { checkImageExists } from "@/lib/image-cache"
+import { optimizeGalleryGrid, optimizeGalleryDetail, optimizeGalleryThumbnail } from "@/lib/image-optimization"
 
 interface ImageItem {
   id: string
@@ -281,12 +282,13 @@ export function ImageGallery({
                       onClick={() => openDetailView(index)}
                     >
                       <NextImage
-                        src={image.media_path}
+                        src={optimizeGalleryGrid(image.media_path)}
                         alt={image.alt || `Gallery ${index + 1}`}
                         fill
                         className="object-cover transition-all duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        quality={85}
+                        quality={80}
+                        loading={index < 8 ? "eager" : "lazy"}
                       />
                     </div>
                   ))}
@@ -315,12 +317,14 @@ export function ImageGallery({
                 {validImages[currentImageIndex] && (
                     <NextImage
                     key={validImages[currentImageIndex].id}
-                    src={validImages[currentImageIndex].media_path}
+                    src={optimizeGalleryDetail(validImages[currentImageIndex].media_path)}
                     alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
                     fill
                     className="object-contain"
-                    quality={85}
+                    quality={90}
+                    sizes="(max-width: 768px) 100vw, 2000px"
                     loading="eager"
+                    priority
                     fetchPriority="high"
                     decoding="async"
                   />
@@ -369,13 +373,13 @@ export function ImageGallery({
                         }}
                       >
                         <NextImage
-                          src={image.media_path}
+                          src={optimizeGalleryThumbnail(image.media_path)}
                           alt={image.alt || `Thumbnail ${index + 1}`}
                           fill
                           className="object-cover transition-transform duration-200 hover:scale-105"
                           sizes="64px"
-                          quality={80}
-                          loading="eager"
+                          quality={75}
+                          loading="lazy"
                         />
                       </div>
                     ))}

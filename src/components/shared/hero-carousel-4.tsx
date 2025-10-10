@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useHeroImages, type HeroImageData } from "@/hooks/use-hero-images"
 import { SectionContainer } from "@/components/shared/section-container"
+import { optimizeHeroImageMobile, optimizeHeroImageDesktop } from "@/lib/image-optimization"
 
 interface CarouselSlide {
   id: number
@@ -197,12 +198,13 @@ export function HeroCarousel4() {
                       </div>
                     ) : (
                       <Image
-                        src={carouselSlides[currentSlide].image || "/placeholder.svg"}
+                        src={optimizeHeroImageMobile(carouselSlides[currentSlide].image || "/placeholder.svg")}
                         alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
                         fill
                         priority
+                        quality={85}
                         className="object-cover transition-all duration-300 group-hover:scale-105"
-                        sizes="100vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
                         onError={(e) => {
                           console.error(`❌ 히어로 이미지 로딩 실패: ${carouselSlides[currentSlide].image}`)
                           const target = e.target as HTMLImageElement
@@ -298,12 +300,14 @@ export function HeroCarousel4() {
                         </div>
                       ) : (
                         <Image
-                          src={slide.image || "/placeholder.svg"}
+                          src={optimizeHeroImageDesktop(slide.image || "/placeholder.svg")}
                           alt={`${slide.hotelName} - Premium Hotel Property`}
                           fill
                           priority={index < 2}
+                          quality={85}
                           className="object-cover transition-all duration-300 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          sizes="(max-width: 1024px) 50vw, 25vw"
+                          loading={index < 2 ? "eager" : "lazy"}
                           onError={(e) => {
                             console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
                             const target = e.target as HTMLImageElement

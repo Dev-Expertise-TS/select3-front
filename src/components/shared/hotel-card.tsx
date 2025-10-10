@@ -11,6 +11,7 @@ import { OptimizedImage } from "@/components/ui/optimized-image"
 import { generateHotelImageUrl } from "@/lib/supabase-image-loader"
 import { PromotionBox } from "@/components/shared/promotion-box"
 import { formatDateDot } from "@/lib/date-utils"
+import { optimizeHotelCardImage } from "@/lib/image-optimization"
 
 // 호텔 데이터 타입 정의
 export interface HotelCardData {
@@ -116,13 +117,13 @@ export function HotelCard({
         )}>
           {/* select_hotel_media 테이블의 이미지 우선 사용 (호텔 카드와 동일) */}
           <OptimizedImage
-            src={getSafeImageUrl(hotel.image)}
+            src={optimizeHotelCardImage(getSafeImageUrl(hotel.image))}
             alt={`${hotel.property_name_ko} - ${hotel.city}`}
             fill
             className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={variant === 'featured' || variant === 'promotion'}
-            quality={variant === 'featured' || variant === 'promotion' ? 90 : 80}
+            quality={variant === 'featured' || variant === 'promotion' ? 85 : 80}
             format="webp"
             placeholder="blur"
             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="

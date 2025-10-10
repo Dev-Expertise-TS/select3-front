@@ -4,6 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { optimizeHotelMainImage, optimizeGalleryDetail, optimizeGalleryThumbnail } from "@/lib/image-optimization"
 
 interface MobileImageGridProps {
   images: Array<{
@@ -62,12 +63,14 @@ export function MobileImageGrid({
       <div className={cn("lg:hidden", className)}>
         <div className="relative aspect-[4/3] rounded-none sm:rounded-lg overflow-hidden">
           <Image
-            src={currentImage.media_path}
+            src={optimizeHotelMainImage(currentImage.media_path)}
             alt={hotelName}
             fill
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
+            quality={85}
+            sizes="100vw"
           />
           
           {/* 이미지 개수 표시 */}
@@ -112,11 +115,13 @@ export function MobileImageGrid({
             <div className="flex-1 relative bg-black">
               <div className="relative w-full h-full">
                 <Image
-                  src={currentImage.media_path}
+                  src={optimizeGalleryDetail(currentImage.media_path)}
                   alt={`${hotelName} - 이미지 ${currentImageIndex + 1}`}
                   fill
                   className="object-contain"
                   priority
+                  quality={90}
+                  sizes="100vw"
                 />
                 
                 {/* 네비게이션 버튼 */}
@@ -155,10 +160,13 @@ export function MobileImageGrid({
                       )}
                     >
                       <Image
-                        src={image.media_path}
+                        src={optimizeGalleryThumbnail(image.media_path)}
                         alt={`${hotelName} 썸네일 ${index + 1}`}
                         fill
                         className="object-cover"
+                        quality={75}
+                        sizes="64px"
+                        loading="lazy"
                       />
                     </button>
                   ))}

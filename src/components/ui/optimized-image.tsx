@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { createSupabaseImageUrl } from '@/lib/supabase-image-loader';
 import { cn } from '@/lib/utils';
 import { ImageErrorBoundary, ImageLoadingState } from './image-error-boundary';
+import { optimizeHotelCardImage, optimizeHotelMainImage, optimizeHotelSmallImage } from '@/lib/image-optimization';
 
 interface OptimizedImageProps {
   src: string;
@@ -154,7 +155,7 @@ export function HotelHeroImage({ src, alt, className, width = 1920, height = 108
       className={className}
       priority={true}
       quality={90}
-      format="avif"
+      format="avif" // AVIF 유지
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
       placeholder="blur"
       blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
@@ -206,7 +207,7 @@ export function HotelThumbnail({ src, alt, className, onClick, isActive }: Hotel
         className
       )}
       quality={80}
-      format="webp"
+      format="avif" // AVIF로 변경
       sizes="120px"
       placeholder="empty"
       onClick={onClick}
