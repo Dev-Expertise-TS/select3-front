@@ -84,11 +84,15 @@ export function ShareButton({
     }
 
     try {
+      // 카카오톡 공유에서는 title과 description이 분리되어 전달되므로
+      // 호텔명 중복을 방지하기 위해 description만 사용
+      const shareDescription = description || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
+      
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
           title: title,
-          description: description,
+          description: shareDescription,
           imageUrl: imageUrl || 'https://select-hotels.com/select_logo.avif',
           link: {
             mobileWebUrl: url,
@@ -109,11 +113,11 @@ export function ShareButton({
     } catch (error) {
       console.error('카카오톡 공유 실패:', error)
       // 폴백: 카카오스토리 공유
-      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}`, '_blank')
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank')
     }
   }
 
-  const shareText = `${title} - 셀렉트 호텔`
+  const shareText = `${title} - 투어비스 셀렉트`
 
   return (
     <div className={cn("relative", className)}>

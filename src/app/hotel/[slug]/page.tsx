@@ -128,7 +128,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   const title = `${hotel.property_name_ko || hotel.property_name_en} | Select Hotels`
-  const description = hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en}의 최고의 숙박 경험을 제공합니다.`
+  const description = hotel.description_ko || hotel.description_en || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   

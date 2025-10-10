@@ -194,7 +194,7 @@ export function HotelInfo({
                         <ShareButton 
                           url={shareUrl}
                           title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
-                          description={hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                          description={hotel.description_ko || hotel.description_en || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'}
                           imageUrl={images[0]?.media_path}
                         />
                       </div>
@@ -217,7 +217,7 @@ export function HotelInfo({
                     <ShareButton 
                       url={shareUrl}
                       title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
-                      description={hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                      description={hotel.description_ko || hotel.description_en || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'}
                       imageUrl={images[0]?.media_path}
                     />
                   </div>
