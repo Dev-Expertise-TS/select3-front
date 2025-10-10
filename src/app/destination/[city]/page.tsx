@@ -1,8 +1,47 @@
 import Image from "next/image"
 import Link from "next/link"
+import { Metadata } from 'next'
 import { ArrowLeft, Coffee, Utensils, Waves, Filter, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search/common-search-bar"
+
+// 동적 메타데이터 생성
+export async function generateMetadata({ params }: { params: Promise<{ city: string }> }): Promise<Metadata> {
+  const { city } = await params
+  const cityName = city.charAt(0).toUpperCase() + city.slice(1)
+  const destinationHotels = await getDestinationHotels(city)
+  
+  const title = `${cityName} 호텔 | 투어비스 셀렉트`
+  const description = `${cityName}에서 최고의 럭셔리 호텔과 리조트를 찾아보세요. 투어비스 셀렉트에서 ${cityName} 여행에 특별한 혜택과 함께 최적의 숙박을 예약하실 수 있습니다.`
+  
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [
+        {
+          url: '/destination-image/' + city + '.webp',
+          width: 1200,
+          height: 630,
+          alt: `${cityName} 여행`,
+        },
+      ],
+    },
+    twitter: {
+      title,
+      description,
+      images: ['/destination-image/' + city + '.webp'],
+    },
+  }
+}
+
+// 목적지별 호텔 데이터 가져오기 (실제로는 데이터베이스에서 조회)
+async function getDestinationHotels(city: string) {
+  // 실제 구현에서는 데이터베이스에서 조회
+  return destinationHotels[city] || []
+}
 
 const destinationHotels: Record<string, any[]> = {
   thailand: [

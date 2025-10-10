@@ -1,5 +1,28 @@
 import { Suspense } from "react"
+import { Metadata } from 'next'
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
+
+export const metadata: Metadata = {
+  title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
+  description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
+  openGraph: {
+    title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
+    description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
+    images: [
+      {
+        url: '/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트 전체 호텔',
+      },
+    ],
+  },
+  twitter: {
+    title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
+    description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
+    images: ['/select_logo.avif'],
+  },
+}
 
 export default function AllHotelResortPage() {
   return (

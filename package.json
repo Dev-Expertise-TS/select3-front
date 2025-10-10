@@ -10,7 +10,13 @@
     "check-table": "tsx src/scripts/check-table-structure.ts",
     "check-all-tables": "tsx src/scripts/check-all-tables.ts",
     "check-promotion-tables": "tsx src/scripts/check-promotion-tables.ts",
-    "test-promotion-hook": "tsx src/scripts/test-promotion-hook.ts"
+    "test-promotion-hook": "tsx src/scripts/test-promotion-hook.ts",
+    "commit": "git commit -t .gitmessage",
+    "commit:feat": "git commit -m \"feat: 새로운 기능 추가\"",
+    "commit:fix": "git commit -m \"fix: 버그 수정\"",
+    "commit:refactor": "git commit -m \"refactor: 코드 리팩토링\"",
+    "commit:style": "git commit -m \"style: 코드 스타일 변경\"",
+    "commit:docs": "git commit -m \"docs: 문서 수정\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

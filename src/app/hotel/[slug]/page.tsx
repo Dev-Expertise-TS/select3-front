@@ -79,6 +79,33 @@ function toAbsoluteUrl(url: string): string {
   return `${baseUrl}/${url}`
 }
 
+// HTML 태그를 제거하고 텍스트만 추출하는 함수
+function stripHtmlTags(html: string): string {
+  if (!html) return ''
+  
+  // HTML 태그 제거
+  let text = html.replace(/<[^>]*>/g, '')
+  
+  // HTML 엔티티 디코딩
+  text = text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+  
+  // 연속된 공백과 줄바꿈 정리
+  text = text.replace(/\s+/g, ' ').trim()
+  
+  // 길이 제한 (메타 디스크립션은 보통 160자 이하 권장)
+  if (text.length > 160) {
+    text = text.substring(0, 157) + '...'
+  }
+  
+  return text
+}
+
 // 호텔 이미지를 가져오는 함수
 async function getHotelImages(sabreId: string) {
   try {
@@ -128,7 +155,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   const title = `${hotel.property_name_ko || hotel.property_name_en} | Select Hotels`
-  const description = hotel.description_ko || hotel.description_en || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
+  
+  // property_details에서 HTML 태그 제거하여 디스크립션 생성
+  const rawDescription = hotel.property_details || hotel.property_location || ''
+  const cleanDescription = rawDescription ? stripHtmlTags(rawDescription) : ''
+  const description = cleanDescription || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   
