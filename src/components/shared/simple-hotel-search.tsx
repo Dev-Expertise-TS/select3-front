@@ -207,8 +207,8 @@ export function SimpleHotelSearch({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-1.5 sm:p-4 ${className}`}>
-      <div className="flex items-center gap-1.5 sm:gap-3">
+    <div className={`w-full h-full flex items-center ${className}`}>
+      <div className="flex items-center gap-1.5 sm:gap-3 w-full h-full">
         {/* 검색 입력 영역 */}
         <div className="flex-1 relative">
           <div className="flex items-center gap-1.5 sm:gap-2 relative">
@@ -229,7 +229,7 @@ export function SimpleHotelSearch({
               }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={onKeyDown}
-              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none shadow-none"
+              className="border-0 bg-transparent p-0 text-gray-900 font-medium text-sm sm:text-base placeholder:text-gray-400 placeholder:text-xs sm:placeholder:text-base focus:ring-0 focus:outline-none shadow-none h-full"
               disabled={isSearching}
             />
             

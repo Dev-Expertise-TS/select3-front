@@ -789,23 +789,6 @@ export function HotelSearchResults({
                       {/* 검색 영역 */}
                       {showAllHotels && (
                         <div className="w-full order-2">
-                          <div className="bg-gray-50 lg:py-0">
-                            <SimpleHotelSearch 
-                              onSearch={handleSearch}
-                              initialQuery={searchQuery}
-                              placeholder="호텔명, 국가, 또는 지역으로 검색하세요"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      
-                    </div>
-                    
-                    {/* PC용 4개 그리드 레이아웃 (호텔 카드와 동일한 구조) */}
-                    <div className="hidden xl:grid xl:grid-cols-4 gap-8">
-                      {/* 검색 영역: 1~2번째 컬럼 (col-span-2) */}
-                      {showAllHotels && (
-                        <div className="col-span-2">
                           <SimpleHotelSearch 
                             onSearch={handleSearch}
                             initialQuery={searchQuery}
@@ -814,11 +797,38 @@ export function HotelSearchResults({
                         </div>
                       )}
                       
+                    </div>
+                    
+                    {/* PC용 4개 그리드 레이아웃 (호텔 카드와 동일한 구조) */}
+                    <div className="hidden xl:grid xl:grid-cols-4 gap-8 items-start">
+                      {/* 검색 영역: 1~2번째 컬럼 (col-span-2) */}
+                      {showAllHotels && (
+                        <div className="col-span-2 flex items-stretch">
+                          <div className="bg-white border border-gray-200 rounded-lg p-3 w-full flex flex-col justify-between">
+                            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                              <h3 className="text-base font-semibold text-gray-900">
+                                검색
+                              </h3>
+                              <div className="text-xs text-gray-500 font-medium">
+                                호텔 검색
+                              </div>
+                            </div>
+                            <div className="flex-grow">
+                              <SimpleHotelSearch 
+                                onSearch={handleSearch}
+                                initialQuery={searchQuery}
+                                placeholder="호텔명, 국가, 또는 지역으로 검색하세요"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* 필터 영역: 3~4번째 컬럼 (col-span-2) */}
                       {showFilters && (
-                        <div className="col-span-2">
-                          <div className="bg-white border border-gray-200 rounded-lg p-3 h-full flex flex-col">
-                            <div className="flex items-center justify-between mb-3">
+                        <div className="col-span-2 flex items-stretch">
+                          <div className="bg-white border border-gray-200 rounded-lg p-3 w-full flex flex-col justify-between">
+                            <div className="flex items-center justify-between mb-3 flex-shrink-0">
                               <h3 className="text-base font-semibold text-gray-900">
                                 필터 ({allData?.length || 0}개 호텔)
                               </h3>
@@ -839,13 +849,13 @@ export function HotelSearchResults({
                                 </div>
                               </div>
                             ) : (
-                              <div className="grid grid-cols-4 gap-3">
+                              <div className="grid grid-cols-4 gap-3 flex-grow">
                                 {/* 도시 필터 */}
                                 <div>
                                   <select
                                     value={filters.city}
                                     onChange={(e) => handleSingleFilterChange('city', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
                                     <option value="">도시</option>
@@ -862,7 +872,7 @@ export function HotelSearchResults({
                                   <select
                                     value={filters.country}
                                     onChange={(e) => handleSingleFilterChange('country', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
                                     <option value="">국가</option>
@@ -879,7 +889,7 @@ export function HotelSearchResults({
                                   <select
                                     value={filters.brand}
                                     onChange={(e) => handleSingleFilterChange('brand', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
                                     <option value="">브랜드</option>
@@ -896,7 +906,7 @@ export function HotelSearchResults({
                                   <select
                                     value={filters.chain}
                                     onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
                                     <option value="">체인</option>
