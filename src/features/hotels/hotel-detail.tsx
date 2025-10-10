@@ -1313,6 +1313,7 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
         isImageLoading={isImageLoading}
         isImageLoaded={isImageLoaded}
         isImageError={isImageError}
+        shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
       />
 
       {/* Image Gallery Modal */}

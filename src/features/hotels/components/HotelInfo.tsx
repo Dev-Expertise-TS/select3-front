@@ -4,6 +4,7 @@ import { Star, MapPin } from "lucide-react"
 // import { handleImageError, handleImageLoad } from "@/lib/image-utils"
 import { HotelHeroImage, HotelThumbnail, OptimizedImage } from "@/components/ui/optimized-image"
 import { MobileImageGrid } from "@/components/hotel/MobileImageGrid"
+import { ShareButton } from "@/components/shared/share-button"
 
 interface ImageItem {
   id: string
@@ -30,6 +31,7 @@ interface HotelInfoProps {
   isImageLoading?: (src: string) => boolean
   isImageLoaded?: (src: string) => boolean
   isImageError?: (src: string) => boolean
+  shareUrl?: string
 }
 
 export function HotelInfo({ 
@@ -42,7 +44,8 @@ export function HotelInfo({
   imageLoadingStates,
   isImageLoading,
   isImageLoaded,
-  isImageError
+  isImageError,
+  shareUrl
 }: HotelInfoProps) {
   return (
     <div className="bg-gray-100 py-0 sm:py-0.5 -mt-16 sm:mt-0">
@@ -177,16 +180,44 @@ export function HotelInfo({
           {/* Hotel Info Header - 아래로 이동 */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-3 sm:px-0">
             <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>
-                {hotel.property_name_en && (
-                  <span className="text-base sm:text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
-                )}
-                <div className="flex items-center">
-                  {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
-                    <Star key={`hotel-info-star-${i}`} className="h-4 w-4 fill-orange-400 text-orange-400" />
-                  ))}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1">
+                  {/* 모바일: 한글명 + 공유 버튼 같은 행 */}
+                  <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                    <h1 className="text-lg sm:text-2xl font-bold text-gray-900">{hotel.property_name_ko || '호텔명'}</h1>
+                    
+                    {/* 모바일 공유 버튼 - 한글명과 같은 행 우측 */}
+                    {shareUrl && (
+                      <div className="sm:hidden flex-shrink-0">
+                        <ShareButton 
+                          url={shareUrl}
+                          title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
+                          description={`${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {hotel.property_name_en && (
+                    <span className="text-sm sm:text-2xl font-bold text-gray-900">({hotel.property_name_en})</span>
+                  )}
+                  <div className="flex items-center">
+                    {hotel.rating && [...Array(hotel.rating)].map((_, i) => (
+                      <Star key={`hotel-info-star-${i}`} className="h-4 w-4 fill-orange-400 text-orange-400" />
+                    ))}
+                  </div>
                 </div>
+                
+                {/* 데스크탑 공유 버튼 */}
+                {shareUrl && (
+                  <div className="hidden sm:block">
+                    <ShareButton 
+                      url={shareUrl}
+                      title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
+                      description={`${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <MapPin className="h-4 w-4 flex-shrink-0" />
