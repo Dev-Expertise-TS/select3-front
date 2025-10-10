@@ -154,7 +154,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
   
-  const title = `${hotel.property_name_ko || hotel.property_name_en} | Select Hotels`
+  const title = `${hotel.property_name_ko || hotel.property_name_en} | 투어비스 셀렉트`
   
   // property_details에서 HTML 태그 제거하여 디스크립션 생성
   const rawDescription = hotel.property_details || hotel.property_location || ''
