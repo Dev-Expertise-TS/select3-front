@@ -29,10 +29,10 @@ export const navigationItems: NavigationItem[] = [
 ]
 
 /**
- * 모바일 하단 네비게이션용 아이템 (아이콘이 있는 주요 메뉴만)
+ * 모바일 하단 네비게이션용 아이템 (브랜드 메뉴 제외, 아이콘이 있는 주요 메뉴만)
  */
 export const mobileNavItems = navigationItems.filter(
-  item => item.icon !== undefined
+  item => item.icon !== undefined && item.href !== "/brand"
 )
 
 /**
