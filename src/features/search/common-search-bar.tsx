@@ -374,8 +374,17 @@ export function CommonSearchBar({
     setIsSearching(true)
     
     try {
-      // 사용자가 입력한 검색어를 사용 (빈 값이면 기본값 사용)
-      const query = searchQuery.trim() || initialQuery || location || "후쿠오카"
+      // 입력값 유효성: 호텔명/목적지가 비어있으면 경고 후 중단
+      const trimmed = searchQuery.trim()
+      if (!trimmed && !selectedHotel) {
+        setIsSearching(false)
+        // 간단한 알림. 추후 toast로 교체 가능
+        alert('목적지 또는 호텔명을 입력해주세요.')
+        return
+      }
+
+      // 사용자가 입력한 검색어를 사용 (빈 값이면 fallback 제거)
+      const query = trimmed || initialQuery || location || ""
       const dates = { checkIn: localCheckIn, checkOut: localCheckOut }
       
       // 검색 버튼을 눌렀을 때만 부모에게 날짜 변경 알림 (onDatesChange가 제공된 경우)

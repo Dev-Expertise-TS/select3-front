@@ -19,6 +19,7 @@ interface HotelDetailsResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: HotelDetailsRequest = await request.json()
+    const pricingSource = (process.env.SABRE_PRICING_SOURCE || 'avail').toLowerCase()
     
     if (!body.hotelCode || !body.startDate || !body.endDate) {
       return NextResponse.json<HotelDetailsResponse>(
@@ -112,6 +113,51 @@ export async function POST(request: NextRequest) {
     }
     */
     
+    // 선택적으로 1. hotel-avail API 시도 (Feature flag)
+    let availableData: any = null
+    if (pricingSource === 'avail') {
+      try {
+        console.log('🔧 pricingSource=avail: Hotel Avail 우선 시도', {
+          HotelCode: requestBody.HotelCode,
+          StartDate: requestBody.StartDate,
+          EndDate: requestBody.EndDate,
+          Adults: requestBody.Adults,
+          Children: requestBody.Children,
+          Rooms: requestBody.Rooms,
+        })
+
+        const availResponse = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            HotelCode: requestBody.HotelCode,
+            StartDate: requestBody.StartDate,
+            EndDate: requestBody.EndDate,
+            Adults: requestBody.Adults,
+            Children: requestBody.Children,
+            Rooms: requestBody.Rooms,
+            ...(requestBody.RatePlanCode ? { RatePlanCode: requestBody.RatePlanCode } : {})
+          }),
+          signal: AbortSignal.timeout(12000)
+        })
+
+        if (availResponse.ok) {
+          availableData = await availResponse.json()
+          console.log('📥 Hotel Avail 응답 OK', {
+            hasResult: !!availableData,
+            topKeys: availableData ? Object.keys(availableData).slice(0, 5) : []
+          })
+        } else {
+          console.warn('Hotel Avail API 실패 - details로 폴백', {
+            status: availResponse.status,
+            statusText: availResponse.statusText
+          })
+        }
+      } catch (e) {
+        console.warn('Hotel Avail 호출 오류 - details로 폴백', e)
+      }
+    }
+
     // 2. hotel-info API 시도 (일시 비활성화 - 404 오류)
     // TODO: API 서버 복구 후 다시 활성화
     /*
@@ -200,7 +246,7 @@ export async function POST(request: NextRequest) {
     }
     */
 
-    // 기존 hotel-details API 호출
+    // 기존 hotel-details API 호출 (avail 사용 중이어도 호환성 위해 병행 호출)
     let response: Response
     try {
       response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
@@ -305,7 +351,20 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           ...result,
-          descriptiveData: descriptiveData // 객실 상세 정보 추가
+          descriptiveData: descriptiveData, // 객실 상세 정보 추가
+          availableData // 가격/재고 기반 응답 (pricingSource=avail일 때 시도)
+        },
+        // 응답 메타 정보 추가
+        // 현재 어떤 소스를 시도했는지와 avail 데이터 존재 여부를 노출
+        // 클라이언트에서 디버깅/분기 처리에 활용 가능
+      
+        // NOTE: API Contracts의 meta 필드 가이드에 따라 추가
+        // { "success": true, "data": ..., "meta": {...} }
+        // 상태코드는 기존과 동일 유지
+        // 하위 호환성 위해 선택적 필드로만 제공
+        meta: {
+          pricingSourceAttempted: pricingSource,
+          hasAvailableData: !!availableData
         }
       },
       { status: 200 }
