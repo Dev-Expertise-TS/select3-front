@@ -3,21 +3,21 @@ import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import Image from "next/image"
 import Link from "next/link"
-import { Check, Sparkles, Crown, Coffee, DollarSign, Clock, ArrowUp, Star, Users, CreditCard, ArrowRight } from "lucide-react"
+import { Check, Sparkles, Crown, Coffee, DollarSign, Clock, ArrowUp, Star, Users, CreditCard, ArrowRight, Gift, Bell } from "lucide-react"
 
 // 혜택 아이콘 매핑 함수 (랜딩 페이지와 동일)
 function getBenefitIcon(index: number) {
   const icons = [
-    <Coffee className="w-5 h-5" key={index} />,
-    <DollarSign className="w-5 h-5" key={index} />,
-    <Clock className="w-5 h-5" key={index} />,
-    <Clock className="w-5 h-5" key={index} />,
-    <ArrowUp className="w-5 h-5" key={index} />,
-    <Star className="w-5 h-5" key={index} />,
-    <Users className="w-5 h-5" key={index} />,
-    <CreditCard className="w-5 h-5" key={index} />
+    <Coffee className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <DollarSign className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <Clock className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <Clock className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <ArrowUp className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <Star className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <Users className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />,
+    <CreditCard className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />
   ]
-  return icons[index] || <Check className="w-5 h-5" key={index} />
+  return icons[index] || <Check className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" key={index} />
 }
 
 export default function AboutPage() {
@@ -71,34 +71,31 @@ export default function AboutPage() {
         </section>
 
         {/* Benefits Section */}
-        <section className="py-10 sm:py-12 md:py-16">
+        <section className="py-10 sm:py-12 md:py-16 bg-white">
           <div className="container mx-auto max-w-[1440px] px-4 sm:px-6">
-            <div className="text-center mb-6 sm:mb-8 md:mb-10">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">
+            <div className="text-center mb-8 sm:mb-10 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 px-4">
                 예약과 동시에 드리는
               </h2>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 px-4">
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 px-4">
                 셀렉트만의 특별한 혜택
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
               {benefits.map((benefit, index) => (
                 <div 
                   key={index} 
-                  className="group relative bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 hover:shadow-xl active:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 active:border-blue-300 hover:-translate-y-1 active:translate-y-0 cursor-pointer"
+                  className="bg-white rounded-xl p-6 sm:p-7 md:p-8 border border-gray-200"
                 >
-                  {/* 아이콘 배경 그라데이션 */}
-                  <div className="absolute top-0 right-0 w-20 sm:w-28 md:w-32 h-20 sm:h-28 md:h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-bl-full opacity-30 group-hover:opacity-60 transition-opacity"></div>
-                  
-                  <div className="relative">
-                    <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-blue-600 rounded-lg mb-3 sm:mb-4 group-hover:scale-110 active:scale-105 transition-transform shadow-sm">
-                      <div className="text-white">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="mb-5 sm:mb-6">
+                      <div className="text-gray-900">
                         {getBenefitIcon(index)}
                       </div>
                     </div>
-                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2 leading-snug">{benefit.title}</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{benefit.description}</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">{benefit.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{benefit.description}</p>
                   </div>
                 </div>
               ))}
@@ -107,7 +104,7 @@ export default function AboutPage() {
         </section>
 
         {/* Global Brands Section */}
-        <section className="py-10 sm:py-12 md:py-16 bg-gradient-to-b from-white to-gray-50">
+        <section className="py-10 sm:py-12 md:py-16 bg-gray-50">
           <div className="container mx-auto max-w-[1440px] px-4 sm:px-6">
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">
@@ -154,7 +151,7 @@ export default function AboutPage() {
         </section>
 
         {/* Luxury Network Section */}
-        <section className="py-10 sm:py-12 md:py-16 bg-blue-50">
+        <section className="py-10 sm:py-12 md:py-16 bg-white">
           <div className="container mx-auto max-w-[1440px] px-4 sm:px-6">
             <div className="text-center max-w-4xl mx-auto">
               <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-blue-600 mb-3 sm:mb-4 shadow-sm border border-blue-100">
@@ -176,7 +173,7 @@ export default function AboutPage() {
         </section>
 
         {/* Programs Section */}
-        <section className="py-10 sm:py-12 md:py-16 bg-white">
+        <section className="py-10 sm:py-12 md:py-16 bg-gray-50">
           <div className="container mx-auto max-w-[1440px] px-4 sm:px-6">
             <div className="text-center mb-6 sm:mb-8 md:mb-10">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">
@@ -191,90 +188,129 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
               {programs.map((program, index) => (
                 <div 
                   key={index} 
-                  className="group bg-white rounded-xl shadow-lg hover:shadow-xl active:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200 active:border-blue-300 hover:-translate-y-1 active:translate-y-0"
+                  className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-sm transition-shadow duration-200 flex flex-col"
                 >
                   {/* Logo Section */}
-                  <div className="relative bg-gray-50 py-8 sm:py-10 md:py-12 px-6 sm:px-8 flex items-center justify-center min-h-[140px] sm:min-h-[160px] md:min-h-[180px]">
+                  <div className="relative bg-gray-100 flex items-center justify-center min-h-[140px] sm:min-h-[160px]">
                     {program.logo && (
-                      <div className="relative w-full h-20 sm:h-24 md:h-28">
+                      <div className="relative w-full h-full min-h-[140px] sm:min-h-[160px]">
                         <Image
                           src={program.logo}
                           alt={program.title}
                           fill
                           className="object-contain"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       </div>
                     )}
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-5 sm:p-6 md:p-8">
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1">{program.title}</h3>
-                    <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-5 sm:mb-6">{program.subtitle}</p>
+                  <div className="p-5 sm:p-6 flex flex-col flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">{program.title}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5">{program.subtitle}</p>
 
-                    <ul className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
+                    <ul className="space-y-2 sm:space-y-2.5 mb-5 sm:mb-6 flex-grow">
                       {program.benefits.map((benefit, idx) => (
                         <li key={idx} className="flex items-start">
-                          <div className="flex-shrink-0 mr-2.5 sm:mr-3 mt-0.5">
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                              <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
-                            </div>
+                          <div className="flex-shrink-0 mr-2 mt-0.5">
+                            {benefit.includes("조식") ? (
+                              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            ) : benefit.includes("크레딧") ? (
+                              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            ) : benefit.includes("업그레이드") ? (
+                              <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            ) : benefit.includes("체크인") || benefit.includes("체크아웃") ? (
+                              <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            ) : benefit.includes("포인트") ? (
+                              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            ) : (
+                              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+                            )}
                           </div>
-                          <span className="text-xs sm:text-sm md:text-base text-gray-700">{benefit}</span>
+                          <span className="text-xs sm:text-sm text-gray-700 leading-relaxed">{benefit}</span>
                         </li>
                       ))}
                     </ul>
 
-                    {program.link && (
-                      <Link 
-                        href={program.link}
-                        className="group/btn flex items-center justify-center w-full bg-gray-900 text-white text-center text-sm sm:text-base font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg active:shadow-md"
-                      >
-                        시설 목록 보기
-                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                      </Link>
-                    )}
+                    <div className="mt-auto">
+                      {program.buttons ? (
+                        <div className="flex gap-2">
+                          {program.buttons.map((button: any, btnIdx: number) => (
+                            <Link 
+                              key={btnIdx}
+                              href={button.link}
+                              className={`flex-1 text-center text-xs sm:text-sm font-semibold py-2.5 sm:py-3 rounded-lg transition-colors duration-200 ${
+                                button.secondary 
+                                  ? 'bg-white text-gray-900 border border-gray-900 hover:bg-gray-50' 
+                                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                              }`}
+                            >
+                              {button.text}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : program.link ? (
+                        <Link 
+                          href={program.link}
+                          className="block w-full bg-gray-900 text-white text-center text-xs sm:text-sm font-semibold py-2.5 sm:py-3 rounded-lg hover:bg-gray-800 active:bg-black transition-colors duration-200"
+                        >
+                          시설목록
+                        </Link>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* 혜택 안내 문구 */}
+            <div className="text-center mt-8 sm:mt-10 md:mt-12 px-4">
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                혜택은 시설별로 일부 상이할 수 있습니다.<br />
+                자세한 혜택은 호텔 상세 페이지 또는 컨시어지와의 상담을 통해 확인 바랍니다.
+              </p>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-blue-600 to-blue-700 text-white">
-          <div className="container mx-auto max-w-[1440px] px-4 sm:px-6">
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 px-4">
-                지금 바로 편하게 상담하세요
-              </h2>
-              <p className="text-sm sm:text-base md:text-lg mb-6 sm:mb-8 text-white/90 px-4">
-                호텔 전문 컨시어지 담당자가<br className="sm:hidden" /> 최적의 호텔과 요금을 안내해드립니다
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+        <section className="relative py-16 sm:py-20 md:py-24 bg-gray-50 overflow-hidden">
+          {/* 배경 이미지 */}
+          <div className="absolute inset-0">
+            <Image
+              src="/destination-image/bali.webp"
+              alt="Luxury Hotel"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/30"></div>
+          </div>
+
+          {/* 내용 */}
+          <div className="container mx-auto max-w-[1440px] px-4 sm:px-6 relative z-10">
+            <div className="max-w-xl ml-auto mr-0 md:mr-16 lg:mr-24">
+              <div className="bg-white rounded-2xl p-8 sm:p-10 md:p-12 shadow-2xl">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-5">
+                  Contacts
+                </h2>
+                <p className="text-base sm:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">
+                  셀렉트에 대해 궁금한 내용을 문의주시면<br />
+                  전문 상담사가 답변해드리겠습니다.
+                </p>
                 <a
-                  href="http://pf.kakao.com/_xdSExexj/chat"
+                  href="https://pf.kakao.com/_cxmxgNG/chat"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-[#FEE500] text-[#191919] text-sm sm:text-base font-semibold rounded-lg hover:bg-[#FAD000] active:bg-[#F5C700] transition-all duration-300 shadow-lg hover:shadow-xl active:shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="inline-flex items-center justify-center w-full px-6 py-4 bg-[#FEE500] text-[#191919] text-base sm:text-lg font-bold rounded-lg hover:bg-[#FAD000] active:bg-[#F5C700] transition-all duration-200 shadow-md hover:shadow-lg"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.376 1.409 4.5 3.599 5.899-.143.537-.534 2.007-.617 2.33-.096.374.137.369.255.269.092-.078 1.486-1.017 2.07-1.417C8.372 17.844 10.138 18 12 18c5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/>
-                  </svg>
                   카카오톡 상담
                 </a>
-                <Link 
-                  href="/hotel"
-                  className="group inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-transparent text-white text-sm sm:text-base font-semibold rounded-lg border-2 border-white hover:bg-white hover:text-blue-600 active:bg-gray-100 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  전체 호텔 보기
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
               </div>
             </div>
           </div>
@@ -347,8 +383,8 @@ const programs = [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)",
       "멤버십 포인트 적립"
     ],
     link: "/brand"
@@ -361,11 +397,13 @@ const programs = [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
-      "아만 디스커버리"
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
     ],
-    link: "/brand"
+    buttons: [
+      { text: "시설목록", link: "/brand" },
+      { text: "아만 디스커버리", link: "/blog/brand-discovery-aman", secondary: true }
+    ]
   },
   {
     title: "Hyatt Prive",
@@ -375,8 +413,8 @@ const programs = [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)",
       "멤버십 포인트 적립"
     ],
     link: "/brand"
@@ -389,8 +427,8 @@ const programs = [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)",
       "멤버십 포인트 적립"
     ],
     link: "/brand"
@@ -403,23 +441,139 @@ const programs = [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
-      "멤버십 포인트 적립"
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
     ],
     link: "/brand"
   },
   {
-    title: "Hilton Impresario",
-    subtitle: "힐튼 임프레사리오",
+    title: "Mandarin Oriental Fan Club",
+    subtitle: "만다린 오리엔탈 팬클럽",
+    logo: "/brand-image/mandarin.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Hilton for Luxury",
+    subtitle: "힐튼 포 럭셔리",
     logo: "/brand-image/hilton.avif",
     benefits: [
       "2인 조식 포함",
       "$100 호텔/리조트 크레딧",
       "객실 무료 업그레이드",
-      "얼리 체크인",
-      "레이트 체크아웃",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)",
       "멤버십 포인트 적립"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Shangri-La Group",
+    subtitle: "샹그릴라 더 럭셔리 서클",
+    logo: "/brand-image/shangri-la.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "BRAVOS",
+    subtitle: "멜리아 브라보스",
+    logo: "/brand-image/melia.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Virtuoso",
+    subtitle: "버츄오소",
+    logo: "/brand-image/virtuoso.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "LHW VITA",
+    subtitle: "Leading Hotels Of The World 멤버십",
+    logo: "/brand-image/lhw-vita.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Heaven's Portfolio",
+    subtitle: "헤븐스 포트폴리오",
+    logo: "/brand-image/heavens-portfolio.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Pan Pacific",
+    subtitle: "팬 퍼시픽 호텔 & 리조트",
+    logo: "/brand-image/pacific.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Preferred Hotels & Resorts",
+    subtitle: "Preferred Platinum Program",
+    logo: "/brand-image/preferred-hotels-resorts.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
+    ],
+    link: "/brand"
+  },
+  {
+    title: "Capella Hotels & Resorts",
+    subtitle: "Capella Hotels & Resorts",
+    logo: "/brand-image/capella.avif",
+    benefits: [
+      "2인 조식 포함",
+      "$100 호텔/리조트 크레딧",
+      "객실 무료 업그레이드",
+      "얼리 체크인 (현장 가능시)",
+      "레이트 체크아웃 (현장 가능시)"
     ],
     link: "/brand"
   }
