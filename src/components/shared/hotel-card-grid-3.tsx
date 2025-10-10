@@ -186,11 +186,11 @@ export function HotelCardGridSection3({
 
         {/* 전체 보기 버튼 */}
         {showViewAll && (
-          <div className="text-center mt-12">
+          <div className="text-center mt-8">
             {viewAllHref ? (
               <a
                 href={viewAllHref}
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
+                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
               >
                 {viewAllText}
                 <svg
@@ -205,7 +205,7 @@ export function HotelCardGridSection3({
             ) : (
               <button
                 onClick={onViewAllClick}
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
+                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
               >
                 {viewAllText}
                 <svg

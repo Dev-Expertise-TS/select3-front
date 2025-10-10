@@ -56,12 +56,30 @@ export function Header() {
             <nav className="hidden lg:flex items-center">
               {desktopNavItems.map((item, index) => (
                 <div key={item.href} className="flex items-center">
-                  <Link
-                    href={item.href}
-                    className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
-                  >
-                    {item.label}
-                  </Link>
+                  {item.href === "https://tourvis.com" ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                    >
+                      <Image
+                        src="/tourvis_logo.jpg"
+                        alt="투어비스"
+                        width={20}
+                        height={20}
+                        className="mr-1.5 rounded-sm"
+                      />
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                    >
+                      {item.label}
+                    </Link>
+                  )}
                   {index < desktopNavItems.length - 1 && (
                     <div className="w-px h-4 bg-gray-300 mx-2"></div>
                   )}

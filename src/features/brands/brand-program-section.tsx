@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { BrandCard } from "@/components/shared/brand-card"
 
 interface HotelChain {
@@ -78,6 +79,19 @@ export async function BrandProgramSection() {
               logoPath={chain.logo_path || "/placeholder.svg"}
             />
           ))}
+        </div>
+
+        {/* 더 보기 버튼 */}
+        <div className="text-center mt-8">
+          <Link
+            href="/brand"
+            className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+          >
+            브랜드 더 보기
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       </div>
     </section>

@@ -168,6 +168,9 @@ export function PromotionSection({ hotelCount = PROMOTION_CONFIG.DEFAULT_HOTEL_C
       emptyMessage="현재 진행 중인 프로모션이 없습니다."
       error={error}
       hotelCount={hotelCount}
+      showViewAll={true}
+      viewAllText="프로모션 더 보기"
+      viewAllHref="/promotion"
     />
   )
 }

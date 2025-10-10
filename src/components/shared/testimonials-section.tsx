@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -100,9 +101,24 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
     if (!scrollContainerRef.current) return
     const container = scrollContainerRef.current
     const scrollPosition = container.scrollLeft
-    const cardWidth = container.offsetWidth * 0.85 // 카드 너비 (85%)
-    const newIndex = Math.round(scrollPosition / cardWidth)
-    setCurrentIndex(newIndex)
+    const maxScrollLeft = container.scrollWidth - container.clientWidth
+    
+    // 스크롤이 끝에 거의 도달했으면 마지막 인덱스로 설정
+    if (scrollPosition >= maxScrollLeft - 10) {
+      setCurrentIndex(mockTestimonials.length - 1)
+      return
+    }
+    
+    // 첫 번째와 두 번째 카드 요소로 실제 간격 계산
+    const firstCard = container.querySelector('div[data-testimonial-card]') as HTMLElement
+    const secondCard = container.querySelectorAll('div[data-testimonial-card]')[1] as HTMLElement
+    if (!firstCard || !secondCard) return
+    
+    // 두 카드의 offsetLeft 차이로 정확한 간격 계산 (카드 너비 + gap)
+    const cardWithGap = secondCard.offsetLeft - firstCard.offsetLeft
+    
+    const newIndex = Math.round(scrollPosition / cardWithGap)
+    setCurrentIndex(Math.min(newIndex, mockTestimonials.length - 1))
   }
 
   // 마우스/터치 드래그 시작
@@ -132,9 +148,27 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
   const goToSlide = (index: number) => {
     if (!scrollContainerRef.current) return
     const container = scrollContainerRef.current
-    const cardWidth = container.offsetWidth * 0.85
+    
+    // 마지막 인덱스인 경우 최대 스크롤 위치로 이동
+    if (index === mockTestimonials.length - 1) {
+      const maxScrollLeft = container.scrollWidth - container.clientWidth
+      container.scrollTo({
+        left: maxScrollLeft,
+        behavior: 'smooth'
+      })
+      return
+    }
+    
+    // 첫 번째와 두 번째 카드 요소로 실제 간격 계산
+    const firstCard = container.querySelector('div[data-testimonial-card]') as HTMLElement
+    const secondCard = container.querySelectorAll('div[data-testimonial-card]')[1] as HTMLElement
+    if (!firstCard || !secondCard) return
+    
+    // 두 카드의 offsetLeft 차이로 정확한 간격 계산 (카드 너비 + gap)
+    const cardWithGap = secondCard.offsetLeft - firstCard.offsetLeft
+    
     container.scrollTo({
-      left: cardWidth * index,
+      left: cardWithGap * index,
       behavior: 'smooth'
     })
   }
@@ -176,15 +210,18 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
             onTouchStart={handleDragStart}
             onTouchMove={handleDragMove}
             onTouchEnd={handleDragEnd}
-            className="flex gap-4 lg:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 sm:px-6 lg:px-8 cursor-grab active:cursor-grabbing"
+            className="flex gap-4 lg:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory cursor-grab active:cursor-grabbing"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
+              paddingLeft: '1rem',
+              paddingRight: '1rem',
             }}
           >
             {mockTestimonials.map((testimonial) => (
               <div
                 key={testimonial.id}
+                data-testimonial-card
                 className="flex-shrink-0 w-[85%] sm:w-[80%] md:w-[75%] lg:w-[45%] xl:w-[42%] snap-start"
               >
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 sm:p-8 h-full">
@@ -212,6 +249,8 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
                 </div>
               </div>
             ))}
+            {/* 마지막 카드가 완전히 스크롤되도록 오른쪽 공간 확보 */}
+            <div className="flex-shrink-0 w-[15%] sm:w-[20%] md:w-[25%] lg:w-[55%] xl:w-[58%]" aria-hidden="true"></div>
           </div>
         </div>
 
@@ -230,6 +269,19 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
               aria-label={`리뷰 ${index + 1}로 이동`}
             />
           ))}
+        </div>
+
+        {/* 더 보기 버튼 */}
+        <div className="text-center mt-8">
+          <Link
+            href="/testimonials"
+            className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+          >
+            셀렉트 고객 후기 더 보기
+            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       </div>
     </section>
