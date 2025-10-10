@@ -39,92 +39,83 @@ async function getChainHotels(chainSlug: string) {
     return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
-  const matchedChain = chains[0] // slug는 unique하므로 첫 번째 결과 사용
-  console.log(`[ Server ] 체인 매칭 성공: ${matchedChain.chain_name_en} (chain_id: ${matchedChain.chain_id})`)
-  
+  // 여러 체인이 매칭될 수 있으므로, 브랜드가 있는 체인을 찾음
+  let matchedChain = null
+  let brands = null
+
+  for (const chain of chains) {
+    console.log(`[ Server ] chain_id ${chain.chain_id} (${chain.chain_name_en}) 확인 중...`)
+    
     // 3. hotel_brands에서 해당 chain_id를 가진 브랜드들 조회
-    const { data: brands, error: brandsError } = await supabase
+    const { data: chainBrands, error: brandsError } = await supabase
       .from('hotel_brands')
       .select('brand_id, brand_name_en, brand_name_ko')
-      .eq('chain_id', matchedChain.chain_id)
-  
-  console.log(`[ Server ] hotel_brands 조회 결과:`, { data: brands, error: brandsError })
-  
-  if (brandsError) {
-    console.error('[ Server ] 호텔 브랜드 조회 에러:', brandsError)
+      .eq('chain_id', chain.chain_id)
+      .eq('status', 'active') // status='active'만 조회
+    
+    console.log(`[ Server ] chain_id ${chain.chain_id}의 hotel_brands 조회 결과:`, { 
+      chainName: chain.chain_name_en,
+      brandCount: chainBrands?.length || 0,
+      error: brandsError 
+    })
+
+    if (brandsError) {
+      console.error(`[ Server ] chain_id ${chain.chain_id}의 브랜드 조회 에러:`, brandsError)
+      continue
+    }
+
+    // 브랜드가 있는 체인을 찾으면 선택
+    if (chainBrands && chainBrands.length > 0) {
+      matchedChain = chain
+      brands = chainBrands
+      console.log(`[ Server ] ✅ 브랜드가 있는 체인 선택: ${chain.chain_name_en} (chain_id: ${chain.chain_id}, 브랜드 수: ${chainBrands.length})`)
+      break
+    }
+  }
+
+  // 브랜드가 있는 체인을 찾지 못한 경우
+  if (!matchedChain || !brands) {
+    console.warn(`[ Server ] slug '${chainSlug}'에 브랜드가 있는 체인이 없습니다.`)
+    return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
-  // 4. select_hotels에서 호텔 조회
+  // 4. select_hotels에서 호텔 조회 (brand_id로만 조회)
   let hotels: any[] = []
   
-  // 4-1. brand_id로 조회 (brands가 있는 경우)
   if (brands && brands.length > 0) {
     const brandIds = brands.map(b => b.brand_id)
-    const brandIdStrings = brandIds.map(id => String(id))
-    console.log(`[ Server ] 브랜드 ID들:`, {
+    
+    console.log(`[ Server ] 브랜드 ID들로 호텔 조회:`, {
+      chainId: matchedChain.chain_id,
+      chainName: matchedChain.chain_name_en,
       brandIds,
-      brandIdStrings,
-      types: brandIds.map(id => typeof id),
-      includes65: brandIds.includes(65) || brandIdStrings.includes('65')
+      brandCount: brandIds.length
     })
     
-    // 숫자형과 문자열형 모두 시도
+    // brand_id로 호텔 조회 + publish 필터링 (DB 레벨에서)
     const { data: hotelData, error: hotelsError } = await supabase
       .from('select_hotels')
       .select('*')
-      .in('brand_id', brandIds) // 문자열이 아닌 원본 사용
+      .in('brand_id', brandIds)
+      .or('publish.is.null,publish.eq.true') // DB 레벨에서 publish 필터링
     
-    console.log(`[ Server ] select_hotels (brand_id) 조회 결과:`, { 
-      count: hotelData?.length, 
+    console.log(`[ Server ] select_hotels 조회 결과:`, { 
+      count: hotelData?.length || 0, 
       error: hotelsError,
       sampleHotels: hotelData?.slice(0, 3).map((h: any) => ({
         sabre_id: h.sabre_id,
         brand_id: h.brand_id,
-        brand_id_type: typeof h.brand_id,
         property_name_ko: h.property_name_ko,
         publish: h.publish
       }))
     })
     
     if (!hotelsError && hotelData) {
-      console.log(`[ Server ] publish 필터링 전 호텔 수: ${hotelData.length}`)
-      console.log(`[ Server ] publish 값 분포:`, {
-        total: hotelData.length,
-        publishTrue: hotelData.filter((h: any) => h.publish === true).length,
-        publishFalse: hotelData.filter((h: any) => h.publish === false).length,
-        publishNull: hotelData.filter((h: any) => h.publish === null).length,
-        publishUndefined: hotelData.filter((h: any) => h.publish === undefined).length,
-      })
-      
-      // 클라이언트에서 publish 필터링 (false 제외)
-      hotels = hotelData.filter((h: any) => h.publish !== false)
-      console.log(`[ Server ] publish 필터링 후 호텔 수: ${hotels.length}`)
-      
-      // sabre_id 991과 99999가 있는지 확인
-      const hotel991 = hotels.find((h: any) => h.sabre_id === 991)
-      const hotel99999 = hotels.find((h: any) => h.sabre_id === 99999)
-      console.log(`[ Server ] 특정 호텔 확인:`, {
-        hotel991: hotel991 ? { sabre_id: 991, brand_id: hotel991.brand_id, publish: hotel991.publish } : 'NOT FOUND',
-        hotel99999: hotel99999 ? { sabre_id: 99999, brand_id: hotel99999.brand_id, publish: hotel99999.publish } : 'NOT FOUND'
-      })
+      hotels = hotelData
+      console.log(`[ Server ] 최종 호텔 수: ${hotels.length}`)
     }
-  }
-  
-  // 4-2. brand_id로 호텔을 찾지 못한 경우 chain_en/chain_ko로 직접 조회
-  if (hotels.length === 0) {
-    console.log(`[ Server ] brand_id로 호텔을 찾을 수 없음. chain_en/chain_ko로 조회 시도...`)
-    
-    const { data: chainHotels, error: chainHotelsError } = await supabase
-      .from('select_hotels')
-      .select('*')
-      .or(`chain_en.ilike.%${matchedChain.chain_name_en}%,chain_ko.ilike.%${matchedChain.chain_name_ko || matchedChain.chain_name_en}%`)
-    
-    console.log(`[ Server ] select_hotels (chain_en/ko) 조회 결과:`, { data: chainHotels, error: chainHotelsError })
-    
-    if (!chainHotelsError && chainHotels) {
-      // 클라이언트에서 publish 필터링 (false 제외)
-      hotels = chainHotels.filter((h: any) => h.publish !== false)
-    }
+  } else {
+    console.warn(`[ Server ] 해당 체인(${matchedChain.chain_name_en})에 속한 브랜드가 없습니다.`)
   }
   
   // 5. select_hotel_media에서 호텔 이미지 조회 (각 호텔의 첫 번째 이미지)
