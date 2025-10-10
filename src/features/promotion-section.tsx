@@ -14,22 +14,39 @@ export function usePromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
   return useQuery({
     queryKey: ['promotion-hotels', hotelCount],
     queryFn: async () => {
-      // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회
+      // KST 오늘 (YYYY-MM-DD)
+      const now = new Date()
+      const kstMs = now.getTime() + 9 * 60 * 60 * 1000
+      const todayKst = new Date(kstMs).toISOString().slice(0, 10)
+
+      // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회 (start/end 포함)
       const { data: featureSlots, error: featureError } = await supabase
         .from('select_feature_slots')
-        .select('sabre_id')
+        .select('sabre_id, start_date, end_date')
         .eq('surface', '프로모션')
       
       if (featureError) throw featureError
       if (!featureSlots || featureSlots.length === 0) return []
-      
-      const sabreIds = featureSlots.map(slot => slot.sabre_id)
+
+      // 시작/종료 날짜 필터 (없으면 계속 노출)
+      const activeSabreIds = (featureSlots as any[])
+        .filter((slot) => {
+          const start = (slot.start_date ?? '').toString().slice(0, 10)
+          const end = (slot.end_date ?? '').toString().slice(0, 10)
+          if (!start && !end) return true
+          if (start && todayKst < start) return false
+          if (end && todayKst > end) return false
+          return true
+        })
+        .map((slot) => slot.sabre_id)
+
+      if (activeSabreIds.length === 0) return []
       
       // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회 (image_1 포함)
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
         .select('*')
-        .in('sabre_id', sabreIds)
+        .in('sabre_id', activeSabreIds)
         .limit(hotelCount * 2) // 필터링 고려하여 더 많이 가져오기
       
       if (hotelsError) throw hotelsError

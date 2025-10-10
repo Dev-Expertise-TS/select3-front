@@ -32,7 +32,7 @@ export function useHeroImages() {
         // 1. select_feature_slots에서 surface가 "히어로"인 sabre_id, slot_key 조회 (slot_key 오름차순 정렬)
         const { data: featureSlots, error: featureError } = await supabase
           .from('select_feature_slots')
-          .select('sabre_id, slot_key')
+          .select('sabre_id, slot_key, start_date, end_date')
           .eq('surface', '히어로')
           .order('slot_key', { ascending: true })
         
@@ -45,7 +45,26 @@ export function useHeroImages() {
           return []
         }
         
-        const sabreIds = featureSlots.map(slot => slot.sabre_id)
+        // KST 기준 오늘 날짜(YYYY-MM-DD)
+        const now = new Date()
+        const kstMs = now.getTime() + 9 * 60 * 60 * 1000
+        const todayKst = new Date(kstMs).toISOString().slice(0, 10)
+
+        // start_date/end_date 기간 필터링
+        const activeSlots = (featureSlots as any[]).filter((slot) => {
+          const start = (slot.start_date ?? '').toString().slice(0, 10)
+          const end = (slot.end_date ?? '').toString().slice(0, 10)
+          if (!start && !end) return true
+          if (start && todayKst < start) return false
+          if (end && todayKst > end) return false
+          return true
+        })
+
+        if (activeSlots.length === 0) {
+          return []
+        }
+
+        const sabreIds = activeSlots.map(slot => slot.sabre_id)
         
         // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
         const { data: hotels, error: hotelsError } = await supabase
@@ -109,7 +128,7 @@ export function useHeroImages() {
         
         // slot_key 기준으로 정렬된 순서를 유지하기 위해 맵 구성
         const orderMap = new Map<number, number>()
-        featureSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
+        activeSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
 
         // 5. 데이터 조합 - select_hotel_media 또는 fallback 사용
         const heroImages: HeroImageData[] = filteredHotels.map(hotel => {

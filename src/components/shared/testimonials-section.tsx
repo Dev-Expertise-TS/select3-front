@@ -176,7 +176,7 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
             onTouchStart={handleDragStart}
             onTouchMove={handleDragMove}
             onTouchEnd={handleDragEnd}
-            className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 sm:px-6 lg:px-8 cursor-grab active:cursor-grabbing"
+            className="flex gap-4 lg:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 sm:px-6 lg:px-8 cursor-grab active:cursor-grabbing"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -185,7 +185,7 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
             {mockTestimonials.map((testimonial) => (
               <div
                 key={testimonial.id}
-                className="flex-shrink-0 w-[85%] sm:w-[80%] md:w-[75%] lg:w-[70%] snap-start"
+                className="flex-shrink-0 w-[85%] sm:w-[80%] md:w-[75%] lg:w-[45%] xl:w-[42%] snap-start"
               >
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 sm:p-8 h-full">
                   {/* 별점 */}

@@ -19,7 +19,7 @@ interface HotelDetailsResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: HotelDetailsRequest = await request.json()
-    const pricingSource = (process.env.SABRE_PRICING_SOURCE || 'avail').toLowerCase()
+    const pricingSource = (process.env.SABRE_PRICING_SOURCE || 'details').toLowerCase()
     
     if (!body.hotelCode || !body.startDate || !body.endDate) {
       return NextResponse.json<HotelDetailsResponse>(
@@ -44,11 +44,18 @@ export async function POST(request: NextRequest) {
       Rooms: rooms
     }
     
-    console.log('🔢 룸 정보:', {
-      rooms,
-      adultsPerRoom,
-      totalAdults: adultsPerRoom * rooms,
-      children: body.children || 0
+    console.log('🔢 룸 정보 (요청 전):', {
+      받은값: {
+        rooms: body.rooms,
+        adults: body.adults,
+        children: body.children
+      },
+      실제전송값: {
+        Rooms: rooms,
+        Adults: adultsPerRoom,
+        Children: body.children || 0,
+        totalAdults: adultsPerRoom * rooms
+      }
     })
     
     // ratePlanCodes가 있으면 추가
@@ -113,50 +120,8 @@ export async function POST(request: NextRequest) {
     }
     */
     
-    // 선택적으로 1. hotel-avail API 시도 (Feature flag)
-    let availableData: any = null
-    if (pricingSource === 'avail') {
-      try {
-        console.log('🔧 pricingSource=avail: Hotel Avail 우선 시도', {
-          HotelCode: requestBody.HotelCode,
-          StartDate: requestBody.StartDate,
-          EndDate: requestBody.EndDate,
-          Adults: requestBody.Adults,
-          Children: requestBody.Children,
-          Rooms: requestBody.Rooms,
-        })
-
-        const availResponse = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            HotelCode: requestBody.HotelCode,
-            StartDate: requestBody.StartDate,
-            EndDate: requestBody.EndDate,
-            Adults: requestBody.Adults,
-            Children: requestBody.Children,
-            Rooms: requestBody.Rooms,
-            ...(requestBody.RatePlanCode ? { RatePlanCode: requestBody.RatePlanCode } : {})
-          }),
-          signal: AbortSignal.timeout(12000)
-        })
-
-        if (availResponse.ok) {
-          availableData = await availResponse.json()
-          console.log('📥 Hotel Avail 응답 OK', {
-            hasResult: !!availableData,
-            topKeys: availableData ? Object.keys(availableData).slice(0, 5) : []
-          })
-        } else {
-          console.warn('Hotel Avail API 실패 - details로 폴백', {
-            status: availResponse.status,
-            statusText: availResponse.statusText
-          })
-        }
-      } catch (e) {
-        console.warn('Hotel Avail 호출 오류 - details로 폴백', e)
-      }
-    }
+    // 1. hotel-avail API 시도 비활성화 (요청에 따라 주석 처리 유지)
+    const availableData: any = null
 
     // 2. hotel-info API 시도 (일시 비활성화 - 404 오류)
     // TODO: API 서버 복구 후 다시 활성화
@@ -327,23 +292,63 @@ export async function POST(request: NextRequest) {
       const roomRates = firstRoomStay?.RoomRates?.RoomRate
       const firstRate = Array.isArray(roomRates) ? roomRates[0] : roomRates
       
-      console.log('🏨 룸 응답 상세 분석:', {
-        requestedRooms: rooms,
-        requestedAdultsPerRoom: adultsPerRoom,
-        totalRoomStays: roomStays.length,
-        hasRoomRates: !!roomRates,
-        roomRatesCount: Array.isArray(roomRates) ? roomRates.length : (roomRates ? 1 : 0),
-        firstRateStructure: firstRate ? Object.keys(firstRate) : 'N/A',
-        firstRateAmount: firstRate?.Total?.AmountAfterTax || firstRate?.AmountAfterTax || 'N/A',
-        firstRateCurrency: firstRate?.Total?.CurrencyCode || firstRate?.Currency || 'N/A'
+      console.log('🏨 룸 응답 상세 분석 (서버):', {
+        요청값: {
+          requestedRooms: rooms,
+          requestedAdultsPerRoom: adultsPerRoom,
+          totalAdultsRequested: adultsPerRoom * rooms
+        },
+        응답값: {
+          totalRoomStays: roomStays.length,
+          hasRoomRates: !!roomRates,
+          roomRatesCount: Array.isArray(roomRates) ? roomRates.length : (roomRates ? 1 : 0),
+          firstRateStructure: firstRate ? Object.keys(firstRate) : 'N/A',
+          firstRateAmount: firstRate?.Total?.AmountAfterTax || firstRate?.AmountAfterTax || 'N/A',
+          firstRateCurrency: firstRate?.Total?.CurrencyCode || firstRate?.Currency || 'N/A',
+          sampleFirstThreeRates: roomRates && Array.isArray(roomRates) ? roomRates.slice(0, 3).map((rate: any) => ({
+            RoomType: rate.RoomType || 'N/A',
+            Amount: rate.Total?.AmountAfterTax || rate.AmountAfterTax || 'N/A',
+            Currency: rate.Total?.CurrencyCode || rate.Currency || 'N/A'
+          })) : 'Single rate or none'
+        }
       })
     } else {
       // HotelDetailsInfo 구조 확인
       const hotelDetailsInfo = result?.GetHotelDetailsRS?.HotelDetailsInfo
-      console.log('🏨 대체 응답 구조 확인:', {
+      const hotelRateInfo = hotelDetailsInfo?.HotelRateInfo
+      const rooms = hotelRateInfo?.Rooms?.Room
+      
+      console.log('🏨 대체 응답 구조 상세 분석:', {
         hasHotelDetailsInfo: !!hotelDetailsInfo,
-        hotelDetailsInfoKeys: hotelDetailsInfo ? Object.keys(hotelDetailsInfo) : 'N/A'
+        hotelDetailsInfoKeys: hotelDetailsInfo ? Object.keys(hotelDetailsInfo) : 'N/A',
+        hasHotelRateInfo: !!hotelRateInfo,
+        hotelRateInfoKeys: hotelRateInfo ? Object.keys(hotelRateInfo) : 'N/A',
+        hasRooms: !!rooms,
+        roomsType: Array.isArray(rooms) ? 'array' : typeof rooms,
+        roomsCount: Array.isArray(rooms) ? rooms.length : (rooms ? 1 : 0),
+        sampleRoomStructure: rooms ? (Array.isArray(rooms) ? Object.keys(rooms[0] || {}) : Object.keys(rooms)) : 'N/A',
+        sampleRoomData: rooms ? (Array.isArray(rooms) ? rooms[0] : rooms) : 'N/A'
       })
+      
+      // RatePlans 구조 확인
+      if (rooms) {
+        const roomArray = Array.isArray(rooms) ? rooms : [rooms]
+        const firstRoom = roomArray[0]
+        const ratePlans = firstRoom?.RatePlans?.RatePlan
+        
+        console.log('🏨 RatePlans 상세 분석:', {
+          hasRatePlans: !!ratePlans,
+          ratePlansType: Array.isArray(ratePlans) ? 'array' : typeof ratePlans,
+          ratePlansCount: Array.isArray(ratePlans) ? ratePlans.length : (ratePlans ? 1 : 0),
+          sampleRatePlan: ratePlans ? (Array.isArray(ratePlans) ? ratePlans[0] : ratePlans) : 'N/A',
+          sampleFirstThreeRatePlans: ratePlans && Array.isArray(ratePlans) ? ratePlans.slice(0, 3).map((rp: any) => ({
+            RoomType: rp.RoomType || 'N/A',
+            RateKey: rp.RateKey || 'N/A',
+            AmountAfterTax: rp.ConvertedRateInfo?.AmountAfterTax || rp.RateInfo?.AmountAfterTax || 'N/A',
+            Currency: rp.ConvertedRateInfo?.CurrencyCode || rp.RateInfo?.CurrencyCode || 'N/A'
+          })) : 'Single or none'
+        })
+      }
     }
     
     return NextResponse.json<HotelDetailsResponse>(
