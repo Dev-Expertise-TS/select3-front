@@ -58,6 +58,27 @@ async function getHotelBySlug(slug: string) {
   }
 }
 
+// URL을 절대 URL로 변환하는 함수
+function toAbsoluteUrl(url: string): string {
+  if (!url) return ''
+  
+  // 이미 절대 URL인 경우
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  
+  // 상대 URL인 경우 도메인 추가
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+  
+  // '/'로 시작하는 경우
+  if (url.startsWith('/')) {
+    return `${baseUrl}${url}`
+  }
+  
+  // '/'로 시작하지 않는 경우
+  return `${baseUrl}/${url}`
+}
+
 // 호텔 이미지를 가져오는 함수
 async function getHotelImages(sabreId: string) {
   try {
@@ -65,18 +86,30 @@ async function getHotelImages(sabreId: string) {
     
     const { data: images, error } = await supabase
       .from('select_hotel_media')
-      .select('media_path, sequence')
+      .select('public_url, storage_path, image_seq')
       .eq('sabre_id', sabreId)
-      .order('sequence', { ascending: true })
+      .order('image_seq', { ascending: true })
       .limit(3)
     
     if (error || !images || images.length === 0) {
+      console.log('🔍 호텔 이미지 조회 결과:', { sabreId, error, imagesCount: images?.length || 0 })
       return []
     }
     
-    return images.map(img => img.media_path)
+    // public_url 우선 사용, 없으면 storage_path 사용
+    const imageUrls = images
+      .map(img => {
+        const url = img.public_url || img.storage_path
+        const absoluteUrl = url ? toAbsoluteUrl(url) : null
+        return absoluteUrl
+      })
+      .filter(Boolean) // null/undefined 제거
+    
+    console.log('✅ 호텔 OG 이미지 URLs:', { sabreId, count: imageUrls.length, urls: imageUrls })
+    
+    return imageUrls
   } catch (error) {
-    console.error('호텔 이미지 조회 오류:', error)
+    console.error('❌ 호텔 이미지 조회 오류:', error)
     return []
   }
 }
@@ -96,25 +129,37 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   const title = `${hotel.property_name_ko || hotel.property_name_en} | Select Hotels`
   const description = hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en}의 최고의 숙박 경험을 제공합니다.`
-  const url = `https://select-hotels.com/hotel/${decodedSlug}`
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+  const url = `${baseUrl}/hotel/${decodedSlug}`
   
   // 호텔 이미지 가져오기
   const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
   
+  console.log('📊 generateMetadata 디버깅:', {
+    slug: decodedSlug,
+    sabreId: hotel.sabre_id,
+    hotelImagesCount: hotelImages.length,
+    hotelImages: hotelImages,
+    title,
+    url
+  })
+  
   // OG 이미지 배열 생성
   const ogImages = hotelImages.length > 0 
     ? hotelImages.map(imagePath => ({
-        url: imagePath,
+        url: imagePath, // 이미 절대 URL로 변환됨
         width: 1200,
         height: 630,
         alt: `${hotel.property_name_ko || hotel.property_name_en} 이미지`
       }))
     : [{
-        url: 'https://select-hotels.com/select_logo.avif',
+        url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: 'Select Hotels'
       }]
+  
+  console.log('🖼️ OG 이미지 최종:', ogImages)
   
   return {
     title,
@@ -171,8 +216,9 @@ async function generateHotelStructuredData(hotel: any, slug: string) {
   if (!hotel) return null
 
   const decodedSlug = decodeURIComponent(slug)
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   
-  // 호텔 이미지 가져오기
+  // 호텔 이미지 가져오기 (이미 절대 URL로 변환됨)
   const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
   
   const structuredData = {
@@ -180,8 +226,8 @@ async function generateHotelStructuredData(hotel: any, slug: string) {
     "@type": "Hotel",
     "name": hotel.property_name_ko || hotel.property_name_en,
     "description": hotel.description_ko || hotel.description_en,
-    "url": `https://select-hotels.com/hotel/${decodedSlug}`,
-    "image": hotelImages.length > 0 ? hotelImages : ["https://select-hotels.com/select_logo.avif"],
+    "url": `${baseUrl}/hotel/${decodedSlug}`,
+    "image": hotelImages.length > 0 ? hotelImages : [`${baseUrl}/select_logo.avif`],
     "address": {
       "@type": "PostalAddress",
       "streetAddress": hotel.property_address || "",
