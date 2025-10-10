@@ -60,7 +60,7 @@ function useSearchResults(query: string, tick: number) {
 // 필터 옵션 조회 훅 (서버 API 사용)
 function useFilterOptions() {
   return useQuery({
-    queryKey: ['filter-options', 'v3'], // city_sort_order, country_sort_order 정렬 적용
+    queryKey: ['filter-options', 'v5'], // 체인 필터 제거, 브랜드 표시 형식 변경 (브랜드영문명 (체인영문명))
     queryFn: async () => {
       const response = await fetch('/api/filter-options')
       
@@ -401,8 +401,7 @@ export function HotelSearchResults({
   const [filters, setFilters] = useState({
     city: '',
     country: '',
-    brand: '',
-    chain: currentChainId || '' // 체인 페이지에서 자동으로 해당 체인 선택
+    brand: ''
   })
   const [searchDates, setSearchDates] = useState(() => {
     // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
@@ -487,19 +486,6 @@ export function HotelSearchResults({
       newFilters.country = ''
     }
     
-    // 브랜드 선택 시 자동으로 체인 선택 (브랜드는 체인의 부분집합)
-    if (type === 'brand' && value && finalFilterOptions) {
-      const selectedBrand = finalFilterOptions.brands.find((b: any) => b.id === value)
-      if (selectedBrand && selectedBrand.chain_id) {
-        newFilters.chain = String(selectedBrand.chain_id)
-      }
-    }
-    
-    // 브랜드 필터 해제 시 체인 필터도 해제
-    if (type === 'brand' && !value) {
-      newFilters.chain = ''
-    }
-    
     handleFiltersChange(newFilters)
   }
 
@@ -525,25 +511,6 @@ export function HotelSearchResults({
       // 브랜드 필터 (brand_id로 비교)
       if (filters.brand) {
         if (String(hotel.brand_id) !== filters.brand) {
-          return false
-        }
-      }
-      
-      // 체인 필터 (chain_id로 비교 - hotel_brands.chain_id와 매칭)
-      if (filters.chain) {
-        // filters.chain은 chain_id 값
-        // hotel.brand_id를 통해 brand의 chain_id와 비교해야 함
-        // 이 비교는 서버에서 처리하거나, 브랜드 정보를 통해 매칭
-        // 일단 간단하게 chain_ko로 비교 (폴백)
-        const hotelChain = hotel.chain_ko || hotel.chain_en || ''
-        
-        // chain_id를 chain_name으로 변환
-        const selectedChain = finalFilterOptions?.chains.find((c: any) => c.id === filters.chain)
-        if (selectedChain) {
-          if (!hotelChain.includes(selectedChain.label)) {
-            return false
-          }
-        } else {
           return false
         }
       }
@@ -643,13 +610,6 @@ export function HotelSearchResults({
       return []
     }
     
-    // chain_id → chain_name 매핑
-    let chainNameFilter = ''
-    if (filters.chain && finalFilterOptions) {
-      const chainOption = finalFilterOptions.chains.find((c: any) => c.id === filters.chain)
-      chainNameFilter = chainOption?.label || ''
-    }
-    
     return initialHotels.filter(hotel => {
       // 도시 필터
       if (filters.city && !hotel.city?.includes(filters.city) && !hotel.location?.includes(filters.city)) {
@@ -663,11 +623,6 @@ export function HotelSearchResults({
       
       // 브랜드 필터
       if (filters.brand && hotel.brand !== filters.brand) {
-        return false
-      }
-      
-      // 체인 필터 (chain_id를 chain_name으로 변환하여 비교)
-      if (chainNameFilter && hotel.chain !== chainNameFilter) {
         return false
       }
       
@@ -828,7 +783,7 @@ export function HotelSearchResults({
                                 </div>
                               </div>
                             ) : (
-                              <div className="grid grid-cols-4 gap-3 flex-grow">
+                              <div className="grid grid-cols-3 gap-3 flex-grow">
                                 {/* 도시 필터 */}
                                 <div>
                                   <select
@@ -837,7 +792,7 @@ export function HotelSearchResults({
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
-                                    <option value="">도시</option>
+                                    <option value="">도시 전체</option>
                                     {finalFilterOptions?.cities?.map((city: any) => (
                                       <option key={city.id} value={city.id}>
                                         {city.label}
@@ -854,7 +809,7 @@ export function HotelSearchResults({
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
-                                    <option value="">국가</option>
+                                    <option value="">국가 전체</option>
                                     {finalFilterOptions?.countries?.map((country: any) => (
                                       <option key={country.id} value={country.id}>
                                         {country.label}
@@ -871,27 +826,10 @@ export function HotelSearchResults({
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
                                     disabled={isFinalFilterOptionsLoading}
                                   >
-                                    <option value="">브랜드</option>
+                                    <option value="">브랜드 전체</option>
                                     {finalFilterOptions?.brands?.map((brand: any) => (
                                       <option key={brand.id} value={brand.id}>
                                         {brand.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                
-                                {/* 체인 필터 */}
-                                <div>
-                                  <select
-                                    value={filters.chain}
-                                    onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
-                                    disabled={isFinalFilterOptionsLoading}
-                                  >
-                                    <option value="">체인</option>
-                                    {finalFilterOptions?.chains?.map((chain: any) => (
-                                      <option key={chain.id} value={chain.id}>
-                                        {chain.label}
                                       </option>
                                     ))}
                                   </select>
@@ -928,7 +866,7 @@ export function HotelSearchResults({
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            {/* 모바일: 2x2 그리드 */}
+                            {/* 모바일: 2x2 그리드 (브랜드 하나 더 추가되면 자동 줄바꿈) */}
                             <div className="grid grid-cols-2 gap-2">
                               {/* 도시 필터 */}
                               <div>
@@ -938,7 +876,7 @@ export function HotelSearchResults({
                                   className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                                   disabled={isFinalFilterOptionsLoading}
                                 >
-                                  <option value="">도시</option>
+                                  <option value="">도시 전체</option>
                                   {finalFilterOptions?.cities?.map((city: any) => (
                                     <option key={city.id} value={city.id}>
                                       {city.label}
@@ -955,7 +893,7 @@ export function HotelSearchResults({
                                   className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                                   disabled={isFinalFilterOptionsLoading}
                                 >
-                                  <option value="">국가</option>
+                                  <option value="">국가 전체</option>
                                   {finalFilterOptions?.countries?.map((country: any) => (
                                     <option key={country.id} value={country.id}>
                                       {country.label}
@@ -965,34 +903,17 @@ export function HotelSearchResults({
                               </div>
                               
                               {/* 브랜드 필터 */}
-                              <div>
+                              <div className="col-span-2">
                                 <select
                                   value={filters.brand}
                                   onChange={(e) => handleSingleFilterChange('brand', e.target.value)}
                                   className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                                   disabled={isFinalFilterOptionsLoading}
                                 >
-                                  <option value="">브랜드</option>
+                                  <option value="">브랜드 전체</option>
                                   {finalFilterOptions?.brands?.map((brand: any) => (
                                     <option key={brand.id} value={brand.id}>
                                       {brand.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              
-                              {/* 체인 필터 */}
-                              <div>
-                                <select
-                                  value={filters.chain}
-                                  onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
-                                  className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  disabled={isFinalFilterOptionsLoading}
-                                >
-                                  <option value="">체인</option>
-                                  {finalFilterOptions?.chains?.map((chain: any) => (
-                                    <option key={chain.id} value={chain.id}>
-                                      {chain.label}
                                     </option>
                                   ))}
                                 </select>
@@ -1030,17 +951,6 @@ export function HotelSearchResults({
                                       브랜드: {finalFilterOptions?.brands.find(b => b.id === filters.brand)?.label}
                                       <button
                                         onClick={() => handleSingleFilterChange('brand', '')}
-                                        className="ml-1 text-blue-600 hover:text-blue-800"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  )}
-                                  {filters.chain && (
-                                    <span className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                      체인: {finalFilterOptions?.chains.find(c => c.id === filters.chain)?.label}
-                                      <button
-                                        onClick={() => handleSingleFilterChange('chain', '')}
                                         className="ml-1 text-blue-600 hover:text-blue-800"
                                       >
                                         ×

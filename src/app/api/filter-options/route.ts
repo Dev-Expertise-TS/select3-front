@@ -32,8 +32,9 @@ export async function GET() {
     if (brandIds.length > 0) {
       const { data: brandData, error: brandError } = await supabase
         .from('hotel_brands')
-        .select('brand_id, brand_name_ko, brand_name_en, chain_id')
+        .select('brand_id, brand_name_ko, brand_name_en, chain_id, status')
         .in('brand_id', brandIds)
+        .eq('status', 'active')
       
       if (brandError) {
         console.error('❌ 브랜드 데이터 조회 오류:', brandError)
@@ -174,29 +175,7 @@ export async function GET() {
     
     console.log('🌍 최종 국가 옵션:', countries.length)
     
-    // 브랜드 옵션
-    const brandMap = new Map<string, { id: number; name: string; chain_id?: number }>()
-    filteredHotels.forEach((hotel: any) => {
-      if (hotel.brand_id) {
-        const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
-        if (brand) {
-          brandMap.set(String(hotel.brand_id), {
-            id: hotel.brand_id,
-            name: brand.brand_name_ko || brand.brand_name_en,
-            chain_id: brand.chain_id
-          })
-        }
-      }
-    })
-    const brandOptions = Array.from(brandMap.values()).map(brand => ({
-      id: String(brand.id),
-      label: brand.name,
-      chain_id: brand.chain_id
-    })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
-    
-    console.log('🏷️ 브랜드 옵션:', brandOptions.length)
-    
-    // 체인 옵션 (hotel_brands의 chain_id를 통해 hotel_chains 조회)
+    // 체인 데이터 조회 (브랜드 표시용)
     const chainIds = Array.from(new Set(
       brands
         .filter(b => b.chain_id)
@@ -209,8 +188,9 @@ export async function GET() {
     if (chainIds.length > 0) {
       const { data: chainData, error: chainError } = await supabase
         .from('hotel_chains')
-        .select('chain_id, chain_name_en, chain_name_ko, slug')
+        .select('chain_id, chain_name_en, chain_name_ko, slug, status')
         .in('chain_id', chainIds)
+        .eq('status', 'active')
       
       if (chainError) {
         console.error('❌ 체인 데이터 조회 오류:', chainError)
@@ -220,40 +200,44 @@ export async function GET() {
       }
     }
     
-    const chainMap = new Map<string, { id: number; ko: string; en: string }>()
-    brands.forEach((brand: any) => {
-      const chainId = brand.chain_id
-      if (chainId) {
-        const chain = hotelChains.find((c: any) => c.chain_id === chainId)
-        if (chain) {
-          chainMap.set(String(chainId), {
-            id: chainId,
-            ko: chain.chain_name_ko || chain.chain_name_en,
-            en: chain.chain_name_en
+    // 브랜드 옵션 (브랜드영문명 (체인영문명) 형식)
+    const brandMap = new Map<string, { id: number; brand_en: string; chain_en: string | null }>()
+    filteredHotels.forEach((hotel: any) => {
+      if (hotel.brand_id) {
+        const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
+        if (brand) {
+          const chain = brand.chain_id 
+            ? hotelChains.find((c: any) => c.chain_id === brand.chain_id)
+            : null
+          
+          brandMap.set(String(hotel.brand_id), {
+            id: hotel.brand_id,
+            brand_en: brand.brand_name_en || brand.brand_name_ko,
+            chain_en: chain?.chain_name_en || null
           })
         }
       }
     })
     
-    const chains = Array.from(chainMap.values()).map(chain => ({
-      id: String(chain.id),
-      label: chain.ko
-    })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
+    const brandOptions = Array.from(brandMap.values()).map(brand => ({
+      id: String(brand.id),
+      label: brand.chain_en 
+        ? `${brand.brand_en} (${brand.chain_en})`
+        : brand.brand_en
+    })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'en'))
     
-    console.log('✅ 최종 체인 옵션:', chains.length, chains.slice(0, 3))
+    console.log('🏷️ 브랜드 옵션:', brandOptions.length)
     
     const result = {
       cities,
       countries,
-      brands: brandOptions,
-      chains
+      brands: brandOptions
     }
     
     console.log('✅ 필터 옵션 API 반환:', {
       도시: result.cities.length,
       국가: result.countries.length,
-      브랜드: result.brands.length,
-      체인: result.chains.length
+      브랜드: result.brands.length
     })
     
     return NextResponse.json({
