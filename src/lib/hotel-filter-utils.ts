@@ -44,16 +44,16 @@ export function getChainBrandIds(chainId: string, brands?: Array<{ id: string; c
  * @returns 필터 통과 여부
  */
 export function filterHotel(hotel: any, filters: HotelFilters, chainBrandIds: string[] = []): boolean {
-  // 도시 필터
+  // 도시 필터 (city_code로 비교)
   if (filters.city) {
-    if (hotel.city_ko !== filters.city && hotel.city !== filters.city) {
+    if (hotel.city_code !== filters.city) {
       return false
     }
   }
   
-  // 국가 필터
+  // 국가 필터 (country_code로 비교)
   if (filters.country) {
-    if (hotel.country_ko !== filters.country && hotel.country !== filters.country) {
+    if (hotel.country_code !== filters.country) {
       return false
     }
   }

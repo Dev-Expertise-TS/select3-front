@@ -67,7 +67,7 @@ export function useSearchResults(query: string, tick: number) {
  */
 export function useFilterOptions() {
   return useQuery({
-    queryKey: ['filter-options', 'v10'],
+    queryKey: ['filter-options', 'v13'], // city_code, country_code 기반으로 정확히 복원
     queryFn: async () => {
       const response = await fetch('/api/filter-options')
       

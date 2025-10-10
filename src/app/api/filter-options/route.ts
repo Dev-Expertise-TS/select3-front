@@ -14,7 +14,14 @@ export async function GET() {
     
     console.log('📊 호텔 데이터 조회 결과:', {
       총호텔수: hotels?.length || 0,
-      에러: hotelsError?.message || 'none'
+      에러: hotelsError?.message || 'none',
+      샘플데이터: hotels?.[0] ? {
+        city_code: hotels[0].city_code,
+        city_ko: hotels[0].city_ko,
+        country_code: hotels[0].country_code,
+        country_ko: hotels[0].country_ko,
+        brand_id: hotels[0].brand_id
+      } : null
     })
     
     if (hotelsError) {
@@ -57,7 +64,7 @@ export async function GET() {
     
     const { data: cityRegions, error: cityError } = await supabase
       .from('select_regions')
-      .select('city_ko, country_ko, city_sort_order')
+      .select('city_code, city_ko, country_code, country_ko, city_sort_order')
       .eq('status', 'active')
       .eq('region_type', 'city')
       .order('city_sort_order', { ascending: true })
@@ -91,23 +98,27 @@ export async function GET() {
     
     console.log('✅ [단계 3] select_regions 데이터 검증 통과')
     
-    const cityMap = new Map<string, { ko: string; country_ko: string }>()
+    const cityMap = new Map<string, { code: string; ko: string; country_code: string; country_ko: string }>()
     
     cityRegions.forEach((region: any) => {
+      const cityCode = region.city_code
       const cityKo = region.city_ko
+      const countryCode = region.country_code
       const countryKo = region.country_ko
       
-      if (!cityKo) {
-        console.warn('⚠️ city_ko가 없는 레코드:', region)
+      if (!cityCode || !cityKo) {
+        console.warn('⚠️ city_code 또는 city_ko가 없는 레코드:', region)
         return
       }
       
-      cityMap.set(cityKo, { ko: cityKo, country_ko: countryKo })
+      // city_code를 키로 사용
+      cityMap.set(cityCode, { code: cityCode, ko: cityKo, country_code: countryCode, country_ko: countryKo })
     })
     
     const cities = Array.from(cityMap.values()).map(city => ({
-      id: city.ko,
-      label: city.ko,
+      id: city.code,              // city_code를 ID로 사용 (예: TPE) - select_hotels.city_code와 매칭
+      label: city.ko,             // city_ko를 표시 (예: 타이베이)
+      country_code: city.country_code,  // 도시 선택 시 국가 자동 선택용
       country_ko: city.country_ko
     }))
     // city_sort_order로 이미 정렬되어 있으므로 추가 정렬 불필요
@@ -124,7 +135,7 @@ export async function GET() {
     
     const { data: countryRegions, error: countryError } = await supabase
       .from('select_regions')
-      .select('country_ko, country_sort_order')
+      .select('country_code, country_ko, country_sort_order')
       .eq('status', 'active')
       .eq('region_type', 'country')
       .order('country_sort_order', { ascending: true })
@@ -140,29 +151,31 @@ export async function GET() {
     if (countryError) {
       console.warn('⚠️ [국가] select_regions 조회 실패, select_hotels 데이터 사용:', countryError.message)
       // Fallback: select_hotels에서 국가 목록 추출
-      const countryMap = new Map<string, string>()
+      const countryMap = new Map<string, { code: string; ko: string }>()
       filteredHotels.forEach((hotel: any) => {
+        const countryCode = hotel.country_code
         const countryKo = hotel.country_ko
-        if (countryKo) {
-          countryMap.set(countryKo, countryKo)
+        if (countryCode && countryKo) {
+          countryMap.set(countryCode, { code: countryCode, ko: countryKo })
         }
       })
-      countries = Array.from(countryMap.values()).map(countryKo => ({
-        id: countryKo,
-        label: countryKo
+      countries = Array.from(countryMap.values()).map(country => ({
+        id: country.code,   // country_code를 ID로 사용 (예: TW) - select_hotels.country_code와 매칭
+        label: country.ko   // country_ko를 표시 (예: 대만)
       })).sort((a: any, b: any) => a.label.localeCompare(b.label, 'ko'))
     } else if (countryRegions && countryRegions.length > 0) {
       // select_regions에서 정상 조회
-      const countryMap = new Map<string, string>()
+      const countryMap = new Map<string, { code: string; ko: string }>()
       countryRegions.forEach((region: any) => {
+        const countryCode = region.country_code
         const countryKo = region.country_ko
-        if (countryKo) {
-          countryMap.set(countryKo, countryKo)
+        if (countryCode && countryKo) {
+          countryMap.set(countryCode, { code: countryCode, ko: countryKo })
         }
       })
-      countries = Array.from(countryMap.values()).map(countryKo => ({
-        id: countryKo,
-        label: countryKo
+      countries = Array.from(countryMap.values()).map(country => ({
+        id: country.code,   // country_code를 ID로 사용 (예: TW) - select_hotels.country_code와 매칭
+        label: country.ko   // country_ko를 표시 (예: 대만)
       }))
       // 이미 country_sort_order로 정렬되어 왔으므로 추가 정렬 불필요
     } else {

@@ -122,6 +122,7 @@ export interface HotelCardAllViewData {
   property_name_ko: string
   property_name_en?: string
   city: string
+  city_code?: string
   city_ko?: string
   property_address: string
   image: string
@@ -133,6 +134,7 @@ export interface HotelCardAllViewData {
   badge?: string
   isPromotion?: boolean
   // 전체보기용 추가 필드
+  country_code?: string
   country_ko?: string
   country_en?: string
   chain?: string
@@ -157,6 +159,7 @@ export function transformHotelToAllViewCardData(
     property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,
     property_name_en: hotel.property_name_en || undefined,
     city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
+    city_code: hotel.city_code || undefined,
     city_ko: hotel.city_ko || undefined,
     property_address: hotel.property_address || '주소 정보 없음',
     image: imageUrl || '/placeholder.svg', // image_1 사용 제거, mediaData의 imageUrl 우선
@@ -176,6 +179,7 @@ export function transformHotelToAllViewCardData(
     badge: hotel.badge || hotel.badge_1,
     isPromotion: false,
     // 전체보기용 추가 필드
+    country_code: hotel.country_code || undefined,
     country_ko: hotel.country_ko || undefined,
     country_en: hotel.country_en || undefined,
     chain: hotel.chain_ko || hotel.chain_en || undefined,

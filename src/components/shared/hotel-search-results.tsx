@@ -227,8 +227,13 @@ export function HotelSearchResults({
     // 도시 선택 시 자동으로 국가 선택 (도시는 국가의 부분집합)
     if (type === 'city' && value && finalFilterOptions) {
       const selectedCity = finalFilterOptions.cities.find((c: any) => c.id === value)
-      if (selectedCity && selectedCity.country_ko) {
-        newFilters.country = selectedCity.country_ko
+      if (selectedCity && selectedCity.country_code) {
+        newFilters.country = selectedCity.country_code  // country_code로 자동 선택 (예: TPE 선택 시 TW로 자동 설정)
+        console.log('🔄 도시 선택 → 국가 자동 선택:', { 
+          cityCode: value, 
+          cityLabel: selectedCity.label,
+          countryCode: selectedCity.country_code 
+        })
       }
     }
     
@@ -271,6 +276,11 @@ export function HotelSearchResults({
           console.log('🔄 브랜드 필터 변경 → selectedBrandId 설정:', value)
         }
       } else {
+        // 브랜드 전체 선택 시 체인도 전체로 초기화
+        newFilters.chain = ''
+        if (initialHotels.length === 0) {
+          setSelectedChainId(null)
+        }
         // 브랜드 필터 해제 시 selectedBrandId 초기화
         if (initialHotels.length === 0) {
           setSelectedBrandId(null)
@@ -398,6 +408,16 @@ export function HotelSearchResults({
     return filterInitialHotels(initialHotels, filters, finalFilterOptions)
   }, [initialHotels, filters, finalFilterOptions])
 
+  // 브랜드로 가져온 데이터에 도시/국가/체인 교차 필터 적용
+  const filteredBrandHotels = useMemo(() => {
+    return filterAllHotels(brandHotels || [], filters, finalFilterOptions)
+  }, [brandHotels, filters, finalFilterOptions])
+
+  // 체인으로 가져온 데이터에 도시/국가/브랜드 교차 필터 적용
+  const filteredChainBrandHotels = useMemo(() => {
+    return filterAllHotels(chainBrandHotels || [], filters, finalFilterOptions)
+  }, [chainBrandHotels, filters, finalFilterOptions])
+
   // 브랜드/체인 필터가 초기값과 다른지 확인
   const isFilterChanged = useMemo(() => {
     if (filters.brand && initialBrandId && filters.brand !== initialBrandId) {
@@ -413,7 +433,7 @@ export function HotelSearchResults({
         return false
   }, [filters, initialBrandId, currentChainId])
 
-  // 표시할 데이터 결정 (우선순위: 검색(필터링) > 필터변경시전체호텔 > initialHotels(체인/브랜드 페이지) > 브랜드선택 > 체인선택 > 전체호텔)
+  // 표시할 데이터 결정 (우선순위: 검색(필터링) > 필터변경시전체호텔 > initialHotels(필터링) > 브랜드선택(필터링) > 체인선택(필터링) > 전체호텔)
   const allData = searchQuery.trim() 
     ? filteredSearchResults  // 검색 결과에 필터 적용 ✅
     : showAllInsteadOfInitial  // 필터 초기화 시 전체 호텔 표시
@@ -421,11 +441,11 @@ export function HotelSearchResults({
       : initialHotels.length > 0 && isFilterChanged && allHotels && allHotels.length > 0  // 필터가 변경되고 전체 호텔 로드 완료
         ? filteredData  // 전체 호텔에서 필터링 (다른 브랜드나 도시 검색 가능) - 이미지 포함
         : initialHotels.length > 0 
-          ? filteredChainHotels  // 체인 페이지: 서버에서 전달된 initialHotels 우선 사용 (이미지 포함)
-          : selectedBrandId && brandHotels && brandHotels.length > 0
-            ? brandHotels  // 브랜드 필터로 새로 가져온 데이터 (이미지 포함)
-    : selectedChainId 
-      ? chainBrandHotels 
+          ? filteredChainHotels  // 체인 페이지: 서버에서 전달된 initialHotels에 필터 적용 (이미지 포함)
+          : selectedBrandId && filteredBrandHotels && filteredBrandHotels.length > 0
+            ? filteredBrandHotels  // 브랜드 필터 선택 데이터 + 교차 필터 적용
+            : selectedChainId 
+              ? filteredChainBrandHotels // 체인 필터 선택 데이터 + 교차 필터 적용
               : (showAllHotels ? filteredData : [])
   
   console.log('🔍 [ allData 결정 로직 ]', {
@@ -453,11 +473,11 @@ export function HotelSearchResults({
         : initialHotels.length > 0 && isFilterChanged && allHotels && allHotels.length > 0
           ? 'filteredData (전체 호텔 - 필터 변경 + allHotels 로드 완료) ✅'
           : initialHotels.length > 0
-            ? 'filteredChainHotels (initialHotels - 이미지 포함) ✅'
-            : selectedBrandId && brandHotels && brandHotels.length > 0
-              ? 'brandHotels (새로 가져온 브랜드 데이터 - 이미지 포함)'
-      : selectedChainId 
-        ? 'chainBrandHotels'
+            ? 'filteredChainHotels (initialHotels 필터 적용 - 이미지 포함) ✅'
+            : selectedBrandId && filteredBrandHotels && filteredBrandHotels.length > 0
+              ? 'filteredBrandHotels (브랜드 데이터 + 교차 필터 적용)'
+              : selectedChainId 
+                ? 'filteredChainBrandHotels (체인 데이터 + 교차 필터 적용)'
                 : (showAllHotels ? 'filteredData (전체)' : '빈 배열'),
     resultCount: allData?.length || 0,
     '첫번째호텔이미지': allData?.[0]?.image || 'none',
