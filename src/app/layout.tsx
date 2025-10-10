@@ -18,10 +18,48 @@ export const metadata: Metadata = {
   description:
     "프리미엄 호텔과 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.",
   generator: "v0.app",
+  metadataBase: new URL('https://select-hotels.com'),
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
     apple: '/favicon.png',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ko_KR',
+    url: 'https://select-hotels.com',
+    siteName: '투어비스 셀렉트',
+    title: '투어비스 셀렉트',
+    description: '프리미엄 호텔과 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.',
+    images: [
+      {
+        url: '/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@selecthotels',
+    creator: '@selecthotels',
+    title: '투어비스 셀렉트',
+    description: '프리미엄 호텔과 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.',
+    images: ['/select_logo.avif'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
   },
 }
 

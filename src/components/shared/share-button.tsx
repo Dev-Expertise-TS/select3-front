@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Share2, Copy, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -9,17 +9,47 @@ interface ShareButtonProps {
   url: string
   title: string
   description?: string
+  imageUrl?: string
   className?: string
+}
+
+declare global {
+  interface Window {
+    Kakao: any
+  }
 }
 
 export function ShareButton({ 
   url, 
   title, 
   description = "",
+  imageUrl,
   className 
 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [kakaoReady, setKakaoReady] = useState(false)
+
+  useEffect(() => {
+    // Kakao SDK 로드
+    const script = document.createElement('script')
+    script.src = 'https://developers.kakao.com/sdk/js/kakao.js'
+    script.async = true
+    script.onload = () => {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        // Kakao JavaScript Key로 초기화 (환경 변수에서 가져오기)
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY || '3cdf51d2fb53ca2e1ed1e6a044dde93d')
+        setKakaoReady(true)
+      }
+    }
+    document.head.appendChild(script)
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script)
+      }
+    }
+  }, [])
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -47,8 +77,43 @@ export function ShareButton({
     }
   }
 
+  const handleKakaoShare = () => {
+    if (!kakaoReady || !window.Kakao) {
+      console.error('Kakao SDK가 로드되지 않았습니다.')
+      return
+    }
+
+    try {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: title,
+          description: description,
+          imageUrl: imageUrl || 'https://select-hotels.com/select_logo.avif',
+          link: {
+            mobileWebUrl: url,
+            webUrl: url,
+          },
+        },
+        buttons: [
+          {
+            title: '자세히 보기',
+            link: {
+              mobileWebUrl: url,
+              webUrl: url,
+            },
+          },
+        ],
+      })
+      setIsOpen(false)
+    } catch (error) {
+      console.error('카카오톡 공유 실패:', error)
+      // 폴백: 카카오스토리 공유
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}`, '_blank')
+    }
+  }
+
   const shareText = `${title} - 셀렉트 호텔`
-  const kakaoShareUrl = `https://developers.kakao.com/tool/cleanup.html?url=${encodeURIComponent(url)}`
 
   return (
     <div className={cn("relative", className)}>
@@ -101,18 +166,15 @@ export function ShareButton({
                 </button>
 
                 {/* 카카오톡 공유 */}
-                <a
-                  href={`https://story.kakao.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleKakaoShare}
                   className="w-full flex items-center gap-3 p-2 text-left hover:bg-gray-50 rounded transition-colors"
-                  onClick={() => setIsOpen(false)}
                 >
                   <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
                     <span className="text-xs text-black font-bold">K</span>
                   </div>
                   <span className="text-sm text-gray-700">카카오톡</span>
-                </a>
+                </button>
 
                 {/* 페이스북 공유 */}
                 <a

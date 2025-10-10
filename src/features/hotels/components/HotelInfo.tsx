@@ -21,6 +21,8 @@ interface HotelInfoProps {
     rating?: number
     city_ko?: string
     city_eng?: string
+    description_ko?: string
+    description_en?: string
   }
   images: ImageItem[]
   selectedImage: number
@@ -192,7 +194,8 @@ export function HotelInfo({
                         <ShareButton 
                           url={shareUrl}
                           title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
-                          description={`${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                          description={hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                          imageUrl={images[0]?.media_path}
                         />
                       </div>
                     )}
@@ -214,7 +217,8 @@ export function HotelInfo({
                     <ShareButton 
                       url={shareUrl}
                       title={hotel.property_name_ko || hotel.property_name_en || '호텔'}
-                      description={`${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                      description={hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en || '호텔'} - 셀렉트 호텔에서 예약하세요`}
+                      imageUrl={images[0]?.media_path}
                     />
                   </div>
                 )}

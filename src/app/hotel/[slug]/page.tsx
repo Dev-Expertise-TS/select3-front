@@ -58,6 +58,29 @@ async function getHotelBySlug(slug: string) {
   }
 }
 
+// 호텔 이미지를 가져오는 함수
+async function getHotelImages(sabreId: string) {
+  try {
+    const supabase = await createClient()
+    
+    const { data: images, error } = await supabase
+      .from('select_hotel_media')
+      .select('media_path, sequence')
+      .eq('sabre_id', sabreId)
+      .order('sequence', { ascending: true })
+      .limit(3)
+    
+    if (error || !images || images.length === 0) {
+      return []
+    }
+    
+    return images.map(img => img.media_path)
+  } catch (error) {
+    console.error('호텔 이미지 조회 오류:', error)
+    return []
+  }
+}
+
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -73,6 +96,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   const title = `${hotel.property_name_ko || hotel.property_name_en} | Select Hotels`
   const description = hotel.description_ko || hotel.description_en || `${hotel.property_name_ko || hotel.property_name_en}의 최고의 숙박 경험을 제공합니다.`
+  const url = `https://select-hotels.com/hotel/${decodedSlug}`
+  
+  // 호텔 이미지 가져오기
+  const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
+  
+  // OG 이미지 배열 생성
+  const ogImages = hotelImages.length > 0 
+    ? hotelImages.map(imagePath => ({
+        url: imagePath,
+        width: 1200,
+        height: 630,
+        alt: `${hotel.property_name_ko || hotel.property_name_en} 이미지`
+      }))
+    : [{
+        url: 'https://select-hotels.com/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: 'Select Hotels'
+      }]
   
   return {
     title,
@@ -83,16 +125,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'website',
       locale: 'ko_KR',
       siteName: 'Select Hotels',
-      images: [], // 이미지는 동적으로 로드되므로 메타데이터에서 제외
+      url,
+      images: ogImages,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [], // 이미지는 동적으로 로드되므로 메타데이터에서 제외
+      images: ogImages.map(img => img.url),
+      site: '@selecthotels',
+      creator: '@selecthotels',
     },
     alternates: {
-      canonical: `https://select-hotels.com/hotel/${decodedSlug}`,
+      canonical: url,
+    },
+    robots: {
+      index: hotel.publish !== false,
+      follow: true,
+      googleBot: {
+        index: hotel.publish !== false,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    other: {
+      'fb:app_id': process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '',
     },
   }
 }
@@ -109,34 +167,41 @@ export const revalidate = 300
 // }
 
 // 구조화된 데이터 생성
-function generateHotelStructuredData(hotel: any, slug: string) {
+async function generateHotelStructuredData(hotel: any, slug: string) {
   if (!hotel) return null
 
   const decodedSlug = decodeURIComponent(slug)
+  
+  // 호텔 이미지 가져오기
+  const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
+  
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Hotel",
     "name": hotel.property_name_ko || hotel.property_name_en,
     "description": hotel.description_ko || hotel.description_en,
     "url": `https://select-hotels.com/hotel/${decodedSlug}`,
-    "image": [], // 이미지는 동적으로 로드되므로 구조화 데이터에서 제외
+    "image": hotelImages.length > 0 ? hotelImages : ["https://select-hotels.com/select_logo.avif"],
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": hotel.city,
-      "addressCountry": hotel.country || "KR"
+      "streetAddress": hotel.property_address || "",
+      "addressLocality": hotel.city_ko || hotel.city_eng || "",
+      "addressCountry": hotel.country_code || "KR"
     },
     "starRating": {
       "@type": "Rating",
-      "ratingValue": hotel.star_rating || 5
+      "ratingValue": hotel.rating || hotel.star_rating || 5
     },
     "amenityFeature": hotel.amenities ? hotel.amenities.map((amenity: string) => ({
       "@type": "LocationFeatureSpecification",
       "name": amenity
     })) : [],
+    "priceRange": "₩₩₩₩",
     "checkinTime": "15:00",
     "checkoutTime": "11:00",
     "petsAllowed": false,
-    "smokingAllowed": false
+    "smokingAllowed": false,
+    "hasMap": hotel.property_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.property_address)}` : undefined
   }
 
   return JSON.stringify(structuredData)
@@ -163,7 +228,7 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
   }
   
   // 구조화된 데이터 생성
-  const structuredData = generateHotelStructuredData(hotel, slug)
+  const structuredData = await generateHotelStructuredData(hotel, slug)
   
   return (
     <div className="min-h-screen bg-background">
