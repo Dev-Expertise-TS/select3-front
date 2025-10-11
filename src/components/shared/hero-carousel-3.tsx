@@ -186,7 +186,7 @@ export function HeroCarousel3() {
                         src={optimizeHeroImageMobile(carouselSlides[currentSlide].image || "/placeholder.svg")}
                         alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
                         fill
-                        priority
+                        priority={true}
                         quality={85}
                         className="object-cover transition-all duration-300 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
@@ -288,11 +288,11 @@ export function HeroCarousel3() {
                           src={optimizeHeroImageDesktop(slide.image || "/placeholder.svg")}
                           alt={`${slide.hotelName} - Premium Hotel Property`}
                           fill
-                          priority={index < 2}
+                          priority={index === 0}
                           quality={85}
                           className="object-cover transition-all duration-300 group-hover:scale-105"
                           sizes="(max-width: 1024px) 50vw, 33vw"
-                          loading={index < 2 ? "eager" : "lazy"}
+                          loading={index === 0 ? "eager" : "lazy"}
                           onError={(e) => {
                             console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
                             const target = e.target as HTMLImageElement

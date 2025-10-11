@@ -48,8 +48,9 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
   }, [initialQuery])
 
   return (
-    <form onSubmit={onSubmit} className={cn('w-full', className)} role="search" aria-label="통합 검색">
-      <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+    <div className={cn('w-full', isFocused && 'md:static fixed top-0 left-0 right-0 z-[60] md:z-auto bg-white md:bg-transparent shadow-md md:shadow-none px-4 md:px-0 pt-4 md:pt-0 pb-2 md:pb-0')}>
+      <form onSubmit={onSubmit} className={cn('w-full', className)} role="search" aria-label="통합 검색">
+        <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
         <Search className="w-4 h-4 text-gray-500" />
         <Input
           ref={inputRef}
@@ -92,7 +93,7 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
       {isFocused && query.trim() && (
         <div className="relative">
           {/* Overlay layer */}
-          <div className="absolute left-0 right-0 z-50 mt-2 rounded-md border bg-white shadow-lg" role="dialog" aria-label="검색 추천">
+          <div className="absolute left-0 right-0 z-[70] mt-2 rounded-md border bg-white shadow-lg" role="dialog" aria-label="검색 추천">
             {/* Tabs */}
             <div className="flex items-center gap-4 px-3 pt-2 border-b">
               {([
@@ -183,7 +184,8 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
           </div>
         </div>
       )}
-    </form>
+      </form>
+    </div>
   )
 }
 
