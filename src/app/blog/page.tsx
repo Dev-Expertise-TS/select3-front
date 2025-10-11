@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
@@ -15,7 +16,20 @@ export default function BlogPage() {
       <Header />
       <PromotionBanner />
       <main>
-        <BlogListSection />
+        <Suspense fallback={
+          <section className="py-16 bg-gray-50">
+            <div className="container mx-auto max-w-7xl px-4">
+              <div className="text-center">
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded w-96 mx-auto mb-16"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        }>
+          <BlogListSection />
+        </Suspense>
       </main>
       <Footer />
     </div>
