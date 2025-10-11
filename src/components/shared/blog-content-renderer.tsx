@@ -241,30 +241,10 @@ export function BlogContentRenderer({
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* 헤더 */}
-      {showHeader && (
-        <header className="space-y-4">
-          <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-            {blog.main_title}
-          </h1>
-          {blog.sub_title && (
-            <p className="text-lg text-gray-600 leading-relaxed">
-              {blog.sub_title}
-            </p>
-          )}
-          {showDate && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Calendar className="h-4 w-4" />
-              <span className="text-sm">{formatDate(blog.created_at)}</span>
-            </div>
-          )}
-        </header>
-      )}
-
-      {/* 메인 이미지 */}
+      {/* 메인 이미지 - 제목 위로 이동 */}
       {showImage && blog.main_image && !imageError && (
-        <div className={cn("", imageClassName)}>
-          <div className="aspect-[16/9] relative overflow-hidden rounded-lg bg-gray-100">
+        <div className={cn("-mx-4 sm:mx-0", imageClassName)}>
+          <div className="aspect-[21/9] sm:aspect-[16/9] relative overflow-hidden sm:rounded-xl bg-gray-100">
             <Image
               src={getSafeImageUrl(blog.main_image)}
               alt={blog.main_title}
@@ -283,14 +263,34 @@ export function BlogContentRenderer({
 
       {/* 이미지 오류 시 플레이스홀더 */}
       {showImage && blog.main_image && imageError && (
-        <div className={cn("", imageClassName)}>
-          <div className="aspect-[16/9] relative overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
+        <div className={cn("-mx-4 sm:mx-0", imageClassName)}>
+          <div className="aspect-[21/9] sm:aspect-[16/9] relative overflow-hidden sm:rounded-xl bg-gray-100 flex items-center justify-center">
             <div className="text-center text-gray-500">
               <div className="text-4xl mb-2">🖼️</div>
               <p className="text-sm">이미지를 불러올 수 없습니다</p>
             </div>
           </div>
         </div>
+      )}
+
+      {/* 헤더 - 이미지 아래로 이동 */}
+      {showHeader && (
+        <header className="space-y-4 pt-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+            {blog.main_title}
+          </h1>
+          {blog.sub_title && (
+            <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
+              {blog.sub_title}
+            </p>
+          )}
+          {showDate && (
+            <div className="flex items-center gap-2 text-gray-500 pt-2">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm">{formatDate(blog.created_at)}</span>
+            </div>
+          )}
+        </header>
       )}
 
       {/* 본문 내용 */}

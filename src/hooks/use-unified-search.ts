@@ -97,39 +97,60 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
       if (!query) return []
 
       // 지역 검색 (도시 위주)
-      const { data: regions, error: regionError } = await supabase
-        .from('select_regions')
-        .select('city_code, city_ko, city_en, city_slug, country_code, country_ko, country_en, status, region_type')
-        .eq('status', 'active')
-        .eq('region_type', 'city')
-        .or(`city_ko.ilike.%${query}%,city_en.ilike.%${query}%,country_ko.ilike.%${query}%,country_en.ilike.%${query}%`)
-        .order('city_code', { ascending: true })
-        .limit(20)
+      console.log('🌍 Starting region search for query:', query)
+      let regions: RegionRow[] = []
+      
+      try {
+        const { data: regionData, error: regionError } = await supabase
+          .from('select_regions')
+          .select('city_code, city_ko, city_en, city_slug, country_code, country_ko, country_en, status, region_type')
+          .eq('status', 'active')
+          .eq('region_type', 'city')
+          .or(`city_ko.ilike.%${query}%,city_en.ilike.%${query}%,country_ko.ilike.%${query}%,country_en.ilike.%${query}%`)
+          .order('city_code', { ascending: true })
+          .limit(20)
 
-      if (regionError) throw regionError
+        if (regionError) {
+          console.error('❌ Region search error:', regionError)
+          regions = []
+        } else {
+          regions = regionData || []
+          console.log('✅ Region search successful, found:', regions.length, 'results')
+        }
+      } catch (err) {
+        console.error('❌ Region search critical error:', err)
+        regions = []
+      }
 
       // 지역 이미지 조회: select_city_media 테이블에서 이미지 정보 가져오기
-      const cityCodes = ((regions as RegionRow[] | null) || []).map(r => r.city_code)
+      const cityCodes = regions.map(r => r.city_code)
       let cityMediaMap = new Map<string, string>()
       
       if (cityCodes.length > 0) {
-        const { data: cityMediaData } = await supabase
-          .from('select_city_media')
-          .select('city_code, public_url, storage_path, image_seq')
-          .in('city_code', cityCodes)
-          .order('image_seq', { ascending: true })
-        
-        if (cityMediaData && cityMediaData.length > 0) {
-          for (const m of cityMediaData as any[]) {
-            const key = String(m.city_code)
-            if (!cityMediaMap.has(key)) {
-              cityMediaMap.set(key, m.public_url || m.storage_path || '/placeholder.svg')
+        try {
+          console.log('🖼️ Fetching city media for codes:', cityCodes)
+          const { data: cityMediaData } = await supabase
+            .from('select_city_media')
+            .select('city_code, public_url, storage_path, image_seq')
+            .in('city_code', cityCodes)
+            .order('image_seq', { ascending: true })
+          
+          if (cityMediaData && cityMediaData.length > 0) {
+            for (const m of cityMediaData as any[]) {
+              const key = String(m.city_code)
+              if (!cityMediaMap.has(key)) {
+                cityMediaMap.set(key, m.public_url || m.storage_path || '/placeholder.svg')
+              }
             }
+            console.log('✅ City media fetched successfully:', cityMediaMap.size, 'images')
           }
+        } catch (err) {
+          console.error('❌ City media fetch error:', err)
+          // 에러 발생해도 계속 진행
         }
       }
 
-      const regionItems: UnifiedRegion[] = ((regions as RegionRow[] | null) || []).map((r) => {
+      const regionItems: UnifiedRegion[] = regions.map((r) => {
         return {
           type: 'region',
           id: r.city_code,
@@ -146,81 +167,132 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
 
       // 호텔 검색 - 에러 발생 시 빈 배열 반환하여 다른 검색 결과는 보여주기
       let hotels: HotelRow[] = []
+      
       try {
-        // 최소한의 필수 컬럼만 선택 (description 관련 컬럼은 존재하지 않을 수 있으므로 제외)
+        console.log('🏨 Starting hotel search for query:', query)
+        
+        // 최소한의 필수 컬럼만 선택
         const selectFields = 'sabre_id, slug, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, publish, property_details'
         
-        // 쿼리 1: 호텔명 한글
-        const { data: hotels1, error: error1 } = await supabase
-          .from('select_hotels')
-          .select(selectFields)
-          .ilike('property_name_ko', `%${query}%`)
-          .limit(15)
+        // 개별 쿼리 실행 (에러 발생 시에도 다른 쿼리는 계속 진행)
+        const queryPromises = [
+          // 쿼리 1: 호텔명 한글
+          supabase
+            .from('select_hotels')
+            .select(selectFields)
+            .ilike('property_name_ko', `%${query}%`)
+            .limit(15)
+            .then(result => {
+              if (result.error) {
+                console.error('Hotel search error (property_name_ko):', result.error)
+                return { data: [], error: null }
+              }
+              console.log('✅ Hotel search query 1 successful, found:', result.data?.length || 0, 'results')
+              return result
+            })
+            .catch(err => {
+              console.error('❌ Hotel search query 1 failed:', err)
+              return { data: [], error: err }
+            }),
+          
+          // 쿼리 2: 호텔명 영문
+          supabase
+            .from('select_hotels')
+            .select(selectFields)
+            .ilike('property_name_en', `%${query}%`)
+            .limit(15)
+            .then(result => {
+              if (result.error) {
+                console.error('Hotel search error (property_name_en):', result.error)
+                return { data: [], error: null }
+              }
+              console.log('✅ Hotel search query 2 successful, found:', result.data?.length || 0, 'results')
+              return result
+            })
+            .catch(err => {
+              console.error('❌ Hotel search query 2 failed:', err)
+              return { data: [], error: err }
+            }),
+          
+          // 쿼리 3: 도시명
+          supabase
+            .from('select_hotels')
+            .select(selectFields)
+            .ilike('city_ko', `%${query}%`)
+            .limit(15)
+            .then(result => {
+              if (result.error) {
+                console.error('Hotel search error (city_ko):', result.error)
+                return { data: [], error: null }
+              }
+              console.log('✅ Hotel search query 3 successful, found:', result.data?.length || 0, 'results')
+              return result
+            })
+            .catch(err => {
+              console.error('❌ Hotel search query 3 failed:', err)
+              return { data: [], error: err }
+            })
+        ]
 
-        if (error1) {
-          console.error('Hotel search error (property_name_ko):', error1, JSON.stringify(error1))
-        }
-
-        // 쿼리 2: 호텔명 영문
-        const { data: hotels2, error: error2 } = await supabase
-          .from('select_hotels')
-          .select(selectFields)
-          .ilike('property_name_en', `%${query}%`)
-          .limit(15)
-
-        if (error2) {
-          console.error('Hotel search error (property_name_en):', error2, JSON.stringify(error2))
-        }
-
-        // 쿼리 3: 도시명
-        const { data: hotels3, error: error3 } = await supabase
-          .from('select_hotels')
-          .select(selectFields)
-          .ilike('city_ko', `%${query}%`)
-          .limit(15)
-
-        if (error3) {
-          console.error('Hotel search error (city_ko):', error3, JSON.stringify(error3))
-        }
-
-        // 중복 제거하며 병합
-        const hotelMap = new Map<number, HotelRow>()
-        const allHotels = [...(hotels1 || []), ...(hotels2 || []), ...(hotels3 || [])]
+        // 모든 쿼리 병렬 실행
+        const results = await Promise.all(queryPromises)
         
-        allHotels.forEach(h => {
-          const id = Number(h.sabre_id)
-          if (!hotelMap.has(id)) {
-            hotelMap.set(id, h as HotelRow)
+        // 결과 병합
+        const hotelMap = new Map<number, HotelRow>()
+        results.forEach((result, index) => {
+          if (result.data && Array.isArray(result.data)) {
+            result.data.forEach(h => {
+              const id = Number(h.sabre_id)
+              if (!hotelMap.has(id)) {
+                hotelMap.set(id, h as HotelRow)
+              }
+            })
           }
         })
         
         hotels = Array.from(hotelMap.values())
+        console.log('🏨 Final hotel search results:', hotels.length)
+        
       } catch (err) {
-        console.error('Hotel search critical error:', err)
+        console.error('❌ Hotel search critical error:', err)
+        console.error('Error details:', {
+          message: err instanceof Error ? err.message : 'Unknown error',
+          stack: err instanceof Error ? err.stack : undefined,
+          query
+        })
         // 에러 발생해도 빈 배열로 계속 진행
         hotels = []
       }
 
       // 호텔 이미지 조회: 첫 이미지 매핑
-      const sabreIds = ((hotels as HotelRow[] | null) || []).map((h) => String(h.sabre_id))
+      const sabreIds = hotels.map((h) => String(h.sabre_id))
       let mediaMap = new Map<string, string>()
+      
       if (sabreIds.length > 0) {
-        const { data: mediaData } = await supabase
-          .from('select_hotel_media')
-          .select('sabre_id, public_url, storage_path, image_seq')
-          .in('sabre_id', sabreIds)
-          .order('image_seq', { ascending: true })
-        if (mediaData && mediaData.length > 0) {
-          for (const m of mediaData as any[]) {
-            const key = String(m.sabre_id)
-            if (!mediaMap.has(key)) {
-              mediaMap.set(key, m.public_url || m.storage_path || '/placeholder.svg')
+        try {
+          console.log('🖼️ Fetching hotel media for sabre_ids:', sabreIds)
+          const { data: mediaData } = await supabase
+            .from('select_hotel_media')
+            .select('sabre_id, public_url, storage_path, image_seq')
+            .in('sabre_id', sabreIds)
+            .order('image_seq', { ascending: true })
+
+          if (mediaData && mediaData.length > 0) {
+            for (const m of mediaData as any[]) {
+              const key = String(m.sabre_id)
+              if (!mediaMap.has(key)) {
+                mediaMap.set(key, m.public_url || m.storage_path || '/placeholder.svg')
+              }
             }
+            console.log('✅ Hotel media fetched successfully:', mediaMap.size, 'images')
           }
+        } catch (err) {
+          console.error('❌ Hotel media fetch error:', err)
+          // 에러 발생해도 계속 진행
         }
       }
 
-      const hotelItems: UnifiedHotel[] = ((hotels as HotelRow[] | null) || [])
+      const hotelItems: UnifiedHotel[] = hotels
         .filter((h) => h.publish !== false) // publish가 null이거나 true인 것만
         .slice(0, 20) // 최종 20개로 제한
         .map((h) => ({
@@ -240,19 +312,30 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
         }))
 
       // 블로그 검색: 제목/부제, slug에서 매칭
-      const { data: blogs, error: blogError } = await supabase
-        .from('select_hotel_blogs')
-        .select('id, slug, main_title, sub_title, main_image, created_at')
-        .or(`main_title.ilike.%${query}%,sub_title.ilike.%${query}%,slug.ilike.%${query}%`)
-        .order('id', { ascending: false })
-        .limit(20)
+      console.log('📝 Starting blog search for query:', query)
+      let blogs: any[] = []
+      
+      try {
+        const { data: blogData, error: blogError } = await supabase
+          .from('select_hotel_blogs')
+          .select('id, slug, main_title, sub_title, main_image, created_at')
+          .or(`main_title.ilike.%${query}%,sub_title.ilike.%${query}%,slug.ilike.%${query}%`)
+          .order('id', { ascending: false })
+          .limit(20)
 
-      if (blogError) {
-        console.error('Blog search error:', blogError)
-        throw blogError
+        if (blogError) {
+          console.error('❌ Blog search error:', blogError)
+          blogs = []
+        } else {
+          blogs = blogData || []
+          console.log('✅ Blog search successful, found:', blogs.length, 'results')
+        }
+      } catch (err) {
+        console.error('❌ Blog search critical error:', err)
+        blogs = []
       }
 
-      const blogItems: UnifiedBlog[] = ((blogs as (BlogRow & { main_image?: string | null })[] | null) || []).map((b) => ({
+      const blogItems: UnifiedBlog[] = blogs.map((b) => ({
         type: 'blog',
         id: b.id,
         slug: b.slug,
