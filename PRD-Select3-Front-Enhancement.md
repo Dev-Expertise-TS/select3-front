@@ -27,19 +27,18 @@
 
 ## 1. 개요
 
-### 1.1 프로젝트 비전
-Select 3.0은 **프리미엄 럭셔리 호텔 큐레이션 플랫폼**으로, AI 기반 검색과 브랜드별 특별 혜택을 통해 사용자에게 최상의 호텔 예약 경험을 제공합니다.
+### 1.1 프로젝트 방향
+Select 3.0은 기존 Framer 기반의 Select 1.0 의 기능적, 구조적 한계를 극복하면서
+사용자 사용극 극대화 인터페이스, AI 활용, 캐시 처리, Backend-less 등 기술을 활용하여
+1인 Full Stack 초단기간 개발 진행
 
-### 1.2 핵심 가치 제안
-- 🏆 **엄선된 럭셔리 호텔**: 세계 최고급 호텔 브랜드만 선별
-- 🤖 **AI 기반 추천**: GPT-4 기반 맞춤형 호텔 추천
-- 🎁 **독점 혜택**: 각 브랜드별 특별 프로모션 제공
-- 📱 **완벽한 모바일 경험**: 반응형 디자인과 모바일 최적화
+### 1.2 핵심 기능
+- 🏆 **빠르고, 견고하고, 콤팩트하고**: 최고의 Front 아키텍쳐
+- 🤖 **AI 활용**: 호텔 객실 설명, 통합 검색에 활용
+- 🎁 **이미지 처리**: 비용 Zero 이미지 랜더링
+- 📱 **모바일 인터페이스**: 1 build 2 UI 
+- 📱 **광고/프로모션션 노출**: 
 
-### 1.3 서비스 범위
-- **지역**: 전세계 주요 도시 (아시아, 유럽, 북미, 오세아니아)
-- **호텔 브랜드**: Marriott, Hilton, IHG, Hyatt, Accor 등 글로벌 체인
-- **가격대**: 프리미엄 ~ 울트라 럭셔리 ($200 이상/박)
 
 ---
 
@@ -55,9 +54,8 @@ Select 3.0은 **프리미엄 럭셔리 호텔 큐레이션 플랫폼**으로, AI
 | 모바일 트래픽 비율 | 60% | Device Category |
 
 ### 2.2 비즈니스 모델
-- **커미션 기반**: 예약 성사 시 호텔/OTA로부터 커미션 수취
 - **프로모션 수익**: 브랜드 프로모션 배너 광고
-- **프리미엄 멤버십**: (향후) 독점 혜택 제공
+- **사용자 예약 컨시어지지**: 
 
 ---
 
@@ -1440,7 +1438,1663 @@ data: [DONE]
 
 ---
 
-## 9. 성능 요구사항
+## 9. Sabre API 연동
+
+### 9.1 Sabre API 개요
+
+Sabre API는 실시간 객실 요금 조회 및 예약 기능을 제공.
+
+#### 9.1.1 사용 목적
+- 실시간 호텔 객실 요금 조회
+- 다양한 Rate Plan 비교
+- 객실 타입별 가격 확인
+- 예약 가능 여부 확인
+
+### 9.2 Sabre API 아키텍처
+
+#### 9.2.1 인증 플로우
+```mermaid
+sequenceDiagram
+    participant Client
+    participant NextJS
+    participant Sabre
+    
+    Client->>NextJS: 요금 조회 요청
+    NextJS->>Sabre: POST /v2/auth/token
+    Sabre-->>NextJS: Access Token (24시간 유효)
+    NextJS->>NextJS: 토큰 캐싱 (23시간)
+    NextJS->>Sabre: POST /v2/shop/hotels/rate
+    Sabre-->>NextJS: 요금 정보
+    NextJS-->>Client: 가공된 요금 데이터
+```
+
+#### 9.2.2 토큰 관리
+```typescript
+// src/lib/sabre.ts
+
+// 토큰 캐시 (메모리)
+let cachedToken: {
+  token: string
+  expiresAt: number
+} | null = null
+
+export async function getSabreToken(): Promise<string> {
+  // 캐시된 토큰이 있고 만료되지 않았으면 재사용
+  if (cachedToken && Date.now() < cachedToken.expiresAt) {
+    return cachedToken.token
+  }
+
+  // 새 토큰 요청
+  const credentials = Buffer.from(
+    `${process.env.SABRE_CLIENT_ID}:${process.env.SABRE_CLIENT_SECRET}`
+  ).toString('base64')
+
+  const response = await fetch('https://api.sabre.com/v2/auth/token', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'grant_type=client_credentials'
+  })
+
+  const data = await response.json()
+  
+  // 토큰 캐싱 (23시간 = 82800초)
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + 82800 * 1000
+  }
+
+  return data.access_token
+}
+```
+
+### 9.3 Sabre API 엔드포인트
+
+#### 9.3.1 토큰 발급
+```http
+POST https://api.sabre.com/v2/auth/token
+Authorization: Basic {base64(client_id:client_secret)}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+```
+
+**Response**:
+```json
+{
+  "access_token": "T1RLAQKz1p...",
+  "token_type": "Bearer",
+  "expires_in": 604800
+}
+```
+
+#### 9.3.2 호텔 요금 조회 (HotelRatesAndAvailability)
+```http
+POST https://api.sabre.com/v2/shop/hotels/rate
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body**:
+```json
+{
+  "HotelRateDescriptionRQ": {
+    "AvailRequestSegment": {
+      "GuestCounts": {
+        "Count": 2
+      },
+      "HotelSearchCriteria": {
+        "Criterion": {
+          "HotelRef": {
+            "HotelCode": "0069959"
+          }
+        }
+      },
+      "TimeSpan": {
+        "Start": "2025-03-01",
+        "End": "2025-03-03"
+      },
+      "RatePlanCode": "RAC"
+    }
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "HotelRateDescriptionRS": {
+    "RoomStays": {
+      "RoomStay": [
+        {
+          "RatePlans": {
+            "RatePlan": {
+              "RatePlanName": "Best Available Rate",
+              "RatePlanDescription": "..."
+            }
+          },
+          "RoomTypes": {
+            "RoomType": {
+              "RoomTypeDescription": "Deluxe King Room"
+            }
+          },
+          "RoomRates": {
+            "RoomRate": {
+              "Rates": {
+                "Rate": [
+                  {
+                    "Base": {
+                      "AmountBeforeTax": 45000,
+                      "CurrencyCode": "JPY"
+                    },
+                    "Total": {
+                      "AmountAfterTax": 49500
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### 9.4 Rate Plan Codes
+
+#### 9.4.1 주요 Rate Plan
+```typescript
+export const RATE_PLANS = [
+  {
+    code: 'RAC',
+    name: 'Best Available Rate',
+    description: '최적가 요금 (일반 공개 요금)'
+  },
+  {
+    code: 'AAA',
+    name: 'AAA/CAA Member Rate',
+    description: 'AAA 회원 할인 요금'
+  },
+  {
+    code: 'GOV',
+    name: 'Government Rate',
+    description: '정부/공무원 요금'
+  },
+  {
+    code: 'COR',
+    name: 'Corporate Rate',
+    description: '기업 협약 요금'
+  },
+  {
+    code: 'SNR',
+    name: 'Senior Citizen Rate',
+    description: '시니어 할인 요금'
+  },
+  {
+    code: 'PKG',
+    name: 'Package Rate',
+    description: '패키지 요금'
+  }
+]
+```
+
+#### 9.4.2 Rate Plan 관리
+```typescript
+// src/app/api/rate-plan-codes/route.ts
+
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    data: RATE_PLANS
+  })
+}
+```
+
+### 9.5 Sabre API 통합 예제
+
+#### 9.5.1 호텔 상세 페이지에서 요금 조회
+```typescript
+// src/features/hotels/components/RoomRatesTable.tsx
+
+interface RoomSearchForm {
+  checkIn: string        // YYYY-MM-DD
+  checkOut: string       // YYYY-MM-DD
+  adults: number
+  children: number
+  ratePlanCode: string
+}
+
+async function searchRooms(sabreId: string, form: RoomSearchForm) {
+  const response = await fetch('/api/sabre', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sabreId,
+      checkIn: form.checkIn,
+      checkOut: form.checkOut,
+      guests: form.adults + form.children,
+      ratePlanCode: form.ratePlanCode
+    })
+  })
+
+  return response.json()
+}
+```
+
+#### 9.5.2 API Route 구현
+```typescript
+// src/app/api/sabre/route.ts
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { sabreId, checkIn, checkOut, guests, ratePlanCode } = body
+
+    // 1. Sabre 토큰 획득
+    const token = await getSabreToken()
+
+    // 2. 호텔 요금 조회
+    const response = await fetch(
+      'https://api.sabre.com/v2/shop/hotels/rate',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          HotelRateDescriptionRQ: {
+            AvailRequestSegment: {
+              GuestCounts: { Count: guests },
+              HotelSearchCriteria: {
+                Criterion: {
+                  HotelRef: { HotelCode: sabreId }
+                }
+              },
+              TimeSpan: {
+                Start: checkIn,
+                End: checkOut
+              },
+              RatePlanCode: ratePlanCode
+            }
+          }
+        })
+      }
+    )
+
+    const data = await response.json()
+
+    // 3. 데이터 가공
+    const rooms = processRoomData(data)
+
+    return NextResponse.json({
+      success: true,
+      data: rooms
+    })
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 })
+  }
+}
+```
+
+### 9.6 에러 처리
+
+#### 9.6.1 Sabre API 에러 코드
+```typescript
+const SABRE_ERROR_CODES = {
+  '401': '인증 실패 - 토큰이 만료되었거나 유효하지 않습니다',
+  '404': '호텔을 찾을 수 없습니다',
+  '422': '요청 데이터가 유효하지 않습니다',
+  '429': '요청 제한을 초과했습니다',
+  '500': 'Sabre 서버 오류가 발생했습니다'
+}
+
+function handleSabreError(error: any) {
+  const status = error.response?.status
+  const message = SABRE_ERROR_CODES[status] || '알 수 없는 오류가 발생했습니다'
+  
+  console.error('Sabre API Error:', {
+    status,
+    message,
+    details: error.response?.data
+  })
+
+  return {
+    success: false,
+    error: message,
+    code: `SABRE_${status}`
+  }
+}
+```
+
+### 9.7 성능 최적화
+
+#### 9.7.1 토큰 재사용
+- 토큰은 메모리에 캐싱하여 23시간 동안 재사용
+- 서버 재시작 시에만 새 토큰 발급
+
+#### 9.7.2 요청 제한 (Rate Limiting)
+```typescript
+// 분당 최대 60회 요청
+const rateLimiter = new Map<string, number[]>()
+
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now()
+  const requests = rateLimiter.get(clientId) || []
+  
+  // 1분 이전 요청 제거
+  const recentRequests = requests.filter(time => now - time < 60000)
+  
+  if (recentRequests.length >= 60) {
+    return false
+  }
+  
+  recentRequests.push(now)
+  rateLimiter.set(clientId, recentRequests)
+  return true
+}
+```
+
+#### 9.7.3 타임아웃 설정
+```typescript
+const SABRE_TIMEOUT = 30000 // 30초
+
+const controller = new AbortController()
+const timeoutId = setTimeout(() => controller.abort(), SABRE_TIMEOUT)
+
+try {
+  const response = await fetch(url, {
+    signal: controller.signal,
+    // ...
+  })
+} finally {
+  clearTimeout(timeoutId)
+}
+```
+
+### 9.8 데이터 변환
+
+#### 9.8.1 Sabre 응답 → UI 데이터
+```typescript
+interface SabreRoom {
+  RatePlans: { RatePlan: { RatePlanName: string } }
+  RoomTypes: { RoomType: { RoomTypeDescription: string } }
+  RoomRates: {
+    RoomRate: {
+      Rates: {
+        Rate: Array<{
+          Base: { AmountBeforeTax: number; CurrencyCode: string }
+          Total: { AmountAfterTax: number }
+          RateKey: string
+        }>
+      }
+    }
+  }
+}
+
+interface UIRoom {
+  roomType: string
+  ratePlanName: string
+  amountBeforeTax: number
+  taxAmount: number
+  amountAfterTax: number
+  currencyCode: string
+  rateKey: string
+}
+
+function transformSabreData(sabreData: SabreRoom[]): UIRoom[] {
+  return sabreData.map(room => ({
+    roomType: room.RoomTypes.RoomType.RoomTypeDescription,
+    ratePlanName: room.RatePlans.RatePlan.RatePlanName,
+    amountBeforeTax: room.RoomRates.RoomRate.Rates.Rate[0].Base.AmountBeforeTax,
+    taxAmount: room.RoomRates.RoomRate.Rates.Rate[0].Total.AmountAfterTax - 
+               room.RoomRates.RoomRate.Rates.Rate[0].Base.AmountBeforeTax,
+    amountAfterTax: room.RoomRates.RoomRate.Rates.Rate[0].Total.AmountAfterTax,
+    currencyCode: room.RoomRates.RoomRate.Rates.Rate[0].Base.CurrencyCode,
+    rateKey: room.RoomRates.RoomRate.Rates.Rate[0].RateKey
+  }))
+}
+```
+
+---
+
+## 10. 캐시 전략
+
+### 10.1 캐시 레이어 아키텍처
+
+```
+┌─────────────────────────────────────────┐
+│         Client (Browser)                │
+│  ┌───────────────────────────────────┐  │
+│  │   React Query Cache (Memory)      │  │
+│  │   - staleTime: 5분                │  │
+│  │   - cacheTime: 30분               │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+              ↕
+┌─────────────────────────────────────────┐
+│      Next.js Server (Vercel Edge)       │
+│  ┌───────────────────────────────────┐  │
+│  │   Server Cache (Memory)           │  │
+│  │   - Sabre Token: 23시간           │  │
+│  │   - API Response: 1시간           │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+              ↕
+┌─────────────────────────────────────────┐
+│      CDN (Vercel Edge Network)          │
+│  - Static Assets: 무제한              │
+│  - Images: 1년                         │
+│  - HTML: 설정에 따라                   │
+└─────────────────────────────────────────┘
+```
+
+### 10.2 React Query 캐시 설정
+
+#### 10.2.1 전역 설정
+```typescript
+// src/providers/query-provider.tsx
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // 5분 동안 데이터를 fresh로 간주
+      staleTime: 5 * 60 * 1000,
+      
+      // 30분 동안 캐시에 데이터 유지
+      cacheTime: 30 * 60 * 1000,
+      
+      // 윈도우 포커스 시 자동 리페치 비활성화
+      refetchOnWindowFocus: false,
+      
+      // 마운트 시 자동 리페치 비활성화
+      refetchOnMount: false,
+      
+      // 재연결 시 리페치 활성화
+      refetchOnReconnect: true,
+      
+      // 에러 시 재시도 1회
+      retry: 1,
+      
+      // 재시도 지연
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000)
+    }
+  }
+})
+
+export function QueryProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
+```
+
+#### 10.2.2 쿼리별 캐시 설정
+```typescript
+// 호텔 목록 - 5분 캐시
+export function useHotels(filters: HotelFilters) {
+  return useQuery({
+    queryKey: ['hotels', filters],
+    queryFn: () => fetchHotels(filters),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000
+  })
+}
+
+// 호텔 상세 - 10분 캐시 (자주 변하지 않음)
+export function useHotelDetail(slug: string) {
+  return useQuery({
+    queryKey: ['hotel-detail', slug],
+    queryFn: () => fetchHotelDetail(slug),
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 60 * 60 * 1000
+  })
+}
+
+// 통합 검색 - 1분 캐시 (실시간성 중요)
+export function useUnifiedSearch(q: string) {
+  return useQuery({
+    queryKey: ['unified-search', q],
+    queryFn: () => fetchUnifiedSearch(q),
+    staleTime: 1 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    enabled: q.trim().length > 0
+  })
+}
+
+// 필터 옵션 - 1시간 캐시 (거의 변하지 않음)
+export function useFilterOptions() {
+  return useQuery({
+    queryKey: ['filter-options'],
+    queryFn: () => fetchFilterOptions(),
+    staleTime: 60 * 60 * 1000,
+    cacheTime: 24 * 60 * 60 * 1000
+  })
+}
+```
+
+### 10.3 Next.js 서버 사이드 캐싱
+
+#### 10.3.1 API Route 캐싱
+```typescript
+// src/app/api/hotels/route.ts
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const cacheKey = generateCacheKey(searchParams)
+  
+  // 캐시 확인
+  const cached = cache.get(cacheKey)
+  if (cached && !isCacheExpired(cached)) {
+    return NextResponse.json(cached.data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200'
+      }
+    })
+  }
+  
+  // 데이터 조회
+  const data = await fetchHotelsFromDB(searchParams)
+  
+  // 캐시 저장 (1시간)
+  cache.set(cacheKey, {
+    data,
+    timestamp: Date.now(),
+    ttl: 3600 * 1000
+  })
+  
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200'
+    }
+  })
+}
+```
+
+#### 10.3.2 메모리 캐시 구현
+```typescript
+// src/lib/cache.ts
+
+interface CacheEntry<T> {
+  data: T
+  timestamp: number
+  ttl: number
+}
+
+class MemoryCache {
+  private cache = new Map<string, CacheEntry<any>>()
+  
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key)
+    
+    if (!entry) return null
+    
+    // TTL 체크
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+    
+    return entry.data
+  }
+  
+  set<T>(key: string, data: T, ttl: number): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    })
+  }
+  
+  delete(key: string): void {
+    this.cache.delete(key)
+  }
+  
+  clear(): void {
+    this.cache.clear()
+  }
+  
+  // 주기적으로 만료된 항목 제거
+  cleanup(): void {
+    const now = Date.now()
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.cache.delete(key)
+      }
+    }
+  }
+}
+
+export const cache = new MemoryCache()
+
+// 10분마다 자동 정리
+setInterval(() => cache.cleanup(), 10 * 60 * 1000)
+```
+
+### 10.4 정적 페이지 캐싱
+
+#### 10.4.1 Static Generation (SSG)
+```typescript
+// src/app/blog/[slug]/page.tsx
+
+// 빌드 시 정적 페이지 생성
+export async function generateStaticParams() {
+  const blogs = await fetchAllBlogSlugs()
+  
+  return blogs.map(blog => ({
+    slug: blog.slug
+  }))
+}
+
+// 1시간마다 재생성 (ISR)
+export const revalidate = 3600
+```
+
+#### 10.4.2 On-Demand Revalidation
+```typescript
+// src/app/api/revalidate/route.ts
+
+export async function POST(request: NextRequest) {
+  const { path, secret } = await request.json()
+  
+  // 보안 검증
+  if (secret !== process.env.REVALIDATE_SECRET) {
+    return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
+  }
+  
+  try {
+    // 특정 경로 재검증
+    await revalidatePath(path)
+    
+    return NextResponse.json({ revalidated: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Error revalidating' }, { status: 500 })
+  }
+}
+```
+
+### 10.5 이미지 캐싱
+
+#### 10.5.1 Next.js Image Optimization
+```typescript
+// next.config.mjs
+
+export default {
+  images: {
+    // 이미지 최적화 캐시: 60일
+    minimumCacheTTL: 60 * 24 * 60 * 60,
+    
+    // 원격 이미지 도메인 허용
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co'
+      }
+    ],
+    
+    // 이미지 포맷
+    formats: ['image/webp', 'image/avif'],
+    
+    // 디바이스 크기별 이미지
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    
+    // 이미지 크기
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384]
+  }
+}
+```
+
+#### 10.5.2 Supabase Storage 캐싱
+```typescript
+// src/lib/supabase-image-loader.ts
+
+export default function supabaseLoader({ 
+  src, 
+  width, 
+  quality = 75 
+}: {
+  src: string
+  width: number
+  quality?: number
+}) {
+  // Supabase Storage URL에 최적화 파라미터 추가
+  const url = new URL(src)
+  url.searchParams.set('width', width.toString())
+  url.searchParams.set('quality', quality.toString())
+  
+  return url.toString()
+}
+```
+
+### 10.6 CDN 캐싱 (Vercel)
+
+#### 10.6.1 Cache-Control 헤더
+```typescript
+// 정적 파일
+headers: {
+  'Cache-Control': 'public, max-age=31536000, immutable'
+}
+
+// API 응답 (1시간 캐시, 2시간 stale)
+headers: {
+  'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200'
+}
+
+// 동적 콘텐츠 (캐시 안함)
+headers: {
+  'Cache-Control': 'no-cache, no-store, must-revalidate'
+}
+```
+
+### 10.7 캐시 무효화 전략
+
+#### 10.7.1 자동 무효화
+```typescript
+// 호텔 정보 업데이트 시
+export async function updateHotel(sabreId: number, data: HotelUpdate) {
+  await supabase
+    .from('select_hotels')
+    .update(data)
+    .eq('sabre_id', sabreId)
+  
+  // React Query 캐시 무효화
+  queryClient.invalidateQueries(['hotel-detail', data.slug])
+  queryClient.invalidateQueries(['hotels'])
+  
+  // Next.js 캐시 재검증
+  await revalidatePath(`/hotel/${data.slug}`)
+  await revalidatePath('/hotel')
+}
+```
+
+#### 10.7.2 수동 무효화
+```typescript
+// 관리자 페이지에서 캐시 클리어 버튼
+async function clearCache() {
+  // React Query 전체 캐시 클리어
+  queryClient.clear()
+  
+  // API 호출로 서버 캐시 클리어
+  await fetch('/api/cache/clear', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminToken}`
+    }
+  })
+}
+```
+
+### 10.8 캐시 모니터링
+
+#### 10.8.1 캐시 히트율 추적
+```typescript
+// src/lib/cache-monitor.ts
+
+class CacheMonitor {
+  private hits = 0
+  private misses = 0
+  
+  recordHit() {
+    this.hits++
+  }
+  
+  recordMiss() {
+    this.misses++
+  }
+  
+  getHitRate() {
+    const total = this.hits + this.misses
+    return total > 0 ? (this.hits / total) * 100 : 0
+  }
+  
+  getStats() {
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRate: this.getHitRate(),
+      total: this.hits + this.misses
+    }
+  }
+  
+  reset() {
+    this.hits = 0
+    this.misses = 0
+  }
+}
+
+export const cacheMonitor = new CacheMonitor()
+```
+
+#### 10.8.2 캐시 크기 모니터링
+```typescript
+function getCacheSize(cache: Map<string, any>): number {
+  let size = 0
+  
+  for (const [key, value] of cache.entries()) {
+    size += key.length
+    size += JSON.stringify(value).length
+  }
+  
+  return size // bytes
+}
+
+function logCacheStats() {
+  console.log('Cache Stats:', {
+    size: getCacheSize(cache.cache),
+    entries: cache.cache.size,
+    hitRate: cacheMonitor.getHitRate()
+  })
+}
+
+// 1시간마다 로깅
+setInterval(logCacheStats, 60 * 60 * 1000)
+```
+
+### 10.9 캐시 베스트 프랙티스
+
+#### 10.9.1 캐시 키 설계
+```typescript
+// ✅ Good: 명확하고 일관된 키
+['hotels', { city: 'TOKYO', brand: 'MARRIOTT' }]
+['hotel-detail', 'park-hyatt-tokyo']
+['unified-search', 'v2', 'tokyo', true]
+
+// ❌ Bad: 모호하거나 불안정한 키
+['data']
+['hotels', Math.random()]
+['search', new Date().toISOString()]
+```
+
+#### 10.9.2 캐시 TTL 가이드
+```typescript
+// 데이터 변경 빈도에 따른 TTL 설정
+const CACHE_TTL = {
+  // 거의 변하지 않는 데이터
+  STATIC: 24 * 60 * 60 * 1000,        // 24시간
+  
+  // 자주 변하지 않는 데이터
+  SEMI_STATIC: 60 * 60 * 1000,        // 1시간
+  
+  // 주기적으로 변하는 데이터
+  DYNAMIC: 5 * 60 * 1000,             // 5분
+  
+  // 실시간 데이터
+  REALTIME: 1 * 60 * 1000,            // 1분
+  
+  // Sabre 토큰
+  SABRE_TOKEN: 23 * 60 * 60 * 1000   // 23시간
+}
+```
+
+### 10.10 AI 응답 캐시 전략
+
+AI 처리는 비용이 높고 응답 시간이 길기 때문에 효과적인 캐시 전략이 필수적입니다.
+
+#### 10.10.1 AI 캐시 아키텍처
+
+```
+┌──────────────────────────────────────────┐
+│      Client Request (검색어: "도쿄")     │
+└──────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────┐
+│   1단계: React Query 캐시 확인           │
+│   queryKey: ['ai-summary', '도쿄']      │
+│   staleTime: 30분                        │
+└──────────────────────────────────────────┘
+         ↓ Miss
+┌──────────────────────────────────────────┐
+│   2단계: Server 메모리 캐시 확인         │
+│   key: 'ai:summary:도쿄'                │
+│   TTL: 1시간                             │
+└──────────────────────────────────────────┘
+         ↓ Miss
+┌──────────────────────────────────────────┐
+│   3단계: Supabase 캐시 테이블 확인       │
+│   select_ai_cache (검색어 + 응답)        │
+│   TTL: 7일                               │
+└──────────────────────────────────────────┘
+         ↓ Miss
+┌──────────────────────────────────────────┐
+│   4단계: OpenAI API 호출 (비용 발생)    │
+│   GPT-4o-mini 스트리밍 응답              │
+│   응답 완료 후 3개 레이어에 모두 저장    │
+└──────────────────────────────────────────┘
+```
+
+#### 10.10.2 AI 캐시 데이터베이스 스키마
+
+```sql
+-- AI 응답 캐시 테이블
+CREATE TABLE select_ai_cache (
+  id BIGSERIAL PRIMARY KEY,
+  cache_key VARCHAR(500) NOT NULL,           -- 캐시 키 (검색어 해시)
+  query_text VARCHAR(1000) NOT NULL,         -- 원본 검색어
+  query_type VARCHAR(50) NOT NULL,           -- 'search', 'recommendation', 'description'
+  response_text TEXT NOT NULL,               -- AI 응답 전문
+  model VARCHAR(50) NOT NULL,                -- 사용된 모델 (gpt-4o-mini)
+  prompt_tokens INTEGER,                     -- 프롬프트 토큰 수
+  completion_tokens INTEGER,                 -- 응답 토큰 수
+  total_cost DECIMAL(10, 6),                 -- 총 비용 (USD)
+  hit_count INTEGER DEFAULT 0,               -- 캐시 히트 횟수
+  last_hit_at TIMESTAMP WITH TIME ZONE,      -- 마지막 사용 시간
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE,       -- 만료 시간
+  UNIQUE(cache_key, query_type)
+);
+
+-- 인덱스
+CREATE INDEX idx_ai_cache_key ON select_ai_cache(cache_key);
+CREATE INDEX idx_ai_cache_expires ON select_ai_cache(expires_at);
+CREATE INDEX idx_ai_cache_query_type ON select_ai_cache(query_type);
+
+-- 만료된 캐시 자동 삭제 (PostgreSQL 함수)
+CREATE OR REPLACE FUNCTION cleanup_expired_ai_cache()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM select_ai_cache
+  WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- 매일 자동 실행 (Supabase Cron)
+SELECT cron.schedule(
+  'cleanup-ai-cache',
+  '0 3 * * *',  -- 매일 새벽 3시
+  'SELECT cleanup_expired_ai_cache()'
+);
+```
+
+#### 10.10.3 AI 캐시 키 생성
+
+```typescript
+// src/lib/ai-cache.ts
+
+import crypto from 'crypto'
+
+/**
+ * AI 캐시 키 생성
+ * - 검색어를 정규화하고 해시화
+ * - 대소문자 구분 없음
+ * - 공백 정규화
+ */
+export function generateAICacheKey(
+  query: string, 
+  type: 'search' | 'recommendation' | 'description' = 'search'
+): string {
+  // 정규화: 소문자 변환, 연속 공백 제거, 트림
+  const normalized = query
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+  
+  // SHA-256 해시 생성
+  const hash = crypto
+    .createHash('sha256')
+    .update(`${type}:${normalized}`)
+    .digest('hex')
+    .substring(0, 32)
+  
+  return `ai:${type}:${hash}`
+}
+
+// 예시
+generateAICacheKey('도쿄 호텔 추천', 'search')
+// => "ai:search:a3f2c1d4e5b6..."
+
+generateAICacheKey('도쿄   호텔   추천', 'search')
+// => "ai:search:a3f2c1d4e5b6..." (동일한 결과)
+
+generateAICacheKey('도쿄 호텔 추천', 'recommendation')
+// => "ai:recommendation:b4e3d2c1f6a5..." (다른 결과)
+```
+
+#### 10.10.4 서버 메모리 AI 캐시
+
+```typescript
+// src/lib/ai-cache.ts
+
+interface AICacheEntry {
+  queryText: string
+  responseText: string
+  model: string
+  tokens: {
+    prompt: number
+    completion: number
+  }
+  cost: number
+  timestamp: number
+  hitCount: number
+}
+
+class AICache {
+  private cache = new Map<string, AICacheEntry>()
+  private readonly TTL = 60 * 60 * 1000  // 1시간
+  private readonly MAX_SIZE = 1000       // 최대 1000개 항목
+  
+  get(cacheKey: string): string | null {
+    const entry = this.cache.get(cacheKey)
+    
+    if (!entry) {
+      console.log('🔴 AI Cache Miss (Memory):', cacheKey)
+      return null
+    }
+    
+    // TTL 체크
+    if (Date.now() - entry.timestamp > this.TTL) {
+      this.cache.delete(cacheKey)
+      console.log('⏰ AI Cache Expired (Memory):', cacheKey)
+      return null
+    }
+    
+    // 히트 카운트 증가
+    entry.hitCount++
+    
+    console.log('🟢 AI Cache Hit (Memory):', {
+      key: cacheKey,
+      hitCount: entry.hitCount,
+      age: Math.floor((Date.now() - entry.timestamp) / 1000) + 's'
+    })
+    
+    return entry.responseText
+  }
+  
+  set(
+    cacheKey: string,
+    queryText: string,
+    responseText: string,
+    model: string,
+    tokens: { prompt: number; completion: number },
+    cost: number
+  ): void {
+    // 최대 크기 체크
+    if (this.cache.size >= this.MAX_SIZE) {
+      this.evictOldest()
+    }
+    
+    this.cache.set(cacheKey, {
+      queryText,
+      responseText,
+      model,
+      tokens,
+      cost,
+      timestamp: Date.now(),
+      hitCount: 0
+    })
+    
+    console.log('💾 AI Cache Saved (Memory):', {
+      key: cacheKey,
+      tokens: tokens.prompt + tokens.completion,
+      cost: cost.toFixed(4) + ' USD'
+    })
+  }
+  
+  // 가장 오래된 항목 제거 (LRU)
+  private evictOldest(): void {
+    let oldestKey: string | null = null
+    let oldestTime = Infinity
+    
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.timestamp < oldestTime) {
+        oldestTime = entry.timestamp
+        oldestKey = key
+      }
+    }
+    
+    if (oldestKey) {
+      this.cache.delete(oldestKey)
+      console.log('🗑️ AI Cache Evicted (Memory):', oldestKey)
+    }
+  }
+  
+  // 통계
+  getStats() {
+    let totalHits = 0
+    let totalCost = 0
+    
+    for (const entry of this.cache.values()) {
+      totalHits += entry.hitCount
+      totalCost += entry.cost * entry.hitCount
+    }
+    
+    return {
+      size: this.cache.size,
+      totalHits,
+      savedCost: totalCost.toFixed(2) + ' USD',
+      avgHitsPerEntry: (totalHits / this.cache.size).toFixed(1)
+    }
+  }
+  
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+export const aiCache = new AICache()
+```
+
+#### 10.10.5 Supabase AI 캐시 레이어
+
+```typescript
+// src/lib/ai-cache-db.ts
+
+import { createClient } from '@/lib/supabase/server'
+
+/**
+ * Supabase에서 AI 캐시 조회
+ */
+export async function getAICacheFromDB(
+  cacheKey: string,
+  queryType: string
+): Promise<string | null> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('select_ai_cache')
+    .select('response_text, hit_count, expires_at')
+    .eq('cache_key', cacheKey)
+    .eq('query_type', queryType)
+    .single()
+  
+  if (error || !data) {
+    console.log('🔴 AI Cache Miss (DB):', cacheKey)
+    return null
+  }
+  
+  // 만료 체크
+  if (new Date(data.expires_at) < new Date()) {
+    console.log('⏰ AI Cache Expired (DB):', cacheKey)
+    // 만료된 캐시 삭제
+    await supabase
+      .from('select_ai_cache')
+      .delete()
+      .eq('cache_key', cacheKey)
+    return null
+  }
+  
+  // 히트 카운트 업데이트
+  await supabase
+    .from('select_ai_cache')
+    .update({
+      hit_count: data.hit_count + 1,
+      last_hit_at: new Date().toISOString()
+    })
+    .eq('cache_key', cacheKey)
+  
+  console.log('🟢 AI Cache Hit (DB):', {
+    key: cacheKey,
+    hitCount: data.hit_count + 1
+  })
+  
+  return data.response_text
+}
+
+/**
+ * Supabase에 AI 캐시 저장
+ */
+export async function saveAICacheToDB(
+  cacheKey: string,
+  queryText: string,
+  queryType: string,
+  responseText: string,
+  model: string,
+  promptTokens: number,
+  completionTokens: number,
+  totalCost: number
+): Promise<void> {
+  const supabase = await createClient()
+  
+  // 7일 후 만료
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 7)
+  
+  const { error } = await supabase
+    .from('select_ai_cache')
+    .upsert({
+      cache_key: cacheKey,
+      query_text: queryText,
+      query_type: queryType,
+      response_text: responseText,
+      model,
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_cost: totalCost,
+      expires_at: expiresAt.toISOString(),
+      created_at: new Date().toISOString()
+    }, {
+      onConflict: 'cache_key,query_type'
+    })
+  
+  if (error) {
+    console.error('❌ AI Cache Save Error (DB):', error)
+  } else {
+    console.log('💾 AI Cache Saved (DB):', {
+      key: cacheKey,
+      expiresIn: '7 days'
+    })
+  }
+}
+```
+
+#### 10.10.6 통합 AI 캐시 API
+
+```typescript
+// src/app/api/openai/chat/stream/route.ts
+
+import { generateAICacheKey, aiCache } from '@/lib/ai-cache'
+import { getAICacheFromDB, saveAICacheToDB } from '@/lib/ai-cache-db'
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { messages, model = 'gpt-4o-mini' } = body
+    
+    // 사용자 메시지 추출
+    const userMessage = messages.find((m: any) => m.role === 'user')?.content || ''
+    const cacheKey = generateAICacheKey(userMessage, 'search')
+    
+    // 1단계: 메모리 캐시 확인
+    let cachedResponse = aiCache.get(cacheKey)
+    
+    if (cachedResponse) {
+      // 캐시된 응답을 스트리밍 형식으로 반환
+      return new Response(
+        createSSEStream(cachedResponse),
+        {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'X-Cache-Status': 'HIT-MEMORY'
+          }
+        }
+      )
+    }
+    
+    // 2단계: Supabase 캐시 확인
+    cachedResponse = await getAICacheFromDB(cacheKey, 'search')
+    
+    if (cachedResponse) {
+      // 메모리 캐시에도 저장
+      aiCache.set(cacheKey, userMessage, cachedResponse, model, { prompt: 0, completion: 0 }, 0)
+      
+      return new Response(
+        createSSEStream(cachedResponse),
+        {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'X-Cache-Status': 'HIT-DB'
+          }
+        }
+      )
+    }
+    
+    // 3단계: OpenAI API 호출 (캐시 미스)
+    console.log('🔴 AI Cache Miss (All Layers) - Calling OpenAI API')
+    
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: true,
+        temperature: 0.4
+      })
+    })
+    
+    if (!openaiResponse.ok || !openaiResponse.body) {
+      throw new Error('OpenAI API request failed')
+    }
+    
+    // 스트리밍 응답 처리 + 캐싱
+    const reader = openaiResponse.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    
+    let fullResponse = ''
+    let promptTokens = 0
+    let completionTokens = 0
+    
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        let buffer = ''
+        
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n\n')
+          buffer = lines.pop() || ''
+          
+          for (const line of lines) {
+            if (!line.trim().startsWith('data:')) continue
+            
+            const data = line.replace(/^data:\s*/, '')
+            if (data === '[DONE]') {
+              // 응답 완료 - 캐시에 저장
+              const cost = calculateCost(promptTokens, completionTokens, model)
+              
+              // 메모리 캐시 저장
+              aiCache.set(
+                cacheKey,
+                userMessage,
+                fullResponse,
+                model,
+                { prompt: promptTokens, completion: completionTokens },
+                cost
+              )
+              
+              // DB 캐시 저장 (비동기)
+              saveAICacheToDB(
+                cacheKey,
+                userMessage,
+                'search',
+                fullResponse,
+                model,
+                promptTokens,
+                completionTokens,
+                cost
+              ).catch(err => console.error('DB Cache Save Error:', err))
+              
+              controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+              controller.close()
+              return
+            }
+            
+            try {
+              const json = JSON.parse(data)
+              const content = json.choices?.[0]?.delta?.content
+              
+              if (content) {
+                fullResponse += content
+              }
+              
+              // 토큰 정보 추출
+              if (json.usage) {
+                promptTokens = json.usage.prompt_tokens
+                completionTokens = json.usage.completion_tokens
+              }
+              
+              // 클라이언트로 스트리밍
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+            } catch {
+              // JSON 파싱 실패 무시
+            }
+          }
+        }
+      }
+    })
+    
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'X-Cache-Status': 'MISS'
+      }
+    })
+    
+  } catch (error) {
+    console.error('AI API Error:', error)
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 })
+  }
+}
+
+// 캐시된 응답을 SSE 스트림으로 변환
+function createSSEStream(text: string): ReadableStream {
+  const encoder = new TextEncoder()
+  // 토큰 단위로 분할하여 스트리밍 효과
+  const tokens = text.split(' ')
+  let index = 0
+  
+  return new ReadableStream({
+    async start(controller) {
+      for (const token of tokens) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({
+            choices: [{
+              delta: { content: token + ' ' }
+            }]
+          })}\n\n`)
+        )
+        // 짧은 지연으로 스트리밍 효과
+        await new Promise(resolve => setTimeout(resolve, 20))
+      }
+      controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+      controller.close()
+    }
+  })
+}
+
+// OpenAI 비용 계산
+function calculateCost(
+  promptTokens: number,
+  completionTokens: number,
+  model: string
+): number {
+  // GPT-4o-mini 가격 (2025년 기준)
+  const PRICE_PER_1K_PROMPT = 0.00015      // $0.15 / 1M tokens
+  const PRICE_PER_1K_COMPLETION = 0.0006   // $0.60 / 1M tokens
+  
+  const promptCost = (promptTokens / 1000) * PRICE_PER_1K_PROMPT
+  const completionCost = (completionTokens / 1000) * PRICE_PER_1K_COMPLETION
+  
+  return promptCost + completionCost
+}
+```
+
+#### 10.10.7 AI 캐시 모니터링 대시보드
+
+```typescript
+// src/app/api/admin/ai-cache-stats/route.ts
+
+export async function GET() {
+  const supabase = await createClient()
+  
+  // 캐시 통계
+  const { data: stats } = await supabase
+    .from('select_ai_cache')
+    .select('*')
+  
+  if (!stats) {
+    return NextResponse.json({ success: false })
+  }
+  
+  // 집계
+  const totalEntries = stats.length
+  const totalHits = stats.reduce((sum, s) => sum + s.hit_count, 0)
+  const totalCost = stats.reduce((sum, s) => sum + s.total_cost, 0)
+  const savedCost = stats.reduce((sum, s) => sum + (s.total_cost * s.hit_count), 0)
+  
+  // 인기 검색어 Top 10
+  const topQueries = stats
+    .sort((a, b) => b.hit_count - a.hit_count)
+    .slice(0, 10)
+    .map(s => ({
+      query: s.query_text,
+      hits: s.hit_count,
+      savedCost: (s.total_cost * s.hit_count).toFixed(4)
+    }))
+  
+  // 메모리 캐시 통계
+  const memoryStats = aiCache.getStats()
+  
+  return NextResponse.json({
+    success: true,
+    data: {
+      database: {
+        totalEntries,
+        totalHits,
+        totalCost: totalCost.toFixed(2) + ' USD',
+        savedCost: savedCost.toFixed(2) + ' USD',
+        hitRate: totalEntries > 0 
+          ? ((totalHits / totalEntries) * 100).toFixed(1) + '%'
+          : '0%',
+        topQueries
+      },
+      memory: memoryStats
+    }
+  })
+}
+```
+
+#### 10.10.8 AI 캐시 관리 API
+
+```typescript
+// src/app/api/admin/ai-cache/route.ts
+
+// 캐시 클리어
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const type = searchParams.get('type') // 'memory' | 'db' | 'all'
+  
+  try {
+    if (type === 'memory' || type === 'all') {
+      aiCache.clear()
+      console.log('✅ Memory AI Cache Cleared')
+    }
+    
+    if (type === 'db' || type === 'all') {
+      const supabase = await createClient()
+      await supabase
+        .from('select_ai_cache')
+        .delete()
+        .neq('id', 0) // 전체 삭제
+      console.log('✅ Database AI Cache Cleared')
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: `${type} cache cleared`
+    })
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 })
+  }
+}
+
+// 만료된 캐시 정리
+export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  
+  const { data } = await supabase
+    .from('select_ai_cache')
+    .delete()
+    .lt('expires_at', new Date().toISOString())
+    .select('id')
+  
+  return NextResponse.json({
+    success: true,
+    deletedCount: data?.length || 0
+  })
+}
+```
+
+#### 10.10.9 AI 캐시 효과 측정
+
+**비용 절감 효과**:
+```typescript
+// 예시 계산
+const 평균_프롬프트_토큰 = 500
+const 평균_응답_토큰 = 800
+const GPT4_MINI_비용_PER_1K = 0.00075  // (0.15 + 0.60) / 2
+
+// 1회 API 호출 비용
+const 호출당_비용 = ((평균_프롬프트_토큰 + 평균_응답_토큰) / 1000) * GPT4_MINI_비용_PER_1K
+// ≈ $0.000975 (약 ₩1.3)
+
+// 캐시 히트율 80% 가정
+const 월간_검색_수 = 10000
+const 캐시_히트율 = 0.8
+
+const 실제_API_호출 = 월간_검색_수 * (1 - 캐시_히트율)
+// = 2000회
+
+const 월간_절감_비용 = (월간_검색_수 - 실제_API_호출) * 호출당_비용
+// = 8000 * $0.000975
+// ≈ $7.8 (약 ₩10,400)
+```
+
+**응답 시간 개선**:
+```
+캐시 미스 (OpenAI API 호출): 2-5초
+캐시 히트 (메모리):        50-100ms (40-100배 빠름)
+캐시 히트 (DB):            200-500ms (4-25배 빠름)
+```
+
+#### 10.10.10 AI 캐시 주의사항
+
+**캐시 사용 시 고려사항**:
+
+1. **실시간성 vs 비용**
+   - 뉴스/이벤트성 검색어는 짧은 TTL 사용
+   - 일반적인 지역/호텔 정보는 긴 TTL 사용
+
+2. **개인화된 응답**
+   - 사용자별 맞춤 추천은 캐시하지 않음
+   - 일반적인 정보성 응답만 캐시
+
+3. **캐시 무효화**
+   - 호텔 정보 업데이트 시 관련 AI 캐시 삭제
+   - 프로모션 종료 시 캐시 갱신
+
+4. **프라이버시**
+   - 개인정보가 포함된 쿼리는 캐시하지 않음
+   - 로그에 민감 정보 기록 방지
+
+```typescript
+// 캐시 제외 조건
+function shouldCacheAIResponse(query: string): boolean {
+  // 개인정보 패턴 체크
+  const sensitivePatterns = [
+    /이메일/,
+    /전화번호/,
+    /주소/,
+    /결제/,
+    /예약번호/,
+    /카드/
+  ]
+  
+  for (const pattern of sensitivePatterns) {
+    if (pattern.test(query)) {
+      return false
+    }
+  }
+  
+  // 쿼리 길이 체크 (너무 긴 쿼리는 개인화된 질문일 가능성)
+  if (query.length > 200) {
+    return false
+  }
+  
+  return true
+}
+```
+
+---
+
+## 11. 성능 요구사항
 
 ### 9.1 페이지 로딩 성능
 
