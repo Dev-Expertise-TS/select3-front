@@ -1,4 +1,4 @@
-import { Home, Tag, Building2, FileText, Hotel, LucideIcon, MessageCircle } from "lucide-react"
+import { Home, Tag, Building2, FileText, Hotel, LucideIcon, MessageCircle, MapPin, Star } from "lucide-react"
 import { TourvisIcon } from "@/components/shared/icons/TourvisIcon"
 
 export interface NavigationItem {
@@ -18,22 +18,22 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   { href: "/", label: "홈", icon: Home, mobileOnly: true },
   { href: "/about", label: "셀렉트 소개" },
-  { href: "/testimonials", label: "고객 후기" },
   { href: "/brand", label: "브랜드 & 프로그램", mobileLabel: "브랜드", icon: Building2 },
   { href: "/promotion", label: "프로모션", mobileLabel: "프로모션", icon: Tag },
+  { href: "/hotel", label: "호텔 & 리조트 전체보기", mobileLabel: "호텔검색", icon: Hotel },
   // 신규 모바일 전용 메뉴
   { href: "http://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "예약상담", icon: MessageCircle, mobileOnly: true },
-  { href: "/hotel", label: "호텔 & 리조트 전체보기", mobileLabel: "호텔검색", icon: Hotel },
-  { href: "/hotel/region", label: "지역별 호텔 & 리조트", mobileLabel: "지역별" },
-  { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText },
+  { href: "/testimonials", label: "고객 후기", mobileLabel: "고객후기", icon: Star },
+  { href: "/hotel/region", label: "지역별 호텔 & 리조트", mobileLabel: "지역별", icon: MapPin, desktopOnly: true },
+  { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText, desktopOnly: true },
   { href: "https://tourvis.com", label: "투어비스", mobileLabel: "투어비스", icon: (TourvisIcon as unknown as LucideIcon) },
 ]
 
 /**
- * 모바일 하단 네비게이션용 아이템 (브랜드 메뉴 제외, 아이콘이 있는 주요 메뉴만)
+ * 모바일 하단 네비게이션용 아이템 (브랜드 메뉴 제외, 아이콘이 있는 주요 메뉴만, 데스크톱 전용 제외)
  */
 export const mobileNavItems = navigationItems.filter(
-  item => item.icon !== undefined && item.href !== "/brand"
+  item => item.icon !== undefined && item.href !== "/brand" && !item.desktopOnly
 )
 
 /**

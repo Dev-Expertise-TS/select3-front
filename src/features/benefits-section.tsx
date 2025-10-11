@@ -63,10 +63,15 @@ export function BenefitsSection() {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-2 md:gap-3">
           {benefits.map((benefit, index) => {
             const IconComponent = benefit.icon
+            const isLastCard = index === benefits.length - 1
+            const isOddTotal = benefits.length % 2 === 1
+            
             return (
               <div
                 key={index}
-                className="bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-2 md:p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden"
+                className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-2 md:p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden ${
+                  isLastCard && isOddTotal ? 'col-span-2 sm:col-span-1' : ''
+                }`}
                 style={{ borderColor: '#E6CDB5' }}
               >
                 <div className="flex flex-col items-center text-center">

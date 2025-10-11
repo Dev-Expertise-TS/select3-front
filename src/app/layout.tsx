@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
 import { BottomNav } from "@/components/bottom-nav"
+import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ export default function RootLayout({
         <QueryProvider>
           {children}
           <BottomNav />
+          <KakaoConsultationButton />
         </QueryProvider>
       </body>
     </html>
