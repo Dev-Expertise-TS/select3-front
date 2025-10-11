@@ -40,9 +40,9 @@ export function Footer() {
                   <Link href="/blog" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     블로그
                   </Link>
-                  <Link href="/tourvis" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                  <a href="https://tourvis.com" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     투어비스
-                  </Link>
+                  </a>
                 </div>
                 <div className="space-y-2">
                   <Link href="/contact" className="block text-sm text-gray-300 hover:text-white transition-colors">
@@ -59,21 +59,24 @@ export function Footer() {
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wide">SNS</h3>
               <div className="space-y-2">
-                <Link href="#" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                <a href="https://blog.naver.com/tourvis-select" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                  TOURVIS SELECT NAVER BLOG
+                </a>
+                <a href="https://www.instagram.com/luxuryhotel_select/" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                   TOURVIS SELECT INSTAGRAM
-                </Link>
-                <Link href="#" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                </a>
+                <a href="https://www.threads.com/@luxuryhotel_select" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                   TOURVIS SELECT THREADS
-                </Link>
-                <Link href="#" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                </a>
+                <a href="https://www.facebook.com/tourvis.official" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                   TOURVIS FACEBOOK
-                </Link>
-                <Link href="#" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                </a>
+                <a href="https://www.instagram.com/tourvis_official/" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                   TOURVIS INSTAGRAM
-                </Link>
-                <Link href="#" className="block text-sm text-gray-300 hover:text-white transition-colors">
+                </a>
+                <a href="https://blog.naver.com/tourvis_official" target="_blank" rel="noopener noreferrer" className="block text-sm text-gray-300 hover:text-white transition-colors">
                   TOURVIS BLOG
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -81,12 +84,15 @@ export function Footer() {
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wide">CONTACTS</h3>
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-gray-300 leading-relaxed">
-                    카카오톡 전문 컨시어지 상담 연결
-                  </p>
-                </div>
+                <a
+                  href="http://pf.kakao.com/_cxmxgNG/chat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 text-sm text-gray-300 hover:text-white transition-colors leading-relaxed no-underline"
+                >
+                  <Phone className="w-5 h-5 mt-0.5 flex-shrink-0 text-current" />
+                  <span>카카오톡 전문 컨시어지 상담 연결</span>
+                </a>
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-gray-300 leading-relaxed">
@@ -113,18 +119,18 @@ export function Footer() {
 
             {/* Right Side - Social Icons */}
             <div className="flex items-center gap-4">
-              <Link href="#" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
+              <a href="https://tourvis.com" target="_blank" rel="noopener noreferrer" title="투어비스" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
                 <MapPin className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
-              </Link>
-              <Link href="#" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
+              </a>
+              <a href="https://www.facebook.com/tourvis.official" target="_blank" rel="noopener noreferrer" title="TOURVIS Facebook" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
                 <Facebook className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
-              </Link>
-              <Link href="#" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
+              </a>
+              <a href="https://www.instagram.com/luxuryhotel_select/" target="_blank" rel="noopener noreferrer" title="TOURVIS SELECT Instagram" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
                 <Instagram className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
-              </Link>
-              <Link href="#" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
+              </a>
+              <a href="https://blog.naver.com/tourvis-select" target="_blank" rel="noopener noreferrer" title="TOURVIS SELECT Blog" className="w-10 h-10 rounded-full border border-gray-400 flex items-center justify-center hover:border-white transition-colors">
                 <span className="text-gray-400 hover:text-white transition-colors font-bold">B</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
