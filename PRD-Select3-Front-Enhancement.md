@@ -30,7 +30,7 @@
 ### 1.1 프로젝트 방향
 Select 3.0은 기존 Framer 기반의 Select 1.0 의 기능적, 구조적 한계를 극복하면서
 사용자 사용극 극대화 인터페이스, AI 활용, 캐시 처리, Backend-less 등 기술을 활용하여
-1인 Full Stack 초단기간 개발 진행
+1인 Full Stack 초단기간 개발 진행 : No 기획자, NO 디자이너, NO Front-Back 구분
 
 ### 1.2 핵심 기능
 - 🏆 **빠르고, 견고하고, 콤팩트하고**: 최고의 Front 아키텍쳐
