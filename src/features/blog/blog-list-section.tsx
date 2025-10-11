@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { UnifiedSearchBar } from "@/components/shared/unified-search-bar"
+import { useSearchParams } from "next/navigation"
 import { BlogCard } from "@/components/shared/blog-card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -28,6 +30,8 @@ export function BlogListSection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(9) // 3행 × 3열 = 9개
+  const searchParams = useSearchParams()
+  const q = (searchParams?.get('q') || '').trim().toLowerCase()
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -56,8 +60,17 @@ export function BlogListSection() {
     setVisibleCount(prev => prev + 9) // 3행씩 추가
   }
 
-  const visibleBlogs = blogs.slice(0, visibleCount)
-  const hasMore = visibleCount < blogs.length
+  const filtered = q
+    ? blogs.filter((b) => {
+        const title = (b.main_title || '').toLowerCase()
+        const sub = (b.sub_title || '').toLowerCase()
+        const slug = (b.slug || '').toLowerCase()
+        return title.includes(q) || sub.includes(q) || slug.includes(q)
+      })
+    : blogs
+
+  const visibleBlogs = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
 
   if (loading) {
     return (
@@ -113,6 +126,11 @@ export function BlogListSection() {
           </p>
         </div>
 
+        {/* 통합 검색 바 */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <UnifiedSearchBar placeholder="호텔/아티클을 검색하세요" />
+        </div>
+
         {/* 블로그 리스트 */}
         {blogs.length > 0 ? (
           <>
@@ -140,7 +158,7 @@ export function BlogListSection() {
                   size="lg"
                   className="px-8 py-3 text-lg font-semibold"
                 >
-                  더보기 ({blogs.length - visibleCount}개 더)
+                  더보기 ({filtered.length - visibleCount}개 더)
                 </Button>
               </div>
             )}
@@ -159,11 +177,11 @@ export function BlogListSection() {
         )}
 
         {/* 통계 정보 */}
-        {blogs.length > 0 && (
+        {filtered.length > 0 && (
           <div className="mt-16 text-center">
             <p className="text-gray-500">
-              총 <span className="font-semibold text-gray-700">{blogs.length}</span>개의 아티클
-              {visibleCount < blogs.length && (
+              총 <span className="font-semibold text-gray-700">{filtered.length}</span>개의 아티클
+              {visibleCount < filtered.length && (
                 <span className="ml-2">
                   (현재 <span className="font-semibold text-gray-700">{visibleCount}</span>개 표시)
                 </span>

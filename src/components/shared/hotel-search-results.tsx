@@ -386,9 +386,30 @@ export function HotelSearchResults({
     // URL 파라미터가 있으면 우선 사용, 없으면 initialBrandId/currentChainId 사용
     const newFilters = {
       city: cityParam || '',
-      country: countryParam || '',
+      country: '',
       brand: brandParam || initialBrandId || '',
       chain: chainParam || currentChainId || ''
+    }
+    
+    // country 파라미터 정규화: 코드(id)가 아니고 이름(예: JAPAN/일본)이 들어와도 매핑
+    if (countryParam) {
+      // 1) 필터 옵션에서 코드 또는 라벨 일치 우선
+      const optionMatch = finalFilterOptions?.countries?.find((c: any) => c.id === countryParam || c.label === countryParam)
+      if (optionMatch) {
+        newFilters.country = optionMatch.id
+      } else {
+        // 2) 전체 호텔 데이터에서 country_en 또는 country_ko로 매칭해 코드 도출
+        const hotelMatch = (allHotels || []).find((h: any) =>
+          (typeof h.country_en === 'string' && h.country_en.toLowerCase() === countryParam.toLowerCase()) ||
+          h.country_ko === countryParam
+        )
+        if (hotelMatch?.country_code) {
+          newFilters.country = hotelMatch.country_code
+        } else {
+          // 3) 매핑 실패 시 원본값 유지 (추후 서버에서 처리 가능성)
+          newFilters.country = countryParam
+        }
+      }
     }
     
     // 도시 선택 시 자동으로 국가 선택 (URL 파라미터로 도시가 전달된 경우)
@@ -420,7 +441,7 @@ export function HotelSearchResults({
       console.log('🔍 필터 적용 (URL 또는 initialBrandId/currentChainId):', newFilters)
       setFilters(newFilters)
     }
-  }, [initialBrandId, currentChainId, finalFilterOptions]) // finalFilterOptions 의존성 추가
+  }, [initialBrandId, currentChainId, finalFilterOptions, allHotels]) // allHotels 의존성 추가 (country 이름 매핑용)
 
   // 검색 결과용 필터링된 데이터
   const filteredSearchResults = useMemo(() => {
