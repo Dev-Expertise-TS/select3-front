@@ -108,32 +108,28 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
 
       if (regionError) throw regionError
 
-      const regionItems: UnifiedRegion[] = ((regions as RegionRow[] | null) || []).map((r) => {
-        // 실제 존재하는 이미지 경로 매핑
-        const cityName = (r.city_ko || r.city_en || '').trim()
-        let imageUrl = '/placeholder.svg'
+      // 지역 이미지 조회: select_city_media 테이블에서 이미지 정보 가져오기
+      const cityCodes = ((regions as RegionRow[] | null) || []).map(r => r.city_code)
+      let cityMediaMap = new Map<string, string>()
+      
+      if (cityCodes.length > 0) {
+        const { data: cityMediaData } = await supabase
+          .from('select_city_media')
+          .select('city_code, public_url, storage_path, image_seq')
+          .in('city_code', cityCodes)
+          .order('image_seq', { ascending: true })
         
-        if (cityName) {
-          // 실제로 존재하는 이미지들만 매핑
-          const cityImageMap: Record<string, string> = {
-            '도쿄': '/destination-image/도쿄.jpg',
-            '오사카': '/destination-image/오사카.avif',
-            '교토': '/destination-image/교토.jpg',
-            '후쿠오카': '/destination-image/후쿠오카.jpg',
-            '방콕': '/destination-image/방콕.jpg',
-            '다낭': '/destination-image/다낭.jpg',
-            '푸켓': '/destination-image/푸켓.jpg',
-            '싱가폴': '/destination-image/싱가폴.jpg',
-            '홍콩': '/destination-image/홍콩.webp',
-            '런던': '/destination-image/런던.jpg',
-            '로마': '/destination-image/로마.jpg',
-            '발리': '/destination-image/발리.webp',
-            '하와이': '/destination-image/하와이.jpg',
+        if (cityMediaData && cityMediaData.length > 0) {
+          for (const m of cityMediaData as any[]) {
+            const key = String(m.city_code)
+            if (!cityMediaMap.has(key)) {
+              cityMediaMap.set(key, m.public_url || m.storage_path || '/placeholder.svg')
+            }
           }
-          
-          imageUrl = cityImageMap[cityName] || '/placeholder.svg'
         }
-        
+      }
+
+      const regionItems: UnifiedRegion[] = ((regions as RegionRow[] | null) || []).map((r) => {
         return {
           type: 'region',
           id: r.city_code,
@@ -144,7 +140,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
           country_code: r.country_code ?? null,
           country_ko: r.country_ko ?? null,
           country_en: r.country_en ?? null,
-          image_url: imageUrl
+          image_url: cityMediaMap.get(r.city_code) || '/placeholder.svg'
         }
       })
 

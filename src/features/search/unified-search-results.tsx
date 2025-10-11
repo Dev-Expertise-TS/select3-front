@@ -121,7 +121,8 @@ export function UnifiedSearchResults() {
     
     // 첫 번째 유효한 이미지 URL을 메모이제이션
     const imageSrc = useMemo(() => {
-      return candidates.find(Boolean) || '/placeholder.svg'
+      const validSrc = candidates.find(src => src && src.trim() && src !== '/placeholder.svg')
+      return validSrc || '/placeholder.svg'
     }, [candidates])
     
     const handleError = () => {
@@ -154,14 +155,13 @@ export function UnifiedSearchResults() {
       `}</style>
       <section className="py-6">
         <div className="container mx-auto max-w-[1200px] px-4">
-        {/* 상단 검색 바 */}
-        <div className="mb-4">
-          <UnifiedSearchBar submitTo="/search" initialQuery={q} />
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left - AI 요약 + 결과 리스트 */}
           <div className="lg:col-span-8 space-y-8">
+            {/* 상단 검색 바 - 좌측 영역에 맞춤 */}
+            <div className="mb-4">
+              <UnifiedSearchBar submitTo="/search" initialQuery={q} />
+            </div>
             {/* AI 요약 */}
             {q && (
               <div>
@@ -243,11 +243,12 @@ export function UnifiedSearchResults() {
                     const href = `/hotel?${params.toString()}`
                     const city = r.city_ko || r.city_en || r.city_code
                     const country = r.country_ko || r.country_en || ''
+                    
                     return (
                       <a key={`r-${r.id}`} href={href} className="flex gap-3 pb-3 border-b border-gray-200 last:border-0 group">
                         <div className="relative w-24 h-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
                           <Thumb
-                            candidates={[r.image_url || '']}
+                            candidates={[r.image_url].filter(Boolean)}
                             alt={city}
                           />
                         </div>
