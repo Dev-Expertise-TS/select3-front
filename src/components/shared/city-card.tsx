@@ -47,16 +47,16 @@ export function CityCard({
             cityCode={cityCode}
             cityKo={cityKo}
             alt={`${cityKo}, ${countryKo}`}
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-105 transition-transform duration-300 brightness-110"
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
             priority={priority}
             preloadedImageUrl={preloadedImageUrl}  // 서버에서 가져온 이미지 전달
           />
-          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent group-hover:from-black/60 transition-colors" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-semibold text-lg mb-1">{cityKo}</h3>
+            <h3 className="text-white font-semibold text-lg mb-1 drop-shadow-lg">{cityKo}</h3>
             {countryKo && (
-              <p className="text-white/90 text-sm flex items-center">
+              <p className="text-white/95 text-sm flex items-center drop-shadow-md">
                 <MapPin className="w-3 h-3 mr-1" />
                 {countryKo}
               </p>

@@ -46,7 +46,19 @@ export function getChainBrandIds(chainId: string, brands?: Array<{ id: string; c
 export function filterHotel(hotel: any, filters: HotelFilters, chainBrandIds: string[] = []): boolean {
   // 도시 필터 (city_code로 비교)
   if (filters.city) {
-    if (hotel.city_code !== filters.city) {
+    const matched = hotel.city_code === filters.city
+    
+    // 디버깅: 매칭 실패 시 로그
+    if (!matched && process.env.NODE_ENV === 'development') {
+      console.log('🔍 [도시 필터 불일치]', {
+        호텔명: hotel.property_name_ko,
+        호텔city_code: hotel.city_code,
+        필터city: filters.city,
+        호텔city_ko: hotel.city_ko,
+      })
+    }
+    
+    if (!matched) {
       return false
     }
   }
@@ -186,6 +198,28 @@ export function filterAllHotels(
   if (!allHotels || allHotels.length === 0) {
     console.warn('⚠️ 전체 호텔 데이터가 비어있습니다')
     return []
+  }
+  
+  // 도시 필터가 있을 때 호텔의 city_code 분포 확인
+  if (filters.city && process.env.NODE_ENV === 'development') {
+    const cityCodeDistribution = allHotels.reduce((acc: any, hotel: any) => {
+      const code = hotel.city_code || 'null'
+      acc[code] = (acc[code] || 0) + 1
+      return acc
+    }, {})
+    console.log('📊 [도시 필터 디버깅] 전체 호텔의 city_code 분포:', cityCodeDistribution)
+    console.log('🔍 [도시 필터 디버깅] 찾는 city_code:', filters.city)
+    
+    const matchingHotels = allHotels.filter((h: any) => h.city_code === filters.city)
+    console.log('✅ [도시 필터 디버깅] 매칭되는 호텔 수:', matchingHotels.length)
+    if (matchingHotels.length > 0) {
+      console.log('📋 [도시 필터 디버깅] 매칭 호텔 샘플:', matchingHotels.slice(0, 3).map((h: any) => ({
+        sabre_id: h.sabre_id,
+        name: h.property_name_ko,
+        city_code: h.city_code,
+        city_ko: h.city_ko
+      })))
+    }
   }
   
   const chainBrandIds = getChainBrandIds(filters.chain, filterOptions?.brands)

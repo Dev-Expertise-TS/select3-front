@@ -10,12 +10,13 @@ export const metadata: Metadata = {
 export default async function RegionListPage() {
   const supabase = await createClient()
 
-  // 1. select_regions에서 활성 도시 목록 조회
+  // 1. select_regions에서 활성 도시 목록 조회 (국가 정보 포함)
   const { data: regions, error } = await supabase
     .from('select_regions')
-    .select('city_code, city_ko, city_en, city_slug, country_ko, city_sort_order')
+    .select('city_code, city_ko, city_en, city_slug, country_code, country_ko, country_en, continent_ko, continent_en, city_sort_order, country_sort_order')
     .eq('region_type', 'city')
     .eq('status', 'active')
+    .order('country_sort_order', { ascending: true })
     .order('city_sort_order', { ascending: true })
 
   if (error) {
