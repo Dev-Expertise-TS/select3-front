@@ -1,5 +1,3 @@
-'use client'
-
 import { HotelCard, HotelCardData, HotelCardProps } from "./hotel-card"
 import { HotelCardGrid3 } from "./hotel-card-grid-3"
 import { HotelCardGrid4 } from "./hotel-card-grid-4"
@@ -29,7 +27,7 @@ export interface HotelCardGridProps {
   hotelCount?: HotelCount // 호텔 개수 설정
 }
 
-// 호텔 카드 그리드 컴포넌트
+// 호텔 카드 그리드 컴포넌트 (RSC)
 export function HotelCardGrid({
   hotels,
   variant = 'default',

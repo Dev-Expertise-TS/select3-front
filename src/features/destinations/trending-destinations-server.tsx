@@ -2,14 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { TrendingDestinationsClient } from './trending-destinations-client'
 
 /**
- * 트렌딩 지역 섹션 (서버 컴포넌트 - 성능 최적화)
- * 
- * 성능 최적화:
- * - 서버에서 모든 도시와 이미지를 한 번에 조회
- * - 클라이언트에서 개별 API 호출 불필요
- * - 즉시 이미지 표시 (빠른 로딩!)
+ * 트렌딩 지역 데이터 조회 (Server-side)
  */
-export async function TrendingDestinationsSection() {
+async function getTrendingDestinations() {
   const supabase = await createClient()
 
   // 1. select_regions에서 트렌딩 도시 조회 (상위 8개)
@@ -65,6 +60,20 @@ export async function TrendingDestinationsSection() {
     }
   }
 
-  return <TrendingDestinationsClient destinations={destinations || []} cityImages={cityImages} />
+  return { destinations: destinations || [], cityImages }
+}
+
+/**
+ * 트렌딩 지역 섹션 (서버 컴포넌트 - 성능 최적화)
+ * 
+ * 성능 최적화:
+ * - 서버에서 모든 도시와 이미지를 한 번에 조회
+ * - 클라이언트에서 개별 API 호출 불필요
+ * - 즉시 이미지 표시 (빠른 로딩!)
+ * - Next.js 캐시로 1시간 동안 재사용
+ */
+export async function TrendingDestinationsSection() {
+  const { destinations, cityImages } = await getTrendingDestinations()
+  return <TrendingDestinationsClient destinations={destinations} cityImages={cityImages} />
 }
 

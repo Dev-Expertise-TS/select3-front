@@ -12,6 +12,9 @@ import { TrendingDestinationsSection } from "@/features/destinations"
 import { BrandProgramSection } from "@/features/brands"
 import TestimonialsSection from "@/components/shared/testimonials-section"
 
+// 페이지 레벨 캐시 설정: 30분마다 재검증
+export const revalidate = 1800
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">

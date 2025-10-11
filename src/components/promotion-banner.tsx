@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTopBannerHotels } from "@/features/promotion-section"
+import { useTopBannerHotels } from "@/hooks/use-promotion-hotels"
 import { useHotelPromotionDetails } from "@/hooks/use-hotel-promotion-details"
 
 // 상수

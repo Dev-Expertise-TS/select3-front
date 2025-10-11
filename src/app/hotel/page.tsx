@@ -2,6 +2,9 @@ import { Suspense } from "react"
 import { Metadata } from 'next'
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
 
+// 호텔 목록 페이지 캐시: 5분마다 재검증
+export const revalidate = 300
+
 export const metadata: Metadata = {
   title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
   description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',

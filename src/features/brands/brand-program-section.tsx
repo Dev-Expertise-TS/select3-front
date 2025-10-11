@@ -9,31 +9,7 @@ interface HotelChain {
   logo_path?: string
 }
 
-// slug 컬럼을 사용하므로 alias 매핑이 필요 없음
-// function toSlug(name: string) {
-//   const alias: Record<string, string> = {
-//     'Aman Resorts': 'aman-resorts-international',
-//     'Hyatt Hotels Corporation': 'hyatt-hotels',
-//     'Hilton Hotels & Resorts (Hilton Worldwide Holdings Inc.)': 'hilton-worldwide',
-//     'Marriott International': 'marriott-international',
-//     'Accor Hotels': 'accor-hotels',
-//     'InterContinental Hotels Group (IHG)': 'ihg-hotels',
-//     'Wyndham Hotels & Resorts': 'wyndham-hotels',
-//     'Radisson Hotel Group': 'radisson-hotels',
-//     'Four Seasons Hotels & Resorts': 'four-seasons',
-//     'The Ritz-Carlton Hotel Company': 'ritz-carlton',
-//     'Mandarin Oriental Hotel Group': 'mandarin-oriental',
-//     'Shangri-La Hotels & Resorts': 'shangri-la',
-//     'Kempinski Hotels': 'kempinski',
-//     'Fairmont Hotels & Resorts': 'fairmont-hotels',
-//     'Sofitel Hotels & Resorts': 'sofitel-hotels',
-//     'Capella Hotel Group': 'capella-hotels',
-//     'The Peninsula Hotels': 'peninsula-hotels',
-//   }
-//   if (alias[name]) return alias[name]
-//   return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
-// }
-
+// 호텔 체인 데이터 조회 (Server-side)
 async function getHotelChains() {
   // DB hotel_chains 테이블과 일치하는 slug 사용 (logo_path는 기존 이미지 유지)
   const brandCards: HotelChain[] = [

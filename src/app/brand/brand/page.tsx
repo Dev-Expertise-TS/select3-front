@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { ChainBrandPageClient } from "./chain-brand-page-client"
 
+// 브랜드 페이지 캐시: 1시간마다 재검증
+export const revalidate = 3600
+
 async function getAllChainsAndBrands() {
   const supabase = await createClient()
   

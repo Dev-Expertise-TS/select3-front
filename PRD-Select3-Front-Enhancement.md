@@ -16,12 +16,15 @@
 3. [사용자 페르소나](#3-사용자-페르소나)
 4. [핵심 기능](#4-핵심-기능)
 5. [기술 스펙](#5-기술-스펙)
-6. [UI/UX 가이드](#6-uiux-가이드)
-7. [데이터 구조](#7-데이터-구조)
-8. [API 명세](#8-api-명세)
-9. [성능 요구사항](#9-성능-요구사항)
-10. [보안 및 개인정보](#10-보안-및-개인정보)
-11. [향후 로드맵](#11-향후-로드맵)
+6. [코드 구조 분석](#6-코드-구조-분석)
+7. [UI/UX 가이드](#7-uiux-가이드)
+8. [데이터 구조](#8-데이터-구조)
+9. [API 명세](#9-api-명세)
+10. [Sabre API 연동](#10-sabre-api-연동)
+11. [캐시 전략](#11-캐시-전략)
+12. [성능 요구사항](#12-성능-요구사항)
+13. [보안 및 개인정보](#13-보안-및-개인정보)
+14. [향후 로드맵](#14-향후-로드맵)
 
 ---
 
@@ -29,7 +32,7 @@
 
 ### 1.1 프로젝트 방향
 Select 3.0은 기존 Framer 기반의 Select 1.0 의 기능적, 구조적 한계를 극복하면서
-사용자 사용극 극대화 인터페이스, AI 활용, 캐시 처리, Backend-less 등 기술을 활용하여
+사용자 사용성 극대화 인터페이스, AI 활용, 캐시 처리, Backend-less 등 기술을 활용하여
 1인 Full Stack 초단기간 개발 진행 : No 기획자, NO 디자이너, NO Front-Back 구분
 
 ### 1.2 핵심 기능
@@ -922,11 +925,750 @@ NEXT_PUBLIC_APP_URL=
 
 ---
 
-## 6. UI/UX 가이드
+## 6. 코드 구조 분석
 
-### 6.1 디자인 시스템
+### 6.1 프로젝트 통계
 
-#### 6.1.1 컬러 팔레트
+#### 6.1.1 전체 코드 규모
+```
+총 소스 파일:    211개
+TypeScript:      83개 (.ts)
+React 컴포넌트:  118개 (.tsx)
+총 Export:       289개 (함수, 컴포넌트, 상수)
+```
+
+#### 6.1.2 상위 30개 큰 파일
+| 파일 | 라인 수 | 역할 |
+|------|---------|------|
+| `features/hotels/hotel-detail.tsx` | 1,422 | 호텔 상세 페이지 메인 컴포넌트 |
+| `components/shared/hotel-search-results.tsx` | 964 | 호텔 검색 결과 표시 |
+| `features/search/common-search-bar.tsx` | 870 | 기본 검색바 컴포넌트 |
+| `hooks/use-room-ai-processing.ts` | 838 | AI 객실 설명 생성 훅 |
+| `features/hotels/components/RoomRatesTable.tsx` | 707 | Sabre API 요금 테이블 |
+| `lib/supabase.ts` | 600 | Supabase 유틸리티 |
+| `features/hotels/components/HotelTabs.tsx` | 566 | 호텔 탭 네비게이션 |
+| `app/about.tsx` | 552 | 소개 페이지 |
+| `lib/supabase-utils.ts` | 537 | Supabase 헬퍼 함수 |
+| `lib/openai.ts` | 484 | OpenAI API 클라이언트 |
+| `features/search/unified-search-results.tsx` | 393 | 통합 검색 결과 페이지 |
+| `hooks/use-hotel-queries.ts` | 370 | 호텔 데이터 쿼리 훅 모음 |
+| `hooks/use-unified-search.ts` | 359 | 통합 검색 훅 |
+| `features/hotels/components/ImageGallery.tsx` | 356 | 이미지 갤러리 |
+
+### 6.2 디렉토리별 상세 구조
+
+#### 6.2.1 `src/app/` - Next.js App Router (페이지 & API)
+
+**페이지 라우트 (21개)**:
+```
+├── page.tsx                    # 홈페이지
+├── about/                      # 소개
+├── hotel/                      # 호텔
+│   ├── page.tsx               # 전체 호텔 목록
+│   ├── [slug]/                # 호텔 상세
+│   └── region/                # 지역별 호텔
+├── brand/                      # 브랜드
+│   ├── page.tsx               # 브랜드 목록
+│   ├── [chain]/               # 특정 체인 브랜드
+│   └── brand/                 # 브랜드 프로그램
+├── blog/                       # 블로그
+│   ├── page.tsx               # 블로그 목록
+│   └── [slug]/                # 블로그 상세
+├── search/                     # 통합 검색 결과
+├── search-results/             # (레거시) 검색 결과
+├── destination/[city]/         # 목적지별 페이지
+├── promotion/                  # 프로모션
+├── testimonials/               # 고객 후기
+├── contact/                    # 문의
+├── terms/                      # 약관
+├── with-kids/                  # 가족 여행
+├── login/                      # 로그인 (관리자)
+└── admin/                      # 관리자
+    ├── advertisements/         # 광고 관리
+    ├── chain-brand/           # 브랜드 관리
+    └── hotel-update/[sabre]/  # 호텔 수정
+```
+
+**API 라우트 (26개)**:
+```
+api/
+├── blogs/                      # 블로그 API
+│   ├── route.ts               # GET: 목록 조회
+│   └── [slug]/route.ts        # GET: 상세 조회
+├── hotels/                     # 호텔 API
+│   └── [sabreId]/
+│       ├── benefits/          # GET: 혜택 조회
+│       ├── blogs/             # GET: 관련 아티클
+│       └── storage-images/    # GET: 이미지 목록
+├── brands/                     # 브랜드 API
+│   └── [chainId]/articles/    # GET: 브랜드 아티클
+├── chain-brand/                # 브랜드 관리 API
+│   ├── list/                  # GET: 브랜드 목록
+│   ├── schema/                # GET: 스키마 정보
+│   └── brand/save/            # POST: 브랜드 저장
+├── openai/                     # AI API
+│   ├── chat/                  # POST: AI 채팅
+│   ├── chat/stream/           # POST: AI 스트리밍
+│   ├── health/                # GET: 상태 확인
+│   └── test/                  # POST: 테스트
+├── sabre/                      # Sabre API
+│   └── token/                 # GET: 토큰 발급
+├── sabre-id/                   # Sabre 검색 API
+│   ├── search/                # POST: 호텔 검색
+│   └── openai-search/         # POST: AI 검색
+├── regions/                    # 지역 API
+│   └── [city_code]/images/    # GET: 도시 이미지
+├── filter-options/             # GET: 필터 옵션
+├── hotel-chains/               # GET: 호텔 체인
+├── hotel-details/              # GET: 호텔 상세
+├── rate-plan-codes/            # GET: Rate Plan 목록
+└── debug/                      # 디버그 API (5개)
+    ├── env/
+    ├── og-tags/
+    ├── sabre/
+    ├── sabre-status/
+    └── storage-structure/
+```
+
+**테스트 페이지 (14개)**:
+```
+test-* 페이지들 (개발/디버깅용)
+├── test-blog-cta/
+├── test-hero-image/
+├── test-hotel-card-cta/
+├── test-hotel-cards/
+├── test-hotel-storage-images/
+├── test-images/
+├── test-supabase-images/
+└── ... (8개 추가)
+```
+
+#### 6.2.2 `src/components/` - 재사용 컴포넌트 (54개)
+
+**레이아웃 컴포넌트 (3개)**:
+```
+├── header.tsx                  # 헤더 (데스크톱)
+├── footer.tsx                  # 푸터
+└── bottom-nav.tsx              # 하단 네비게이션 (모바일)
+```
+
+**UI 기본 컴포넌트 (14개)** - `components/ui/`:
+```
+├── button.tsx                  # 버튼
+├── card.tsx                    # 카드
+├── dialog.tsx                  # 모달/다이얼로그
+├── input.tsx                   # 입력 필드
+├── label.tsx                   # 레이블
+├── select.tsx                  # 셀렉트 박스
+├── toast.tsx                   # 토스트 알림
+├── date-picker.tsx             # 날짜 선택기
+├── guest-selector.tsx          # 인원 선택기
+├── optimized-image.tsx         # 최적화 이미지
+├── smart-image.tsx             # 스마트 이미지
+├── image-error-boundary.tsx    # 이미지 에러 처리
+└── ... (2개 추가)
+```
+
+**공유 컴포넌트 (36개)** - `components/shared/`:
+```
+호텔 관련 (13개):
+├── hotel-card.tsx              # 호텔 카드 (기본)
+├── hotel-card-cta.tsx          # 호텔 카드 (CTA)
+├── hotel-card-all-view.tsx     # 호텔 카드 (전체보기)
+├── hotel-card-grid.tsx         # 호텔 그리드 (기본)
+├── hotel-card-grid-3.tsx       # 호텔 그리드 (3열)
+├── hotel-card-grid-4.tsx       # 호텔 그리드 (4열)
+├── hotel-card-grid-all-view.tsx # 호텔 그리드 (전체)
+├── hotel-list-section.tsx      # 호텔 리스트 섹션
+├── hotel-list-section-all-view.tsx
+├── hotel-search-results.tsx    # 호텔 검색 결과
+├── hotel-filter.tsx            # 호텔 필터
+├── hotel-filter-section.tsx    # 호텔 필터 섹션
+└── hotel-error-boundary.tsx    # 호텔 에러 경계
+
+블로그 관련 (3개):
+├── blog-card.tsx               # 블로그 카드
+├── blog-content-renderer.tsx   # 블로그 본문 렌더러
+└── (blog-list는 features에)
+
+브랜드 관련 (3개):
+├── brand-card.tsx              # 브랜드 카드
+├── brand-hotel-card.tsx        # 브랜드 호텔 카드
+└── (brand-program은 features에)
+
+검색 관련 (3개):
+├── search-input.tsx            # 검색 입력
+├── simple-hotel-search.tsx     # 간단 호텔 검색
+└── unified-search-bar.tsx      # 통합 검색바
+
+히어로/배너 관련 (5개):
+├── hero-carousel-3.tsx         # 히어로 캐러셀 (3개)
+├── hero-carousel-4.tsx         # 히어로 캐러셀 (4개)
+├── page-banner.tsx             # 페이지 배너
+├── hotel-banner-section.tsx    # 호텔 배너 섹션
+└── hotel-ad-banner.tsx         # 호텔 광고 배너
+
+도시/지역 관련 (2개):
+├── city-card.tsx               # 도시 카드
+└── city-image.tsx              # 도시 이미지
+
+기타 (7개):
+├── section-container.tsx       # 섹션 컨테이너
+├── promotion-box.tsx           # 프로모션 박스
+├── testimonials-section.tsx    # 고객 후기 섹션
+├── kakao-consultation-button.tsx # 카카오 상담 버튼
+├── share-button.tsx            # 공유 버튼
+├── icons/TourvisIcon.tsx       # 투어비스 아이콘
+└── index.ts                    # Export 모음
+```
+
+**전용 컴포넌트 (3개)** - `components/`:
+```
+├── HeroImage.tsx               # 히어로 이미지 (범용)
+├── HotelCardImage.tsx          # 호텔 카드 이미지
+└── promotion-banner.tsx        # 프로모션 띠배너
+```
+
+#### 6.2.3 `src/features/` - 도메인별 기능 (7개 도메인)
+
+**호텔 도메인** - `features/hotels/` (14개 파일):
+```
+├── hotel-detail.tsx            # 호텔 상세 메인 (1,422줄)
+├── hotel-detail-refactored.tsx # 리팩토링 버전
+├── hotel-grid.tsx              # 호텔 그리드
+├── test-select-hotels.tsx      # 테스트 컴포넌트
+├── index.ts
+└── components/                 # 호텔 전용 컴포넌트 (9개)
+    ├── HotelInfo.tsx           # 호텔 정보
+    ├── HotelPromotion.tsx      # 프로모션 정보
+    ├── HotelTabs.tsx           # 탭 네비게이션 (566줄)
+    ├── ImageGallery.tsx        # 이미지 갤러리 (356줄)
+    ├── RoomCard.tsx            # 객실 카드 (249줄)
+    ├── RoomCardList.tsx        # 객실 카드 리스트
+    ├── RoomRatesTable.tsx      # 요금 테이블 (707줄, Sabre 연동)
+    └── index.ts
+```
+
+**검색 도메인** - `features/search/` (4개 파일):
+```
+├── unified-search-results.tsx  # 통합 검색 결과 (393줄, AI 통합)
+├── common-search-bar.tsx       # 공통 검색바 (870줄)
+├── search-section.tsx          # 검색 섹션
+└── index.ts
+```
+
+**블로그 도메인** - `features/blog/` (3개 파일):
+```
+├── blog-list-section.tsx       # 블로그 목록 섹션
+├── blog-detail-section.tsx     # 블로그 상세 섹션
+└── index.ts
+```
+
+**브랜드 도메인** - `features/brands/` (5개 파일):
+```
+├── brand-program-section.tsx   # 브랜드 프로그램 섹션
+├── brand-program-page.tsx      # 브랜드 프로그램 페이지
+├── brand-hotels-client.tsx     # 브랜드별 호텔 리스트 (306줄)
+├── brand-articles-section.tsx  # 브랜드 아티클 섹션
+└── index.ts
+```
+
+**목적지 도메인** - `features/destinations/` (4개 파일):
+```
+├── trending-destinations-section.tsx  # 인기 목적지 섹션
+├── trending-destinations-server.tsx   # 서버 컴포넌트
+├── trending-destinations-client.tsx   # 클라이언트 컴포넌트
+└── index.ts
+```
+
+**기타 기능** (3개):
+```
+├── hero.tsx                    # 히어로 섹션
+├── benefits-section.tsx        # 혜택 안내 섹션
+├── promotion-section.tsx       # 프로모션 섹션
+└── scroll-to-top.tsx           # 스크롤 탑 버튼
+```
+
+#### 6.2.4 `src/hooks/` - 커스텀 훅 (14개)
+
+**호텔 관련 훅 (9개)**:
+```
+├── use-hotels.ts               # 호텔 목록 조회
+├── use-hotel-queries.ts        # 호텔 쿼리 모음 (370줄)
+├── use-hotel-chains.ts         # 호텔 체인 조회
+├── use-hotel-images.ts         # 호텔 이미지 조회
+├── use-hotel-media.ts          # 호텔 미디어 조회
+├── use-hotel-storage-images.ts # 스토리지 이미지 조회
+├── use-hotel-promotion.ts      # 프로모션 조회
+├── use-hotel-promotion-details.ts # 프로모션 상세
+└── use-room-ai-processing.ts   # AI 객실 설명 (838줄)
+```
+
+**검색 관련 훅 (1개)**:
+```
+└── use-unified-search.ts       # 통합 검색 (359줄)
+```
+
+**이미지 관련 훅 (2개)**:
+```
+├── use-hero-images.ts          # 히어로 이미지
+├── use-region-images.ts        # 지역 이미지
+└── use-image-loading.ts        # 이미지 로딩 상태
+```
+
+**기타 훅 (1개)**:
+```
+└── use-is-mobile.ts            # 모바일 감지
+```
+
+#### 6.2.5 `src/lib/` - 유틸리티 & 클라이언트 (15개)
+
+**Supabase 관련 (6개)**:
+```
+lib/supabase/
+├── client.ts                   # 클라이언트 사이드 Supabase
+├── server.ts                   # 서버 사이드 Supabase
+└── admin.ts                    # 관리자용 Supabase
+
+lib/
+├── supabase.ts                 # Supabase 유틸 (600줄)
+├── supabase-utils.ts           # Supabase 헬퍼 (537줄)
+└── supabase-image-loader.ts    # 이미지 로더 (253줄)
+```
+
+**이미지 관련 (4개)**:
+```
+├── image-utils.ts              # 이미지 유틸리티
+├── image-optimization.ts       # 이미지 최적화 (11 exports)
+├── image-cache.ts              # 이미지 캐시
+└── media-utils.ts              # 미디어 유틸리티
+```
+
+**외부 API 클라이언트 (2개)**:
+```
+├── openai.ts                   # OpenAI 클라이언트 (484줄)
+└── sabre.ts                    # Sabre 클라이언트
+```
+
+**기타 유틸 (3개)**:
+```
+├── utils.ts                    # 공통 유틸 (cn 함수 등)
+├── hotel-utils.ts              # 호텔 유틸 (304줄, 10 exports)
+├── hotel-filter-utils.ts       # 필터 유틸 (6 exports)
+└── date-utils.ts               # 날짜 유틸
+```
+
+#### 6.2.6 `src/types/` - TypeScript 타입 (5개)
+
+```
+├── index.ts                    # 공통 타입 Export
+├── hotel.ts                    # 호텔 관련 타입
+├── hotel-filter.ts             # 필터 관련 타입
+├── region.ts                   # 지역 관련 타입
+└── env.d.ts                    # 환경 변수 타입
+```
+
+#### 6.2.7 `src/config/` - 설정 파일 (5개)
+
+```
+├── site.ts                     # 사이트 전역 설정
+├── navigation.ts               # 네비게이션 설정
+├── layout.ts                   # 레이아웃 설정 (6 exports)
+├── ai-config.ts                # AI 설정 (3 exports)
+└── ai-search.ts                # AI 검색 프롬프트 (3 exports)
+```
+
+#### 6.2.8 `src/providers/` - Context Providers (1개)
+
+```
+└── query-provider.tsx          # TanStack Query Provider
+```
+
+#### 6.2.9 `src/scripts/` - 유틸리티 스크립트 (11개)
+
+```
+├── check-actual-slug.ts        # Slug 확인
+├── check-all-tables.ts         # 전체 테이블 확인
+├── check-hotel-brands.js       # 브랜드 확인
+├── check-hotel-chains-slug.js  # 체인 Slug 확인
+├── check-hotel-media.ts        # 미디어 확인
+├── check-hyatt-data.js         # Hyatt 데이터 확인
+├── check-promotion-tables.ts   # 프로모션 테이블 확인
+├── check-slug-column.ts        # Slug 컬럼 확인
+├── check-table-structure.ts    # 테이블 구조 확인
+├── test-new-columns.js         # 신규 컬럼 테스트
+└── test-promotion-hook.ts      # 프로모션 훅 테스트
+```
+
+### 6.3 주요 컴포넌트 의존성 그래프
+
+```mermaid
+graph TD
+    A[app/page.tsx - 홈페이지] --> B[features/hero.tsx]
+    A --> C[features/search/search-section.tsx]
+    A --> D[features/hotels/hotel-grid.tsx]
+    A --> E[features/promotion-section.tsx]
+    
+    B --> F[components/shared/hero-carousel-3.tsx]
+    B --> G[components/shared/hero-carousel-4.tsx]
+    
+    C --> H[features/search/common-search-bar.tsx]
+    
+    D --> I[components/shared/hotel-card-grid.tsx]
+    I --> J[components/shared/hotel-card.tsx]
+    
+    K[app/hotel/[slug]/page.tsx] --> L[features/hotels/hotel-detail.tsx]
+    L --> M[features/hotels/components/HotelTabs.tsx]
+    L --> N[features/hotels/components/ImageGallery.tsx]
+    L --> O[features/hotels/components/RoomRatesTable.tsx]
+    
+    O --> P[lib/sabre.ts - Sabre API]
+    
+    Q[app/search/page.tsx] --> R[features/search/unified-search-results.tsx]
+    R --> S[hooks/use-unified-search.ts]
+    R --> T[api/openai/chat/stream - AI API]
+    
+    S --> U[lib/supabase/client.ts]
+    T --> V[lib/openai.ts]
+```
+
+### 6.4 데이터 흐름 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client Layer                          │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  React Components (118 .tsx files)              │   │
+│  │  - Server Components (default)                   │   │
+│  │  - Client Components ('use client')              │   │
+│  └──────────────────────────────────────────────────┘   │
+│                         ↓                                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  Custom Hooks (14 hooks)                         │   │
+│  │  - useUnifiedSearch                              │   │
+│  │  - useHotelQueries                               │   │
+│  │  - useRoomAIProcessing                           │   │
+│  └──────────────────────────────────────────────────┘   │
+│                         ↓                                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  React Query (TanStack Query)                    │   │
+│  │  - Query Cache                                   │   │
+│  │  - Mutation Cache                                │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│                    API Layer                             │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  Next.js API Routes (26 routes)                  │   │
+│  │  - /api/hotels/*                                 │   │
+│  │  - /api/blogs/*                                  │   │
+│  │  - /api/openai/*                                 │   │
+│  │  - /api/sabre/*                                  │   │
+│  └──────────────────────────────────────────────────┘   │
+│                         ↓                                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  Library Layer (15 files)                        │   │
+│  │  - lib/supabase/* (Supabase 클라이언트)          │   │
+│  │  - lib/openai.ts (OpenAI 클라이언트)             │   │
+│  │  - lib/sabre.ts (Sabre 클라이언트)               │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│                 External Services                        │
+│  ┌─────────────┐  ┌──────────┐  ┌───────────────┐      │
+│  │  Supabase   │  │ OpenAI   │  │  Sabre API    │      │
+│  │  (PostgreSQL)│  │ GPT-4o   │  │  (Hotel Data) │      │
+│  └─────────────┘  └──────────┘  └───────────────┘      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 6.5 핵심 파일 역할 분석
+
+#### 6.5.1 데이터 페칭 레이어
+
+**호텔 데이터**:
+```typescript
+// hooks/use-hotel-queries.ts (370줄)
+- useHotels()              // 호텔 목록 (필터링)
+- useSearchResults()       // 검색 결과
+- useHotelDetail()         // 호텔 상세
+- useFilterOptions()       // 필터 옵션
+- useAllHotels()          // 전체 호텔
+- useTopBannerHotels()    // 프로모션 배너용
+- useRelatedBlogs()       // 관련 아티클
+```
+
+**통합 검색**:
+```typescript
+// hooks/use-unified-search.ts (359줄)
+- 지역 검색: select_regions
+- 호텔 검색: select_hotels (3개 병렬 쿼리)
+- 블로그 검색: select_hotel_blogs
+- 이미지 조회: select_city_media, select_hotel_media
+```
+
+**AI 처리**:
+```typescript
+// hooks/use-room-ai-processing.ts (838줄)
+- AI 기반 객실 설명 생성
+- OpenAI GPT-4o-mini 사용
+- 스트리밍 지원
+```
+
+#### 6.5.2 UI 컴포넌트 레이어
+
+**호텔 카드 (5가지 변형)**:
+```typescript
+1. hotel-card.tsx              // 기본 호텔 카드
+2. hotel-card-cta.tsx          // CTA 포함 카드
+3. hotel-card-all-view.tsx     // 전체보기용 카드
+4. brand-hotel-card.tsx        // 브랜드용 카드
+5. hotel-card-grid-*.tsx       // 그리드 레이아웃 (3종)
+```
+
+**히어로 캐러셀 (2가지 버전)**:
+```typescript
+1. hero-carousel-3.tsx (316줄)  // 3개 호텔 표시
+2. hero-carousel-4.tsx (331줄)  // 4개 호텔 표시
+```
+
+#### 6.5.3 외부 API 통합 레이어
+
+**Sabre API**:
+```typescript
+// lib/sabre.ts
+- getSabreToken()              // 토큰 발급 & 캐싱
+- searchHotels()               // 호텔 검색
+- getRoomRates()               // 요금 조회
+
+// features/hotels/components/RoomRatesTable.tsx (707줄)
+- Sabre API 요금 조회 UI
+- Rate Plan 선택
+- 결과 테이블 표시
+```
+
+**OpenAI API**:
+```typescript
+// lib/openai.ts (484줄)
+- createChatCompletion()       // 채팅 완성
+- streamChatCompletion()       // 스트리밍 채팅
+
+// api/openai/chat/stream/route.ts
+- SSE 스트리밍 프록시
+- 토큰 단위 실시간 응답
+```
+
+### 6.6 상태 관리 전략
+
+#### 6.6.1 TanStack Query (React Query)
+```typescript
+// providers/query-provider.tsx
+
+전역 설정:
+- staleTime: 5분
+- cacheTime: 30분
+- refetchOnWindowFocus: false
+- retry: 1회
+
+쿼리 키 패턴:
+['hotels', filters]              // 호텔 목록
+['hotel-detail', slug]           // 호텔 상세
+['unified-search', 'v2', q]     // 통합 검색
+['filter-options']               // 필터 옵션
+['hero-images']                  // 히어로 이미지
+['promotion-hotels']             // 프로모션 호텔
+```
+
+#### 6.6.2 URL State (Query Parameters)
+```typescript
+// 호텔 필터링
+/hotel?city=TOKYO&brand=MARRIOTT&country=JAPAN
+
+// 통합 검색
+/search?q=도쿄+호텔
+
+// 블로그 검색
+/blog?q=여행+팁
+```
+
+#### 6.6.3 Local State (useState)
+```typescript
+// 컴포넌트별 로컬 상태
+- 모달 열림/닫힘
+- 현재 슬라이드 인덱스
+- 검색어 입력값
+- 로딩/에러 상태
+```
+
+### 6.7 코드 품질 지표
+
+#### 6.7.1 TypeScript 사용률
+```
+TypeScript 파일: 201개 (100%)
+Any 타입 사용:   최소화 (타입 안정성 우선)
+엄격 모드:       활성화
+```
+
+#### 6.7.2 컴포넌트 재사용성
+```
+재사용 컴포넌트: 54개
+도메인 컴포넌트: 27개
+UI 프리미티브:   14개
+재사용률:        ~70%
+```
+
+#### 6.7.3 코드 응집도
+```
+평균 파일 크기:   ~200줄
+최대 파일 크기:   1,422줄 (hotel-detail.tsx)
+단일 책임 원칙:   대부분 준수
+도메인 분리:      명확 (features/ 구조)
+```
+
+### 6.8 주요 패턴 & 아키텍처
+
+#### 6.8.1 Server Component First
+```typescript
+// 기본적으로 Server Component 사용
+export default async function Page() {
+  const data = await fetchData()
+  return <ServerComponent data={data} />
+}
+
+// 필요한 경우에만 'use client'
+'use client'
+export function ClientComponent() {
+  const [state, setState] = useState()
+  // ...
+}
+```
+
+#### 6.8.2 Compound Component Pattern
+```typescript
+// HotelTabs 예시
+<Tabs defaultValue="overview">
+  <TabsList>
+    <TabsTrigger value="overview">개요</TabsTrigger>
+    <TabsTrigger value="rooms">객실</TabsTrigger>
+  </TabsList>
+  <TabsContent value="overview">
+    <HotelInfo />
+  </TabsContent>
+  <TabsContent value="rooms">
+    <RoomRatesTable />
+  </TabsContent>
+</Tabs>
+```
+
+#### 6.8.3 Hook Composition
+```typescript
+// 여러 훅을 조합하여 복잡한 로직 처리
+export function HotelDetailPage({ slug }: Props) {
+  const { data: hotel } = useHotelDetail(slug)
+  const { data: images } = useHotelMedia(hotel?.sabre_id)
+  const { data: benefits } = useHotelBenefits(hotel?.sabre_id)
+  const { data: blogs } = useRelatedBlogs(hotel?.sabre_id)
+  
+  // ...
+}
+```
+
+#### 6.8.4 Error Boundary Pattern
+```typescript
+// components/shared/hotel-error-boundary.tsx
+<HotelErrorBoundary fallback={<ErrorFallback />}>
+  <HotelContent />
+</HotelErrorBoundary>
+
+// components/ui/image-error-boundary.tsx
+<ImageErrorBoundary>
+  <OptimizedImage src={src} />
+</ImageErrorBoundary>
+```
+
+### 6.9 성능 최적화 기법
+
+#### 6.9.1 코드 스플리팅
+```typescript
+// Dynamic Import
+const ImageGallery = dynamic(
+  () => import('@/features/hotels/components/ImageGallery'),
+  { ssr: false, loading: () => <Skeleton /> }
+)
+```
+
+#### 6.9.2 이미지 최적화
+```typescript
+// 다양한 이미지 로딩 전략
+<Image
+  src={src}
+  alt={alt}
+  fill
+  priority={isLCP}              // LCP 이미지만
+  loading={isAboveFold ? "eager" : "lazy"}
+  sizes="(max-width: 768px) 100vw, 50vw"
+/>
+```
+
+#### 6.9.3 Debounce & Throttle
+```typescript
+// 검색 입력 디바운싱
+const debouncedQuery = useMemo(
+  () => debounce(query, 300),
+  [query]
+)
+```
+
+### 6.10 코드 조직 원칙
+
+#### 6.10.1 폴더 구조 규칙
+```
+✅ DO:
+- 도메인별로 features/ 아래 그룹화
+- 재사용 컴포넌트는 components/shared/
+- UI 프리미티브는 components/ui/
+- 페이지는 app/ 아래 라우팅 구조대로
+
+❌ DON'T:
+- 컴포넌트를 app/ 안에 직접 배치
+- 도메인 로직을 components/에 배치
+- 유틸리티를 features/에 배치
+```
+
+#### 6.10.2 파일 네이밍
+```
+✅ DO:
+- 컴포넌트: PascalCase (HotelCard.tsx)
+- 훅: use-kebab-case.ts (use-hotels.ts)
+- 유틸: kebab-case.ts (hotel-utils.ts)
+- API: route.ts (Next.js 규칙)
+
+❌ DON'T:
+- hotelCard.tsx (camelCase)
+- HotelUtils.ts (컴포넌트 아님)
+- api.ts (명확하지 않음)
+```
+
+#### 6.10.3 Import 규칙
+```typescript
+// Alias 사용 (@/)
+import { HotelCard } from '@/components/shared/hotel-card'
+import { useHotels } from '@/hooks/use-hotels'
+import { cn } from '@/lib/utils'
+
+// 상대 경로 사용 금지
+// ❌ import { HotelCard } from '../../../components/shared/hotel-card'
+```
+
+---
+
+## 7. UI/UX 가이드
+
+### 7.1 디자인 시스템
+
+#### 7.1.1 컬러 팔레트
 ```css
 /* Primary */
 --primary: #1a0dab;           /* 파란색 (링크) */
@@ -1089,9 +1831,9 @@ animate-pulse: opacity 변화
 
 ---
 
-## 7. 데이터 구조
+## 8. 데이터 구조
 
-### 7.1 호텔 데이터 스키마
+### 8.1 호텔 데이터 스키마
 
 ```typescript
 interface Hotel {
@@ -1214,9 +1956,9 @@ interface Region {
 
 ---
 
-## 8. API 명세
+## 9. API 명세
 
-### 8.1 RESTful API 설계 원칙
+### 9.1 RESTful API 설계 원칙
 
 #### 8.1.1 응답 형식
 ```json
@@ -1438,9 +2180,9 @@ data: [DONE]
 
 ---
 
-## 9. Sabre API 연동
+## 10. Sabre API 연동
 
-### 9.1 Sabre API 개요
+### 10.1 Sabre API 개요
 
 Sabre API는 실시간 객실 요금 조회 및 예약 기능을 제공.
 
@@ -1865,9 +2607,9 @@ function transformSabreData(sabreData: SabreRoom[]): UIRoom[] {
 
 ---
 
-## 10. 캐시 전략
+## 11. 캐시 전략
 
-### 10.1 캐시 레이어 아키텍처
+### 11.1 캐시 레이어 아키텍처
 
 ```
 ┌─────────────────────────────────────────┐
@@ -3094,9 +3836,9 @@ function shouldCacheAIResponse(query: string): boolean {
 
 ---
 
-## 11. 성능 요구사항
+## 12. 성능 요구사항
 
-### 9.1 페이지 로딩 성능
+### 12.1 페이지 로딩 성능
 
 | 페이지 | 목표 LCP | 목표 FCP | 목표 TTI |
 |--------|----------|----------|----------|
@@ -3166,9 +3908,9 @@ export const revalidate = 3600   // 1시간
 
 ---
 
-## 10. 보안 및 개인정보
+## 13. 보안 및 개인정보
 
-### 10.1 보안 요구사항
+### 13.1 보안 요구사항
 
 #### 10.1.1 인증 & 권한
 - Supabase Auth 사용
@@ -3207,9 +3949,9 @@ export const revalidate = 3600   // 1시간
 
 ---
 
-## 11. 향후 로드맵
+## 14. 향후 로드맵
 
-### 11.1 Phase 2 (Q2 2025)
+### 14.1 Phase 2 (Q2 2025)
 
 #### 11.1.1 회원 시스템
 - 회원 가입/로그인
@@ -3265,9 +4007,9 @@ export const revalidate = 3600   // 1시간
 
 ---
 
-## 12. 부록
+## 15. 부록
 
-### 12.1 용어 정의
+### 15.1 용어 정의
 
 | 용어 | 설명 |
 |------|------|
