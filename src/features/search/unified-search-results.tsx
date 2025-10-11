@@ -166,7 +166,7 @@ export function UnifiedSearchResults() {
             {q && (
               <div>
                 <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
-                  AI 요약
+                  호텔 전문 AI 답변
                   {aiStreaming && (
                     <div className="flex items-center gap-1 text-blue-600">
                       <div className="flex space-x-1">
@@ -198,7 +198,7 @@ export function UnifiedSearchResults() {
                           </span>
                         )}
                       </div>
-                      {aiSummary.length > 200 && !aiStreaming && (
+                      {aiSummary.length > 200 && (
                         <div className="flex justify-center mt-3">
                           <button
                             onClick={() => setIsAiExpanded(!isAiExpanded)}
