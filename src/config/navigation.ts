@@ -39,7 +39,24 @@ export const mobileNavItems = navigationItems.filter(
 /**
  * 데스크톱 헤더용 아이템 (모바일 전용 제외)
  */
-export const desktopNavItems = navigationItems.filter(
-  item => !item.mobileOnly
-)
+// 데스크탑 전용 순서: 셀렉트 소개 오른쪽에 고객 후기 배치
+export const desktopNavItems = navigationItems
+  .filter(item => !item.mobileOnly)
+  .sort((a, b) => {
+    const order = [
+      "/about",          // 셀렉트 소개
+      "/testimonials",   // 고객 후기 (오른쪽 위치)
+      "/brand",
+      "/promotion",
+      "/hotel",
+      "/hotel/region",
+      "/blog",
+      "https://tourvis.com",
+    ]
+    const idx = (href: string) => {
+      const i = order.indexOf(href)
+      return i === -1 ? 999 : i
+    }
+    return idx(a.href) - idx(b.href)
+  })
 
