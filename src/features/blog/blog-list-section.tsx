@@ -128,7 +128,7 @@ export function BlogListSection() {
 
         {/* 통합 검색 바 */}
         <div className="max-w-3xl mx-auto mb-8">
-          <UnifiedSearchBar placeholder="호텔/아티클을 검색하세요" />
+          <UnifiedSearchBar placeholder="호텔/아티클을 검색하세요" submitTo="/search" />
         </div>
 
         {/* 블로그 리스트 */}

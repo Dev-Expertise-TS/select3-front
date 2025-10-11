@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { useUnifiedSearch } from '@/hooks/use-unified-search'
@@ -10,12 +10,15 @@ import { useUnifiedSearch } from '@/hooks/use-unified-search'
 interface UnifiedSearchBarProps {
   className?: string
   placeholder?: string
+  submitTo?: string
+  initialQuery?: string
 }
 
-export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티클 통합 검색' }: UnifiedSearchBarProps) {
+export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티클 통합 검색', submitTo = '/search', initialQuery = '' }: UnifiedSearchBarProps) {
   const router = useRouter()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialQuery)
   const { data, isLoading } = useUnifiedSearch(query)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const suggestions = useMemo(() => data ?? [], [data])
   const regionSuggestions = useMemo(() => suggestions.filter((s: any) => s.type === 'region').slice(0, 5), [suggestions])
@@ -23,36 +26,61 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
   const blogSuggestions = useMemo(() => suggestions.filter((s: any) => s.type === 'blog').slice(0, 5), [suggestions])
 
   const [activeTab, setActiveTab] = useState<'all' | 'region' | 'hotel' | 'blog'>('all')
+  const [isFocused, setIsFocused] = useState(false)
 
   const onSubmit = useCallback(
     (e?: React.FormEvent) => {
       if (e) e.preventDefault()
       const q = query.trim()
       if (!q) return
-      // 우선 동작: 블로그 페이지에 부착되므로, 블로그 검색 결과는 현재 페이지 스크롤/목록 필터링과 별개로
-      // 일단 호텔/블로그 상관 없이 검색 결과 페이지로 이동하지 않고, 블로그 페이지에서는 쿼리 파라미터만 반영
-      // 추후 /search-results 통합 페이지로 연결 가능
+      // 입력 제출 시 추천 레이어 닫기
+      setIsFocused(false)
       const params = new URLSearchParams()
       params.set('q', q)
-      router.push(`/blog?${params.toString()}`)
+      router.push(`${submitTo}?${params.toString()}`)
     },
-    [query, router]
+    [query, router, submitTo]
   )
+
+  // 초기 검색어가 URL 변경 등으로 갱신될 때만 동기화 (입력 중에는 간섭하지 않음)
+  useEffect(() => {
+    setQuery(initialQuery)
+  }, [initialQuery])
 
   return (
     <form onSubmit={onSubmit} className={cn('w-full', className)} role="search" aria-label="통합 검색">
       <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
         <Search className="w-4 h-4 text-gray-500" />
         <Input
+          ref={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value
+            setQuery(v)
+          }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 120)}
           placeholder={placeholder}
           className="border-0 p-0 shadow-none focus-visible:ring-0"
         />
+        {!!query && !isLoading && (
+          <button
+            type="button"
+            aria-label="clear"
+            onClick={() => {
+              setQuery('')
+              setIsFocused(true)
+              inputRef.current?.focus()
+            }}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
         <button
           type="submit"
           className={cn(
-            'rounded-md px-3 py-1.5 text-sm font-medium text-white',
+            'rounded-md px-4 md:px-5 py-1.5 text-sm font-medium text-white whitespace-nowrap min-w-[72px] flex-shrink-0',
             isLoading ? 'bg-gray-400' : 'bg-gray-900 hover:bg-black'
           )}
           aria-busy={isLoading}
@@ -61,7 +89,7 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
         </button>
       </div>
 
-      {query.trim() && (regionSuggestions.length > 0 || hotelSuggestions.length > 0 || blogSuggestions.length > 0) && (
+      {isFocused && query.trim() && (
         <div className="relative">
           {/* Overlay layer */}
           <div className="absolute left-0 right-0 z-50 mt-2 rounded-md border bg-white shadow-lg" role="dialog" aria-label="검색 추천">
@@ -90,6 +118,12 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
 
             {/* Content */}
             <div className="max-h-80 overflow-auto" role="listbox">
+              {isLoading && (
+                <div className="px-3 py-2 text-xs text-gray-500">불러오는 중...</div>
+              )}
+              {!isLoading && suggestions.length === 0 && (
+                <div className="px-3 py-2 text-xs text-gray-500">결과가 없습니다</div>
+              )}
               {(activeTab === 'all' || activeTab === 'region') && regionSuggestions.length > 0 && (
                 <div className="divide-y">
                   <div className="px-3 py-1.5 text-xs font-semibold text-gray-500">지역</div>
@@ -141,6 +175,9 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
                     )
                   })}
                 </div>
+              )}
+              {!isLoading && regionSuggestions.length === 0 && hotelSuggestions.length === 0 && blogSuggestions.length === 0 && (
+                <div className="px-3 py-2 text-xs text-gray-500">결과가 없습니다</div>
               )}
             </div>
           </div>
