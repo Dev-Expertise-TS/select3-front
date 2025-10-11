@@ -46,7 +46,8 @@ export function PromotionBanner() {
   const { data: promotionHotels = [] } = useTopBannerHotels()
 
   useEffect(() => {
-    if (showPromoBanner && promotionHotels.length > 0) {
+    // 호텔이 2개 이상일 때만 자동 슬라이드 실행
+    if (showPromoBanner && promotionHotels.length > 1) {
       const interval = setInterval(() => {
         setCurrentPromoIndex((prev) => (prev + 1) % promotionHotels.length)
         setAnimationKey(prev => prev + 1)
@@ -123,24 +124,29 @@ export function PromotionBanner() {
           </div>
 
           <div className="absolute right-1 sm:right-4 flex items-center space-x-1 sm:space-x-2">
-            <button
-              className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-white hover:bg-white/20 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSlideChange((currentPromoIndex - 1 + promotionHotels.length) % promotionHotels.length)
-              }}
-            >
-              <ChevronLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-            </button>
-            <button
-              className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-white hover:bg-white/20 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSlideChange((currentPromoIndex + 1) % promotionHotels.length)
-              }}
-            >
-              <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-            </button>
+            {/* 호텔이 2개 이상일 때만 좌우 화살표 표시 */}
+            {promotionHotels.length > 1 && (
+              <>
+                <button
+                  className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-white hover:bg-white/20 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSlideChange((currentPromoIndex - 1 + promotionHotels.length) % promotionHotels.length)
+                  }}
+                >
+                  <ChevronLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                </button>
+                <button
+                  className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-white hover:bg-white/20 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSlideChange((currentPromoIndex + 1) % promotionHotels.length)
+                  }}
+                >
+                  <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                </button>
+              </>
+            )}
             <button
               className="h-5 w-5 sm:h-6 sm:w-6 p-0 ml-1 sm:ml-2 text-white hover:bg-white/20 transition-colors"
               onClick={(e) => {

@@ -384,19 +384,43 @@ export function HotelSearchResults({
     const chainParam = urlParams.get('chain')
     
     // URL 파라미터가 있으면 우선 사용, 없으면 initialBrandId/currentChainId 사용
-      const newFilters = {
-        city: cityParam || '',
-        country: countryParam || '',
+    const newFilters = {
+      city: cityParam || '',
+      country: countryParam || '',
       brand: brandParam || initialBrandId || '',
       chain: chainParam || currentChainId || ''
+    }
+    
+    // 도시 선택 시 자동으로 국가 선택 (URL 파라미터로 도시가 전달된 경우)
+    if (cityParam && !countryParam && finalFilterOptions?.cities) {
+      const selectedCity = finalFilterOptions.cities.find((c: any) => c.id === cityParam)
+      if (selectedCity && selectedCity.country_code) {
+        newFilters.country = selectedCity.country_code
+        console.log('🔄 URL 도시 파라미터 → 국가 자동 선택:', {
+          city: cityParam,
+          country: selectedCity.country_code
+        })
       }
+    }
+    
+    // 브랜드 선택 시 자동으로 체인 선택 (URL 파라미터로 브랜드가 전달된 경우)
+    if (brandParam && !chainParam && finalFilterOptions?.brands) {
+      const selectedBrand = finalFilterOptions.brands.find((b: any) => b.id === brandParam)
+      if (selectedBrand && selectedBrand.chain_id) {
+        newFilters.chain = String(selectedBrand.chain_id)
+        console.log('🔄 URL 브랜드 파라미터 → 체인 자동 선택:', {
+          brand: brandParam,
+          chain: selectedBrand.chain_id
+        })
+      }
+    }
       
     // 필터가 있는 경우에만 적용
     if (newFilters.city || newFilters.country || newFilters.brand || newFilters.chain) {
       console.log('🔍 필터 적용 (URL 또는 initialBrandId/currentChainId):', newFilters)
       setFilters(newFilters)
     }
-  }, [initialBrandId, currentChainId]) // initialBrandId, currentChainId가 변경될 때도 실행
+  }, [initialBrandId, currentChainId, finalFilterOptions]) // finalFilterOptions 의존성 추가
 
   // 검색 결과용 필터링된 데이터
   const filteredSearchResults = useMemo(() => {
