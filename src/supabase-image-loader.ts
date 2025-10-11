@@ -18,13 +18,32 @@ type LoaderProps = {
     return `https://${PROJECT_ID}.supabase.co/storage/v1/render/image/public/${src}?width=${width}&quality=${q}&resize=${DEFAULT_RESIZE}`;
   };
   
-  export default function supabaseLoader({ src, width, quality }: LoaderProps) {
-    // 안전 가드: 절대 URL이 들어오면 원본 그대로 반환
-    if (src.startsWith('http')) return src;
-    return buildURL(src, width, quality);
+export default function supabaseLoader({ src, width, quality }: LoaderProps) {
+  // 안전 가드: 절대 URL이 들어오면 원본 그대로 반환
+  if (src.startsWith('http')) return src;
+  
+  // 이미 최적화된 이미지 형식(avif, webp)이면 render API 사용 안 함 (타임아웃 방지)
+  const isOptimizedFormat = src.toLowerCase().endsWith('.avif') || src.toLowerCase().endsWith('.webp');
+  
+  if (isOptimizedFormat) {
+    // 최적화된 이미지는 원본 URL 직접 반환 (타임아웃 방지)
+    return `https://${PROJECT_ID}.supabase.co/storage/v1/object/public/${src}`;
   }
   
+  return buildURL(src, width, quality);
+}
+  
   /** 유틸: 매우 작은 블러 썸네일(placeholder) 생성용 */
-  export const tinyBlurDataURL = (src: string) =>
-    `https://${PROJECT_ID}.supabase.co/storage/v1/render/image/public/${src}?width=24&quality=40&resize=${DEFAULT_RESIZE}&format=webp`;
+  export const tinyBlurDataURL = (src: string) => {
+    // 절대 URL이면 그대로 반환
+    if (src.startsWith('http')) return src;
+    
+    // 이미 최적화된 이미지는 원본 URL 반환 (타임아웃 방지)
+    const isOptimizedFormat = src.toLowerCase().endsWith('.avif') || src.toLowerCase().endsWith('.webp');
+    if (isOptimizedFormat) {
+      return `https://${PROJECT_ID}.supabase.co/storage/v1/object/public/${src}`;
+    }
+    
+    return `https://${PROJECT_ID}.supabase.co/storage/v1/render/image/public/${src}?width=24&quality=40&resize=${DEFAULT_RESIZE}&format=webp`;
+  }
   

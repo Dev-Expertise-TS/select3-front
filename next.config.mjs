@@ -45,6 +45,15 @@ const nextConfig = {
     minimumCacheTTL: 300, // 캐시 시간을 5분으로 증가
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Supabase Storage 이미지 타임아웃 방지
+    loader: 'default',
+    // 이미지 최적화 타임아웃 증가 (기본 7초 -> 60초)
+    loaderFile: undefined,
+  },
+  // 이미지 최적화 타임아웃 설정
+  experimental: {
+    // 이미지 최적화 타임아웃을 60초로 증가
+    proxyTimeout: 60_000,
   },
 }
 
