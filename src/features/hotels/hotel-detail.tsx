@@ -1388,7 +1388,7 @@ export function HotelDetail({
       />
 
       {/* Search Bar - Sticky */}
-      <div className="sticky top-[76px] sm:top-[130px] z-40 bg-gray-100 py-0 sm:py-2">
+      <div className="sticky top-[90px] sm:top-[130px] z-40 bg-gray-100 py-0 sm:py-2">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <CommonSearchBar
             variant="hotel-detail"
