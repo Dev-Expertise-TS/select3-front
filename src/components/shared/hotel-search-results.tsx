@@ -394,6 +394,11 @@ export function HotelSearchResults({
     const brandParam = urlParams.get('brand')
     const chainParam = urlParams.get('chain')
     
+    // 필터 데이터가 아직 없으면 대기
+    if (!finalFilterOptions || !allHotels) {
+      return
+    }
+    
     // URL 파라미터가 있으면 우선 사용, 없으면 initialBrandId/currentChainId 사용
     const newFilters = {
       city: cityParam || '',
@@ -410,7 +415,7 @@ export function HotelSearchResults({
         newFilters.country = optionMatch.id
       } else {
         // 2) 전체 호텔 데이터에서 country_en 또는 country_ko로 매칭해 코드 도출
-        const hotelMatch = (allHotels || []).find((h: any) =>
+        const hotelMatch = allHotels.find((h: any) =>
           (typeof h.country_en === 'string' && h.country_en.toLowerCase() === countryParam.toLowerCase()) ||
           h.country_ko === countryParam
         )
@@ -446,13 +451,20 @@ export function HotelSearchResults({
         })
       }
     }
+    
+    // 현재 필터와 새 필터를 비교하여 변경이 있을 때만 업데이트
+    const filtersChanged = 
+      filters.city !== newFilters.city ||
+      filters.country !== newFilters.country ||
+      filters.brand !== newFilters.brand ||
+      filters.chain !== newFilters.chain
       
-    // 필터가 있는 경우에만 적용
-    if (newFilters.city || newFilters.country || newFilters.brand || newFilters.chain) {
+    // 필터가 있고 변경이 있는 경우에만 적용
+    if ((newFilters.city || newFilters.country || newFilters.brand || newFilters.chain) && filtersChanged) {
       console.log('🔍 필터 적용 (URL 또는 initialBrandId/currentChainId):', newFilters)
       setFilters(newFilters)
     }
-  }, [initialBrandId, currentChainId, finalFilterOptions, allHotels]) // allHotels 의존성 추가 (country 이름 매핑용)
+  }, [initialBrandId, currentChainId]) // finalFilterOptions, allHotels 제거하여 무한 루프 방지
 
   // 검색 결과용 필터링된 데이터
   const filteredSearchResults = useMemo(() => {
