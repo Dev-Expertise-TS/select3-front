@@ -114,21 +114,34 @@ export function HotelSearchResults({
   })
   
   const { data: searchResults, isLoading: isSearchLoading, error: searchError } = useSearchResults(searchQuery, refreshTick)
-  const { data: allHotels, isLoading: isAllHotelsLoading, error: allHotelsError } = useAllHotels()
+  
+  // 서버 데이터 우선 사용, 없으면 클라이언트에서 fetch
+  const { data: clientAllHotels, isLoading: isAllHotelsLoading, error: allHotelsError } = useAllHotels(
+    { enabled: initialHotels.length === 0 } // 서버 데이터가 없을 때만 클라이언트에서 조회
+  )
+  const allHotels = initialHotels.length > 0 ? initialHotels : clientAllHotels
+  
   const { data: bannerHotel, isLoading: isBannerLoading } = useBannerHotel()
   const { data: chainBrandHotels, isLoading: isChainBrandLoading, error: chainBrandError } = useChainBrandHotels(selectedChainId)
   const { data: brandHotels, isLoading: isBrandLoading, error: brandError } = useBrandHotels(selectedBrandId)
   const { data: chainBrands } = useChainBrands(selectedChainId)
-  const { data: filterOptions, isLoading: isFilterOptionsLoading, error: filterOptionsError } = useFilterOptions()
+  
+  // 서버 필터 옵션 우선 사용, 없으면 클라이언트에서 fetch
+  const { data: clientFilterOptions, isLoading: isFilterOptionsLoading, error: filterOptionsError } = useFilterOptions(
+    { enabled: !serverFilterOptions } // 서버 데이터가 없을 때만 클라이언트에서 조회
+  )
+  const filterOptions = serverFilterOptions || clientFilterOptions
   
   // 체인 페이지에서는 서버 필터 옵션과 클라이언트 필터 옵션을 병합
   // 브랜드는 항상 클라이언트 API에서 가져온 전체 목록 사용
   const finalFilterOptions = serverFilterOptions 
     ? {
         ...serverFilterOptions,
-        brands: filterOptions?.brands || [] // 브랜드는 항상 전체 목록
+        brands: clientFilterOptions?.brands || [] // 브랜드는 항상 전체 목록
       }
     : filterOptions
+  
+  const isFinalFilterOptionsLoading = serverFilterOptions ? false : isFilterOptionsLoading
   
   // 전체 호텔 데이터 디버깅
   useEffect(() => {
@@ -140,8 +153,6 @@ export function HotelSearchResults({
       샘플: allHotels?.slice(0, 2)
     })
   }, [allHotels, isAllHotelsLoading, allHotelsError])
-  
-  const isFinalFilterOptionsLoading = serverFilterOptions ? false : isFilterOptionsLoading
 
 
   const handleSearch = (newQuery: string) => {

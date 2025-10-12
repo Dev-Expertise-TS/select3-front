@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { Metadata } from 'next'
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
+import { getHotelPageData } from './hotel-page-server'
 
 // 호텔 목록 페이지 캐시: 5분마다 재검증
 export const revalidate = 300
@@ -27,7 +28,10 @@ export const metadata: Metadata = {
   },
 }
 
-export default function AllHotelResortPage() {
+export default async function AllHotelResortPage() {
+  // 서버에서 초기 데이터 조회
+  const { allHotels, filterOptions } = await getHotelPageData()
+  
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
       <HotelSearchResults 
@@ -36,6 +40,8 @@ export default function AllHotelResortPage() {
         showAllHotels={true}
         hideSearchBar={true}
         showFilters={true}
+        initialHotels={allHotels}
+        serverFilterOptions={filterOptions}
       />
     </Suspense>
   )

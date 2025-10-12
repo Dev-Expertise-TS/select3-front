@@ -65,7 +65,7 @@ export function useSearchResults(query: string, tick: number) {
 /**
  * 필터 옵션 조회 훅 (서버 API 사용)
  */
-export function useFilterOptions() {
+export function useFilterOptions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['filter-options', 'v13'], // city_code, country_code 기반으로 정확히 복원
     queryFn: async () => {
@@ -93,13 +93,14 @@ export function useFilterOptions() {
     staleTime: 5 * 60 * 1000,
     retry: 1,
     retryDelay: 500,
+    enabled: options?.enabled !== false, // 기본값 true, options로 제어 가능
   })
 }
 
 /**
  * 모든 호텔 조회 훅
  */
-export function useAllHotels() {
+export function useAllHotels(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['all-hotels', 'v3'],
     queryFn: async () => {
@@ -162,6 +163,7 @@ export function useAllHotels() {
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled: options?.enabled !== false, // 기본값 true, options로 제어 가능
   })
 }
 
