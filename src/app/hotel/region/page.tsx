@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: '전 세계 주요 도시별 프리미엄 호텔 & 리조트를 찾아보세요',
 }
 
+// 지역 페이지 캐시: 1시간마다 재검증
+export const revalidate = 3600
+
 export default async function RegionListPage() {
   const supabase = await createClient()
 
@@ -25,8 +28,28 @@ export default async function RegionListPage() {
 
   console.log('📍 지역 목록 조회 성공:', regions?.length || 0)
 
-  // 2. 모든 도시의 이미지를 한 번에 조회 (성능 최적화)
   const cityCodes = regions?.map(r => r.city_code) || []
+  
+  // 2. 각 도시별 호텔 개수 조회 (병렬 처리)
+  let hotelCounts: Record<string, number> = {}
+  
+  if (cityCodes.length > 0) {
+    const { data: hotels } = await supabase
+      .from('select_hotels')
+      .select('city_code')
+      .in('city_code', cityCodes)
+      .or('publish.is.null,publish.eq.true')
+    
+    if (hotels) {
+      hotels.forEach((h: any) => {
+        const code = h.city_code
+        hotelCounts[code] = (hotelCounts[code] || 0) + 1
+      })
+      console.log('🏨 도시별 호텔 개수 집계 완료')
+    }
+  }
+
+  // 3. 모든 도시의 이미지를 한 번에 조회 (성능 최적화)
   let cityImages: Record<string, string> = {}
 
   if (cityCodes.length > 0) {
@@ -62,6 +85,10 @@ export default async function RegionListPage() {
     }
   }
 
-  return <RegionListClient regions={regions || []} cityImages={cityImages} />
+  return <RegionListClient 
+    regions={regions || []} 
+    cityImages={cityImages}
+    hotelCounts={hotelCounts}
+  />
 }
 

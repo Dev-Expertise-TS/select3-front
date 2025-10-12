@@ -5,6 +5,9 @@ import { ArrowLeft, Coffee, Utensils, Waves, Filter, ChevronDown } from "lucide-
 import { Button } from "@/components/ui/button"
 import { CommonSearchBar } from "@/features/search/common-search-bar"
 
+// 지역 페이지 캐시: 1시간마다 재검증
+export const revalidate = 3600
+
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: { params: Promise<{ city: string }> }): Promise<Metadata> {
   const { city } = await params

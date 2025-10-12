@@ -24,6 +24,7 @@ interface Region {
 interface RegionListClientProps {
   regions: Region[]
   cityImages: Record<string, string>  // 서버에서 미리 가져온 이미지 URL
+  hotelCounts: Record<string, number> // 서버에서 미리 집계한 호텔 개수
 }
 
 /**
@@ -72,7 +73,7 @@ function groupByContinent(regions: Region[]) {
   return grouped
 }
 
-export function RegionListClient({ regions, cityImages }: RegionListClientProps) {
+export function RegionListClient({ regions, cityImages, hotelCounts }: RegionListClientProps) {
   const groupedRegions = groupByContinent(regions)
   return (
     <div className="min-h-screen bg-background">

@@ -105,7 +105,7 @@ export function useHotelBySlug(slug: string) {
 }
 
 // 호텔 미디어 이미지 조회 (select_hotel_media 테이블 사용)
-export function useHotelMedia(sabreId: number) {
+export function useHotelMedia(sabreId: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['hotel-media', sabreId],
     queryFn: async () => {
@@ -128,7 +128,7 @@ export function useHotelMedia(sabreId: number) {
       
       return data || []
     },
-    enabled: !!sabreId,
+    enabled: options?.enabled !== false && !!sabreId, // enabled 옵션 추가
     staleTime: 5 * 60 * 1000, // 5분
   })
 }

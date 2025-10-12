@@ -2,61 +2,9 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/features/scroll-to-top"
 import { HotelDetail } from "@/features/hotels/hotel-detail"
-import { createClient } from "@/lib/supabase/server"
 import { Metadata } from "next"
 import { HotelNotFound } from "@/components/hotel/HotelNotFound"
-
-// 호텔 데이터를 서버사이드에서 미리 페칭
-async function getHotelBySlug(slug: string) {
-  try {
-    const supabase = await createClient()
-    
-    // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
-    const decodedSlug = decodeURIComponent(slug)
-    
-    console.log('🔍 호텔 검색:', {
-      originalSlug: slug,
-      decodedSlug: decodedSlug,
-      hasSpecialChars: slug !== decodedSlug
-    })
-    
-    const { data: hotel, error } = await supabase
-      .from('select_hotels')
-      .select('*')
-      .eq('slug', decodedSlug)
-      .maybeSingle()
-    
-    if (error) {
-      // 호텔을 찾을 수 없는 경우는 정상적인 상황이므로 경고 수준으로 로깅
-      console.warn('호텔 데이터 조회 실패:', {
-        originalSlug: slug,
-        decodedSlug: decodedSlug,
-        error: error.message || error,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      })
-      return null
-    }
-    
-    // publish가 false면 null 반환
-    if (hotel && hotel.publish === false) {
-      console.log('호텔이 publish=false로 숨겨짐:', { slug, sabre_id: hotel.sabre_id })
-      return null
-    }
-    
-    return hotel
-  } catch (error) {
-    // 예상치 못한 오류만 error로 로깅
-    console.error('getHotelBySlug 예상치 못한 오류:', {
-      originalSlug: slug,
-      decodedSlug: decodeURIComponent(slug),
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    return null
-  }
-}
+import { getHotelDetailData } from './hotel-detail-server'
 
 // URL을 절대 URL로 변환하는 함수
 function toAbsoluteUrl(url: string): string {
@@ -106,53 +54,22 @@ function stripHtmlTags(html: string): string {
   return text
 }
 
-// 호텔 이미지를 가져오는 함수
-async function getHotelImages(sabreId: string) {
-  try {
-    const supabase = await createClient()
-    
-    const { data: images, error } = await supabase
-      .from('select_hotel_media')
-      .select('public_url, storage_path, image_seq')
-      .eq('sabre_id', sabreId)
-      .order('image_seq', { ascending: true })
-      .limit(3)
-    
-    if (error || !images || images.length === 0) {
-      console.log('🔍 호텔 이미지 조회 결과:', { sabreId, error, imagesCount: images?.length || 0 })
-      return []
-    }
-    
-    // public_url 우선 사용, 없으면 storage_path 사용
-    const imageUrls = images
-      .map(img => {
-        const url = img.public_url || img.storage_path
-        const absoluteUrl = url ? toAbsoluteUrl(url) : null
-        return absoluteUrl
-      })
-      .filter(Boolean) // null/undefined 제거
-    
-    console.log('✅ 호텔 OG 이미지 URLs:', { sabreId, count: imageUrls.length, urls: imageUrls })
-    
-    return imageUrls
-  } catch (error) {
-    console.error('❌ 호텔 이미지 조회 오류:', error)
-    return []
-  }
-}
-
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
-  const hotel = await getHotelBySlug(slug)
   
-  if (!hotel) {
+  // getHotelDetailData를 재사용하여 중복 조회 방지
+  const detailData = await getHotelDetailData(slug)
+  
+  if (!detailData) {
     return {
       title: '호텔을 찾을 수 없습니다',
       description: '요청하신 호텔 정보를 찾을 수 없습니다.'
     }
   }
+  
+  const hotel = detailData.hotel
   
   const title = `${hotel.property_name_ko || hotel.property_name_en} | 투어비스 셀렉트`
   
@@ -163,17 +80,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   
-  // 호텔 이미지 가져오기
-  const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
-  
-  console.log('📊 generateMetadata 디버깅:', {
-    slug: decodedSlug,
-    sabreId: hotel.sabre_id,
-    hotelImagesCount: hotelImages.length,
-    hotelImages: hotelImages,
-    title,
-    url
-  })
+  // 이미 조회한 이미지 데이터 재사용
+  const hotelImages = detailData.images
+    .map(img => toAbsoluteUrl(img.public_url || img.storage_path))
+    .filter(Boolean)
+    .slice(0, 3)
   
   // OG 이미지 배열 생성
   const ogImages = hotelImages.length > 0 
@@ -189,8 +100,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         height: 630,
         alt: 'Select Hotels'
       }]
-  
-  console.log('🖼️ OG 이미지 최종:', ogImages)
   
   return {
     title,
@@ -234,23 +143,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 // ISR을 위한 revalidate 설정 (5분마다 재생성)
 export const revalidate = 300
 
-// 정적 생성 비활성화 (ISR 사용으로 대체)
-// export async function generateStaticParams() {
-//   // generateStaticParams는 정적 생성 시점에 실행되므로
-//   // cookies가 필요한 createClient()를 사용할 수 없음
-//   // 대신 ISR(revalidate)을 사용하여 동적으로 생성
-//   return []
-// }
+// 동적 렌더링 설정
+export const dynamic = 'force-static'
+export const dynamicParams = true
 
 // 구조화된 데이터 생성
-async function generateHotelStructuredData(hotel: any, slug: string) {
+function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
   if (!hotel) return null
 
   const decodedSlug = decodeURIComponent(slug)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   
-  // 호텔 이미지 가져오기 (이미 절대 URL로 변환됨)
-  const hotelImages = hotel.sabre_id ? await getHotelImages(hotel.sabre_id) : []
+  // 이미 조회한 이미지 데이터 재사용
+  const hotelImages = images
+    .map(img => toAbsoluteUrl(img.public_url || img.storage_path))
+    .filter(Boolean)
+    .slice(0, 3)
   
   const structuredData = {
     "@context": "https://schema.org",
@@ -287,11 +195,11 @@ async function generateHotelStructuredData(hotel: any, slug: string) {
 export default async function HotelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   
-  // 서버사이드에서 호텔 데이터 미리 페칭
-  const hotel = await getHotelBySlug(slug)
+  // 서버사이드에서 호텔 상세 데이터 미리 페칭 (호텔 + 이미지 + 혜택 + 프로모션 + 블로그)
+  const detailData = await getHotelDetailData(slug)
   
   // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시 (Header/Footer 포함)
-  if (!hotel) {
+  if (!detailData) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -304,8 +212,10 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
     )
   }
   
+  const { hotel, images, benefits, promotions, blogs } = detailData
+  
   // 구조화된 데이터 생성
-  const structuredData = await generateHotelStructuredData(hotel, slug)
+  const structuredData = generateHotelStructuredData(hotel, images, slug)
   
   return (
     <div className="min-h-screen bg-background">
@@ -319,7 +229,14 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
       
       <Header />
       <main>
-        <HotelDetail hotelSlug={slug} initialHotel={hotel} />
+        <HotelDetail 
+          hotelSlug={slug} 
+          initialHotel={hotel}
+          initialImages={images}
+          initialBenefits={benefits}
+          initialPromotions={promotions}
+          initialBlogs={blogs}
+        />
       </main>
       <Footer />
       <ScrollToTop />

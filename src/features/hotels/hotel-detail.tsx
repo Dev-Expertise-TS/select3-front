@@ -39,6 +39,10 @@ import { HotelHeroImage, HotelThumbnail } from "@/components/ui/smart-image"
 interface HotelDetailProps {
   hotelSlug: string;
   initialHotel?: any; // 서버에서 전달받은 초기 호텔 데이터
+  initialImages?: any[]; // 서버에서 전달받은 이미지 데이터
+  initialBenefits?: any[]; // 서버에서 전달받은 혜택 데이터
+  initialPromotions?: any[]; // 서버에서 전달받은 프로모션 데이터
+  initialBlogs?: any[]; // 서버에서 전달받은 블로그 데이터
   searchDates?: {
     checkIn?: string;
     checkOut?: string;
@@ -436,7 +440,14 @@ interface SearchDates {
   checkOut: string;
 }
 
-export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
+export function HotelDetail({ 
+  hotelSlug, 
+  initialHotel,
+  initialImages = [],
+  initialBenefits = [],
+  initialPromotions = [],
+  initialBlogs = []
+}: HotelDetailProps) {
   // URL 쿼리 파라미터
   const searchParams = useSearchParams()
   
@@ -446,7 +457,12 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
   console.log('🏨 HotelDetail 컴포넌트:', {
     originalSlug: hotelSlug,
     decodedSlug: decodedSlug,
-    hasSpecialChars: hotelSlug !== decodedSlug
+    hasSpecialChars: hotelSlug !== decodedSlug,
+    hasInitialData: !!initialHotel,
+    initialImagesCount: initialImages.length,
+    initialBenefitsCount: initialBenefits.length,
+    initialPromotionsCount: initialPromotions.length,
+    initialBlogsCount: initialBlogs.length
   })
 
   // UI 상태 관리
@@ -496,9 +512,15 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     }
   }, [searchParams])
 
-  // 프로모션 데이터 상태 관리
-  const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>([])
-  const [isLoadingPromotions, setIsLoadingPromotions] = useState(false)
+  // 프로모션 데이터 상태 관리 (서버 데이터 우선 사용)
+  const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>(
+    initialPromotions.map((p: any) => ({
+      promotion_id: p.benefit_id || 0,
+      promotion: p.promotion_title || '',
+      promotion_description: p.promotion_description || ''
+    }))
+  )
+  const [isLoadingPromotions, setIsLoadingPromotions] = useState(initialPromotions.length === 0)
 
   // 이미지 로딩 상태 관리 (기존 로직 유지)
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())
@@ -733,8 +755,11 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     }
   }
   
-  // 호텔 미디어 이미지 조회 (select_hotel_media 테이블)
-  const { data: hotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0)
+  // 호텔 미디어 이미지 조회 (서버 데이터 우선 사용)
+  const { data: clientHotelMedia = [] } = useHotelMedia(hotel?.sabre_id || 0, {
+    enabled: initialImages.length === 0 // 서버 데이터가 없을 때만 클라이언트에서 조회
+  })
+  const hotelMedia = initialImages.length > 0 ? initialImages : clientHotelMedia
   
   // select_hotel_media 테이블 데이터를 사용한 이미지 배열 생성
   const hotelImages = useMemo(() => {
@@ -1040,16 +1065,20 @@ export function HotelDetail({ hotelSlug, initialHotel }: HotelDetailProps) {
     return locationHtml || null
   }, [hotel?.property_location])
   
-  // 호텔 프로모션 데이터 조회
+  // 호텔 프로모션 데이터 조회 (서버 데이터가 없을 때만)
   useEffect(() => {
+    if (initialPromotions.length > 0) {
+      return // 서버 데이터가 있으면 skip
+    }
+    
     if (hotel?.sabre_id) {
-      console.log('🎯 호텔 프로모션 데이터 조회 시작:', hotel.sabre_id)
+      console.log('🎯 호텔 프로모션 데이터 조회 시작 (클라이언트):', hotel.sabre_id)
       fetchHotelPromotions(hotel.sabre_id).then(promotions => {
         setHotelPromotions(promotions)
         console.log('💾 프로모션 데이터 상태 업데이트 완료:', promotions.length, '개')
       })
     }
-  }, [hotel?.sabre_id])
+  }, [hotel?.sabre_id, initialPromotions.length])
 
   // Sabre API를 통해 객실 데이터 조회
   const { data: sabreData, isLoading: sabreLoading, error: sabreError } = useQuery({

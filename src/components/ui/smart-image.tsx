@@ -178,19 +178,16 @@ export function HotelHeroImage({
   height = 1080 
 }: HotelHeroImageProps) {
   return (
-    <SmartImage
+    <Image
       src={src}
       alt={alt}
-      fill={true}
+      fill
       className={className}
-      priority={true}
-      quality={90}
-      format="avif"
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
-      placeholder="blur"
-      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-      autoPreload={true}
-      showLoadingState={false}
+      priority
+      quality={80}
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+      style={{ objectFit: 'cover' }}
+      fetchPriority="high"
     />
   );
 }
@@ -214,7 +211,7 @@ export function HotelThumbnail({
   isActive 
 }: HotelThumbnailProps) {
   return (
-    <SmartImage
+    <Image
       src={src}
       alt={alt}
       fill
@@ -223,13 +220,11 @@ export function HotelThumbnail({
         isActive ? "ring-2 ring-blue-500" : "opacity-70 hover:opacity-100",
         className
       )}
-      quality={80}
-      format="webp"
-      sizes="56px"
-      placeholder="empty"
+      quality={75}
+      sizes="96px"
+      loading="lazy"
       onClick={onClick}
-      autoPreload={false}
-      showLoadingState={false}
+      style={{ objectFit: 'cover' }}
     />
   );
 }

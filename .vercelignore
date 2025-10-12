@@ -1,0 +1,8 @@
+# 테스트 및 디버그 페이지 (프로덕션 빌드에서 제외)
+src/app/test-*/
+src/app/debug-*/
+src/app/debug/
+
+# 스크립트 파일
+src/scripts/
+

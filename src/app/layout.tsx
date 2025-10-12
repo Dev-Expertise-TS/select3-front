@@ -70,7 +70,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
+    <html lang="ko" className={inter.variable} data-scroll-behavior="smooth">
+      <head>
+        {/* DNS Prefetch & Preconnect for critical resources */}
+        <link rel="dns-prefetch" href="https://bnnuekzyfuvgeefmhmnp.supabase.co" />
+        <link rel="preconnect" href="https://bnnuekzyfuvgeefmhmnp.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.openai.com" />
+        <link rel="dns-prefetch" href="https://t1.kakaocdn.net" />
+        <link rel="preconnect" href="https://t1.kakaocdn.net" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased pb-16 lg:pb-0">
         <QueryProvider>
           {children}
