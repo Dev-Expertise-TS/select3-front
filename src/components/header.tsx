@@ -65,10 +65,11 @@ export function Header() {
                     >
                       <Image
                         src="/tourvis_logo.jpg"
-                        alt="투어비스"
+                        alt=""
                         width={20}
                         height={20}
                         className="mr-1.5 rounded-sm"
+                        aria-hidden="true"
                       />
                       {item.label}
                     </a>

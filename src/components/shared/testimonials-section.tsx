@@ -238,9 +238,9 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
                   {/* 고객 정보 */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-gray-900">
                         {maskName(testimonial.name)}
-                      </h4>
+                      </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {testimonial.hotel} • {testimonial.date}
                       </p>
@@ -260,14 +260,18 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all duration-300",
-                index === currentIndex
-                  ? "bg-orange-500 w-6"
-                  : "bg-gray-300 hover:bg-gray-400"
-              )}
+              className="p-2"
               aria-label={`리뷰 ${index + 1}로 이동`}
-            />
+            >
+              <span
+                className={cn(
+                  "block w-2 h-2 rounded-full transition-all duration-300",
+                  index === currentIndex
+                    ? "bg-orange-600 w-6"
+                    : "bg-gray-400 hover:bg-gray-500"
+                )}
+              />
+            </button>
           ))}
         </div>
 

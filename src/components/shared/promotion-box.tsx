@@ -24,7 +24,7 @@ export function PromotionBox({ text, bookingDate, checkInDate, isThreeGrid }: Pr
     >
       <div
         className={cn(
-          "text-gray-700 font-medium line-clamp-2 flex items-center",
+          "text-gray-800 font-medium line-clamp-2 flex items-center",
           isThreeGrid ? "text-sm" : "text-xs",
           isShortText ? "mb-0" : "mb-1"
         )}
@@ -35,7 +35,7 @@ export function PromotionBox({ text, bookingDate, checkInDate, isThreeGrid }: Pr
       </div>
       {hasAnyDate && (
         <div className={cn(
-          "flex items-center gap-4 text-gray-500 mt-auto",
+          "flex items-center gap-4 text-gray-700 mt-auto",
           isThreeGrid ? "text-sm" : "text-xs"
         )}>
           {bookingDate && (

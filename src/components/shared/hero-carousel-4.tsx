@@ -217,7 +217,7 @@ export function HeroCarousel4() {
                     <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                       {/* Top: Category Badge */}
                       <div className="flex justify-start p-4">
-                        <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
+                        <span className="inline-block bg-orange-600 text-white text-xs font-semibold px-2 py-1">
                           {carouselSlides[currentSlide].brand_name_en || carouselSlides[currentSlide].chain_name_en || 'LUXURY'}
                         </span>
                       </div>
@@ -320,7 +320,7 @@ export function HeroCarousel4() {
                       <div className="absolute inset-0 flex flex-col justify-between">
                         {/* Top: Category Badge */}
                         <div className="flex justify-start p-4">
-                          <span className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1">
+                          <span className="inline-block bg-orange-600 text-white text-xs font-semibold px-2 py-1">
                             {slide.brand_name_en || slide.chain_name_en || 'LUXURY'}
                           </span>
                         </div>

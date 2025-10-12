@@ -135,7 +135,7 @@ export function HotelCard({
           {/* 배지들 */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {showPromotionBadge && hotel.isPromotion && (
-              <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
                 프로모션
               </span>
             )}

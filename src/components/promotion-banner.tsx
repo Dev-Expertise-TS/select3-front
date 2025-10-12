@@ -133,6 +133,7 @@ export function PromotionBanner() {
                     e.stopPropagation()
                     handleSlideChange((currentPromoIndex - 1 + promotionHotels.length) % promotionHotels.length)
                   }}
+                  aria-label="이전 프로모션 보기"
                 >
                   <ChevronLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </button>
@@ -142,6 +143,7 @@ export function PromotionBanner() {
                     e.stopPropagation()
                     handleSlideChange((currentPromoIndex + 1) % promotionHotels.length)
                   }}
+                  aria-label="다음 프로모션 보기"
                 >
                   <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </button>
@@ -153,6 +155,7 @@ export function PromotionBanner() {
                 e.stopPropagation()
                 setShowPromoBanner(false)
               }}
+              aria-label="프로모션 배너 닫기"
             >
               <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             </button>
