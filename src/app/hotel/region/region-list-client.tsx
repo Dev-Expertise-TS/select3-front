@@ -149,7 +149,7 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
                               countryKo={region.country_ko}
                               href={`/hotel?${filterParams.toString()}`}
                               preloadedImageUrl={cityImages[region.city_code]}
-                              priority={index < 6}
+                              priority={index < 12}
                             />
                           )
                         })}

@@ -202,7 +202,7 @@ export function HeroCarousel4() {
             alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
             fill
             priority
-            quality={70}
+            unoptimized={true}
             className="object-cover transition-all duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"

@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useRegionFirstImage } from "@/hooks/use-region-images"
+import { optimizeCityImage } from "@/lib/image-optimization"
 
 interface CityImageProps {
   cityCode: string
@@ -39,10 +40,10 @@ export function CityImage({
   // ✅ 우선순위 결정 함수
   const getFinalImageUrl = (): string => {
     // 1순위: 서버에서 미리 가져온 이미지 (가장 빠름!)
-    if (preloadedImageUrl) return preloadedImageUrl
+    if (preloadedImageUrl) return optimizeCityImage(preloadedImageUrl)
     
     // 2순위: API에서 가져온 이미지
-    if (imageUrl) return imageUrl
+    if (imageUrl) return optimizeCityImage(imageUrl)
     
     // 3순위: 로컬 파일 (확실히 있는 경우만 시도하여 404 방지)
     const citiesWithLocalImages = [
@@ -89,7 +90,7 @@ export function CityImage({
           fill
           className={className}
           sizes={sizes}
-          quality={70}
+          unoptimized={true}
           priority={priority}
           onError={(e) => {
             const target = e.target as HTMLImageElement
