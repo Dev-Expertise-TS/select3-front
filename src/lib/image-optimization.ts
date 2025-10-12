@@ -199,6 +199,21 @@ export function optimizeHotelSmallImage(url: string): string {
 }
 
 /**
+ * 호텔 배너 이미지 최적화 (HotelAdBanner)
+ * - Supabase Transform API 사용
+ * - WebP 변환
+ * - 대형 배너용 (1440px 최대)
+ */
+export function optimizeHotelBannerImage(url: string): string {
+  return optimizeSupabaseImage(url, {
+    width: 1440,
+    quality: 75,
+    format: 'webp',
+    resize: 'cover'
+  })
+}
+
+/**
  * 목적지 도시 이미지 최적화
  * - Supabase Transform API 사용
  * - WebP 포맷으로 강제 변환 (크기 70-80% 감소)

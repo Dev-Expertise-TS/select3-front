@@ -1,7 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { optimizeHotelBannerImage } from "@/lib/image-optimization"
 
 interface HotelAdBannerProps {
   hotel: {
@@ -48,10 +50,19 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
     >
       {/* 배경 이미지 */}
       {hotel.media_path && (
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
-          style={{
-            backgroundImage: `url(${hotel.media_path})`
+        <Image
+          src={optimizeHotelBannerImage(hotel.media_path)}
+          alt={hotel.property_name_ko}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          priority
+          unoptimized={true}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
+          fetchPriority="high"
+          loading="eager"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
           }}
         />
       )}
