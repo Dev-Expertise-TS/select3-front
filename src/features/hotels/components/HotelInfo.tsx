@@ -50,7 +50,7 @@ export function HotelInfo({
   shareUrl
 }: HotelInfoProps) {
   return (
-    <div className="bg-gray-100 py-0 sm:py-0.5 mt-2 sm:mt-0">
+    <div className="bg-gray-100 py-0 sm:py-0.5 -mt-16 sm:mt-0">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
         <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm pt-0 px-0 pb-3 sm:pt-3 sm:px-6 sm:pb-6">
           {/* Image Gallery - 위로 이동 */}

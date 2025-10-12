@@ -1310,7 +1310,7 @@ export function HotelDetail({
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen -mt-16 sm:mt-0">
+    <div className="bg-gray-100 min-h-screen mt-0">
       {/* Promotion Banner */}
       <PromotionBanner />
       
@@ -1388,7 +1388,7 @@ export function HotelDetail({
       />
 
       {/* Search Bar - Sticky */}
-      <div className="sticky top-14 sm:top-16 z-40 bg-gray-100 py-0 sm:py-4 min-h-[60px] sm:min-h-[80px]">
+      <div className="sticky top-[76px] sm:top-[130px] z-40 bg-gray-100 py-0 sm:py-2">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <CommonSearchBar
             variant="hotel-detail"
@@ -1412,7 +1412,7 @@ export function HotelDetail({
       </div>
 
       {/* Room types & rates */}
-      <div className="bg-gray-100 py-0 sm:py-4 min-h-[400px] sm:min-h-[500px]">
+      <div className="bg-gray-100 py-0 sm:py-1 min-h-[400px] sm:min-h-[200px]">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm">
 

@@ -226,7 +226,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   }
 
   return (
-    <div className="bg-gray-100 py-0 sm:py-4 min-h-[300px] sm:min-h-[400px]">
+    <div className="bg-gray-100 py-0 sm:py-1 min-h-[300px] sm:min-h-[150px]">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
         <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm py-4 px-0 sm:p-6">
           {/* Tab Navigation */}
@@ -321,7 +321,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                   {benefits.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1.5 px-2 sm:flex sm:flex-wrap sm:gap-2 sm:px-0">
                       {benefits.map((benefit, index) => (
-                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-md h-[42px] sm:h-[56px] sm:flex-1 sm:min-w-[150px] shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden ${
+                        <div key={index} className={`flex items-center justify-center px-2 py-2 sm:p-3 bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-md h-[42px] sm:h-[56px] sm:flex-1 sm:min-w-[150px] shadow-xl border-2 backdrop-blur-sm relative overflow-hidden ${
                           index % 2 === 0 ? 'mr-1 sm:mr-0' : 'ml-1 sm:ml-0'
                         }`} style={{ borderColor: '#E6CDB5' }}>
                           <div className={`hidden sm:flex w-6 h-6 ${benefit.bgColor} rounded-md items-center justify-center flex-shrink-0 sm:mr-1.5`}>
