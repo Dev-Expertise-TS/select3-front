@@ -79,14 +79,14 @@ export function optimizeSupabaseImage(
 /**
  * 히어로 캐로셀용 이미지 최적화 (모바일)
  * - Supabase Transform API 사용
- * - 모바일 최적 크기: 1200px
- * - 원본 포맷 유지 (AVIF → AVIF)
+ * - WebP 강제 변환 (크기 70% 감소)
+ * - LCP 최적화
  */
 export function optimizeHeroImageMobile(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 1200,
-    quality: 75,  // 모바일 대역폭 고려
-    format: 'origin',
+    quality: 70,  // 75 → 70 (더 작은 파일)
+    format: 'webp',  // origin → webp (강제 변환, 크기 감소)
     resize: 'cover'
   })
 }
@@ -94,13 +94,13 @@ export function optimizeHeroImageMobile(url: string): string {
 /**
  * 히어로 캐로셀용 이미지 최적화 (데스크탑 그리드)
  * - Supabase Transform API 사용
- * - 데스크탑 그리드 크기: 600px
+ * - WebP 강제 변환
  */
 export function optimizeHeroImageDesktop(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 600,
-    quality: 80,
-    format: 'origin',
+    quality: 75,  // 80 → 75
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -108,12 +108,13 @@ export function optimizeHeroImageDesktop(url: string): string {
 /**
  * 호텔 카드용 이미지 최적화
  * - Supabase Transform API 사용
+ * - WebP 변환으로 크기 감소
  */
 export function optimizeHotelCardImage(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 600,
-    quality: 75,
-    format: 'origin',
+    quality: 70,  // 75 → 70
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -125,8 +126,8 @@ export function optimizeHotelCardImage(url: string): string {
 export function optimizeThumbnail(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 300,
-    quality: 70,
-    format: 'origin',
+    quality: 65,  // 70 → 65
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -138,8 +139,8 @@ export function optimizeThumbnail(url: string): string {
 export function optimizeGalleryGrid(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 500,
-    quality: 75,
-    format: 'origin',
+    quality: 70,  // 75 → 70
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -151,8 +152,8 @@ export function optimizeGalleryGrid(url: string): string {
 export function optimizeGalleryDetail(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 2000,
-    quality: 85,
-    format: 'origin',
+    quality: 80,  // 85 → 80
+    format: 'webp',  // origin → webp
     resize: 'contain'
   })
 }
@@ -164,8 +165,8 @@ export function optimizeGalleryDetail(url: string): string {
 export function optimizeGalleryThumbnail(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 128,
-    quality: 70,
-    format: 'origin',
+    quality: 65,  // 70 → 65
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -173,13 +174,13 @@ export function optimizeGalleryThumbnail(url: string): string {
 /**
  * 호텔 메인 이미지 최적화 (HotelInfo 컴포넌트)
  * - Supabase Transform API 사용
- * - 고품질 유지
+ * - WebP 변환
  */
 export function optimizeHotelMainImage(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 1600,
-    quality: 85,
-    format: 'origin',
+    quality: 80,  // 85 → 80
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -191,8 +192,8 @@ export function optimizeHotelMainImage(url: string): string {
 export function optimizeHotelSmallImage(url: string): string {
   return optimizeSupabaseImage(url, {
     width: 400,
-    quality: 80,
-    format: 'origin',
+    quality: 75,  // 80 → 75
+    format: 'webp',  // origin → webp
     resize: 'cover'
   })
 }
@@ -200,13 +201,14 @@ export function optimizeHotelSmallImage(url: string): string {
 /**
  * 목적지 도시 이미지 최적화
  * - Supabase Transform API 사용
- * - 빠른 변환을 위해 quality 낮춤
+ * - WebP 포맷으로 강제 변환 (크기 70-80% 감소)
+ * - 작은 크기 (400px)로 빠른 로딩
  */
 export function optimizeCityImage(url: string): string {
   return optimizeSupabaseImage(url, {
-    width: 640,
-    quality: 70,  // 빠른 변환
-    format: 'origin',
+    width: 400,  // 640 → 400 (모바일 그리드에 충분)
+    quality: 65,  // 70 → 65 (더 작은 파일)
+    format: 'webp',  // origin → webp (강제 변환)
     resize: 'cover'
   })
 }

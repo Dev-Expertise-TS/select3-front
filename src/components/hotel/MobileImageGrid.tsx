@@ -69,7 +69,7 @@ export function MobileImageGrid({
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
-            quality={70}
+            unoptimized={true}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"
           />
@@ -122,7 +122,7 @@ export function MobileImageGrid({
                   fill
                   className="object-contain"
                   priority
-                  quality={90}
+                  unoptimized={true}
                   sizes="100vw"
                 />
                 
@@ -168,7 +168,7 @@ export function MobileImageGrid({
                         alt={`${hotelName} 썸네일 ${index + 1}`}
                         fill
                         className="object-cover"
-                        quality={75}
+                        unoptimized={true}
                         sizes="64px"
                         loading="lazy"
                       />
