@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const { data: blogs, error } = await supabase
       .from("select_hotel_blogs")
       .select("id, slug, main_image, main_title, sub_title, created_at, updated_at")
+      .eq("publish", true)
       .order("updated_at", { ascending: false })
       .order("id", { ascending: false })
 

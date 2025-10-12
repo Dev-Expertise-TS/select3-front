@@ -25,15 +25,24 @@ interface BlogResponse {
   }
 }
 
-export function BlogListSection() {
-  const [blogs, setBlogs] = useState<Blog[]>([])
-  const [loading, setLoading] = useState(true)
+interface BlogListSectionProps {
+  initialBlogs?: Blog[]
+}
+
+export function BlogListSection({ initialBlogs = [] }: BlogListSectionProps) {
+  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs)
+  const [loading, setLoading] = useState(initialBlogs.length === 0)
   const [error, setError] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(9) // 3행 × 3열 = 9개
   const searchParams = useSearchParams()
   const q = (searchParams?.get('q') || '').trim().toLowerCase()
 
+  // 서버 데이터가 없을 때만 클라이언트에서 fetch
   useEffect(() => {
+    if (initialBlogs.length > 0) {
+      return // 서버 데이터가 있으면 fetch 안함
+    }
+
     const fetchBlogs = async () => {
       try {
         setLoading(true)
@@ -54,7 +63,7 @@ export function BlogListSection() {
     }
 
     fetchBlogs()
-  }, [])
+  }, [initialBlogs.length])
 
   const handleLoadMore = () => {
     setVisibleCount(prev => prev + 9) // 3행씩 추가

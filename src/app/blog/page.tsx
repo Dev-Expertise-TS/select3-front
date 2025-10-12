@@ -4,6 +4,7 @@ import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import { BlogListSection } from '@/features/blog/blog-list-section'
+import { getBlogPageData } from './blog-page-server'
 
 // 블로그 페이지 캐시: 10분마다 재검증
 export const revalidate = 600
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
   description: '셀렉트에서 제공하는 다양한 호텔과 여행 관련 아티클을 만나보세요.',
 }
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  // 서버에서 초기 데이터 조회
+  const { blogs } = await getBlogPageData()
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -31,7 +35,7 @@ export default function BlogPage() {
             </div>
           </section>
         }>
-          <BlogListSection />
+          <BlogListSection initialBlogs={blogs} />
         </Suspense>
       </main>
       <Footer />
