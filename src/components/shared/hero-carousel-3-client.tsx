@@ -171,19 +171,22 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                       </div>
                     </div>
                     
-                    {/* Navigation Buttons */}
+                    {/* Navigation Buttons - 모바일용 (배경 제거) */}
                     {carouselSlides.length > 1 && (
-                      <div className="pointer-events-auto">
+                      <div className="pointer-events-auto lg:hidden">
                         <button
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
                             prevSlide()
                           }}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 text-white p-1 transition-opacity hover:opacity-80"
                           aria-label="이전 슬라이드"
+                          style={{
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                          }}
                         >
-                          <ChevronLeft className="w-5 h-5" />
+                          <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -191,10 +194,13 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                             e.stopPropagation()
                             nextSlide()
                           }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-white p-1 transition-opacity hover:opacity-80"
                           aria-label="다음 슬라이드"
+                          style={{
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                          }}
                         >
-                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-6 h-6 stroke-[2.5]" />
                         </button>
                       </div>
                     )}
