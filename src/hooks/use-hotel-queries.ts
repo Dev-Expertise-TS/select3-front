@@ -170,7 +170,7 @@ export function useAllHotels(options?: { enabled?: boolean }) {
 /**
  * 배너용 호텔 데이터 조회 훅 (select_feature_slots 기반)
  */
-export function useBannerHotel() {
+export function useBannerHotel(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['banner-hotel'],
     queryFn: async () => {
@@ -253,6 +253,7 @@ export function useBannerHotel() {
         return null
       }
     },
+    enabled: options?.enabled !== false,
     staleTime: 10 * 60 * 1000,
   })
 }

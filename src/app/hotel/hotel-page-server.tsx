@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { getBannerHotel } from '@/lib/banner-hotel-server'
 
 /**
  * 서버에서 호텔 목록 페이지 데이터 조회
@@ -10,6 +11,9 @@ export async function getHotelPageData() {
   const supabase = await createClient()
   
   console.log('🔍 [HotelPage] 서버 데이터 조회 시작')
+
+  // 0. 배너 호텔 조회 (병렬 처리를 위해 먼저 시작)
+  const bannerHotelPromise = getBannerHotel()
 
   // 1. 전체 호텔 조회
   const { data: hotels, error: hotelsError } = await supabase
@@ -128,9 +132,14 @@ export async function getHotelPageData() {
     chains: filterOptions.chains.length
   })
 
+  // 배너 호텔 대기
+  const bannerHotel = await bannerHotelPromise
+  console.log('✅ [HotelPage] 배너 호텔 조회 완료:', bannerHotel ? bannerHotel.property_name_ko : '없음')
+
   return {
     allHotels,
-    filterOptions
+    filterOptions,
+    bannerHotel
   }
 }
 

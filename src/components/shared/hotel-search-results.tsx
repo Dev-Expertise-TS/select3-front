@@ -46,6 +46,8 @@ interface HotelSearchResultsProps {
     brands: Array<{ id: string; label: string; count: number; chain_id?: number | null; chain_name_ko?: string | null }>
     chains: Array<{ id: string; label: string; count: number }>
   }
+  // 배너 호텔 (서버에서 조회)
+  serverBannerHotel?: any
   // 아티클 섹션용 props
   showArticles?: boolean
   articlesChainId?: string
@@ -68,6 +70,7 @@ export function HotelSearchResults({
   initialBrandId,
   onBrandChange,
   serverFilterOptions,
+  serverBannerHotel,
   // 아티클 섹션용 props
   showArticles = false,
   articlesChainId,
@@ -121,7 +124,9 @@ export function HotelSearchResults({
   )
   const allHotels = initialHotels.length > 0 ? initialHotels : clientAllHotels
   
-  const { data: bannerHotel, isLoading: isBannerLoading } = useBannerHotel()
+  // 배너 호텔: 서버 데이터 우선, 없으면 클라이언트에서 조회
+  const { data: clientBannerHotel, isLoading: isBannerLoading } = useBannerHotel({ enabled: !serverBannerHotel })
+  const bannerHotel = serverBannerHotel || clientBannerHotel
   const { data: chainBrandHotels, isLoading: isChainBrandLoading, error: chainBrandError } = useChainBrandHotels(selectedChainId)
   const { data: brandHotels, isLoading: isBrandLoading, error: brandError } = useBrandHotels(selectedBrandId)
   const { data: chainBrands } = useChainBrands(selectedChainId)

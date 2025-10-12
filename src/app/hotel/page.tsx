@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export default async function AllHotelResortPage() {
   // 서버에서 초기 데이터 조회
-  const { allHotels, filterOptions } = await getHotelPageData()
+  const { allHotels, filterOptions, bannerHotel } = await getHotelPageData()
   
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
@@ -42,6 +42,7 @@ export default async function AllHotelResortPage() {
         showFilters={true}
         initialHotels={allHotels}
         serverFilterOptions={filterOptions}
+        serverBannerHotel={bannerHotel}
       />
     </Suspense>
   )

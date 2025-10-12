@@ -180,32 +180,6 @@ export default function TestimonialsPage() {
           </div>
         </div>
 
-        {/* 통계 */}
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">
-                  {allTestimonials.length}+
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600">고객 후기</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">5.0</div>
-                <div className="text-xs sm:text-sm text-gray-600">평균 평점</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">100%</div>
-                <div className="text-xs sm:text-sm text-gray-600">만족도</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-orange-500 mb-1">98%</div>
-                <div className="text-xs sm:text-sm text-gray-600">재이용률</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 후기 그리드 */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-16 sm:pb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

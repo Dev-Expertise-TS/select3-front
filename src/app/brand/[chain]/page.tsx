@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ChainPageClient } from "./chain-page-client"
 import { getFirstImagePerHotel } from "@/lib/media-utils"
+import { getBannerHotel } from "@/lib/banner-hotel-server"
 
 interface HotelRow {
   sabre_id: number
@@ -169,7 +170,13 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
   const { chain } = await params
   const { brand: brandParam } = await searchParams
   
-  const { chain: chainRow, hotels, hotelMediaData, allChains, selectedChainBrands } = await getChainHotels(chain)
+  // 배너 호텔과 체인 호텔을 병렬로 조회
+  const [bannerHotelResult, chainHotelsResult] = await Promise.all([
+    getBannerHotel(),
+    getChainHotels(chain)
+  ])
+  
+  const { chain: chainRow, hotels, hotelMediaData, allChains, selectedChainBrands } = chainHotelsResult
   
   if (!chainRow) {
     notFound()
@@ -203,6 +210,7 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
       selectedChainBrands={selectedChainBrands}
       initialBrandId={brandParam || null}
       serverFilterOptions={serverFilterOptions}
+      serverBannerHotel={bannerHotelResult}
     />
   )
 }

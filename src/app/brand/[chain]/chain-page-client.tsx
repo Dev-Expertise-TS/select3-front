@@ -19,6 +19,7 @@ interface ChainPageClientProps {
     brands: Array<{ id: string; label: string; count: number }>
     chains: Array<{ id: string; label: string; count: number }>
   }
+  serverBannerHotel?: any
 }
 
 export function ChainPageClient({ 
@@ -27,7 +28,8 @@ export function ChainPageClient({
   allChains, 
   selectedChainBrands,
   initialBrandId,
-  serverFilterOptions
+  serverFilterOptions,
+  serverBannerHotel
 }: ChainPageClientProps) {
   const router = useRouter()
 
@@ -83,6 +85,7 @@ export function ChainPageClient({
       onChainChange={handleChainChange}
       onBrandChange={handleBrandChange}
       serverFilterOptions={serverFilterOptions}
+      serverBannerHotel={serverBannerHotel}
       // 아티클 섹션 표시
       showArticles={true}
       articlesChainId={String(chainRow.chain_id)}
