@@ -58,26 +58,34 @@ export function useHotelStorageImages(sabreId: number | undefined): UseHotelStor
         ok: response.ok,
         success: result.success,
         imagesCount: result.data?.images?.length || 0,
-        data: result
+        error: result.error,
+        details: result.details
       });
 
       if (!response.ok) {
-        throw new Error(result.error || `HTTP ${response.status}`);
+        // 404나 다른 오류는 조용히 처리 (fallback 이미지가 있으므로)
+        console.warn(`⚠️ useHotelStorageImages: Storage 이미지 없음 (Sabre ID: ${sabreId})`, {
+          error: result.error,
+          details: result.details
+        });
+        setData(null);
+        return;
       }
 
       if (result.success) {
         console.log(`✅ useHotelStorageImages: 데이터 설정 완료 (Sabre ID: ${sabreId})`, {
-          imagesCount: result.data?.images?.length || 0,
-          images: result.data?.images
+          imagesCount: result.data?.images?.length || 0
         });
         setData(result.data);
       } else {
-        throw new Error(result.error || '이미지 목록을 불러올 수 없습니다');
+        // 실패해도 에러를 throw하지 않고 null 설정 (fallback 사용)
+        console.warn(`⚠️ useHotelStorageImages: API 실패 (Sabre ID: ${sabreId})`, result.error);
+        setData(null);
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('알 수 없는 오류');
-      setError(error);
-      console.error(`❌ useHotelStorageImages: 조회 오류 (Sabre ID: ${sabreId})`, error);
+      // 네트워크 오류 등은 조용히 처리
+      console.warn(`⚠️ useHotelStorageImages: 네트워크 오류 (Sabre ID: ${sabreId})`, err);
+      setData(null);
     } finally {
       setLoading(false);
     }

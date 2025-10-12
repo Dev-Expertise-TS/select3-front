@@ -43,20 +43,76 @@ export async function GET(
 
     // Service Role 클라이언트로 Storage list() API 사용
     const adminClient = createAdminClient();
-    const { data: files, error: listError } = await adminClient.storage
-      .from('hotel-media')
-      .list(`public/${decodedSlug}`, {
-        limit: 1000,
-        sortBy: { column: 'name', order: 'asc' }
-      });
+    
+    console.log('🔍 Storage API 호출 시도:', {
+      bucket: 'hotel-media',
+      path: decodedSlug,
+      sabreId,
+      slug: hotel.slug
+    });
+    
+    // Timeout 설정 (10초)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Storage API timeout (10s)')), 10000);
+    });
 
-    if (listError) {
-      console.error('Storage list 오류:', listError);
+    // 여러 경로 시도
+    const paths = [
+      decodedSlug,                    // 기본 경로
+      `public/${decodedSlug}`,        // public 폴더 포함
+      `${decodedSlug}`,               // 동일하지만 명시적
+    ];
+
+    let files = null;
+    let listError = null;
+    let successPath = null;
+
+    // 각 경로를 순차적으로 시도
+    for (const tryPath of paths) {
+      const listPromise = adminClient.storage
+        .from('hotel-media')
+        .list(tryPath, {
+          limit: 100,
+          sortBy: { column: 'name', order: 'asc' }
+        });
+
+      try {
+        const result = await Promise.race([listPromise, timeoutPromise]);
+        
+        if (!result.error && result.data && result.data.length > 0) {
+          files = result.data;
+          successPath = tryPath;
+          console.log(`✅ Storage 경로 찾음: ${tryPath} (파일 ${files.length}개)`);
+          break;
+        } else if (result.error) {
+          console.log(`❌ Storage 경로 실패: ${tryPath} - ${result.error.message}`);
+          listError = result.error;
+        } else {
+          console.log(`📭 Storage 경로 비어있음: ${tryPath}`);
+        }
+      } catch (err) {
+        console.log(`⏱️ Storage 경로 timeout: ${tryPath}`);
+        continue;
+      }
+    }
+
+    // 모든 경로 시도 실패
+    if (!files || files.length === 0) {
+      console.warn(`⚠️ Storage에서 이미지를 찾을 수 없음 (Sabre ID: ${sabreId}, slug: ${decodedSlug})`);
+      // 빈 배열 반환 (fallback 사용)
       return NextResponse.json({
-        success: false,
-        error: 'Storage 파일 목록 조회 실패',
-        details: listError.message
-      }, { status: 500 });
+        success: true,
+        data: {
+          hotel: {
+            sabre_id: parseInt(sabreId),
+            slug: hotel.slug,
+            property_name_ko: hotel.property_name_ko,
+            property_name_en: hotel.property_name_en
+          },
+          images: [],
+          totalCount: 0
+        }
+      });
     }
 
     // 이미지 파일만 필터링
@@ -74,17 +130,19 @@ export async function GET(
       return getNumber(a.name) - getNumber(b.name);
     });
 
-    console.log('✅ Storage list() API 호출 완료:', {
+    console.log('✅ Storage API 완료:', {
+      successPath,
       slug: decodedSlug,
       sabreId,
       totalFiles: files?.length || 0,
       imageFiles: sortedImageFiles.length,
-      images: sortedImageFiles.map(f => f.name)
+      firstImage: sortedImageFiles[0]?.name
     });
 
     // 이미지 메타데이터 생성 (순차적으로 번호 부여)
     const images = sortedImageFiles.map((file, idx) => {
-      const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${file.name}`;
+      // successPath를 사용하여 올바른 URL 생성
+      const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${successPath}/${file.name}`;
       return {
         id: `storage-${idx + 1}`,
         filename: file.name,
