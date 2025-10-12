@@ -184,6 +184,7 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
             size="sm"
             onClick={onClose}
             className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+            aria-label="게스트 선택 닫기"
           >
             ×
           </Button>

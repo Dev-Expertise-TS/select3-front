@@ -66,7 +66,7 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
               {promotions.map((promotion) => (
                 <div key={promotion.promotion_id} className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                   {/* 주요 프로모션 배너 */}
-                  <span className="bg-amber-600 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white shadow-sm">
+                  <span className="bg-amber-700 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white shadow-sm">
                     {promotion.promotion}
                   </span>
                   

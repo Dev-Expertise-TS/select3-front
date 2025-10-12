@@ -1450,7 +1450,7 @@ export function HotelDetail({
                 <div className="space-y-8">
                   {/* 객실 카드 리스트 */}
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4">객실 타입별 요금</h4>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">객실 타입별 요금</h3>
                     <RoomCardList
                       ratePlans={ratePlanCodes}
                       roomIntroductions={roomIntroductions}
