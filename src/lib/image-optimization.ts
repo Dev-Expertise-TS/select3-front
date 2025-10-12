@@ -80,13 +80,13 @@ export function optimizeSupabaseImage(
  * 히어로 캐로셀용 이미지 최적화 (모바일)
  * - Supabase Transform API 사용
  * - WebP 강제 변환 (크기 70% 감소)
- * - LCP 최적화
+ * - LCP 최적화 (작은 크기, 낮은 quality로 빠른 로딩)
  */
 export function optimizeHeroImageMobile(url: string): string {
   return optimizeSupabaseImage(url, {
-    width: 1200,
-    quality: 70,  // 75 → 70 (더 작은 파일)
-    format: 'webp',  // origin → webp (강제 변환, 크기 감소)
+    width: 1000,  // 1200 → 1000 (모바일에 충분, 20% 파일 크기 감소)
+    quality: 65,  // 70 → 65 (더 빠른 변환)
+    format: 'webp',  // WebP 강제 변환
     resize: 'cover'
   })
 }

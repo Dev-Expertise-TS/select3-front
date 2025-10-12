@@ -14,6 +14,7 @@ import { ArrowLeft } from "lucide-react"
 
 // Components
 import { Button } from "@/components/ui/button"
+import { PromotionBanner } from "@/components/promotion-banner"
 import { CommonSearchBar } from "@/features/search"
 import { ImageGallery } from "./components/ImageGallery"
 import { MobileImageGrid } from "@/components/hotel/MobileImageGrid"
@@ -1310,6 +1311,9 @@ export function HotelDetail({
 
   return (
     <div className="bg-gray-100 min-h-screen -mt-16 sm:mt-0">
+      {/* Promotion Banner */}
+      <PromotionBanner />
+      
       {/* Header with Back Button - 데스크톱에서만 표시 */}
       <div className="hidden sm:block py-1 pb-0 sm:pb-1 bg-white sm:bg-transparent">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">

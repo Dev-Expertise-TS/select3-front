@@ -27,16 +27,10 @@ export default function HomePage() {
         </Suspense>
         <BenefitsSection />
         <TestimonialsSection />
-        <Suspense fallback={<div className="py-16 bg-white h-96" />}>
-          <PromotionSection hotelCount={3} />
-        </Suspense>
+        <PromotionSection hotelCount={3} />
         <BrandProgramSection />
-        <Suspense fallback={<div className="py-16 bg-gray-50 h-96" />}>
-          <TrendingDestinationsSection />
-        </Suspense>
-        <Suspense fallback={<div className="py-16 bg-white h-96" />}>
-          <HotelGrid />
-        </Suspense>
+        <TrendingDestinationsSection />
+        <HotelGrid />
       </main>
       <Footer />
       <ScrollToTop />

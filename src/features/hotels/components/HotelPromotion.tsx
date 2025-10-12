@@ -51,7 +51,7 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
   }
 
   return (
-    <div className="bg-gray-200 py-2 sm:py-3 mt-1.5">
+    <div className="sticky top-14 sm:top-16 z-30 bg-gray-200 py-2 sm:py-3 mt-1.5">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
         <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-none sm:rounded-lg shadow-sm">
           {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
@@ -66,7 +66,7 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
               {promotions.map((promotion) => (
                 <div key={promotion.promotion_id} className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                   {/* 주요 프로모션 배너 */}
-                  <span className="bg-amber-700 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white shadow-sm">
+                  <span className="bg-amber-600 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white shadow-sm">
                     {promotion.promotion}
                   </span>
                   
