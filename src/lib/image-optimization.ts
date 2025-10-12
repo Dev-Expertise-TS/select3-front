@@ -25,10 +25,11 @@ export function checkAVIFSupport(): boolean {
 }
 
 /**
- * Supabase Storage 이미지 URL에 변환 파라미터를 추가합니다.
+ * Supabase Storage 이미지 URL을 정리합니다.
+ * Next.js Image 컴포넌트가 최적화를 전담하므로 Supabase 파라미터는 제거합니다.
  * @param url - 원본 이미지 URL
- * @param options - 변환 옵션
- * @returns 최적화된 이미지 URL
+ * @param options - 변환 옵션 (더 이상 사용되지 않음)
+ * @returns 정리된 이미지 URL
  */
 export function optimizeSupabaseImage(
   url: string,
@@ -39,162 +40,84 @@ export function optimizeSupabaseImage(
     return url
   }
 
-  // 기본값 설정
-  const {
-    width,
-    height,
-    quality = 80,
-    format = 'webp',
-    resize = 'cover'
-  } = options
-
-  // URL에 이미 쿼리 파라미터가 있는지 확인
-  const hasQuery = url.includes('?')
-  const separator = hasQuery ? '&' : '?'
-
-  // 변환 파라미터 구성
-  const params: string[] = []
+  // URL에서 기존 쿼리 파라미터 제거 (Next.js Image가 최적화를 전담)
+  // Supabase Storage 변환 파라미터와 Next.js 파라미터가 충돌하는 것을 방지
+  const urlWithoutParams = url.split('?')[0]
   
-  if (width) params.push(`width=${width}`)
-  if (height) params.push(`height=${height}`)
-  if (quality) params.push(`quality=${quality}`)
-  if (format !== 'origin') params.push(`format=${format}`)
-  if (resize) params.push(`resize=${resize}`)
-
-  // 파라미터가 없으면 원본 반환
-  if (params.length === 0) {
-    return url
-  }
-
-  return `${url}${separator}${params.join('&')}`
+  return urlWithoutParams
 }
 
 /**
  * 히어로 캐로셀용 이미지 최적화 (모바일)
- * - 화면 전체 너비
- * - Aspect ratio: 4:2 or 4:3
- * - AVIF 포맷 사용 (LCP 최적화)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
+ * - Next.js Image의 quality={70} 설정 사용
  */
 export function optimizeHeroImageMobile(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 1200, // 모바일 최대 너비 (레티나 대응)
-    quality: 85,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 히어로 캐로셀용 이미지 최적화 (데스크탑 그리드)
- * - 4개 그리드 중 1개 (약 25vw)
- * - Aspect ratio: 4:3
- * - AVIF 포맷 사용 (LCP 최적화)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
+ * - Next.js Image의 quality={70} 설정 사용
  */
 export function optimizeHeroImageDesktop(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 600, // 데스크탑 그리드 1개 크기 (레티나 대응)
-    quality: 85,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 호텔 카드용 이미지 최적화
- * - 호텔 카드 그리드용
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeHotelCardImage(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 600,
-    quality: 80,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 썸네일용 이미지 최적화
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeThumbnail(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 300,
-    quality: 75,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 갤러리 그리드용 이미지 최적화
- * - 4개 컬럼 그리드
- * - Aspect ratio: 4:3
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeGalleryGrid(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 500,
-    quality: 80,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 갤러리 상세 보기용 이미지 최적화 (큰 이미지)
- * - 전체 화면 보기
- * - 고품질
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeGalleryDetail(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 2000,
-    quality: 90,
-    format: 'avif', // AVIF로 변경
-    resize: 'contain'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 갤러리 썸네일용 이미지 최적화 (작은 썸네일)
- * - 64px 크기
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeGalleryThumbnail(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 128, // 레티나 대응
-    quality: 75,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 호텔 메인 이미지 최적화 (HotelInfo 컴포넌트)
- * - 큰 메인 이미지
- * - AVIF 포맷 사용 (고품질 이미지에 최적)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeHotelMainImage(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 1600,
-    quality: 90,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
 /**
  * 호텔 작은 이미지 최적화 (HotelInfo 사이드 이미지)
- * - 작은 보조 이미지
- * - AVIF 포맷 사용 (WebP보다 20-30% 더 작은 파일 크기)
+ * - Supabase 파라미터를 제거하여 Next.js Image가 최적화 전담
  */
 export function optimizeHotelSmallImage(url: string): string {
-  return optimizeSupabaseImage(url, {
-    width: 400,
-    quality: 85,
-    format: 'avif', // AVIF로 변경
-    resize: 'cover'
-  })
+  return optimizeSupabaseImage(url, {})
 }
 
