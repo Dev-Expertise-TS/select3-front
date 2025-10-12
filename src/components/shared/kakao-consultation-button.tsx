@@ -6,25 +6,29 @@ export function KakaoConsultationButton() {
   const [shouldAnimate, setShouldAnimate] = useState(false)
 
   useEffect(() => {
-    // 3초 후 첫 애니메이션 시작
-    const initialTimer = setTimeout(() => {
+    let animationTimer: NodeJS.Timeout | null = null
+    
+    // 애니메이션 실행 함수
+    const runAnimation = () => {
       setShouldAnimate(true)
-      setTimeout(() => {
+      animationTimer = setTimeout(() => {
         setShouldAnimate(false)
       }, 2000) // 2초간 애니메이션
-    }, 3000)
+    }
 
-    // 이후 5초마다 2초간 애니메이션 실행
+    // 즉시 첫 애니메이션 시작
+    runAnimation()
+
+    // 5초마다 반복 (첫 실행 포함)
     const interval = setInterval(() => {
-      setShouldAnimate(true)
-      setTimeout(() => {
-        setShouldAnimate(false)
-      }, 2000) // 2초간 애니메이션
-    }, 5000) // 5초마다 반복
+      runAnimation()
+    }, 5000)
 
     return () => {
-      clearTimeout(initialTimer)
       clearInterval(interval)
+      if (animationTimer) {
+        clearTimeout(animationTimer)
+      }
     }
   }, [])
 
