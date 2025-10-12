@@ -185,13 +185,10 @@ export default async function ChainPage({ params }: ChainPageProps) {
     slug: h.slug 
   })))
 
-  // 서버에서 필터 옵션 미리 계산 (영문 표시, 카운트 제거)
+  // 서버에서 필터 옵션 미리 계산 (도시/국가는 API에서 가져오도록 빈 배열로 설정)
   const serverFilterOptions = {
-    countries: [],
-    cities: Array.from(new Set(transformedHotels.map(hotel => hotel.city || hotel.city_ko))).map(city => ({
-      id: city,
-      label: city
-    })).sort((a, b) => a.label.localeCompare(b.label)),
+    countries: [], // API에서 전체 국가 목록을 가져오도록 빈 배열
+    cities: [], // API에서 전체 도시 목록을 가져오도록 빈 배열
     brands: selectedChainBrands.map(brand => ({
       id: String(brand.brand_id),
       label: brand.brand_name_en || brand.brand_name_ko

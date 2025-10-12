@@ -69,27 +69,23 @@ export function BenefitsSection() {
             return (
               <div
                 key={index}
-                className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-2 md:p-3 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 group hover:scale-105 hover:-translate-y-2 backdrop-blur-sm relative overflow-hidden ${
+                className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-2 md:p-3 shadow-xl border-2 backdrop-blur-sm relative overflow-hidden ${
                   isLastCard && isOddTotal ? 'col-span-2 sm:col-span-1' : ''
                 }`}
                 style={{ borderColor: '#E6CDB5' }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-3 sm:mb-3 md:mb-4 group-hover:from-gray-300/40 group-hover:to-gray-400/60 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 shadow-lg group-hover:shadow-xl border"
+                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-3 sm:mb-3 md:mb-4 shadow-lg border"
                     style={{ borderColor: '#E6CDB5' }}>
-                    <IconComponent className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-gray-700 transition-colors" />
+                    <IconComponent className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-xs sm:text-xs mb-0.5 sm:mb-0.5 leading-tight group-hover:text-gray-700 transition-colors">
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-xs mb-0.5 sm:mb-0.5 leading-tight">
                     {benefit.title}
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-xs leading-snug line-clamp-2 group-hover:text-gray-700 transition-colors">
+                  <p className="text-gray-600 text-xs sm:text-xs leading-snug line-clamp-2">
                     {benefit.description}
                   </p>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-b-xl"
-                  style={{ background: 'linear-gradient(to right, transparent, #C9A227, transparent)' }}></div>
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: 'linear-gradient(to bottom right, transparent, transparent, #C9A22710)' }}></div>
               </div>
             )
           })}

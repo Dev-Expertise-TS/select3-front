@@ -132,12 +132,20 @@ export function HotelSearchResults({
   // 서버 필터 옵션과 클라이언트 필터 옵션 병합
   const finalFilterOptions = useMemo(() => {
     if (serverFilterOptions && clientFilterOptions) {
-      // 서버 데이터(도시/국가) + 클라이언트 데이터(브랜드/체인)
+      // 서버 데이터가 빈 배열이면 클라이언트 데이터 사용, 아니면 서버 데이터 우선
       return {
-        countries: serverFilterOptions.countries || [],
-        cities: serverFilterOptions.cities || [],
-        brands: clientFilterOptions.brands || [],
-        chains: clientFilterOptions.chains || []
+        countries: (serverFilterOptions.countries && serverFilterOptions.countries.length > 0) 
+          ? serverFilterOptions.countries 
+          : (clientFilterOptions.countries || []),
+        cities: (serverFilterOptions.cities && serverFilterOptions.cities.length > 0) 
+          ? serverFilterOptions.cities 
+          : (clientFilterOptions.cities || []),
+        brands: (serverFilterOptions.brands && serverFilterOptions.brands.length > 0) 
+          ? serverFilterOptions.brands 
+          : (clientFilterOptions.brands || []),
+        chains: (serverFilterOptions.chains && serverFilterOptions.chains.length > 0) 
+          ? serverFilterOptions.chains 
+          : (clientFilterOptions.chains || [])
       }
     }
     // 서버 데이터만 있는 경우
