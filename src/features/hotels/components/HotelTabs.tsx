@@ -226,7 +226,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   }
 
   return (
-    <div className="bg-gray-100 py-0 sm:py-4">
+    <div className="bg-gray-100 py-0 sm:py-4 min-h-[300px] sm:min-h-[400px]">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
         <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm py-4 px-0 sm:p-6">
           {/* Tab Navigation */}

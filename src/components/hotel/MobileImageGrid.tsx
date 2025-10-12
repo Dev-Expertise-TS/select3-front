@@ -69,7 +69,7 @@ export function MobileImageGrid({
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
-            quality={80}
+            quality={70}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"
           />

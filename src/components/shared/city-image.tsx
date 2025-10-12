@@ -89,6 +89,7 @@ export function CityImage({
           fill
           className={className}
           sizes={sizes}
+          quality={70}
           priority={priority}
           onError={(e) => {
             const target = e.target as HTMLImageElement

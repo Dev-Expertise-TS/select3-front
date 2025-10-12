@@ -47,7 +47,7 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95, 100], // Next.js 16 대비 quality 설정 (80 추가)
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 86400, // 캐시 시간을 24시간으로 증가 (Lighthouse 권장)
+    minimumCacheTTL: 604800, // 캐시 시간을 1주일로 증가 (Lighthouse 권장: 긴 캐시 수명)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     // Supabase Storage 이미지 타임아웃 방지
