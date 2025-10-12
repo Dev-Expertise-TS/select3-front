@@ -1,10 +1,10 @@
 "use client"
 
 import { Star, MapPin } from "lucide-react"
-// import { handleImageError, handleImageLoad } from "@/lib/image-utils"
-import { HotelHeroImage, HotelThumbnail, OptimizedImage } from "@/components/ui/optimized-image"
+import Image from "next/image"
 import { MobileImageGrid } from "@/components/hotel/MobileImageGrid"
 import { ShareButton } from "@/components/shared/share-button"
+import { optimizeHeroImageDesktop, optimizeHotelSmallImage } from "@/lib/image-optimization"
 
 interface ImageItem {
   id: string
@@ -102,12 +102,20 @@ export function HotelInfo({
                       
                       return null
                     })()}
-                    <HotelHeroImage
-                      src={images[selectedImage]?.media_path || images[0]?.media_path}
+                    <Image
+                      src={optimizeHeroImageDesktop(images[selectedImage]?.media_path || images[0]?.media_path)}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
-                      width={1920}
-                      height={1080}
-                      className="w-full h-full object-cover transition-opacity duration-300"
+                      fill
+                      className="object-cover transition-opacity duration-300"
+                      priority
+                      unoptimized={true}
+                      sizes="(max-width: 768px) 100vw, 60vw"
+                      fetchPriority="high"
+                      loading="eager"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = '/placeholder.svg'
+                      }}
                     />
                   </div>
                 ) : (
@@ -151,17 +159,18 @@ export function HotelInfo({
                             </div>
                           )}
                           
-                          <OptimizedImage
-                            src={media.media_path}
+                          <Image
+                            src={optimizeHotelSmallImage(media.media_path)}
                             alt={media.alt || `Gallery ${index + 2}`}
                             fill
                             className="object-cover transition-opacity duration-300"
-                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 20vw"
-                            quality={85}
-                            format="webp"
-                            loading={isLoading ? 'loading' : hasError ? 'error' : undefined}
-                            // onLoad={() => handleImageLoad(media.media_path)}
-                            // onError={handleImageError}
+                            sizes="(max-width: 768px) 50vw, 20vw"
+                            unoptimized={true}
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = '/placeholder.svg'
+                            }}
                           />
                         </div>
                       )

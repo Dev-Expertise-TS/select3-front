@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
-import { optimizeHotelMainImage, optimizeGalleryDetail, optimizeGalleryThumbnail } from "@/lib/image-optimization"
+import { optimizeHeroImageMobile, optimizeGalleryDetail, optimizeGalleryThumbnail } from "@/lib/image-optimization"
 
 interface MobileImageGridProps {
   images: Array<{
@@ -63,7 +63,7 @@ export function MobileImageGrid({
       <div className={cn("lg:hidden", className)}>
         <div className="relative aspect-[4/3] rounded-none sm:rounded-lg overflow-hidden">
           <Image
-            src={optimizeHotelMainImage(currentImage.media_path)}
+            src={optimizeHeroImageMobile(currentImage.media_path)}
             alt={hotelName}
             fill
             className="object-cover cursor-pointer"
@@ -72,6 +72,11 @@ export function MobileImageGrid({
             unoptimized={true}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"
+            loading="eager"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = '/placeholder.svg'
+            }}
           />
           
           {/* 이미지 개수 표시 */}
