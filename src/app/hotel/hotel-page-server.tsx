@@ -63,31 +63,32 @@ export async function getHotelPageData() {
 
   // 5. 필터 옵션 가공 (이미 조회한 hotels 데이터 사용)
   const countries = new Map<string, { id: string; label: string; count: number }>()
-  const cities = new Map<string, { id: string; label: string; count: number }>()
+  const cities = new Map<string, { id: string; label: string; count: number; country_code: string }>()
   const brands = new Map<string, { id: string; label: string; count: number }>()
   const chains = new Map<number, { id: string; label: string; count: number }>()
   
   hotels.forEach((hotel: any) => {
-    // 국가
-    if (hotel.country_ko) {
-      const existing = countries.get(hotel.country_ko) || { 
-        id: hotel.country_ko, 
-        label: hotel.country_ko, 
+    // 국가 (country_code를 id로 사용)
+    if (hotel.country_code && hotel.country_ko) {
+      const existing = countries.get(hotel.country_code) || { 
+        id: hotel.country_code,  // country_code를 id로 (예: JP, TH)
+        label: hotel.country_ko,  // 한글 이름을 label로 (예: 일본, 태국)
         count: 0 
       }
       existing.count++
-      countries.set(hotel.country_ko, existing)
+      countries.set(hotel.country_code, existing)
     }
     
-    // 도시
-    if (hotel.city_ko) {
-      const existing = cities.get(hotel.city_ko) || { 
-        id: hotel.city_ko, 
-        label: hotel.city_ko, 
+    // 도시 (city_code를 id로 사용, country_code 포함)
+    if (hotel.city_code && hotel.city_ko && hotel.country_code) {
+      const existing = cities.get(hotel.city_code) || { 
+        id: hotel.city_code,       // city_code를 id로 (예: TYO, BKK)
+        label: hotel.city_ko,       // 한글 이름을 label로 (예: 도쿄, 방콕)
+        country_code: hotel.country_code,  // 국가 코드 추가 (예: JP, TH)
         count: 0 
       }
       existing.count++
-      cities.set(hotel.city_ko, existing)
+      cities.set(hotel.city_code, existing)
     }
     
     // 브랜드
