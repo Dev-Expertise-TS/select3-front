@@ -40,7 +40,6 @@ export function PromotionBanner() {
   const [showPromoBanner, setShowPromoBanner] = useState(true)
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0)
   const [animationKey, setAnimationKey] = useState(0)
-  const [isSticky, setIsSticky] = useState(false)
 
   // 띠베너 노출 대상 호텔 데이터 조회 (KST 날짜 필터 적용)
   const { data: promotionHotels = [] } = useTopBannerHotels()
@@ -55,16 +54,6 @@ export function PromotionBanner() {
       return () => clearInterval(interval)
     }
   }, [showPromoBanner, promotionHotels.length])
-
-  // 스크롤 감지 로직
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsSticky(window.scrollY > BANNER_HEIGHT)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // 수동 네비게이션 시에도 애니메이션 재실행
   const handleSlideChange = (newIndex: number) => {
@@ -87,10 +76,7 @@ export function PromotionBanner() {
 
   return (
     <div 
-      className={cn(
-        "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white transition-all duration-300 cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900",
-        isSticky ? "sticky top-12 md:top-16 z-40 shadow-lg" : "relative"
-      )}
+      className="sticky top-12 md:top-16 z-40 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
       onClick={handleBannerClick}
     >
       <div className="container mx-auto max-w-[1440px] pl-[10px] pr-1 sm:px-4">

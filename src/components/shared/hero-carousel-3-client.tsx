@@ -126,7 +126,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
 
   return (
     <div className="w-full">
-      <section className="relative mt-0.5 pt-0 pb-0 sm:py-8">
+      <section className="relative mt-0.5 pt-0 pb-0 sm:py-8 mb-0">
         <SectionContainer className="px-0 sm:px-4">
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
@@ -204,7 +204,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
 
               {/* Carousel Indicators */}
               {carouselSlides.length > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
+                <div className="flex justify-center gap-2 mt-1">
                   {carouselSlides.map((_, index) => (
                     <button
                       key={index}
@@ -212,7 +212,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                         e.preventDefault()
                         changeSlide(index)
                       }}
-                      className="p-2"
+                      className="p-1"
                       aria-label={`슬라이드 ${index + 1}로 이동`}
                     >
                       <span className={`block h-1.5 rounded-full transition-all ${
