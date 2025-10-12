@@ -82,16 +82,10 @@ export function ChainBrandPageClient({
       initialBrandId={selectedBrandId}
       onBrandChange={handleBrandChange}
       serverFilterOptions={{
-        countries: [],
-        cities: [],
-        brands: allBrands.map(brand => ({
-          id: String(brand.brand_id),
-          label: brand.brand_name_en || brand.brand_name_ko
-        })),
-        chains: allChains.map(chain => ({
-          id: String(chain.chain_id),
-          label: chain.chain_name_en || chain.chain_name_ko
-        }))
+        countries: [], // API에서 전체 국가 목록을 가져오도록 빈 배열
+        cities: [], // API에서 전체 도시 목록을 가져오도록 빈 배열
+        brands: [], // API에서 전체 브랜드 목록을 가져오도록 빈 배열 (체인명 포함 형식)
+        chains: [] // API에서 전체 체인 목록을 가져오도록 빈 배열
       }}
     />
   )

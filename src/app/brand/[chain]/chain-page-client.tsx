@@ -12,6 +12,7 @@ interface ChainPageClientProps {
   transformedHotels: any[]
   allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
   selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
+  initialBrandId?: string | null
   serverFilterOptions: {
     countries: Array<{ id: string; label: string; count: number }>
     cities: Array<{ id: string; label: string; count: number }>
@@ -25,6 +26,7 @@ export function ChainPageClient({
   transformedHotels, 
   allChains, 
   selectedChainBrands,
+  initialBrandId,
   serverFilterOptions
 }: ChainPageClientProps) {
   const router = useRouter()
@@ -41,9 +43,25 @@ export function ChainPageClient({
     }))
   })
 
-  // 체인 변경 핸들러 - 고정된 페이지로 이동
+  // 체인 변경 핸들러 - 해당 체인 페이지로 이동
   const handleChainChange = (chainId: string) => {
-    router.push(`/brand/brand?chain=${chainId}`)
+    const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
+    if (selectedChain?.slug) {
+      router.push(`/brand/${selectedChain.slug}`)
+    } else {
+      router.push(`/brand/brand?chain=${chainId}`)
+    }
+  }
+
+  // 브랜드 변경 핸들러 - 해당 브랜드의 체인 페이지로 이동 (브랜드 선택 상태 유지)
+  const handleBrandChange = (brandId: string, chainId: string) => {
+    // 해당 체인의 slug 찾기
+    const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
+    if (selectedChain?.slug) {
+      router.push(`/brand/${selectedChain.slug}?brand=${brandId}`)
+    } else {
+      router.push(`/brand/brand?chain=${chainId}&brand=${brandId}`)
+    }
   }
 
   // 체인의 첫 번째 브랜드를 기본 선택 (URL 파라미터가 없는 경우)
@@ -61,8 +79,9 @@ export function ChainPageClient({
       selectedChainBrands={selectedChainBrands}
       currentChainName={chainRow.chain_name_en || chainRow.chain_name_ko}
       currentChainId={String(chainRow.chain_id)} // 체인 필터 자동 선택을 위해 전달
-      initialBrandId={null} // 체인 전체를 보여주므로 브랜드는 선택하지 않음
+      initialBrandId={initialBrandId} // URL 파라미터에서 가져온 브랜드 ID
       onChainChange={handleChainChange}
+      onBrandChange={handleBrandChange}
       serverFilterOptions={serverFilterOptions}
       // 아티클 섹션 표시
       showArticles={true}

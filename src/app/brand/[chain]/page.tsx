@@ -161,11 +161,13 @@ async function getChainHotels(chainSlug: string) {
 }
 
 interface ChainPageProps { 
-  params: Promise<{ chain: string }> 
+  params: Promise<{ chain: string }>
+  searchParams: Promise<{ brand?: string }>
 }
 
-export default async function ChainPage({ params }: ChainPageProps) {
+export default async function ChainPage({ params, searchParams }: ChainPageProps) {
   const { chain } = await params
+  const { brand: brandParam } = await searchParams
   
   const { chain: chainRow, hotels, hotelMediaData, allChains, selectedChainBrands } = await getChainHotels(chain)
   
@@ -185,18 +187,12 @@ export default async function ChainPage({ params }: ChainPageProps) {
     slug: h.slug 
   })))
 
-  // 서버에서 필터 옵션 미리 계산 (도시/국가는 API에서 가져오도록 빈 배열로 설정)
+  // 서버에서 필터 옵션 미리 계산 (모두 API에서 가져오도록 빈 배열로 설정)
   const serverFilterOptions = {
     countries: [], // API에서 전체 국가 목록을 가져오도록 빈 배열
     cities: [], // API에서 전체 도시 목록을 가져오도록 빈 배열
-    brands: selectedChainBrands.map(brand => ({
-      id: String(brand.brand_id),
-      label: brand.brand_name_en || brand.brand_name_ko
-    })).sort((a, b) => a.label.localeCompare(b.label)),
-    chains: allChains.map(chain => ({
-      id: String(chain.chain_id),
-      label: chain.chain_name_en || chain.chain_name_ko
-    })).sort((a, b) => a.label.localeCompare(b.label))
+    brands: [], // API에서 전체 브랜드 목록을 가져오도록 빈 배열 (체인명 포함 형식)
+    chains: [] // API에서 전체 체인 목록을 가져오도록 빈 배열
   }
 
   return (
@@ -205,6 +201,7 @@ export default async function ChainPage({ params }: ChainPageProps) {
       transformedHotels={transformedHotels}
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}
+      initialBrandId={brandParam || null}
       serverFilterOptions={serverFilterOptions}
     />
   )
