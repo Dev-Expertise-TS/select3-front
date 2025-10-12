@@ -18,13 +18,13 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   { href: "/", label: "홈", icon: Home, mobileOnly: true },
   { href: "/about", label: "셀렉트 소개" },
-  { href: "/brand", label: "브랜드 & 프로그램", mobileLabel: "브랜드", icon: Building2 },
+  { href: "/brand", label: "호텔 브랜드", mobileLabel: "브랜드", icon: Building2 },
   { href: "/promotion", label: "프로모션", mobileLabel: "프로모션", icon: Tag },
-  { href: "/hotel", label: "호텔 & 리조트 전체보기", mobileLabel: "호텔검색", icon: Hotel },
+  { href: "/hotel", label: "전체 호텔", mobileLabel: "호텔검색", icon: Hotel },
   // 신규 모바일 전용 메뉴
   { href: "http://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "예약상담", icon: MessageCircle, mobileOnly: true },
   { href: "/testimonials", label: "고객 후기", mobileLabel: "고객후기", icon: Star },
-  { href: "/hotel/region", label: "지역별 호텔 & 리조트", mobileLabel: "지역별", icon: MapPin, desktopOnly: true },
+  { href: "/hotel/region", label: "지역별 호텔", mobileLabel: "지역별", icon: MapPin, desktopOnly: true },
   { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText, desktopOnly: true },
   { href: "https://tourvis.com", label: "투어비스", mobileLabel: "투어비스", icon: (TourvisIcon as unknown as LucideIcon) },
 ]
