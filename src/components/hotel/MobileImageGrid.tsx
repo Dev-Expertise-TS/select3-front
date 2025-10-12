@@ -69,8 +69,9 @@ export function MobileImageGrid({
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
-            quality={85}
-            sizes="100vw"
+            quality={80}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
+            fetchPriority="high"
           />
           
           {/* 이미지 개수 표시 */}
@@ -106,6 +107,7 @@ export function MobileImageGrid({
               <button
                 onClick={closeModal}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="갤러리 닫기"
               >
                 <X className="w-6 h-6 text-gray-600" />
               </button>
@@ -130,12 +132,14 @@ export function MobileImageGrid({
                     <button
                       onClick={prevImage}
                       className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                      aria-label="이전 이미지"
                     >
                       <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
                       onClick={nextImage}
                       className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                      aria-label="다음 이미지"
                     >
                       <ChevronRight className="w-6 h-6" />
                     </button>

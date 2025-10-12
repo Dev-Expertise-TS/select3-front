@@ -262,11 +262,13 @@ export function HeroCarousel3() {
                         e.stopPropagation()
                         changeSlide(index)
                       }}
-                      className={`h-1.5 rounded-full transition-all ${
+                      className="p-2"
+                      aria-label={`슬라이드 ${index + 1}로 이동`}
+                    >
+                      <span className={`block h-1.5 rounded-full transition-all ${
                         index === currentSlide ? 'bg-white w-8' : 'bg-white/60 w-1.5'
-                      }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
+                      }`} />
+                    </button>
                   ))}
                 </div>
               </div>

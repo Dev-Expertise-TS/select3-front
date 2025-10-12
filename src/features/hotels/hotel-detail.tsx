@@ -1415,7 +1415,7 @@ export function HotelDetail({
 
             {/* Room Details and Pricing Table */}
             <div className="p-3 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">객실 타입별 요금 상세</h3>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">객실 타입별 요금 상세</h2>
               
               {/* 객실 정보 표시 */}
                 {sabreLoading ? (

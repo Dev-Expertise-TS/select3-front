@@ -14,6 +14,7 @@ export function KakaoConsultationButton() {
         alt="카카오톡 상담"
         className="block select-none w-[80px] h-auto transition-all duration-200 ease-out group-hover:scale-105 group-hover:drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)] active:scale-95"
         draggable={false}
+        loading="lazy"
       />
     </a>
   )

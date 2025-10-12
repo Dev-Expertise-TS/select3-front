@@ -8,14 +8,10 @@ import { PROMOTION_CONFIG, type HotelCount } from '@/config/layout'
 async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_HOTEL_COUNT) {
   const supabase = await createClient()
   
-  console.log('🔍 [PromotionSection] 프로모션 호텔 조회 시작, hotelCount:', hotelCount)
-  
   // KST 오늘 (YYYY-MM-DD)
   const now = new Date()
   const kstMs = now.getTime() + 9 * 60 * 60 * 1000
   const todayKst = new Date(kstMs).toISOString().slice(0, 10)
-  
-  console.log('📅 [PromotionSection] KST Today:', todayKst)
 
   // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회
   const { data: featureSlots, error: featureError } = await supabase
@@ -23,14 +19,7 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
     .select('sabre_id, start_date, end_date')
     .eq('surface', '프로모션')
   
-  console.log('📊 [PromotionSection] Feature Slots:', {
-    count: featureSlots?.length || 0,
-    data: featureSlots,
-    error: featureError
-  })
-  
   if (featureError || !featureSlots || featureSlots.length === 0) {
-    console.log('❌ [PromotionSection] Feature slots 없음')
     return []
   }
 
@@ -46,10 +35,7 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
     })
     .map((slot) => slot.sabre_id)
 
-  console.log('✅ [PromotionSection] Active Sabre IDs:', activeSabreIds)
-
   if (activeSabreIds.length === 0) {
-    console.log('❌ [PromotionSection] 활성 Sabre IDs 없음')
     return []
   }
   
@@ -60,20 +46,12 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
     .in('sabre_id', activeSabreIds)
     .limit(hotelCount * 2)  // 필터링 고려하여 더 많이 가져오기
   
-  console.log('📊 [PromotionSection] Hotels:', {
-    count: hotels?.length || 0,
-    error: hotelsError
-  })
-  
   if (hotelsError || !hotels) {
-    console.log('❌ [PromotionSection] 호텔 조회 실패')
     return []
   }
   
   // publish 필터링 (null이거나 true인 것만)
   const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
-  
-  console.log('✅ [PromotionSection] Filtered Hotels:', filteredHotels.length)
   
   // 3. select_hotel_media에서 호텔 이미지 조회
   const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
@@ -83,17 +61,11 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
     .in('sabre_id', hotelSabreIds)
     .order('image_seq', { ascending: true })
   
-  console.log('📊 [PromotionSection] Media:', {
-    count: rawMediaData?.length || 0
-  })
-  
   // 각 호텔별로 첫 번째 이미지만 선택
   const mediaData = getFirstImagePerHotel(rawMediaData || [])
   
   // 4. 데이터 변환
   const result = transformHotelsToCardData(filteredHotels, mediaData, true)
-  
-  console.log('🎯 [PromotionSection] Final Result:', result.length, 'hotels')
   
   return result
 }

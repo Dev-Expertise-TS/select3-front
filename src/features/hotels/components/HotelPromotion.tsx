@@ -30,9 +30,9 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
   }
   if (isLoading) {
     return (
-      <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
+      <div className="bg-gray-200 py-2 sm:py-3 mt-1.5">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
-          <div className="bg-blue-500/90 text-white p-3 sm:p-4 rounded-none sm:rounded-lg">
+          <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-none sm:rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <span className="font-medium text-base sm:text-lg">프로모션</span>
               <div className="flex items-center gap-2">
@@ -51,9 +51,9 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
   }
 
   return (
-    <div className="bg-gray-100 py-2 sm:py-3 mt-1.5">
+    <div className="bg-gray-200 py-2 sm:py-3 mt-1.5">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
-        <div className="bg-blue-500/90 text-white p-3 sm:p-4 rounded-none sm:rounded-lg">
+        <div className="bg-blue-600 text-white p-3 sm:p-4 rounded-none sm:rounded-lg shadow-sm">
           {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             {/* 프로모션 제목 */}
@@ -66,19 +66,19 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
               {promotions.map((promotion) => (
                 <div key={promotion.promotion_id} className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                   {/* 주요 프로모션 배너 */}
-                  <span className="bg-amber-500/90 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white">
+                  <span className="bg-amber-600 px-3 py-2 sm:py-1 rounded text-xs sm:text-xs font-medium text-center sm:text-left text-white shadow-sm">
                     {promotion.promotion}
                   </span>
                   
                   {/* 프로모션 설명 */}
                   {promotion.promotion_description && (
-                    <span className="bg-rose-400/80 px-3 py-2 sm:py-1 rounded text-xs font-medium text-center sm:text-left text-white">
+                    <span className="bg-rose-500 px-3 py-2 sm:py-1 rounded text-xs font-medium text-center sm:text-left text-white shadow-sm">
                       {promotion.promotion_description}
                     </span>
                   )}
                   
                   {/* 날짜 정보들 (KST, 범위 표기) - 모바일: 세로 정렬, 데스크톱: 가로 정렬 */}
-                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 text-xs text-blue-100">
+                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 text-xs text-white/95">
                     {(promotion.booking_start_date || promotion.booking_end_date) && (
                       <span className="text-center sm:text-left whitespace-nowrap">
                         예약일: {formatKstDate(promotion.booking_start_date)} ~ {formatKstDate(promotion.booking_end_date)}
@@ -93,7 +93,7 @@ export function HotelPromotion({ promotions, isLoading }: HotelPromotionProps) {
 
                   {/* 비고(note) - 모바일: 가운데 정렬 */}
                   {promotion.note && (
-                    <div className="text-[11px] sm:text-xs text-blue-100 text-center sm:text-left">
+                    <div className="text-[11px] sm:text-xs text-white/90 text-center sm:text-left">
                       {promotion.note}
                     </div>
                   )}

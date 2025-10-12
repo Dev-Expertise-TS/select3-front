@@ -712,6 +712,7 @@ export function CommonSearchBar({
                 : "hover:scale-105 hover:-translate-y-1 hover:shadow-2xl text-white"
             )}
             style={{ borderColor: '#E6CDB5' }}
+            aria-label="호텔 검색"
           >
             {(isSearching || isSabreLoading) ? (
               <Loader2 className="h-4 w-4 animate-spin" />

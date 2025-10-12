@@ -101,10 +101,11 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
                   "h-8 w-8 p-0 rounded-full",
                   isRoomsMinDisabled && "opacity-50 cursor-not-allowed"
                 )}
+                aria-label="객실 수 감소"
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
+              <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center" aria-live="polite">
                 {localRooms}
               </span>
               <Button
@@ -116,6 +117,7 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
                   "h-8 w-8 p-0 rounded-full",
                   isRoomsMaxDisabled && "opacity-50 cursor-not-allowed"
                 )}
+                aria-label="객실 수 증가"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -137,10 +139,11 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
                   "h-8 w-8 p-0 rounded-full",
                   isAdultsMinDisabled && "opacity-50 cursor-not-allowed"
                 )}
+                aria-label="성인 수 감소"
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center">
+              <span className="text-lg font-semibold text-gray-900 min-w-[2rem] text-center" aria-live="polite">
                 {localAdults}
               </span>
               <Button
@@ -152,6 +155,7 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
                   "h-8 w-8 p-0 rounded-full",
                   isAdultsMaxDisabled && "opacity-50 cursor-not-allowed"
                 )}
+                aria-label="성인 수 증가"
               >
                 <Plus className="h-4 w-4" />
               </Button>

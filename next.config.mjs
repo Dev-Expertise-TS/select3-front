@@ -44,7 +44,7 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'], // AVIF 우선 제공
-    qualities: [75, 85, 90, 95, 100], // Next.js 16 대비 quality 설정
+    qualities: [75, 80, 85, 90, 95, 100], // Next.js 16 대비 quality 설정 (80 추가)
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 86400, // 캐시 시간을 24시간으로 증가 (Lighthouse 권장)

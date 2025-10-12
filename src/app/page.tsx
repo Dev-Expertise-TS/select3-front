@@ -15,9 +15,6 @@ import TestimonialsSection from "@/components/shared/testimonials-section"
 // 페이지 레벨 캐시 설정: 30분마다 재검증
 export const revalidate = 1800
 
-// 정적 생성 강제 (TTFB 개선)
-export const dynamic = 'force-static'
-
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
