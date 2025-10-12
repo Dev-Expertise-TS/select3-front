@@ -186,10 +186,12 @@ export function HeroCarousel3() {
                         src={optimizeHeroImageMobile(carouselSlides[currentSlide].image || "/placeholder.svg")}
                         alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
                         fill
-                        priority={true}
-                        quality={85}
+                        priority
+                        quality={80}
                         className="object-cover transition-all duration-300 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
+                        fetchPriority="high"
+                        loading="eager"
                         onError={(e) => {
                           console.error(`❌ 히어로 이미지 로딩 실패: ${carouselSlides[currentSlide].image}`)
                           const target = e.target as HTMLImageElement

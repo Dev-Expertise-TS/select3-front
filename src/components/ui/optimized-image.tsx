@@ -106,6 +106,7 @@ export function OptimizedImage({
           placeholder={placeholder}
           blurDataURL={blurDataURL}
           style={fill ? { objectFit } : undefined}
+          loading={priority ? "eager" : "lazy"}
           onError={handleImageError}
           onLoad={onLoad}
           unoptimized={false}
