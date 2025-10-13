@@ -5,7 +5,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionContainer } from "@/components/shared/section-container"
-import { optimizeHeroImageMobile, optimizeHeroImageDesktop } from "@/lib/image-optimization"
 import type { HeroImageData } from "@/features/hero/hero-data"
 
 interface CarouselSlide {
@@ -135,15 +134,13 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                 <Link href={`/hotel/${carouselSlides[currentSlide].hotelId}`}>
                   <div className="relative w-full h-full">
                     <Image
-                      src={optimizeHeroImageMobile(carouselSlides[currentSlide].image || "/placeholder.svg")}
+                      src={carouselSlides[currentSlide].image || "/placeholder.svg"}
                       alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
                       fill
                       priority
-                      unoptimized={true}
+                      quality={85}
                       className="object-cover transition-all duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
-                      fetchPriority="high"
-                      loading="eager"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/placeholder.svg'
@@ -236,11 +233,11 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                 <Link key={slide.id} href={`/hotel/${slide.hotelId}`}>
                   <div className="relative aspect-[4/3] overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 group">
                     <Image
-                      src={optimizeHeroImageDesktop(slide.image || "/placeholder.svg")}
+                      src={slide.image || "/placeholder.svg"}
                       alt={`${slide.hotelName} - Premium Hotel Property`}
                       fill
                       priority={index === 0}
-                      unoptimized={true}
+                      quality={85}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 1024px) 50vw, 33vw"
                       onError={(e) => {

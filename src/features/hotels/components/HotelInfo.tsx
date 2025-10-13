@@ -4,7 +4,6 @@ import { Star, MapPin } from "lucide-react"
 import Image from "next/image"
 import { MobileImageGrid } from "@/components/hotel/MobileImageGrid"
 import { ShareButton } from "@/components/shared/share-button"
-import { optimizeHeroImageDesktop, optimizeHotelSmallImage } from "@/lib/image-optimization"
 
 interface ImageItem {
   id: string
@@ -103,15 +102,13 @@ export function HotelInfo({
                       return null
                     })()}
                     <Image
-                      src={optimizeHeroImageDesktop(images[selectedImage]?.media_path || images[0]?.media_path)}
+                      src={images[selectedImage]?.media_path || images[0]?.media_path}
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                       fill
                       className="object-cover transition-opacity duration-300"
                       priority
-                      unoptimized={true}
                       sizes="(max-width: 768px) 100vw, 60vw"
-                      fetchPriority="high"
-                      loading="eager"
+                      quality={90}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/placeholder.svg'
@@ -160,13 +157,13 @@ export function HotelInfo({
                           )}
                           
                           <Image
-                            src={optimizeHotelSmallImage(media.media_path)}
+                            src={media.media_path}
                             alt={media.alt || `Gallery ${index + 2}`}
                             fill
                             className="object-cover transition-opacity duration-300"
                             sizes="(max-width: 768px) 50vw, 20vw"
-                            unoptimized={true}
-                            loading="lazy"
+                            quality={85}
+                            loading={index < 2 ? "eager" : "lazy"}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.src = '/placeholder.svg'
