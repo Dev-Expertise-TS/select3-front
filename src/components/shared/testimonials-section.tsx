@@ -5,126 +5,106 @@ import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+interface SatisfactionSurvey {
+  id: number
+  review_text: string
+  property_name_kr: string
+  booking_number: string
+  sabre_id: string
+  slug: string
+  created_at: string
+}
+
 interface Testimonial {
   id: number
-  name: string
-  location: string
-  rating: number
   content: string
   hotel: string
-  date: string
-  avatar?: string
+  bookingNumber: string
+  slug: string
 }
 
 interface TestimonialsSectionProps {
   className?: string
 }
 
-// 목업 데이터
-const mockTestimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "김민수",
-    location: "서울",
-    rating: 5,
-    content: "정말 환상적인 호텔이었습니다! 투어비스 셀렉트를 통해 예약했는데, 일반 예약으로는 절대 받을 수 없는 혜택들을 많이 받았어요. 특히 무료 업그레이드와 조식 서비스가 정말 좋았습니다.",
-    hotel: "그랜드 하이엇 서울",
-    date: "2024.01.15"
-  },
-  {
-    id: 2,
-    name: "이영희",
-    location: "부산",
-    rating: 5,
-    content: "부산 출장 중에 투어비스 셀렉트를 통해 호텔을 예약했는데, 정말 놀라운 서비스였어요. 체크인 시 무료 업그레이드와 함께 환영 선물까지 받았습니다. 다음에도 꼭 이용하겠습니다!",
-    hotel: "파크 하이엇 부산",
-    date: "2024.01.20"
-  },
-  {
-    id: 3,
-    name: "박준호",
-    location: "대구",
-    rating: 5,
-    content: "가족 여행으로 제주도에 갔는데, 투어비스 셀렉트 덕분에 정말 특별한 경험을 했습니다. 호텔 직원분들의 서비스도 최고였고, 추가 혜택들도 정말 만족스러웠어요.",
-    hotel: "라군나 제주",
-    date: "2024.01.25"
-  },
-  {
-    id: 4,
-    name: "최수진",
-    location: "인천",
-    rating: 5,
-    content: "비즈니스 트립으로 싱가포르에 갔는데, 투어비스 셀렉트를 통해 예약한 호텔이 정말 훌륭했습니다. 무료 인터넷과 조식, 그리고 라운지 이용권까지 모든 것이 완벽했어요.",
-    hotel: "마리나 베이 샌즈",
-    date: "2024.02.01"
-  },
-  {
-    id: 5,
-    name: "정민철",
-    location: "대전",
-    rating: 5,
-    content: "일본 여행에서 투어비스 셀렉트를 처음 이용했는데, 정말 후회없는 선택이었습니다. 호텔 서비스와 추가 혜택들이 기대 이상이었고, 다음 여행에서도 꼭 이용하고 싶어요.",
-    hotel: "콘래드 도쿄",
-    date: "2024.02.05"
-  },
-  {
-    id: 6,
-    name: "한소영",
-    location: "광주",
-    rating: 5,
-    content: "태국 휴가를 위해 투어비스 셀렉트를 통해 호텔을 예약했는데, 정말 만족스러운 경험이었습니다. 무료 업그레이드와 스파 크레딧까지 받아서 정말 특별한 휴가가 되었어요.",
-    hotel: "반얀 트리 방콕",
-    date: "2024.02.10"
-  }
-]
-
 export default function TestimonialsSection({ className }: TestimonialsSectionProps) {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
+  const [dragDistance, setDragDistance] = useState(0)
 
-  // 이름 마스킹 함수 (중간 글자를 * 로 처리)
-  const maskName = (name: string): string => {
-    if (name.length <= 2) {
-      return name[0] + '*'
+  // 데이터 가져오기
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch('/api/testimonials')
+        const result = await response.json()
+        
+        if (result.success && result.data) {
+          const transformedData: Testimonial[] = result.data.map((item: SatisfactionSurvey) => ({
+            id: item.id,
+            content: item.review_text,
+            hotel: item.property_name_kr,
+            bookingNumber: item.booking_number,
+            slug: item.slug,
+          }))
+          setTestimonials(transformedData)
+        }
+      } catch (error) {
+        console.error('Failed to fetch testimonials:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-    const first = name[0]
-    const last = name[name.length - 1]
-    const middle = '*'.repeat(name.length - 2)
+
+    fetchTestimonials()
+  }, [])
+
+  // 예약 번호 마스킹 함수 (첫 문자와 마지막 문자만 보이고 중간은 마스킹)
+  const maskBookingNumber = (bookingNumber: string): string => {
+    if (!bookingNumber || bookingNumber.length <= 2) {
+      return bookingNumber
+    }
+    const first = bookingNumber[0]
+    const last = bookingNumber[bookingNumber.length - 1]
+    const middle = '*'.repeat(bookingNumber.length - 2)
     return first + middle + last
   }
 
   // 스크롤 이벤트로 현재 인덱스 업데이트
   const handleScroll = () => {
-    if (!scrollContainerRef.current) return
+    if (!scrollContainerRef.current || testimonials.length === 0) return
     const container = scrollContainerRef.current
     const scrollPosition = container.scrollLeft
     const maxScrollLeft = container.scrollWidth - container.clientWidth
     
     // 스크롤이 끝에 거의 도달했으면 마지막 인덱스로 설정
     if (scrollPosition >= maxScrollLeft - 10) {
-      setCurrentIndex(mockTestimonials.length - 1)
+      setCurrentIndex(testimonials.length - 1)
       return
     }
     
     // 첫 번째와 두 번째 카드 요소로 실제 간격 계산
-    const firstCard = container.querySelector('div[data-testimonial-card]') as HTMLElement
-    const secondCard = container.querySelectorAll('div[data-testimonial-card]')[1] as HTMLElement
+    const firstCard = container.querySelector('[data-testimonial-card]') as HTMLElement
+    const secondCard = container.querySelectorAll('[data-testimonial-card]')[1] as HTMLElement
     if (!firstCard || !secondCard) return
     
     // 두 카드의 offsetLeft 차이로 정확한 간격 계산 (카드 너비 + gap)
     const cardWithGap = secondCard.offsetLeft - firstCard.offsetLeft
     
     const newIndex = Math.round(scrollPosition / cardWithGap)
-    setCurrentIndex(Math.min(newIndex, mockTestimonials.length - 1))
+    setCurrentIndex(Math.min(newIndex, testimonials.length - 1))
   }
 
   // 마우스/터치 드래그 시작
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!scrollContainerRef.current) return
     setIsDragging(true)
+    setDragDistance(0)
     const pageX = 'touches' in e ? e.touches[0].pageX : e.pageX
     setStartX(pageX - scrollContainerRef.current.offsetLeft)
     setScrollLeft(scrollContainerRef.current.scrollLeft)
@@ -138,6 +118,7 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
     const x = pageX - scrollContainerRef.current.offsetLeft
     const walk = (x - startX) * 2
     scrollContainerRef.current.scrollLeft = scrollLeft - walk
+    setDragDistance(Math.abs(walk))
   }
 
   // 마우스/터치 드래그 종료
@@ -145,12 +126,21 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
     setIsDragging(false)
   }
 
+  // 클릭과 드래그를 구분하는 핸들러
+  const handleCardClick = (e: React.MouseEvent, slug: string) => {
+    // 드래그 거리가 5px 이상이면 클릭 이벤트 무시
+    if (dragDistance > 5) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+  }
+
   const goToSlide = (index: number) => {
-    if (!scrollContainerRef.current) return
+    if (!scrollContainerRef.current || testimonials.length === 0) return
     const container = scrollContainerRef.current
     
     // 마지막 인덱스인 경우 최대 스크롤 위치로 이동
-    if (index === mockTestimonials.length - 1) {
+    if (index === testimonials.length - 1) {
       const maxScrollLeft = container.scrollWidth - container.clientWidth
       container.scrollTo({
         left: maxScrollLeft,
@@ -160,8 +150,8 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
     }
     
     // 첫 번째와 두 번째 카드 요소로 실제 간격 계산
-    const firstCard = container.querySelector('div[data-testimonial-card]') as HTMLElement
-    const secondCard = container.querySelectorAll('div[data-testimonial-card]')[1] as HTMLElement
+    const firstCard = container.querySelector('[data-testimonial-card]') as HTMLElement
+    const secondCard = container.querySelectorAll('[data-testimonial-card]')[1] as HTMLElement
     if (!firstCard || !secondCard) return
     
     // 두 카드의 offsetLeft 차이로 정확한 간격 계산 (카드 너비 + gap)
@@ -183,6 +173,46 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
         )}
       />
     ))
+  }
+
+  if (isLoading) {
+    return (
+      <section className={cn("pt-4 sm:pt-6 pb-12 sm:pb-16 bg-white", className)}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              고객 후기
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600">
+              투어비스 셀렉트를 이용하신 고객들의 후기
+            </p>
+          </div>
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (testimonials.length === 0) {
+    return (
+      <section className={cn("pt-4 sm:pt-6 pb-12 sm:pb-16 bg-white", className)}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              고객 후기
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600">
+              투어비스 셀렉트를 이용하신 고객들의 후기
+            </p>
+          </div>
+          <div className="text-center py-12 text-gray-500">
+            아직 등록된 후기가 없습니다.
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -218,20 +248,24 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
               paddingRight: '1rem',
             }}
           >
-            {mockTestimonials.map((testimonial) => (
+            {testimonials.map((testimonial) => (
               <div
                 key={testimonial.id}
                 data-testimonial-card
                 className="flex-shrink-0 w-[85%] sm:w-[80%] md:w-[75%] lg:w-[45%] xl:w-[42%] snap-start"
               >
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 sm:p-8 h-full">
+                <Link
+                  href={`/hotel/${testimonial.slug}`}
+                  onClick={(e) => handleCardClick(e, testimonial.slug)}
+                  className="block bg-gray-50 rounded-xl border border-gray-200 p-6 sm:p-8 h-full hover:shadow-lg transition-shadow duration-200"
+                >
                   {/* 별점 */}
                   <div className="flex items-center mb-4">
-                    {renderStars(testimonial.rating)}
+                    {renderStars(5)}
                   </div>
 
-                  {/* 리뷰 내용 */}
-                  <blockquote className="text-sm sm:text-base text-gray-700 leading-relaxed mb-4">
+                  {/* 리뷰 내용 - 높이 고정 */}
+                  <blockquote className="text-sm sm:text-base text-gray-700 leading-relaxed mb-4 line-clamp-4 min-h-[6rem]">
                     {testimonial.content}
                   </blockquote>
 
@@ -239,14 +273,14 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">
-                        {maskName(testimonial.name)}
+                        {testimonial.hotel}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {testimonial.hotel} • {testimonial.date}
+                        예약번호: {maskBookingNumber(testimonial.bookingNumber)}
                       </p>
                     </div>
                   </div>
-                </div>
+                </Link>
               </div>
             ))}
             {/* 마지막 카드가 완전히 스크롤되도록 오른쪽 공간 확보 */}
@@ -256,7 +290,7 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
 
         {/* 인디케이터 도트 */}
         <div className="flex justify-center mt-6 space-x-2">
-          {mockTestimonials.map((_, index) => (
+          {testimonials.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
