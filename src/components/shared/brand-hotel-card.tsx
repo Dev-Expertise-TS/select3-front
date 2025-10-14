@@ -110,9 +110,6 @@ export function BrandHotelCard({
               }}
             />
           )}
-          
-          {/* 이미지 오버레이 */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
           {brandLabel && (
             <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-900">

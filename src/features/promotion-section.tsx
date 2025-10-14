@@ -13,18 +13,19 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
   const kstMs = now.getTime() + 9 * 60 * 60 * 1000
   const todayKst = new Date(kstMs).toISOString().slice(0, 10)
 
-  // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회
+  // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회 (slot_key 오름차순)
   const { data: featureSlots, error: featureError } = await supabase
     .from('select_feature_slots')
-    .select('sabre_id, start_date, end_date')
+    .select('sabre_id, slot_key, start_date, end_date')
     .eq('surface', '프로모션')
+    .order('slot_key', { ascending: true })
   
   if (featureError || !featureSlots || featureSlots.length === 0) {
     return []
   }
 
   // 시작/종료 날짜 필터
-  const activeSabreIds = (featureSlots as any[])
+  const activeSlots = (featureSlots as any[])
     .filter((slot) => {
       const start = (slot.start_date ?? '').toString().slice(0, 10)
       const end = (slot.end_date ?? '').toString().slice(0, 10)
@@ -33,7 +34,12 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
       if (end && todayKst > end) return false
       return true
     })
-    .map((slot) => slot.sabre_id)
+
+  // slot_key 순서 맵 (왼쪽 -> 오른쪽)
+  const orderMap = new Map<number, number>()
+  activeSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
+
+  const activeSabreIds = activeSlots.map((slot: any) => slot.sabre_id)
 
   if (activeSabreIds.length === 0) {
     return []
@@ -50,8 +56,11 @@ async function getPromotionHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
     return []
   }
   
-  // publish 필터링 (null이거나 true인 것만)
-  const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
+  // publish 필터링 (null이거나 true인 것만) 후 slot_key 순서로 정렬
+  const filteredHotels = hotels
+    .filter((h: any) => h.publish !== false)
+    .sort((a: any, b: any) => (orderMap.get(a.sabre_id) ?? 0) - (orderMap.get(b.sabre_id) ?? 0))
+    .slice(0, hotelCount)
   
   // 3. select_hotel_media에서 호텔 이미지 조회
   const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
@@ -79,15 +88,16 @@ async function getTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
   const kstMs = now.getTime() + 9 * 60 * 60 * 1000
   const todayKst = new Date(kstMs).toISOString().slice(0, 10)
 
-  // 1. select_feature_slots에서 surface가 '띠베너'인 항목 조회
+  // 1. select_feature_slots에서 surface가 '띠베너'인 항목 조회 (slot_key 오름차순)
   const { data: slots, error: slotsError } = await supabase
     .from('select_feature_slots')
-    .select('sabre_id, start_date, end_date')
+    .select('sabre_id, slot_key, start_date, end_date')
     .eq('surface', '띠베너')
+    .order('slot_key', { ascending: true })
 
   if (slotsError || !slots || slots.length === 0) return []
 
-  const activeSabreIds = (slots as any[])
+  const activeTopSlots = (slots as any[])
     .filter((slot) => {
       const start = (slot.start_date ?? '').toString().slice(0, 10)
       const end = (slot.end_date ?? '').toString().slice(0, 10)
@@ -96,7 +106,11 @@ async function getTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
       if (end && todayKst > end) return false
       return true
     })
-    .map((slot) => slot.sabre_id)
+
+  const topOrderMap = new Map<number, number>()
+  activeTopSlots.forEach((slot: any, idx: number) => topOrderMap.set(slot.sabre_id, idx))
+
+  const activeSabreIds = activeTopSlots.map((slot: any) => slot.sabre_id)
 
   if (activeSabreIds.length === 0) return []
 
@@ -109,8 +123,11 @@ async function getTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT_
 
   if (hotelsError || !hotels) return []
 
-  // publish 필터링 (null이거나 true인 것만)
-  const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
+  // publish 필터링 (null이거나 true인 것만) 후 slot_key 순서로 정렬
+  const filteredHotels = hotels
+    .filter((h: any) => h.publish !== false)
+    .sort((a: any, b: any) => (topOrderMap.get(a.sabre_id) ?? 0) - (topOrderMap.get(b.sabre_id) ?? 0))
+    .slice(0, hotelCount)
 
   // 3. select_hotel_media에서 호텔 이미지 조회
   const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
