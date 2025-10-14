@@ -23,12 +23,13 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
 
       const { data: slots } = await supabase
         .from('select_feature_slots')
-        .select('sabre_id, start_date, end_date')
+        .select('sabre_id, slot_key, start_date, end_date')
         .eq('surface', '띠베너')
+        .order('slot_key', { ascending: true })
 
       if (!slots || slots.length === 0) return []
 
-      const activeSabreIds = (slots as any[])
+      const activeSlots = (slots as any[])
         .filter((slot) => {
           const start = (slot.start_date ?? '').toString().slice(0, 10)
           const end = (slot.end_date ?? '').toString().slice(0, 10)
@@ -37,7 +38,12 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
           if (end && todayKst > end) return false
           return true
         })
-        .map((slot) => slot.sabre_id)
+
+      // slot_key 순서를 보존하기 위한 맵
+      const orderMap = new Map<number, number>()
+      activeSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
+
+      const activeSabreIds = activeSlots.map((slot: any) => slot.sabre_id)
 
       if (activeSabreIds.length === 0) return []
 
@@ -49,7 +55,10 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
 
       if (!hotels) return []
 
-      const filteredHotels = hotels.filter((h: any) => h.publish !== false).slice(0, hotelCount)
+      const filteredHotels = hotels
+        .filter((h: any) => h.publish !== false)
+        .sort((a: any, b: any) => (orderMap.get(a.sabre_id) ?? 0) - (orderMap.get(b.sabre_id) ?? 0))
+        .slice(0, hotelCount)
 
       const hotelSabreIds = filteredHotels.map(h => String(h.sabre_id))
       const { data: rawMediaData } = await supabase
