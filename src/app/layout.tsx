@@ -74,6 +74,19 @@ export default function RootLayout({
   return (
     <html lang="ko" className={inter.variable}>
       <head>
+        {/* Google Tag Manager */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-W4D9SSJB');
+            `,
+          }}
+        />
+        
         {/* DNS Prefetch & Preconnect for critical resources */}
         <link rel="dns-prefetch" href="https://bnnuekzyfuvgeefmhmnp.supabase.co" />
         <link rel="preconnect" href="https://bnnuekzyfuvgeefmhmnp.supabase.co" crossOrigin="anonymous" />
@@ -82,6 +95,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://t1.kakaocdn.net" crossOrigin="anonymous" />
       </head>
       <body className="bg-background text-foreground antialiased pb-16 lg:pb-0">
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe 
+            src="https://www.googletagmanager.com/ns.html?id=GTM-W4D9SSJB"
+            height="0" 
+            width="0" 
+            style={{display: 'none', visibility: 'hidden'}}
+          />
+        </noscript>
+        {/* End Google Tag Manager (noscript) */}
+        
         <AnalyticsProvider>
           <QueryProvider>
             <Header />
