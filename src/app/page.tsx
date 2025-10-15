@@ -16,7 +16,7 @@ export const revalidate = 1800
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <PromotionBanner />
       <main>
         <Hero />

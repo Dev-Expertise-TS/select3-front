@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* 스크롤 동작 개선 */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 :root {
   /* Tourvis Select design tokens */
   --background: oklch(1 0 0);
