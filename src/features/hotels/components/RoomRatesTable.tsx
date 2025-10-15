@@ -259,7 +259,8 @@ export function RoomRatesTable({
               // 카카오톡 상담
               window.open('https://pf.kakao.com/_cxmxgNG/chat', '_blank')
             }}
-            className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+            className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 flex items-center gap-2"
+            style={{ backgroundColor: '#FEE500', color: '#3C1E1E' }}
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 3C6.486 3 2 6.262 2 10.2c0 2.4 1.6 4.5 4 5.8V21l3.5-2c.5.1 1 .1 1.5.1 5.514 0 10-3.262 10-7.2S17.514 3 12 3z"/>

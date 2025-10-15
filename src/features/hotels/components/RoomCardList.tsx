@@ -147,7 +147,8 @@ export function RoomCardList({
           {/* 카카오 친구 추가 버튼 */}
           <button
             onClick={handleKakaoFriendAdd}
-            className="inline-flex items-center justify-center px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+            className="inline-flex items-center justify-center px-8 py-4 font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+            style={{ backgroundColor: '#FEE500', color: '#3C1E1E' }}
           >
             <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.376 1.409 4.5 3.599 5.899-.143.537-.534 2.007-.617 2.33-.096.374.137.369.255.269.092-.078 1.486-1.017 2.07-1.417C8.372 17.844 10.138 18 12 18c5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/>
