@@ -58,6 +58,7 @@ export function useAnalytics() {
 
   // 전환 이벤트 추적 (카카오톡 상담 등)
   const trackConversion = (conversionType: string) => {
+    console.log('🎯 [Analytics] 전환 이벤트 발생:', conversionType)
     trackEvent('conversion', 'engagement', conversionType)
   }
 

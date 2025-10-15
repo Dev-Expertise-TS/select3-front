@@ -6,6 +6,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { mobileNavItems, navigationItems } from "@/config/navigation"
 import { Menu, X } from "lucide-react"
+import { TourvisIcon } from "@/components/shared/icons/TourvisIcon"
 
 /**
  * 모바일 하단 네비게이션 바
@@ -104,6 +105,9 @@ export function BottomNav() {
                   const isActive = pathname === item.href || 
                                   (item.href !== "/" && pathname.startsWith(item.href))
                   
+                  // 투어비스 메뉴인지 확인
+                  const isTourvisMenu = item.href === "https://tourvis.com"
+                  
                   return (
                     <Link
                       key={item.href}
@@ -116,6 +120,10 @@ export function BottomNav() {
                           : "text-gray-700 hover:bg-gray-50"
                       )}
                     >
+                      {/* 투어비스 메뉴인 경우 아이콘 추가 */}
+                      {isTourvisMenu && (
+                        <TourvisIcon className="w-5 h-5 mr-3" />
+                      )}
                       <span className="text-base">{item.label}</span>
                       {isActive && (
                         <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>

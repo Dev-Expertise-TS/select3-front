@@ -89,6 +89,7 @@ export function HotelAdBanner({ hotel, className }: HotelAdBannerProps) {
           quality={90}
           placeholder="blur"
           blurDataURL={tinyBlurDataURL(imagePath)}
+          fetchPriority="high" // 배너는 중요한 이미지이므로 high로 설정
           onError={(e) => {
             const target = e.target as HTMLImageElement
             target.style.display = 'none'

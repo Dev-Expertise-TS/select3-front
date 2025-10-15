@@ -26,6 +26,8 @@ const HotelCardImage = ({ src, alt = 'Hotel image', w = 640, h = 360 }: Props) =
         placeholder="blur"
         blurDataURL={tinyBlurDataURL(src)}
         className="h-auto w-full object-cover"
+        priority={false} // 명시적으로 priority 비활성화
+        fetchPriority="low" // fetchPriority를 low로 설정
       />
     </div>
   );
