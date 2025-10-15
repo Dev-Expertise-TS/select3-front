@@ -5,6 +5,21 @@ import { createClient } from '@/lib/supabase/server'
  * select_feature_slots 테이블에서 '상단베너' surface의 활성 호텔 조회
  */
 export async function getBannerHotel() {
+  return getBannerHotelByCondition('상단베너', null)
+}
+
+/**
+ * 브랜드 페이지용 배너 호텔 조회
+ * select_feature_slots 테이블에서 '브랜드베너' surface + chain_slug 조건의 활성 호텔 조회
+ */
+export async function getBrandBannerHotel(chainSlug: string) {
+  return getBannerHotelByCondition('브랜드베너', chainSlug)
+}
+
+/**
+ * 공통 배너 호텔 조회 로직
+ */
+async function getBannerHotelByCondition(surface: string, chainSlug: string | null) {
   try {
     const supabase = await createClient()
     
@@ -14,18 +29,25 @@ export async function getBannerHotel() {
     const todayKst = new Date(kstMs).toISOString().slice(0, 10)
 
     // select_feature_slots에서 활성 슬롯 조회
-    const { data: featureSlots, error: featureError } = await supabase
+    let query = supabase
       .from('select_feature_slots')
       .select('sabre_id, start_date, end_date')
-      .eq('surface', '상단베너')
+      .eq('surface', surface)
+    
+    // 브랜드 베너인 경우 chain_slug 필터 추가
+    if (chainSlug) {
+      query = query.eq('chain_slug', chainSlug)
+    }
+    
+    const { data: featureSlots, error: featureError } = await query
 
     if (featureError) {
-      console.error('❌ [Server] 배너 슬롯 조회 오류:', featureError)
+      console.error(`❌ [Server] ${surface} 배너 슬롯 조회 오류:`, featureError)
       return null
     }
     
     if (!featureSlots || featureSlots.length === 0) {
-      console.log('📭 [Server] 활성 배너 슬롯 없음')
+      console.log(`📭 [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 활성 배너 슬롯 없음`)
       return null
     }
 
@@ -40,7 +62,7 @@ export async function getBannerHotel() {
     })
 
     if (activeSlots.length === 0) {
-      console.log('📭 [Server] 오늘 날짜에 활성 배너 슬롯 없음')
+      console.log(`📭 [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 오늘 날짜에 활성 배너 슬롯 없음`)
       return null
     }
 
@@ -105,7 +127,7 @@ export async function getBannerHotel() {
     const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
     const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
     
-    console.log('✅ [Server] 배너 호텔 조회 성공:', randomHotel.property_name_ko)
+    console.log(`✅ [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 배너 호텔 조회 성공:`, randomHotel.property_name_ko)
     
     return {
       ...randomHotel,

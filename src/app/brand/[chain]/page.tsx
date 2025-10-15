@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ChainPageClient } from "./chain-page-client"
 import { getFirstImagePerHotel } from "@/lib/media-utils"
-import { getBannerHotel } from "@/lib/banner-hotel-server"
+import { getBrandBannerHotel } from "@/lib/banner-hotel-server"
 
 interface HotelRow {
   sabre_id: number
@@ -171,8 +171,9 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
   const { brand: brandParam } = await searchParams
   
   // 배너 호텔과 체인 호텔을 병렬로 조회
+  // 브랜드 페이지에서는 chain slug에 맞는 브랜드 배너 호텔 조회
   const [bannerHotelResult, chainHotelsResult] = await Promise.all([
-    getBannerHotel(),
+    getBrandBannerHotel(chain),
     getChainHotels(chain)
   ])
   
