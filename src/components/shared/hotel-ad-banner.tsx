@@ -70,7 +70,7 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
       )}
       onClick={handleClick}
     >
-      {/* 배경 이미지 */}
+      {/* 배경 이미지 - 필터 없이 밝고 선명하게 */}
       {imagePath && (
         <Image
           loader={supabaseLoader}
@@ -80,7 +80,7 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           priority
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
-          quality={85}
+          quality={90}
           placeholder="blur"
           blurDataURL={tinyBlurDataURL(imagePath)}
           onError={(e) => {
@@ -90,9 +90,7 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
         />
       )}
       
-      {/* 콘텐츠 - 부드러운 그라데이션 배경 추가 */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
-      
+      {/* 콘텐츠 - 배경 없이 텍스트만 */}
       <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12">
         <div className="max-w-2xl">
           {/* 추천 문구 라벨 */}
