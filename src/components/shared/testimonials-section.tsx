@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
+import { Star, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SatisfactionSurvey {
@@ -163,6 +163,18 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
     })
   }
 
+  // 이전 슬라이드로 이동
+  const goToPrevious = () => {
+    const newIndex = Math.max(0, currentIndex - 1)
+    goToSlide(newIndex)
+  }
+
+  // 다음 슬라이드로 이동
+  const goToNext = () => {
+    const newIndex = Math.min(testimonials.length - 1, currentIndex + 1)
+    goToSlide(newIndex)
+  }
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -230,6 +242,26 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
 
         {/* 스크롤 컨테이너 */}
         <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
+          {/* 이전 버튼 - 데스크탑에서만 표시 */}
+          <button
+            onClick={goToPrevious}
+            disabled={currentIndex === 0}
+            className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="이전 리뷰로 이동"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* 다음 버튼 - 데스크탑에서만 표시 */}
+          <button
+            onClick={goToNext}
+            disabled={currentIndex === testimonials.length - 1}
+            className="hidden lg:flex absolute -right-12 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="다음 리뷰로 이동"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
+import { Header } from "@/components/header"
 import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
@@ -83,7 +84,10 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased pb-16 lg:pb-0">
         <AnalyticsProvider>
           <QueryProvider>
-            {children}
+            <Header />
+            <main className="pt-12 md:pt-16">
+              {children}
+            </main>
             <BottomNav />
             <KakaoConsultationButton />
           </QueryProvider>

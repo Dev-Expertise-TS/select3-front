@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 
-export const runtime = 'edge'
+// Edge Runtime 제거 - 정적 생성 활성화
+// export const runtime = 'edge'
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY

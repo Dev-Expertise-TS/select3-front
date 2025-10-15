@@ -1,5 +1,4 @@
 import { Suspense } from "react"
-import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Hero } from "@/features/hero"
 import { SearchSection } from "@/features/search"
@@ -18,7 +17,6 @@ export const revalidate = 1800
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <PromotionBanner />
       <main>
         <Hero />
