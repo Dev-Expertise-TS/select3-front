@@ -21,7 +21,7 @@ function PromotionDetails({ sabreId }: { sabreId?: number }) {
   }
   
   const first = promotions[0]
-  const raw: string = String((first as any)?.promotion_description ?? (first as any)?.description ?? (first as any)?.promotion ?? "")
+  const raw: string = String(first?.promotion_description ?? first?.description ?? first?.promotion ?? "")
 
   return (
     <span className="truncate">
@@ -76,12 +76,13 @@ export function PromotionBanner() {
 
   return (
     <div 
-      className="fixed top-12 md:top-16 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
+      className="sticky top-12 md:top-16 z-50 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg mb-1"
       onClick={handleBannerClick}
       style={{
-        transform: 'translateZ(0)',
+        transform: 'translate3d(0, 0, 0)',
+        willChange: 'transform',
         backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden',
+        perspective: '1000px'
       }}
     >
       <div className="container mx-auto max-w-[1440px] pl-[10px] pr-1 sm:px-4">

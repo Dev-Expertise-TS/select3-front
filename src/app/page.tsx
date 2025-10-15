@@ -18,7 +18,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <PromotionBanner />
-      <main style={{ paddingTop: '60px' }}>
+      <main>
         <Hero />
         <Suspense fallback={<div className="bg-white sm:bg-gray-50 pt-3 pb-1 sm:py-6 h-20" />}>
           <SearchSection />
