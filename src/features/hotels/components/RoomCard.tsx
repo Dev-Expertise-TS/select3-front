@@ -253,7 +253,7 @@ export function RoomCard({
 
           {/* 예약 버튼 */}
           <a
-            href="http://pf.kakao.com/_cxmxgNG/chat"
+            href="https://pf.kakao.com/_cxmxgNG/chat"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full inline-block text-center bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base"

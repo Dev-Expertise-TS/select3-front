@@ -6,6 +6,7 @@ import { PromotionBanner } from '@/components/promotion-banner'
 import { Footer } from '@/components/footer'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
+import { KakaoChatButton } from '@/components/shared/kakao-chat-button'
 
 export const metadata: Metadata = {
   title: '고객 후기 | 투어비스 셀렉트',
@@ -161,17 +162,7 @@ export default async function TestimonialsPage() {
                 전화 상담하기
               </a>
               {/* 카카오톡 상담 - 항상 표시 */}
-              <a
-                href="http://pf.kakao.com/_xdSExexj/chat"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-2.5 sm:py-3 bg-yellow-400 text-gray-900 text-sm sm:text-base font-medium rounded-lg hover:bg-yellow-500 transition-colors duration-200"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.376 1.409 4.5 3.599 5.899-.143.537-.534 2.007-.617 2.33-.096.374.137.369.255.269.092-.078 1.486-1.017 2.07-1.417C8.372 17.844 10.138 18 12 18c5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/>
-                </svg>
-                카카오톡 상담
-              </a>
+              <KakaoChatButton text="카카오톡 상담" size="md" />
             </div>
           </div>
         </div>

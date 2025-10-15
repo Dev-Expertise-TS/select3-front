@@ -85,7 +85,7 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-white uppercase tracking-wide">CONTACTS</h3>
               <div className="space-y-3">
                 <a
-                  href="http://pf.kakao.com/_cxmxgNG/chat"
+                  href="https://pf.kakao.com/_cxmxgNG/chat"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-3 text-sm text-gray-300 hover:text-white transition-colors leading-relaxed no-underline"

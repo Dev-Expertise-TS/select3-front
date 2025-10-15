@@ -256,8 +256,8 @@ export function RoomRatesTable({
           
           <button 
             onClick={() => {
-              // 카카오톡 상담 (예시)
-              window.open('https://pf.kakao.com/_your_kakao_channel', '_blank')
+              // 카카오톡 상담
+              window.open('https://pf.kakao.com/_cxmxgNG/chat', '_blank')
             }}
             className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
           >

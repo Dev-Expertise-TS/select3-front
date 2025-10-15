@@ -40,7 +40,7 @@ export default function ContactPage() {
                   전문 상담사가 답변해드리겠습니다.
                 </p>
                 <a
-                  href="http://pf.kakao.com/_cxmxgNG/chat"
+                  href="https://pf.kakao.com/_cxmxgNG/chat"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center text-gray-900 font-bold rounded-xl h-12 sm:h-14 leading-[3rem] sm:leading-[3.5rem] shadow-md transition-transform hover:-translate-y-0.5"

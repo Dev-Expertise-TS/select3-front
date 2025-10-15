@@ -114,7 +114,7 @@ export function RoomCardList({
     }
     
     // 새 창에서 카카오 친구 추가 링크 열기
-    window.open('http://pf.kakao.com/_cxmxgNG', '_blank', 'noopener,noreferrer')
+    window.open('https://pf.kakao.com/_cxmxgNG/chat', '_blank', 'noopener,noreferrer')
     
     // 바로 객실 요금 표시
     setHasAddedKakaoFriend(true)

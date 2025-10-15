@@ -36,7 +36,7 @@ export function KakaoConsultationButton() {
     <div className="fixed bottom-6 left-0 right-0 z-50 hidden lg:block pointer-events-none">
       <div className="container mx-auto max-w-[1440px] px-4 relative h-0">
         <a
-          href="http://pf.kakao.com/_cxmxgNG/chat"
+          href="https://pf.kakao.com/_cxmxgNG/chat"
           target="_blank"
           rel="noopener noreferrer"
           className="absolute -right-2 bottom-0 group pointer-events-auto"
