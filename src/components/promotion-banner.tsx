@@ -76,8 +76,13 @@ export function PromotionBanner() {
 
   return (
     <div 
-      className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
+      className="sticky top-12 md:top-16 z-40 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
       onClick={handleBannerClick}
+      style={{
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
       <div className="container mx-auto max-w-[1440px] pl-[10px] pr-1 sm:px-4">
         <div className="flex items-center justify-start sm:justify-center py-2 sm:py-2 relative">
