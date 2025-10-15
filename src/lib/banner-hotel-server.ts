@@ -46,6 +46,8 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       return null
     }
     
+    console.log(`🔍 [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 조회된 슬롯:`, featureSlots)
+    
     if (!featureSlots || featureSlots.length === 0) {
       console.log(`📭 [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 활성 배너 슬롯 없음`)
       return null
@@ -73,7 +75,6 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       .from('select_hotels')
       .select('*')
       .in('sabre_id', sabreIds)
-      .not('image_1', 'is', null)
     
     if (hotelsError) {
       console.error('❌ [Server] 배너 호텔 조회 오류:', hotelsError)
@@ -90,6 +91,34 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       console.log('📭 [Server] publish된 배너 호텔 없음')
       return null
     }
+    
+    // 랜덤 호텔 선택
+    const randomHotel = filteredHotels[Math.floor(Math.random() * filteredHotels.length)]
+    
+    // select_hotel_media에서 해당 호텔의 첫 번째 이미지 조회
+    const { data: mediaData, error: mediaError } = await supabase
+      .from('select_hotel_media')
+      .select('storage_path, public_url, file_name')
+      .eq('sabre_id', String(randomHotel.sabre_id))
+      .order('image_seq', { ascending: true })
+      .limit(1)
+      .single()
+    
+    if (mediaError) {
+      console.warn('⚠️ [Server] 배너 호텔 이미지 조회 실패:', mediaError.message)
+    }
+    
+    // 이미지 경로 결정 (storage_path 우선, 없으면 image_1 fallback)
+    const imagePath = mediaData?.storage_path || mediaData?.public_url || randomHotel.image_1 || null
+    
+    console.log('🖼️ [Server] 배너 이미지 경로:', {
+      sabre_id: randomHotel.sabre_id,
+      hotel_name: randomHotel.property_name_ko,
+      storage_path: mediaData?.storage_path,
+      public_url: mediaData?.public_url,
+      image_1: randomHotel.image_1,
+      final_path: imagePath
+    })
     
     // 브랜드 및 체인 정보 조회
     const brandIds = filteredHotels.map((hotel: any) => hotel.brand_id).filter(Boolean)
@@ -122,8 +151,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       }
     }
     
-    // 랜덤 호텔 선택 및 브랜드 정보 매핑
-    const randomHotel = filteredHotels[Math.floor(Math.random() * filteredHotels.length)]
+    // 브랜드 정보 매핑
     const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
     const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
     
@@ -131,7 +159,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
     
     return {
       ...randomHotel,
-      media_path: randomHotel.image_1,
+      media_path: imagePath,
       brand_name_en: hotelBrand?.brand_name_en || null,
       chain_name_en: hotelChain?.chain_name_en || null
     }

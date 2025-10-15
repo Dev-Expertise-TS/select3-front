@@ -177,6 +177,14 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
     getChainHotels(chain)
   ])
   
+  // 브랜드 배너가 없으면 일반 상단 배너로 fallback
+  let finalBannerHotel = bannerHotelResult
+  if (!finalBannerHotel) {
+    console.log(`🔄 [Server] ${chain} 브랜드 배너 없음, 상단 배너로 fallback`)
+    const { getBannerHotel } = await import('@/lib/banner-hotel-server')
+    finalBannerHotel = await getBannerHotel()
+  }
+  
   const { chain: chainRow, hotels, hotelMediaData, allChains, selectedChainBrands } = chainHotelsResult
   
   if (!chainRow) {
@@ -211,7 +219,7 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
       selectedChainBrands={selectedChainBrands}
       initialBrandId={brandParam || null}
       serverFilterOptions={serverFilterOptions}
-      serverBannerHotel={bannerHotelResult}
+      serverBannerHotel={finalBannerHotel}
     />
   )
 }

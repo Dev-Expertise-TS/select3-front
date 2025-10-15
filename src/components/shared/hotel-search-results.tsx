@@ -725,7 +725,6 @@ export function HotelSearchResults({
         <HotelBannerSection
           bannerHotel={bannerHotel || null}
           isBannerLoading={isBannerLoading}
-          copywriter={searchQuery.trim() ? "특별한 혜택과 함께하는 프리미엄 호텔 경험을 만나보세요" : "전 세계 프리미엄 호텔과 리조트의 특별한 경험을 만나보세요"}
         />
         
         {/* 검색 영역은 전체보기에서만 노출되며, 모바일에서는 제목/서브타이틀 아래로 배치 */}

@@ -13,38 +13,33 @@ interface HotelAdBannerProps {
     property_name_en: string
     city: string
     city_ko?: string
-    benefit?: string
-    benefit_1?: string
-    benefit_2?: string
-    benefit_3?: string
-    benefit_4?: string
-    benefit_5?: string
-    benefit_6?: string
     media_path?: string
     image_1?: string
     brand_name_en?: string | null
     chain_name_en?: string | null
   }
-  copywriter?: string
   className?: string
 }
 
-export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerProps) {
+export function HotelAdBanner({ hotel, className }: HotelAdBannerProps) {
   const router = useRouter()
 
   const handleClick = () => {
     router.push(`/hotel/${hotel.slug}`)
   }
 
-  // 호텔 혜택 중 하나를 카피라이터로 사용 (우선순위: benefit > benefit_1 > benefit_2)
-  const displayCopywriter = copywriter || hotel.benefit || hotel.benefit_1 || hotel.benefit_2 || "특별한 혜택을 만나보세요"
-  
   // media_path 정규화: 중복된 public/ 제거 및 경로 정리
   const normalizeMediaPath = (path?: string): string => {
     if (!path) return ''
     
     // 절대 URL이면 그대로 반환
     if (path.startsWith('http')) return path
+    
+    // storage_path가 public/으로 시작하는 경우 (select_hotel_media에서 온 경우)
+    // supabaseLoader가 상대 경로를 처리하지 못하므로 절대 URL로 변환
+    if (path.startsWith('public/')) {
+      return `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${path}`
+    }
     
     // hotel-media/public/... 형태를 select-media/hotels/... 로 변환
     // supabaseLoader가 자동으로 public/을 추가하므로 중복 방지
@@ -61,6 +56,17 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
   }
   
   const imagePath = normalizeMediaPath(hotel.media_path || hotel.image_1)
+  
+  // 디버깅 로그
+  console.log('🖼️ [HotelAdBanner] 이미지 경로 디버깅:', {
+    sabre_id: hotel.sabre_id,
+    hotel_name: hotel.property_name_ko,
+    media_path: hotel.media_path,
+    image_1: hotel.image_1,
+    final_imagePath: imagePath,
+    hasImage: !!imagePath,
+    imagePathType: typeof imagePath
+  })
 
   return (
     <div 
@@ -114,8 +120,6 @@ export function HotelAdBanner({ hotel, copywriter, className }: HotelAdBannerPro
           <p className="text-xs sm:text-sm md:text-base text-white mb-2 sm:mb-4 md:mb-6 drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">
             📍 {hotel.city_ko || hotel.city}
           </p>
-          
-          {/* 카피라이터 영역 제거 */}
         </div>
       </div>
       
