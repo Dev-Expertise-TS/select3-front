@@ -5,6 +5,7 @@ import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
 import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -80,11 +81,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://t1.kakaocdn.net" crossOrigin="anonymous" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased pb-16 lg:pb-0">
-        <QueryProvider>
-          {children}
-          <BottomNav />
-          <KakaoConsultationButton />
-        </QueryProvider>
+        <AnalyticsProvider>
+          <QueryProvider>
+            {children}
+            <BottomNav />
+            <KakaoConsultationButton />
+          </QueryProvider>
+        </AnalyticsProvider>
       </body>
     </html>
   )

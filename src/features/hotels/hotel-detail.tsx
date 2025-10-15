@@ -27,6 +27,7 @@ import { KakaoChatButton } from "@/components/shared/kakao-chat-button"
 
 // Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
+import { useAnalytics } from "@/hooks/use-analytics"
 import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
 
@@ -453,6 +454,9 @@ export function HotelDetail({
   // URL 쿼리 파라미터
   const searchParams = useSearchParams()
   
+  // Analytics 추적
+  const { trackHotelView, trackClick, trackConversion } = useAnalytics()
+  
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
   const decodedSlug = decodeURIComponent(hotelSlug)
   
@@ -513,6 +517,13 @@ export function HotelDetail({
       setSearchDates({ checkIn: ci, checkOut: co })
     }
   }, [searchParams])
+
+  // 호텔 상세 페이지 뷰 추적
+  useEffect(() => {
+    if (initialHotel) {
+      trackHotelView(initialHotel.property_name_ko || initialHotel.property_name_en || 'Unknown Hotel', String(initialHotel.sabre_id))
+    }
+  }, [initialHotel, trackHotelView])
 
   // 프로모션 데이터 상태 관리 (서버 데이터 우선 사용)
   const [hotelPromotions, setHotelPromotions] = useState<HotelPromotion[]>(
@@ -1520,7 +1531,9 @@ export function HotelDetail({
                   
                   {/* 카카오톡 상담하기 버튼 */}
                   <div className="flex justify-center">
-                    <KakaoChatButton size="lg" />
+                    <div onClick={() => trackConversion('kakao_consultation_no_rooms')}>
+                      <KakaoChatButton size="lg" />
+                    </div>
                   </div>
                   </div>
                 ) : (
