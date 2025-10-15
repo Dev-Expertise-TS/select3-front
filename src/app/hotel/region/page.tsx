@@ -31,7 +31,7 @@ export default async function RegionListPage() {
   const cityCodes = regions?.map(r => r.city_code) || []
   
   // 2. 각 도시별 호텔 개수 조회 (병렬 처리)
-  let hotelCounts: Record<string, number> = {}
+  const hotelCounts: Record<string, number> = {}
   
   if (cityCodes.length > 0) {
     const { data: hotels } = await supabase
@@ -50,7 +50,7 @@ export default async function RegionListPage() {
   }
 
   // 3. 모든 도시의 이미지를 한 번에 조회 (성능 최적화)
-  let cityImages: Record<string, string> = {}
+  const cityImages: Record<string, string> = {}
 
   if (cityCodes.length > 0) {
     const { data: imageData, error: imageError } = await supabase

@@ -124,7 +124,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
 
       // 지역 이미지 조회: select_city_media 테이블에서 이미지 정보 가져오기
       const cityCodes = regions.map(r => r.city_code)
-      let cityMediaMap = new Map<string, string>()
+      const cityMediaMap = new Map<string, string>()
       
       if (cityCodes.length > 0) {
         try {
@@ -266,7 +266,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
 
       // 호텔 이미지 조회: 첫 이미지 매핑
       const sabreIds = hotels.map((h) => String(h.sabre_id))
-      let mediaMap = new Map<string, string>()
+      const mediaMap = new Map<string, string>()
       
       if (sabreIds.length > 0) {
         try {

@@ -7,6 +7,8 @@ const supabase = createClient()
 
 export interface HotelPromotionDetail {
   promotion: string
+  promotion_description?: string
+  description?: string
   booking_date: string
   check_in_date: string
 }

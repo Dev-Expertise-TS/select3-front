@@ -28,9 +28,6 @@ export function Footer() {
                   <Link href="/about" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     셀렉트 소개
                   </Link>
-                  <Link href="/with-kids" className="block text-sm text-gray-300 hover:text-white transition-colors">
-                    아이와 함께
-                  </Link>
                   <Link href="/hotel" className="block text-sm text-gray-300 hover:text-white transition-colors">
                     호텔 & 리조트
                   </Link>

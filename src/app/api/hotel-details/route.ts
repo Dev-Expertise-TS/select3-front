@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     console.log('📤 Sabre Hotel Details API 요청:', requestBody)
 
     // 여러 Sabre API 엔드포인트를 시도하여 객실 상세 정보 가져오기
-    let descriptiveData = null
+    const descriptiveData = null
     
     // 1. hotel-avail API 시도 (일시 비활성화 - 404 오류)
     // TODO: API 서버 복구 후 다시 활성화

@@ -253,7 +253,7 @@ export async function generateGlobalOTAStyleRoomName(roomType: string, roomName:
     
     if (content) {
       // 불필요한 문자 제거 및 정리
-      let cleanedContent = content.trim()
+      const cleanedContent = content.trim()
         .replace(/\([^)]*\)/g, '') // 괄호와 괄호 안의 내용 제거
         .replace(/\d+자/g, '') // "12자" 같은 글자 수 표시 제거
         .replace(/\d+개/g, '') // "2개" 같은 개수 표시 제거
@@ -334,7 +334,7 @@ export async function interpretBedType(description: string, roomName: string): P
     
     if (content) {
       // 불필요한 문자 제거 및 정리
-      let cleanedContent = content.trim()
+      const cleanedContent = content.trim()
         .replace(/\([^)]*\)/g, '') // 괄호와 괄호 안의 내용 제거
         .replace(/\d+개/g, '') // "2개" 같은 개수 표시 제거
         .replace(/\d+자/g, '') // "5자" 같은 글자 수 표시 제거

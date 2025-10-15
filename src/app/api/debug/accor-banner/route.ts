@@ -21,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Feature slots 조회 오류', details: featureError }, { status: 500 })
     }
     
-    let result: any = {
+    const result: any = {
       accorBrandBanner: featureSlots,
       hasAccorBrandBanner: featureSlots && featureSlots.length > 0
     }

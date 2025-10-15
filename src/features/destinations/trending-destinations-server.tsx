@@ -25,7 +25,7 @@ async function getTrendingDestinations() {
 
   // 2. 모든 트렌딩 도시의 이미지를 한 번에 조회 (성능 최적화!)
   const cityCodes = destinations?.map(d => d.city_code) || []
-  let cityImages: Record<string, string> = {}
+  const cityImages: Record<string, string> = {}
 
   if (cityCodes.length > 0) {
     const { data: imageData, error: imageError } = await supabase
