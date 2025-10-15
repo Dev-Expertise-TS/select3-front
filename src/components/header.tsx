@@ -29,9 +29,14 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 bg-white border-b border-gray-200",
+          "fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-200",
           isScrolled ? "shadow-md" : "",
         )}
+        style={{
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+        }}
       >
           <div className="container mx-auto max-w-[1440px] px-4">
             <div className="flex h-12 md:h-16 items-center justify-between">
