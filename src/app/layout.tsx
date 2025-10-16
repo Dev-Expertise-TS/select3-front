@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "프리미엄 호텔 & 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.",
   generator: "v0.app",
-  metadataBase: new URL('https://select-hotels.com'),
+  metadataBase: new URL('https://luxury-select.co.kr'),
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://select-hotels.com',
+    url: 'https://luxury-select.co.kr',
     siteName: '투어비스 셀렉트',
     title: '투어비스 셀렉트',
     description: '프리미엄 호텔과 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.',
