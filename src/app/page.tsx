@@ -17,9 +17,10 @@ export const revalidate = 1800
 export default function HomePage() {
   return (
     <div className="bg-background">
-      <PromotionBanner />
       <main>
-        <Hero />
+        <PromotionBanner />
+        <div style={{ paddingTop: '60px' }}>
+          <Hero />
         <Suspense fallback={<div className="bg-white sm:bg-gray-50 pt-3 pb-1 sm:py-6 h-20" />}>
           <SearchSection />
         </Suspense>
@@ -29,6 +30,7 @@ export default function HomePage() {
         <BrandProgramSection />
         <TrendingDestinationsSection />
         <HotelGrid />
+        </div>
       </main>
       <Footer />
       <ScrollToTop />

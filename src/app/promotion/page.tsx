@@ -34,7 +34,9 @@ export default function PromotionPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <PromotionBanner />
-      <PromotionPageContent />
+      <div style={{ paddingTop: '60px' }}>
+        <PromotionPageContent />
+      </div>
       <Footer />
     </div>
   )

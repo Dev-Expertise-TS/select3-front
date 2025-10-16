@@ -77,7 +77,15 @@ export function PromotionBanner() {
 
   return (
     <div 
-      className="sticky top-12 md:top-16 z-40 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
+      className="promotion-banner-fixed bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg"
+      style={{ 
+        position: 'fixed',
+        top: '3rem', // 48px (h-12)
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        width: '100%'
+      }}
       onClick={handleBannerClick}
     >
       <div className="container mx-auto max-w-[1440px] pl-[10px] pr-1 sm:px-4">
