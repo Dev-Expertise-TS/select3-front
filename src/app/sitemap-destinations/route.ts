@@ -8,10 +8,11 @@ export async function GET() {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
     
-    // 도시별 페이지 목록 가져오기
+    // 지역별 페이지 목록 가져오기 (도시별)
     const { data: cities, error: citiesError } = await supabase
-      .from('destinations')
+      .from('select_regions')
       .select('city_slug, updated_at, created_at')
+      .eq('region_type', 'city')
       .not('city_slug', 'is', null)
       .not('city_slug', 'eq', '')
       .limit(500)

@@ -16,4 +16,4 @@ Sitemap: https://luxury-select.co.kr/sitemap-hotel
 Sitemap: https://luxury-select.co.kr/sitemap-chains
 Sitemap: https://luxury-select.co.kr/sitemap-blog
 Sitemap: https://luxury-select.co.kr/sitemap-destinations
-Sitemap: https://luxury-select.co.kr/sitemap-index.xml
+Sitemap: https://luxury-select.co.kr/sitemap-index

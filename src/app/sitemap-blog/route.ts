@@ -10,8 +10,9 @@ export async function GET() {
     
     // 블로그 포스트 목록 가져오기
     const { data: blogs, error: blogsError } = await supabase
-      .from('blog_posts')
+      .from('select_hotel_blogs')
       .select('slug, updated_at, created_at')
+      .eq('publish', true)
       .not('slug', 'is', null)
       .not('slug', 'eq', '')
       .limit(1000)

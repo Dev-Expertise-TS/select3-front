@@ -11,7 +11,8 @@ export async function GET() {
     // 브랜드 체인 목록 가져오기
     const { data: chains, error: chainsError } = await supabase
       .from('hotel_chains')
-      .select('slug, updated_at, created_at')
+      .select('slug, created_at')
+      .eq('status', 'active')
       .not('slug', 'is', null)
       .not('slug', 'eq', '')
       .limit(500)
@@ -34,8 +35,7 @@ export async function GET() {
     }
 
     const chainUrls = chains.map((chain) => {
-      const lastModified = chain.updated_at ? new Date(chain.updated_at) : 
-                          chain.created_at ? new Date(chain.created_at) : currentDate
+      const lastModified = chain.created_at ? new Date(chain.created_at) : currentDate
       return `
   <url>
     <loc>${baseUrl}/brand/${chain.slug}</loc>

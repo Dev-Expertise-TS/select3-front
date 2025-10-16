@@ -127,7 +127,7 @@ export function GuestSelector({ rooms, adults, onGuestsChange, onClose }: GuestS
           {/* 성인 선택 */}
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h3 className="text-lg font-medium text-gray-900">성인 만 18세 이상</h3>
+              <h3 className="text-lg font-medium text-gray-900">만 12세 이상</h3>
             </div>
             <div className="flex items-center gap-3">
               <Button
