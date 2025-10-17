@@ -31,13 +31,13 @@ export const navigationItems: NavigationItem[] = [
 
 /**
  * 모바일 하단 네비게이션용 아이템
- * 순서: 홈 → 프로모션 → 전체검색 → 호텔지역 → 아티클 → 고객후기 → 전체메뉴
+ * 순서: 홈 → 프로모션 → 전체검색 → 예약상담 → 아티클 → 고객후기 → 전체메뉴
  */
 export const mobileNavItems: NavigationItem[] = [
   { href: "/", label: "홈", mobileLabel: "홈", icon: Home, mobileOnly: true },
   { href: "/promotion", label: "프로모션", mobileLabel: "프로모션", icon: Tag },
   { href: "/hotel", label: "전체 호텔", mobileLabel: "전체검색", icon: Hotel },
-  { href: "/hotel/region", label: "지역별 호텔", mobileLabel: "호텔지역", icon: MapPin },
+  { href: "https://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "상담", icon: MessageCircle, mobileOnly: true },
   { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText },
   { href: "/testimonials", label: "고객 후기", mobileLabel: "고객후기", icon: Star },
 ]
