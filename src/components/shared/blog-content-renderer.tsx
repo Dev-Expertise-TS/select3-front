@@ -62,7 +62,7 @@ function useHotelData(sabreId: number | null) {
       if (!sabreId) return null
       
       try {
-        console.log('호텔 데이터 조회 시작:', { sabreId })
+        console.log('✅ [BlogContentRenderer] 호텔 데이터 조회 시작:', { sabreId })
         
         const { data, error } = await supabase
           .from('select_hotels')
@@ -70,28 +70,38 @@ function useHotelData(sabreId: number | null) {
           .eq('sabre_id', sabreId)
           .maybeSingle()
         
-        console.log('호텔 데이터 조회 결과:', { 
+        console.log('📊 [BlogContentRenderer] 호텔 데이터 조회 결과:', { 
           hasData: !!data, 
           hasError: !!error,
-          sabreId 
+          dataIsNull: data === null,
+          sabreId,
+          hotelName: data?.property_name_ko || 'N/A'
         })
         
         if (error) {
-          // 에러 객체를 안전하게 직렬화
-          const errorInfo = {
-            message: error.message || '알 수 없는 오류',
-            details: error.details || null,
-            hint: error.hint || null,
-            code: error.code || null,
+          // 에러 객체를 안전하게 로깅
+          console.error('🔴 [BlogContentRenderer] 호텔 데이터 조회 오류:', {
             sabreId,
+            errorMessage: error?.message,
+            errorDetails: error?.details,
+            errorHint: error?.hint,
+            errorCode: error?.code,
             timestamp: new Date().toISOString()
-          }
-          console.error('호텔 데이터 조회 오류:', errorInfo)
+          })
+          console.error('🔴 [BlogContentRenderer] Raw error object:', error)
+          // 에러 발생 시 null 반환
+          return null
+        }
+        
+        // 데이터가 없는 경우 (존재하지 않는 sabre_id)
+        if (!data) {
+          console.warn('⚠️ [BlogContentRenderer] 호텔 데이터가 존재하지 않음:', { sabreId })
           return null
         }
         
         // publish가 false면 null 반환
-        if (data && data.publish === false) {
+        if (data.publish === false) {
+          console.warn('⚠️ [BlogContentRenderer] 비공개 호텔:', { sabreId, hotelName: data.property_name_ko })
           return null
         }
         
@@ -106,26 +116,41 @@ function useHotelData(sabreId: number | null) {
             .maybeSingle()
           
           if (mediaError) {
-            console.error('호텔 미디어 조회 오류:', mediaError)
+            console.error('🔴 [BlogContentRenderer] 호텔 미디어 조회 오류:', {
+              sabreId,
+              errorMessage: mediaError?.message,
+              errorDetails: mediaError?.details,
+              errorCode: mediaError?.code
+            })
           }
           
           // 이미지 경로를 호텔 데이터에 추가
+          const imageUrl = rawMediaData?.public_url || rawMediaData?.storage_path || '/placeholder.svg'
+          
+          console.log('🖼️ [BlogContentRenderer] 호텔 이미지 URL:', {
+            sabreId,
+            hotelName: data.property_name_ko,
+            imageUrl,
+            hasPublicUrl: !!rawMediaData?.public_url,
+            hasStoragePath: !!rawMediaData?.storage_path
+          })
+          
           return {
             ...data,
-            image_url: rawMediaData?.public_url || rawMediaData?.storage_path || '/placeholder.svg'
+            image_url: imageUrl
           }
         }
         
         return data
       } catch (err) {
-        // 예외 객체를 안전하게 직렬화
-        const errorInfo = {
-          message: err instanceof Error ? err.message : '알 수 없는 예외',
-          stack: err instanceof Error ? err.stack : null,
+        // 예외 객체를 안전하게 로깅
+        console.error('🔴 [BlogContentRenderer] 호텔 데이터 조회 중 예외 발생:', {
           sabreId,
+          errorMessage: err instanceof Error ? err.message : String(err),
+          errorStack: err instanceof Error ? err.stack : null,
           timestamp: new Date().toISOString()
-        }
-        console.error('호텔 데이터 조회 중 예외 발생:', errorInfo)
+        })
+        console.error('🔴 [BlogContentRenderer] Exception object:', err)
         return null
       }
     },
