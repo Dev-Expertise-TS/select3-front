@@ -7,6 +7,7 @@ import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { OptimizedImage } from "@/components/ui/optimized-image"
 import { generateHotelImageUrl } from "@/lib/supabase-image-loader"
+import { optimizeHotelCardImage } from "@/lib/image-optimization"
 
 // CTA용 호텔 데이터 타입 정의
 export interface HotelCardCtaData {
@@ -122,9 +123,9 @@ export function HotelCardCta({
             "aspect-[4/3] sm:aspect-auto sm:min-h-[200px]",
             imageClassName
           )}>
-            {/* select_hotel_media 테이블의 이미지 직접 사용 */}
+            {/* select_hotel_media 테이블의 이미지 사용 (호텔 카드와 동일한 최적화 적용) */}
             <OptimizedImage
-              src={getSafeImageUrl(hotel.image)}
+              src={optimizeHotelCardImage(getSafeImageUrl(hotel.image))}
               alt={`${hotel.property_name_ko} - ${hotel.city}`}
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
@@ -134,6 +135,14 @@ export function HotelCardCta({
               format="webp"
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              onError={(e) => {
+                console.warn(`🖼️ [HotelCardCta] 이미지 로딩 실패:`, {
+                  sabre_id: hotel.sabre_id,
+                  hotel_name: hotel.property_name_ko,
+                  image_url: hotel.image,
+                  optimized_url: optimizeHotelCardImage(getSafeImageUrl(hotel.image))
+                })
+              }}
             />
 
             {/* 배지들 */}

@@ -67,7 +67,7 @@ export function useSearchResults(query: string, tick: number) {
  */
 export function useFilterOptions(options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: ['filter-options', 'v13'], // city_code, country_code 기반으로 정확히 복원
+    queryKey: ['filter-options', 'v14'], // v14: 몬트리올 도시명 업데이트 반영
     queryFn: async () => {
       const response = await fetch('/api/filter-options')
       

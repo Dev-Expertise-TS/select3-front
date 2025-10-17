@@ -1,11 +1,13 @@
 'use client'
 
-import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useRef, useEffect } from "react"
+import { OptimizedImage } from "@/components/ui/optimized-image"
+import { optimizeHotelCardImage } from "@/lib/image-optimization"
+import { getSafeImageUrl } from "@/lib/image-utils"
 
 export interface BrandHotelCardProps {
   href: string
@@ -89,24 +91,30 @@ export function BrandHotelCard({
           )}
           
           {isInView && (
-            <Image
-              src={hasError ? '/placeholder.svg' : image}
+            <OptimizedImage
+              src={hasError ? '/placeholder.svg' : optimizeHotelCardImage(getSafeImageUrl(image))}
               alt={`${name} - ${city}`}
               fill
               className={cn(
-                "object-cover object-center group-hover:scale-110 transition-transform duration-500",
+                "object-cover object-center group-hover:scale-105 transition-transform duration-300",
                 isLoading ? "opacity-0" : "opacity-100"
               )}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
               priority={priority}
-              quality={priority ? 90 : 75} // 우선 로딩 이미지는 더 높은 품질
+              quality={priority ? 85 : 75}
+              format="webp"
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pV2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-              loading={priority ? "eager" : "lazy"}
               onLoad={() => setIsLoading(false)}
               onError={() => {
                 setHasError(true)
                 setIsLoading(false)
+                console.warn(`🖼️ [BrandHotelCard] 이미지 로딩 실패:`, {
+                  name,
+                  city,
+                  image_url: image,
+                  optimized_url: optimizeHotelCardImage(getSafeImageUrl(image))
+                })
               }}
             />
           )}

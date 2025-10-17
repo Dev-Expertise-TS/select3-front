@@ -62,31 +62,38 @@ export function transformHotelsToCardData(
   isPromotion: boolean = false
 ): HotelCardData[] {
   return hotels.map(hotel => {
-    // 1순위: select_hotel_media 테이블에서 해당 호텔의 첫 번째 이미지 찾기
-    const hotelMedia = mediaData?.find(m => String(m.sabre_id) === String(hotel.sabre_id))
-    let imageUrl = hotelMedia?.public_url || hotelMedia?.storage_path
+    // 1순위: select_hotel_media 테이블에서 해당 호텔의 이미지 찾기 (image_seq=1 우선)
+    const hotelMediaList = mediaData?.filter(m => String(m.sabre_id) === String(hotel.sabre_id))
+    const mainMedia = hotelMediaList?.find(m => m.image_seq === 1) || hotelMediaList?.[0]
+    
+    // public_url이 있으면 사용, 없으면 storage_path 사용
+    let imageUrl = mainMedia?.public_url || mainMedia?.storage_path
+    
+    console.log(`🖼️ [Hotel ${hotel.sabre_id}] Image URL:`, {
+      sabre_id: hotel.sabre_id,
+      slug: hotel.slug,
+      has_mediaData: !!mediaData,
+      mediaDataLength: mediaData?.length || 0,
+      hotelMediaListLength: hotelMediaList?.length || 0,
+      mainMedia_id: mainMedia?.id,
+      mainMedia_seq: mainMedia?.image_seq,
+      public_url: mainMedia?.public_url,
+      storage_path: mainMedia?.storage_path,
+      final_imageUrl: imageUrl
+    })
     
     // 2순위: select_hotel_media에 데이터가 없으면 Storage URL 패턴 시도
     if (!imageUrl && hotel.slug && hotel.sabre_id) {
       const decodedSlug = decodeURIComponent(hotel.slug)
-      // 여러 포맷과 패턴 시도
-      const extensions = ['avif', 'webp', 'jpg', 'jpeg', 'png']
-      for (const ext of extensions) {
-        const patterns = [
-          `${decodedSlug}_${hotel.sabre_id}_01.${ext}`,
-          `${decodedSlug}_${hotel.sabre_id}_01_1600w.${ext}`,
-        ]
-        for (const fileName of patterns) {
-          imageUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${fileName}`
-          break // 첫 번째 패턴 시도 (클라이언트에서 404 시 fallback)
-        }
-        if (imageUrl) break
-      }
+      // 첫 번째 이미지 패턴 생성 (avif 우선)
+      imageUrl = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/public/${decodedSlug}/${decodedSlug}_${hotel.sabre_id}_01.avif`
+      console.log(`🔄 [Hotel ${hotel.sabre_id}] Fallback to pattern URL:`, imageUrl)
     }
     
     // 3순위: placeholder
     if (!imageUrl) {
       imageUrl = '/placeholder.svg'
+      console.warn(`⚠️ [Hotel ${hotel.sabre_id}] No image found, using placeholder`)
     }
     
     // 혜택 정보 정리
