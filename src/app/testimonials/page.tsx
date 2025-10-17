@@ -84,6 +84,8 @@ export default async function TestimonialsPage() {
     <div className="bg-gray-50 min-h-screen">
       <Header />
       <PromotionBanner />
+      {/* 프로모션 베너 아래 여백 */}
+      <div style={{ paddingTop: '72px' }}></div>
       
       <main>
         {/* 헤더 */}

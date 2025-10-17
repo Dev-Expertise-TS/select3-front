@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { Search, X, MapPin, Hotel, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { useUnifiedSearch } from '@/hooks/use-unified-search'
@@ -19,6 +19,7 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
   const [query, setQuery] = useState(initialQuery)
   const { data, isLoading } = useUnifiedSearch(query)
   const inputRef = useRef<HTMLInputElement>(null)
+  const suggestionRef = useRef<HTMLDivElement>(null)
 
   const suggestions = useMemo(() => data ?? [], [data])
   const regionSuggestions = useMemo(() => suggestions.filter((s: any) => s.type === 'region').slice(0, 5), [suggestions])
@@ -47,11 +48,33 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
     setQuery(initialQuery)
   }, [initialQuery])
 
+  // 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionRef.current &&
+        !suggestionRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setIsFocused(false)
+      }
+    }
+
+    if (isFocused) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isFocused])
+
   return (
     <div className={cn('w-full', isFocused && 'md:static fixed top-0 left-0 right-0 z-[60] md:z-auto bg-white md:bg-transparent shadow-md md:shadow-none px-4 md:px-0 pt-4 md:pt-0 pb-2 md:pb-0')}>
       <form onSubmit={onSubmit} className={cn('w-full', className)} role="search" aria-label="통합 검색">
         <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
-        <Search className="w-4 h-4 text-gray-500" />
+        <Search className="w-5 h-5 text-gray-500" />
         <Input
           ref={inputRef}
           value={query}
@@ -60,7 +83,6 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
             setQuery(v)
           }}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 120)}
           placeholder={placeholder}
           className="border-0 p-0 shadow-none focus-visible:ring-0"
         />
@@ -93,22 +115,33 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
       {isFocused && query.trim() && (
         <div className="relative">
           {/* Overlay layer */}
-          <div className="absolute left-0 right-0 z-[70] mt-2 rounded-md border bg-white shadow-lg" role="dialog" aria-label="검색 추천">
+          <div 
+            ref={suggestionRef}
+            className="absolute left-0 right-0 z-[70] mt-3 rounded-xl border-2 border-gray-200 bg-white shadow-2xl" 
+            role="dialog" 
+            aria-label="검색 추천"
+          >
             {/* Tabs */}
-            <div className="flex items-center gap-4 px-3 pt-2 border-b">
+            <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b-2 border-gray-100 bg-gray-50/50">
               {([
-                { key: 'all', label: '전체' },
-                { key: 'region', label: '지역' },
-                { key: 'hotel', label: '호텔' },
-                { key: 'blog', label: '아티클' },
-              ] as const).map((tab) => (
+                { key: 'all', label: '전체', show: true },
+                { key: 'region', label: '지역', show: regionSuggestions.length > 0 },
+                { key: 'hotel', label: '호텔', show: hotelSuggestions.length > 0 },
+                { key: 'blog', label: '아티클', show: blogSuggestions.length > 0 },
+              ] as const).filter(tab => tab.show).map((tab) => (
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setActiveTab(tab.key)
+                  }}
                   className={cn(
-                    'py-2 text-sm font-medium border-b-2 -mb-px',
-                    activeTab === tab.key ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700'
+                    'px-5 py-2.5 text-base font-semibold rounded-lg border-2 transition-all duration-200',
+                    activeTab === tab.key 
+                      ? 'bg-gray-900 text-white border-gray-900 shadow-md' 
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                   )}
                   aria-selected={activeTab === tab.key}
                 >
@@ -118,7 +151,7 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
             </div>
 
             {/* Content */}
-            <div className="max-h-80 overflow-auto" role="listbox">
+            <div className="max-h-96 overflow-auto" role="listbox">
               {isLoading && (
                 <div className="px-3 py-2 text-xs text-gray-500">불러오는 중...</div>
               )}
@@ -127,7 +160,12 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
               )}
               {(activeTab === 'all' || activeTab === 'region') && regionSuggestions.length > 0 && (
                 <div className="divide-y">
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-500">지역</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-50 sticky top-0">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>지역</span>
+                    </div>
+                  </div>
                   {regionSuggestions.map((item: any) => {
                     const city = item.city_ko || item.city_en || item.city_code
                     const country = item.country_ko || item.country_en || ''
@@ -136,9 +174,17 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
                     if (item.country_code) params.set('country', String(item.country_code))
                     const href = `/hotel?${params.toString()}`
                     return (
-                      <a key={`r-${item.id}`} href={href} className="block px-3 py-2 hover:bg-gray-50" role="option">
-                        <div className="text-sm font-medium text-gray-900">{city}</div>
-                        {!!country && <div className="text-xs text-gray-500">{country}</div>}
+                      <a 
+                        key={`r-${item.id}`} 
+                        href={href} 
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-blue-50 transition-colors duration-150 border-l-2 border-transparent hover:border-blue-500" 
+                        role="option"
+                      >
+                        <MapPin className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{city}</div>
+                          {!!country && <div className="text-xs text-gray-500 mt-0.5">{country}</div>}
+                        </div>
                       </a>
                     )
                   })}
@@ -147,15 +193,28 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
 
               {(activeTab === 'all' || activeTab === 'hotel') && hotelSuggestions.length > 0 && (
                 <div className="divide-y border-t">
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-500">호텔</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-50 sticky top-0">
+                    <div className="flex items-center gap-1.5">
+                      <Hotel className="w-3.5 h-3.5" />
+                      <span>호텔</span>
+                    </div>
+                  </div>
                   {hotelSuggestions.map((item: any) => {
                     const name = item.property_name_ko || item.property_name_en || `Hotel ${item.sabre_id}`
                     const subtitle = item.city_ko || item.city_en || item.country_ko || item.country_en || item.city || ''
                     const href = item.slug ? `/hotel/${item.slug}` : `/hotel?sabreId=${item.sabre_id}`
                     return (
-                      <a key={`h-${item.id}`} href={href} className="block px-3 py-2 hover:bg-gray-50" role="option">
-                        <div className="text-sm font-medium text-gray-900">{name}</div>
-                        {!!subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
+                      <a 
+                        key={`h-${item.id}`} 
+                        href={href} 
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-orange-50 transition-colors duration-150 border-l-2 border-transparent hover:border-orange-500" 
+                        role="option"
+                      >
+                        <Hotel className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{name}</div>
+                          {!!subtitle && <div className="text-xs text-gray-500 mt-0.5">{subtitle}</div>}
+                        </div>
                       </a>
                     )
                   })}
@@ -164,14 +223,27 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
 
               {(activeTab === 'all' || activeTab === 'blog') && blogSuggestions.length > 0 && (
                 <div className="divide-y border-t">
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-500">아티클</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-50 sticky top-0">
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>아티클</span>
+                    </div>
+                  </div>
                   {blogSuggestions.map((item: any) => {
                     const title = item.main_title || item.slug
                     const subtitle = item.sub_title || ''
                     return (
-                      <a key={`b-${item.id}`} href={`/blog/${item.slug}`} className="block px-3 py-2 hover:bg-gray-50" role="option">
-                        <div className="text-sm font-medium text-gray-900">{title}</div>
-                        {!!subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
+                      <a 
+                        key={`b-${item.id}`} 
+                        href={`/blog/${item.slug}`} 
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-green-50 transition-colors duration-150 border-l-2 border-transparent hover:border-green-500" 
+                        role="option"
+                      >
+                        <FileText className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 line-clamp-1">{title}</div>
+                          {!!subtitle && <div className="text-xs text-gray-500 mt-0.5 line-clamp-2">{subtitle}</div>}
+                        </div>
                       </a>
                     )
                   })}

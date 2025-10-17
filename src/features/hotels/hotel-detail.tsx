@@ -1328,8 +1328,11 @@ export function HotelDetail({
       {/* Promotion Banner */}
       <PromotionBanner />
       
-      {/* Header with Back Button - 데스크톱에서만 표시 */}
-      <div className="hidden sm:block py-1 pb-0 sm:pb-1 bg-white sm:bg-transparent">
+      {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) */}
+      <div style={{ paddingTop: '72px' }}></div>
+
+      {/* Header with Back Button - 모든 화면 크기에서 표시 */}
+      <div className="py-1 bg-white sm:bg-transparent">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-0">
             <div className="flex items-center gap-2">
@@ -1347,6 +1350,9 @@ export function HotelDetail({
           </div>
         </div>
       </div>
+
+      {/* 브레드크럼과 이미지 갤러리 사이의 간격 */}
+      <div className="pt-0 sm:pt-1"></div>
 
       {/* Hotel Info and Image Gallery */}
       <HotelInfo

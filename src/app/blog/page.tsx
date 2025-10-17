@@ -22,6 +22,8 @@ export default async function BlogPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <PromotionBanner />
+      {/* 프로모션 베너 아래 여백 */}
+      <div style={{ paddingTop: '72px' }}></div>
       <main>
         <Suspense fallback={
           <section className="py-16 bg-gray-50">

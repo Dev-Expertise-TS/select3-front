@@ -31,7 +31,9 @@ export default function BrandsPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <PromotionBanner />
-      <main style={{ paddingTop: '60px' }}>
+      {/* 프로모션 베너 아래 여백 */}
+      <div style={{ paddingTop: '72px' }}></div>
+      <main>
         <BrandProgramPage />
       </main>
       <Footer />
