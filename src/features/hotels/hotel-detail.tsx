@@ -1328,8 +1328,8 @@ export function HotelDetail({
       {/* Promotion Banner */}
       <PromotionBanner />
       
-      {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) */}
-      <div style={{ paddingTop: '72px' }}></div>
+      {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) - 모바일 50px, 데스크톱 72px */}
+      <div className="pt-[50px] sm:pt-[72px]"></div>
 
       {/* Header with Back Button - 모든 화면 크기에서 표시 */}
       <div className="py-1 bg-white sm:bg-transparent">

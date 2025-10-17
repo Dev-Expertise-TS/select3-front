@@ -79,10 +79,12 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
     <div className="min-h-screen bg-background">
       <Header />
       <PromotionBanner />
+      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 60px */}
+      <div className="pt-[50px] sm:pt-[60px]"></div>
       
       <main>
         {/* Page Header */}
-        <div className="bg-white border-b">
+        <div className="bg-gray-50">
           <div className="container mx-auto max-w-[1440px] px-4 py-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
               지역별 호텔 & 리조트
@@ -94,7 +96,7 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
         </div>
 
         {/* Region Grid - 대륙/국가별 그룹화 */}
-        <div className="bg-gray-50 py-12">
+        <div className="bg-gray-50 pt-4 pb-12">
           <div className="container mx-auto max-w-[1440px] px-4 space-y-12">
             {Array.from(groupedRegions.entries()).map(([continentName, countries]) => (
               <div key={continentName}>

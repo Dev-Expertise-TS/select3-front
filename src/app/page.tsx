@@ -19,7 +19,7 @@ export default function HomePage() {
     <div className="bg-background">
       <main>
         <PromotionBanner />
-        <div style={{ paddingTop: '60px' }}>
+        <div className="pt-[50px] sm:pt-[60px]"> {/* 모바일 50px, 데스크톱 60px */}
           <Hero />
         <Suspense fallback={<div className="bg-white sm:bg-gray-50 pt-3 pb-1 sm:py-6 h-20" />}>
           <SearchSection />

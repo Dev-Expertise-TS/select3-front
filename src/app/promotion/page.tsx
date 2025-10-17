@@ -34,7 +34,7 @@ export default function PromotionPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <PromotionBanner />
-      <div style={{ paddingTop: '60px' }}>
+      <div className="pt-[50px] sm:pt-[60px]"> {/* 모바일 50px, 데스크톱 60px */}
         <PromotionPageContent />
       </div>
       <Footer />

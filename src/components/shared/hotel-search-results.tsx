@@ -757,7 +757,7 @@ export function HotelSearchResults({
       <PromotionBanner />
       
       {/* 메인 콘텐츠 */}
-      <main className="flex-1" style={{ paddingTop: '60px' }}>
+      <main className="flex-1 pt-[50px] sm:pt-[60px]"> {/* 모바일 50px, 데스크톱 60px */}
         {/* 호텔 광고 배너 */}
         <HotelBannerSection
           bannerHotel={bannerHotel || null}
