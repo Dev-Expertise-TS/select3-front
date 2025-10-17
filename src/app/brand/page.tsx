@@ -30,9 +30,10 @@ export default function BrandsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <PromotionBanner />
-      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 72px */}
-      <div className="pt-[50px] sm:pt-[72px]"></div>
+      {/* 프로모션 베너: 브랜드 페이지에서는 숨김 (나중에 사용 가능하도록 유지) */}
+      <div className="hidden">
+        <PromotionBanner />
+      </div>
       <main>
         <BrandProgramPage />
       </main>

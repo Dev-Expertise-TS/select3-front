@@ -73,6 +73,7 @@ export function ChainBrandPageClient({
       showAllHotels={true}
       hideSearchBar={true}
       showFilters={true}
+      hidePromotionBanner={true}  // 브랜드 하위 페이지에서 프로모션 배너 숨김
       initialHotels={[]}
       allChains={allChains}
       selectedChainBrands={selectedChainBrands}

@@ -31,6 +31,7 @@ interface HotelSearchResultsProps {
   showAllHotels?: boolean
   hideSearchBar?: boolean
   showFilters?: boolean
+  hidePromotionBanner?: boolean  // 프로모션 배너 숨김 여부
   // 체인 페이지용 props
   initialHotels?: any[]
   allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
@@ -60,6 +61,7 @@ export function HotelSearchResults({
   showAllHotels = false,
   hideSearchBar = false,
   showFilters = false,
+  hidePromotionBanner = false,  // 프로모션 배너 숨김 여부 기본값
   // 체인 페이지용 props
   initialHotels = [],
   allChains = [],
@@ -754,10 +756,17 @@ export function HotelSearchResults({
     <div className="min-h-screen flex flex-col">
       {/* 헤더 */}
       <Header />
-      <PromotionBanner />
+      {/* 프로모션 베너: hidePromotionBanner가 true면 숨김 (나중에 사용 가능하도록 유지) */}
+      {hidePromotionBanner ? (
+        <div className="hidden">
+          <PromotionBanner />
+        </div>
+      ) : (
+        <PromotionBanner />
+      )}
       
       {/* 메인 콘텐츠 */}
-      <main className="flex-1 pt-[50px] sm:pt-[60px]"> {/* 모바일 50px, 데스크톱 60px */}
+      <main className={hidePromotionBanner ? "flex-1" : "flex-1 pt-[50px] sm:pt-[60px]"}> {/* 베너 숨김 시 여백 제거 */}
         {/* 호텔 광고 배너 */}
         <HotelBannerSection
           bannerHotel={bannerHotel || null}
