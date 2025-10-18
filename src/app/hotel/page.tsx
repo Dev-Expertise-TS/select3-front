@@ -5,6 +5,8 @@ import { getHotelPageData } from './hotel-page-server'
 
 // 호텔 목록 페이지 캐시: 5분마다 재검증
 export const revalidate = 300
+// 동적 렌더링
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: '전체 호텔 & 리조트 | 투어비스 셀렉트',

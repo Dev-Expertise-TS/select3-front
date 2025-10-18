@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
@@ -9,7 +10,7 @@ import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { GTMDebug } from "@/components/analytics/gtm-debug"
 
-// useSearchParams를 사용하는 컴포넌트들이 있으므로 동적 렌더링
+// BottomNav가 usePathname을 사용하므로 동적 렌더링 필요
 export const dynamic = 'force-dynamic'
 
 const inter = Inter({
@@ -116,7 +117,9 @@ export default function RootLayout({
             <main className="pt-12 md:pt-16">
               {children}
             </main>
-            <BottomNav />
+            <Suspense fallback={null}>
+              <BottomNav />
+            </Suspense>
             <KakaoConsultationButton />
           </QueryProvider>
         </AnalyticsProvider>
