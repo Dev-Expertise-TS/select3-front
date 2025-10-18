@@ -143,8 +143,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 // ISR을 위한 revalidate 설정 (5분마다 재생성)
 export const revalidate = 300
 
-// 동적 렌더링 설정
-export const dynamic = 'force-static'
+// 동적 파라미터 허용
 export const dynamicParams = true
 
 // 구조화된 데이터 생성
