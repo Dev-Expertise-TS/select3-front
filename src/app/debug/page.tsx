@@ -1,5 +1,8 @@
 import Link from 'next/link';
 
+// 디버그 페이지는 동적으로 렌더링
+export const dynamic = 'force-dynamic'
+
 export default function DebugPage() {
   return (
     <div className="container mx-auto px-4 py-8">

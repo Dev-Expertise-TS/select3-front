@@ -6,6 +6,9 @@ import { QueryProvider } from "@/providers/query-provider"
 import { Header } from "@/components/header"
 import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
+
+// useSearchParams를 사용하는 컴포넌트들이 있으므로 동적 렌더링
+export const dynamic = 'force-dynamic'
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { GTMDebug } from "@/components/analytics/gtm-debug"
 
