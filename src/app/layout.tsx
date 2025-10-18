@@ -113,14 +113,18 @@ export default function RootLayout({
         
         <AnalyticsProvider>
           <QueryProvider>
-            <Header />
+            <Suspense fallback={null}>
+              <Header />
+            </Suspense>
             <main className="pt-12 md:pt-16">
               {children}
             </main>
             <Suspense fallback={null}>
               <BottomNav />
             </Suspense>
-            <KakaoConsultationButton />
+            <Suspense fallback={null}>
+              <KakaoConsultationButton />
+            </Suspense>
           </QueryProvider>
         </AnalyticsProvider>
       </body>

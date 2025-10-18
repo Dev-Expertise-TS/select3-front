@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { LoginContent } from './login-content'
 
-// 동적 렌더링
+// LoginContent가 client component이므로 동적 렌더링
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
