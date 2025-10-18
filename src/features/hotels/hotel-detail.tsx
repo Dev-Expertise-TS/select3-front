@@ -1117,8 +1117,15 @@ export function HotelDetail({
         if (hotel?.rate_plan_code) {
           try {
             if (typeof hotel.rate_plan_code === 'string') {
-              const parsed = JSON.parse(hotel.rate_plan_code)
-              requestRatePlanCodes = Array.isArray(parsed) ? parsed : [parsed]
+              // JSON 배열 형식인지 확인 (예: '["H01", "H02"]')
+              const trimmed = hotel.rate_plan_code.trim()
+              if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                const parsed = JSON.parse(trimmed)
+                requestRatePlanCodes = Array.isArray(parsed) ? parsed : [parsed]
+              } else {
+                // 단순 문자열인 경우 (예: "H01")
+                requestRatePlanCodes = [trimmed]
+              }
             } else if (Array.isArray(hotel.rate_plan_code)) {
               requestRatePlanCodes = hotel.rate_plan_code
             } else {
@@ -1126,7 +1133,8 @@ export function HotelDetail({
             }
           } catch (parseError) {
             console.warn('rate_plan_code 파싱 실패:', parseError)
-            requestRatePlanCodes = []
+            // 파싱 실패 시 원본 문자열 사용
+            requestRatePlanCodes = [String(hotel.rate_plan_code)]
           }
         }
         
