@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { generateSlug } from "@/lib/hotel-utils"
 import { useIsMobile } from "@/hooks/use-is-mobile"
+import { useAnalytics } from "@/hooks/use-analytics"
 
 interface CommonSearchBarProps {
   variant?: "landing" | "hotel-detail" | "destination"
