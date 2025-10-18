@@ -149,21 +149,23 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
     if (date < tomorrow) return
     
     if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
-      // 체크인 날짜 선택
+      // 첫 번째 날짜 선택 (체크인 날짜)
       setSelectedCheckIn(dateStr)
       setSelectedCheckOut("")
     } else {
-      // 체크아웃 날짜 선택
+      // 두 번째 날짜 선택
+      // 선택한 두 날짜 중 빠른 날짜가 체크인, 늦은 날짜가 체크아웃
       if (dateStr > selectedCheckIn) {
-        const newCheckOut = dateStr
-        setSelectedCheckOut(newCheckOut)
-        
-        // 체크인과 체크아웃이 모두 선택되어도 자동으로 팝업을 닫지 않음
-        // 사용자가 "적용" 버튼을 눌러야 팝업이 닫힘
-      } else {
-        // 체크아웃이 체크인보다 빠르면 체크인으로 설정
+        // 선택한 날짜가 기존 체크인보다 늦으면 → 체크아웃으로 설정
         setSelectedCheckOut(dateStr)
+      } else {
+        // 선택한 날짜가 기존 체크인보다 빠르면 → 새로 선택한 날짜를 체크인으로, 기존 체크인을 체크아웃으로
+        setSelectedCheckIn(dateStr)
+        setSelectedCheckOut(selectedCheckIn)
       }
+      
+      // 체크인과 체크아웃이 모두 선택되어도 자동으로 팝업을 닫지 않음
+      // 사용자가 "적용" 버튼을 눌러야 팝업이 닫힘
     }
   }
 
