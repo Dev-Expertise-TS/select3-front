@@ -1538,7 +1538,7 @@ export function HotelDetail({
                   {/* 카카오톡 상담하기 버튼 */}
                   <div className="flex justify-center">
                     <div onClick={() => trackConversion('kakao_consultation_no_rooms')}>
-                      <KakaoChatButton size="lg" />
+                      <KakaoChatButton size="lg" location="no_rooms_available" />
                     </div>
                   </div>
                   </div>

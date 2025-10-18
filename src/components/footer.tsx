@@ -1,8 +1,23 @@
+'use client'
+
 import Link from "next/link"
 import Image from "next/image"
 import { MapPin, Phone, Facebook, Instagram } from "lucide-react"
+import { useAnalytics } from "@/hooks/use-analytics"
 
 export function Footer() {
+  const { trackEvent } = useAnalytics()
+
+  const handleKakaoClick = () => {
+    trackEvent('click', 'kakao_consultation', 'footer')
+    if (typeof window !== 'undefined' && window.dataLayer) {
+      window.dataLayer.push({
+        event: 'kakao_click',
+        button_location: 'footer',
+        button_type: 'consultation'
+      })
+    }
+  }
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto max-w-[1440px] px-4">
@@ -85,6 +100,7 @@ export function Footer() {
                   href="https://pf.kakao.com/_cxmxgNG/chat"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={handleKakaoClick}
                   className="flex items-start gap-3 text-sm text-gray-300 hover:text-white transition-colors leading-relaxed no-underline"
                 >
                   <Phone className="w-5 h-5 mt-0.5 flex-shrink-0 text-current" />

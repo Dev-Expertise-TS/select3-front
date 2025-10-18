@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Bed, Users, Ruler } from "lucide-react"
+import { useAnalytics } from "@/hooks/use-analytics"
 
 interface RoomCardProps {
   roomType: string
@@ -44,6 +45,7 @@ export function RoomCard({
   onRequestIntro,
   rooms = 1
 }: RoomCardProps) {
+  const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
 
   // 베드 타입별 아이콘 선택
@@ -253,9 +255,21 @@ export function RoomCard({
 
           {/* 예약 버튼 */}
           <a
+            id="kakao-room-card-button"
             href="https://pf.kakao.com/_cxmxgNG/chat"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              trackEvent('click', 'kakao_consultation', 'room_card')
+              if (typeof window !== 'undefined' && window.dataLayer) {
+                window.dataLayer.push({
+                  event: 'kakao_click',
+                  button_location: 'room_card',
+                  room_type: roomType,
+                  button_type: 'reservation'
+                })
+              }
+            }}
             className="w-full inline-block text-center bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 text-sm sm:text-base"
           >
             예약 컨시어지

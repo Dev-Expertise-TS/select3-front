@@ -1,14 +1,22 @@
+'use client'
+
+import { useAnalytics } from '@/hooks/use-analytics'
+
 interface KakaoChatButtonProps {
   text?: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  location?: string
 }
 
 export function KakaoChatButton({ 
   text = '카카오톡 상담하기',
   className = '',
-  size = 'md'
+  size = 'md',
+  location = 'unknown'
 }: KakaoChatButtonProps) {
+  const { trackEvent } = useAnalytics()
+  
   const sizeClasses = {
     sm: 'px-4 py-2 text-sm',
     md: 'px-6 py-2.5 sm:py-3 text-sm sm:text-base',
@@ -21,11 +29,26 @@ export function KakaoChatButton({
     lg: 'w-5 h-5'
   }
 
+  const handleClick = () => {
+    // GA4 이벤트 전송
+    trackEvent('click', 'kakao_consultation', location)
+    
+    // GTM dataLayer에도 push
+    if (typeof window !== 'undefined' && window.dataLayer) {
+      window.dataLayer.push({
+        event: 'kakao_click',
+        button_location: location,
+        button_type: 'consultation'
+      })
+    }
+  }
+
   return (
     <a
       href="https://pf.kakao.com/_cxmxgNG/chat"
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleClick}
       className={`inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 hover:scale-105 ${sizeClasses[size]} ${className}`}
       style={{ backgroundColor: '#FEE500', color: '#3C1E1E' }}
     >

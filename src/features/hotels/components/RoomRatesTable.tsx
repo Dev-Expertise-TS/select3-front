@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useAnalytics } from "@/hooks/use-analytics"
 
 interface RoomRatesTableProps {
   ratePlans: any[]
@@ -51,6 +52,7 @@ export function RoomRatesTable({
   checkOut,
   rooms = 1
 }: RoomRatesTableProps) {
+  const { trackEvent } = useAnalytics()
   const [copiedRateKeyRow, setCopiedRateKeyRow] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedBedTypes, setSelectedBedTypes] = useState<string[]>([])
@@ -256,6 +258,15 @@ export function RoomRatesTable({
           
           <button 
             onClick={() => {
+              // 이벤트 추적
+              trackEvent('click', 'kakao_consultation', 'error_state')
+              if (typeof window !== 'undefined' && window.dataLayer) {
+                window.dataLayer.push({
+                  event: 'kakao_click',
+                  button_location: 'error_state',
+                  button_type: 'consultation'
+                })
+              }
               // 카카오톡 상담
               window.open('https://pf.kakao.com/_cxmxgNG/chat', '_blank')
             }}

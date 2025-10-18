@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAnalytics } from '@/hooks/use-analytics'
 
 export function KakaoConsultationButton() {
   const [shouldAnimate, setShouldAnimate] = useState(false)
+  const { trackEvent } = useAnalytics()
 
   useEffect(() => {
     let animationTimer: NodeJS.Timeout | null = null
@@ -32,13 +34,29 @@ export function KakaoConsultationButton() {
     }
   }, [])
 
+  const handleClick = () => {
+    // GA4 이벤트 전송
+    trackEvent('click', 'kakao_consultation', 'floating_button')
+    
+    // GTM dataLayer에도 push
+    if (typeof window !== 'undefined' && window.dataLayer) {
+      window.dataLayer.push({
+        event: 'kakao_click',
+        button_location: 'floating_button',
+        button_type: 'consultation'
+      })
+    }
+  }
+
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 hidden lg:block pointer-events-none">
       <div className="container mx-auto max-w-[1440px] px-4 relative h-0">
         <a
+          id="kakao-floating-button"
           href="https://pf.kakao.com/_cxmxgNG/chat"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleClick}
           className="absolute -right-2 bottom-0 group pointer-events-auto"
           aria-label="카카오톡 상담"
         >

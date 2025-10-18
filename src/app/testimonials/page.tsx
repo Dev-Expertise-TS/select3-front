@@ -164,7 +164,7 @@ export default async function TestimonialsPage() {
                 전화 상담하기
               </a>
               {/* 카카오톡 상담 - 항상 표시 */}
-              <KakaoChatButton text="카카오톡 상담" size="md" />
+              <KakaoChatButton text="카카오톡 상담" size="md" location="testimonials_cta" />
             </div>
           </div>
         </div>

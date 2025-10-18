@@ -7,6 +7,7 @@ import { Header } from "@/components/header"
 import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
+import { GTMDebug } from "@/components/analytics/gtm-debug"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,7 +73,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" className={inter.variable}>
+    <html lang="ko" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* Google Tag Manager */}
         <script
@@ -94,7 +95,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://t1.kakaocdn.net" />
         <link rel="preconnect" href="https://t1.kakaocdn.net" crossOrigin="anonymous" />
       </head>
-      <body className="bg-background text-foreground antialiased pb-16 lg:pb-0">
+      <body className="bg-background text-foreground antialiased pb-16 lg:pb-0" suppressHydrationWarning>
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe 
@@ -108,6 +109,7 @@ export default function RootLayout({
         
         <AnalyticsProvider>
           <QueryProvider>
+            <GTMDebug />
             <Header />
             <main className="pt-12 md:pt-16">
               {children}
