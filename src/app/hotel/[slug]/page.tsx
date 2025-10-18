@@ -80,26 +80,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   
-  // 이미 조회한 이미지 데이터 재사용
-  const hotelImages = detailData.images
-    .map(img => toAbsoluteUrl(img.public_url || img.storage_path))
-    .filter(Boolean)
-    .slice(0, 3)
+  // 이미 조회한 이미지 데이터 중 첫 번째 이미지만 사용 (OG 이미지용)
+  const firstImage = detailData.images.length > 0 
+    ? toAbsoluteUrl(detailData.images[0].public_url || detailData.images[0].storage_path)
+    : null
   
-  // OG 이미지 배열 생성
-  const ogImages = hotelImages.length > 0 
-    ? hotelImages.map(imagePath => ({
-        url: imagePath, // 이미 절대 URL로 변환됨
+  // OG 이미지 (하나만 설정하여 불필요한 프리로드 방지)
+  const ogImage = firstImage
+    ? {
+        url: firstImage,
         width: 1200,
         height: 630,
         alt: `${hotel.property_name_ko || hotel.property_name_en} 이미지`
-      }))
-    : [{
+      }
+    : {
         url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: 'Select Hotels'
-      }]
+      }
   
   return {
     title,
@@ -111,13 +110,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       locale: 'ko_KR',
       siteName: 'Select Hotels',
       url,
-      images: ogImages,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ogImages.map(img => img.url),
+      images: [ogImage.url],
       site: '@selecthotels',
       creator: '@selecthotels',
     },
@@ -153,11 +152,10 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
   const decodedSlug = decodeURIComponent(slug)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
   
-  // 이미 조회한 이미지 데이터 재사용
-  const hotelImages = images
-    .map(img => toAbsoluteUrl(img.public_url || img.storage_path))
-    .filter(Boolean)
-    .slice(0, 3)
+  // 첫 번째 이미지만 사용 (불필요한 프리로드 방지)
+  const firstImageUrl = images.length > 0 
+    ? toAbsoluteUrl(images[0].public_url || images[0].storage_path)
+    : `${baseUrl}/select_logo.avif`
   
   const structuredData = {
     "@context": "https://schema.org",
@@ -165,7 +163,7 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
     "name": hotel.property_name_ko || hotel.property_name_en,
     "description": hotel.description_ko || hotel.description_en,
     "url": `${baseUrl}/hotel/${decodedSlug}`,
-    "image": hotelImages.length > 0 ? hotelImages : [`${baseUrl}/select_logo.avif`],
+    "image": firstImageUrl,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": hotel.property_address || "",
