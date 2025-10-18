@@ -60,8 +60,11 @@ export async function POST(request: NextRequest) {
     
     // ratePlanCodes가 있으면 추가
     if (body.ratePlanCodes && body.ratePlanCodes.length > 0) {
+      console.log('✅ ratePlanCodes 받음:', body.ratePlanCodes)
       requestBody.RatePlanCode = body.ratePlanCodes
       requestBody.ExactMatchOnly = true
+    } else {
+      console.log('⚠️ ratePlanCodes 없음 - 모든 Rate Plan 조회')
     }
 
     console.log('📤 Sabre Hotel Details API 요청:', requestBody)

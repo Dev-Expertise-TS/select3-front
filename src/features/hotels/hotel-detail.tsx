@@ -1117,13 +1117,19 @@ export function HotelDetail({
         if (hotel?.rate_plan_code) {
           try {
             if (typeof hotel.rate_plan_code === 'string') {
-              // JSON 배열 형식인지 확인 (예: '["H01", "H02"]')
               const trimmed = hotel.rate_plan_code.trim()
+              
+              // 1. JSON 배열 형식인지 확인 (예: '["H01", "H02"]')
               if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
                 const parsed = JSON.parse(trimmed)
                 requestRatePlanCodes = Array.isArray(parsed) ? parsed : [parsed]
-              } else {
-                // 단순 문자열인 경우 (예: "H01")
+              }
+              // 2. 쉼표로 구분된 문자열 (예: "API,ZP3,VMC")
+              else if (trimmed.includes(',')) {
+                requestRatePlanCodes = trimmed.split(',').map((code: string) => code.trim()).filter((code: string) => code.length > 0)
+              }
+              // 3. 단순 문자열 (예: "H01")
+              else {
                 requestRatePlanCodes = [trimmed]
               }
             } else if (Array.isArray(hotel.rate_plan_code)) {
@@ -1131,8 +1137,14 @@ export function HotelDetail({
             } else {
               requestRatePlanCodes = [String(hotel.rate_plan_code)]
             }
+            
+            console.log('✅ rate_plan_code 파싱 성공:', {
+              원본: hotel.rate_plan_code,
+              파싱결과: requestRatePlanCodes,
+              타입: typeof hotel.rate_plan_code
+            })
           } catch (parseError) {
-            console.warn('rate_plan_code 파싱 실패:', parseError)
+            console.warn('❌ rate_plan_code 파싱 실패:', parseError)
             // 파싱 실패 시 원본 문자열 사용
             requestRatePlanCodes = [String(hotel.rate_plan_code)]
           }
