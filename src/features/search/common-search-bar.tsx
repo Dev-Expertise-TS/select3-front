@@ -42,6 +42,7 @@ export function CommonSearchBar({
 }: CommonSearchBarProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { trackHotelSearch } = useAnalytics()
   // 기본값 설정: undefined나 빈 객체일 때 기본값 사용
   const defaultGuests = { rooms: 1, adults: 2 }
 
@@ -386,6 +387,19 @@ export function CommonSearchBar({
       // 사용자가 입력한 검색어를 사용 (빈 값이면 fallback 제거)
       const query = trimmed || initialQuery || location || ""
       const dates = { checkIn: localCheckIn, checkOut: localCheckOut }
+      
+      // ✅ GTM 이벤트 추적
+      trackHotelSearch({
+        searchTerm: query,
+        checkIn: localCheckIn,
+        checkOut: localCheckOut,
+        rooms: localGuests.rooms,
+        adults: localGuests.adults,
+        children: (localGuests as any).children,
+        searchLocation: variant,
+        hotelId: selectedHotel?.sabre_id || null,
+        hotelName: selectedHotel?.name || null
+      })
       
       // 검색 버튼을 눌렀을 때만 부모에게 날짜 변경 알림 (onDatesChange가 제공된 경우)
       if (onDatesChange && localCheckIn && localCheckOut) {

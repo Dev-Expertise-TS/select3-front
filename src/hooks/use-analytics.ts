@@ -62,11 +62,64 @@ export function useAnalytics() {
     trackEvent('conversion', 'engagement', conversionType)
   }
 
+  // 호텔 검색 이벤트 추적
+  const trackHotelSearch = (params: {
+    searchTerm: string
+    checkIn: string
+    checkOut: string
+    rooms: number
+    adults: number
+    children?: number
+    searchLocation?: string
+    hotelId?: number | null
+    hotelName?: string | null
+  }) => {
+    // 숙박일 계산
+    const checkInDate = new Date(params.checkIn)
+    const checkOutDate = new Date(params.checkOut)
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))
+    
+    // GA4 기본 검색 이벤트
+    trackEvent('search', 'hotel_search', params.searchTerm)
+    
+    // GTM dataLayer 상세 데이터
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: 'hotel_search',
+        search_term: params.searchTerm,
+        check_in_date: params.checkIn,
+        check_out_date: params.checkOut,
+        nights: nights,
+        rooms: params.rooms,
+        adults: params.adults,
+        children: params.children || 0,
+        total_guests: params.adults + (params.children || 0),
+        search_type: params.hotelId ? 'hotel_specific' : 'keyword_search',
+        search_location: params.searchLocation || 'unknown',
+        selected_hotel_id: params.hotelId || null,
+        selected_hotel_name: params.hotelName || null,
+        timestamp: new Date().toISOString()
+      })
+    }
+    
+    console.log('🔍 [Analytics] 호텔 검색:', {
+      검색어: params.searchTerm,
+      체크인: params.checkIn,
+      체크아웃: params.checkOut,
+      숙박일: nights,
+      룸: params.rooms,
+      성인: params.adults,
+      어린이: params.children || 0,
+      검색위치: params.searchLocation
+    })
+  }
+
   return {
     trackEvent,
     trackHotelView,
     trackSearch,
     trackClick,
     trackConversion,
+    trackHotelSearch,
   }
 }
