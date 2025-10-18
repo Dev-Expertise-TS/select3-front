@@ -112,7 +112,6 @@ export default function RootLayout({
         
         <AnalyticsProvider>
           <QueryProvider>
-            <GTMDebug />
             <Header />
             <main className="pt-12 md:pt-16">
               {children}

@@ -6,7 +6,6 @@ import { Footer } from "@/components/footer"
 import Image from "next/image"
 import Link from "next/link"
 import { Check, Sparkles, Crown, Coffee, DollarSign, Clock, ArrowUp, Star, Users, CreditCard, ArrowRight, Gift, Bell } from "lucide-react"
-import { useAnalytics } from "@/hooks/use-analytics"
 
 // 혜택 아이콘 매핑 함수 (랜딩 페이지와 동일)
 function getBenefitIcon(index: number) {
@@ -24,19 +23,6 @@ function getBenefitIcon(index: number) {
 }
 
 export default function AboutPage() {
-  const { trackEvent } = useAnalytics()
-
-  const handleKakaoClick = () => {
-    trackEvent('click', 'kakao_consultation', 'about_page')
-    if (typeof window !== 'undefined' && window.dataLayer) {
-      window.dataLayer.push({
-        event: 'kakao_click',
-        button_location: 'about_page',
-        button_type: 'consultation'
-      })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white">
       <Header />
@@ -323,7 +309,6 @@ export default function AboutPage() {
                   href="https://pf.kakao.com/_cxmxgNG/chat"
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={handleKakaoClick}
                   className="inline-flex items-center justify-center w-full px-6 py-4 bg-[#FEE500] text-[#191919] text-base sm:text-lg font-bold rounded-lg hover:bg-[#FAD000] active:bg-[#F5C700] transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   카카오톡 상담

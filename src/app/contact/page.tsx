@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: "셀렉트에 대해 궁금한 내용을 문의주세요. 전문 상담사가 답변해드립니다.",
 }
 
+// ContactContent가 client component이므로 동적 렌더링
+export const dynamic = 'force-dynamic'
+
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,21 +1,8 @@
 'use client'
 
 import Image from "next/image"
-import { useAnalytics } from "@/hooks/use-analytics"
 
 export function ContactContent() {
-  const { trackEvent } = useAnalytics()
-
-  const handleKakaoClick = () => {
-    trackEvent('click', 'kakao_consultation', 'contact_page')
-    if (typeof window !== 'undefined' && window.dataLayer) {
-      window.dataLayer.push({
-        event: 'kakao_click',
-        button_location: 'contact_page',
-        button_type: 'consultation'
-      })
-    }
-  }
 
   return (
     <main>
@@ -47,7 +34,6 @@ export function ContactContent() {
                 href="https://pf.kakao.com/_cxmxgNG/chat"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={handleKakaoClick}
                 className="block w-full text-center text-gray-900 font-bold rounded-xl h-12 sm:h-14 leading-[3rem] sm:leading-[3.5rem] shadow-md transition-transform hover:-translate-y-0.5"
                 style={{
                   background: 'linear-gradient(180deg, #FFE44D 0%, #F4C800 100%)',
