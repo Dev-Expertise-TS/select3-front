@@ -324,7 +324,6 @@ export function ImageGallery({
                     quality={90}
                     sizes="(max-width: 768px) 100vw, 2000px"
                     loading="eager"
-                    priority
                     fetchPriority="high"
                     decoding="async"
                   />

@@ -126,7 +126,6 @@ export function MobileImageGrid({
                   alt={`${hotelName} - 이미지 ${currentImageIndex + 1}`}
                   fill
                   className="object-contain"
-                  priority
                   unoptimized={true}
                   sizes="100vw"
                 />

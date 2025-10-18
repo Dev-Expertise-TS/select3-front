@@ -137,7 +137,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                       src={carouselSlides[currentSlide].image || "/placeholder.svg"}
                       alt={`${carouselSlides[currentSlide].hotelName} - Premium Hotel Property`}
                       fill
-                      priority
+                      priority={currentSlide === 0}
                       quality={85}
                       className="object-cover transition-all duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
