@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionContainer } from "@/components/shared/section-container"
 import type { HeroImageData } from "@/features/hero/hero-data"
+import { useTopBannerHotels } from "@/hooks/use-promotion-hotels"
 
 interface CarouselSlide {
   id: number
@@ -50,6 +51,10 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [shuffleToken] = useState(() => Math.random())
   const [isMobile, setIsMobile] = useState(false)
+  
+  // 프로모션 베너 데이터 조회
+  const { data: promotionHotels = [] } = useTopBannerHotels()
+  const hasPromotionBanner = promotionHotels.length > 0
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)')
@@ -125,7 +130,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
 
   return (
     <div className="w-full">
-      <section className="relative mt-0.5 pt-0 pb-0 sm:py-8 mb-0">
+      <section className={`relative ${hasPromotionBanner ? 'mt-0.5 pt-0 pb-0 sm:py-8' : 'mt-0 pt-0 pb-0 sm:py-4'} mb-0`}>
         <SectionContainer className="px-0 sm:px-4">
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}

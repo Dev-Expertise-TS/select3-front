@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Header } from "@/components/header"
-import { PromotionBanner } from "@/components/promotion-banner"
+import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { BlogListSection } from '@/features/blog/blog-list-section'
 import { getBlogPageData } from './blog-page-server'
@@ -21,25 +21,24 @@ export default async function BlogPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <PromotionBanner />
-      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 72px */}
-      <div className="pt-[50px] sm:pt-[72px]"></div>
-      <main>
-        <Suspense fallback={
-          <section className="py-16 bg-gray-50">
-            <div className="container mx-auto max-w-7xl px-4">
-              <div className="text-center">
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
-                  <div className="h-4 bg-gray-300 rounded w-96 mx-auto mb-16"></div>
+      <PromotionBannerWrapper>
+        <main>
+          <Suspense fallback={
+            <section className="py-16 bg-gray-50">
+              <div className="container mx-auto max-w-7xl px-4">
+                <div className="text-center">
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
+                    <div className="h-4 bg-gray-300 rounded w-96 mx-auto mb-16"></div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
-        }>
-          <BlogListSection initialBlogs={blogs} />
-        </Suspense>
-      </main>
+            </section>
+          }>
+            <BlogListSection initialBlogs={blogs} />
+          </Suspense>
+        </main>
+      </PromotionBannerWrapper>
       <Footer />
     </div>
   )

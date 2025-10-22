@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
-import { PromotionBanner } from "@/components/promotion-banner"
+import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { SimpleHotelSearch } from "./simple-hotel-search"
 import { BrandArticlesSection } from "@/features/brands/brand-articles-section"
@@ -61,7 +61,7 @@ export function HotelSearchResults({
   showAllHotels = false,
   hideSearchBar = false,
   showFilters = false,
-  hidePromotionBanner = false,  // 프로모션 배너 숨김 여부 기본값
+  hidePromotionBanner = false,  // 프로모션 배너 숨김 여부 기본값 (사용하지 않음)
   // 체인 페이지용 props
   initialHotels = [],
   allChains = [],
@@ -756,17 +756,11 @@ export function HotelSearchResults({
     <div className="min-h-screen flex flex-col">
       {/* 헤더 */}
       <Header />
-      {/* 프로모션 베너: hidePromotionBanner가 true면 숨김 (나중에 사용 가능하도록 유지) */}
-      {hidePromotionBanner ? (
-        <div className="hidden">
-          <PromotionBanner />
-        </div>
-      ) : (
-        <PromotionBanner />
-      )}
       
-      {/* 메인 콘텐츠 */}
-      <main className={hidePromotionBanner ? "flex-1" : "flex-1 pt-[50px] sm:pt-[60px]"}> {/* 베너 숨김 시 여백 제거 */}
+      {/* 프로모션 베너 래퍼 - 데이터가 있을 때만 표시 */}
+      <PromotionBannerWrapper>
+        {/* 메인 콘텐츠 */}
+        <main className="flex-1">
         {/* 호텔 광고 배너 */}
         <HotelBannerSection
           bannerHotel={bannerHotel || null}
@@ -1157,7 +1151,8 @@ export function HotelSearchResults({
             )}
           </div>
         </section>
-      </main>
+        </main>
+      </PromotionBannerWrapper>
 
       {/* 브랜드 관련 아티클 섹션 */}
       {showArticles && dynamicArticlesInfo && (

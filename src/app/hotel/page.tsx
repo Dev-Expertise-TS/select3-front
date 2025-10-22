@@ -40,6 +40,7 @@ export default async function AllHotelResortPage() {
         showAllHotels={true}
         hideSearchBar={true}
         showFilters={true}
+        hidePromotionBanner={false}
         initialHotels={allHotels}
         serverFilterOptions={filterOptions}
         serverBannerHotel={bannerHotel}

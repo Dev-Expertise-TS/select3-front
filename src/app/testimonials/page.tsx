@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { Header } from '@/components/header'
-import { PromotionBanner } from '@/components/promotion-banner'
+import { PromotionBannerWrapper } from '@/components/promotion-banner-wrapper'
 import { Footer } from '@/components/footer'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
@@ -83,11 +83,8 @@ export default async function TestimonialsPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <Header />
-      <PromotionBanner />
-      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 72px */}
-      <div className="pt-[50px] sm:pt-[72px]"></div>
-      
-      <main>
+      <PromotionBannerWrapper>
+        <main>
         {/* 헤더 */}
         <div className="bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
@@ -168,7 +165,8 @@ export default async function TestimonialsPage() {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+      </PromotionBannerWrapper>
       
       <Footer />
     </div>

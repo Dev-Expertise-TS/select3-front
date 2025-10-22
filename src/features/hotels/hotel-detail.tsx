@@ -31,6 +31,7 @@ import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
 import { useAnalytics } from "@/hooks/use-analytics"
 import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
+import { useTopBannerHotels } from "@/hooks/use-promotion-hotels"
 
 // Utils & Services
 import { supabase } from "@/lib/supabase"
@@ -457,6 +458,10 @@ export function HotelDetail({
   
   // Analytics 추적
   const { trackHotelView, trackClick, trackConversion } = useAnalytics()
+  
+  // 프로모션 베너 데이터 조회
+  const { data: promotionHotels = [] } = useTopBannerHotels()
+  const hasPromotionBanner = promotionHotels.length > 0
   
   // URL 디코딩 처리 (어퍼스트로피 등 특수문자 처리)
   const decodedSlug = decodeURIComponent(hotelSlug)
@@ -1425,11 +1430,11 @@ export function HotelDetail({
   return (
     <TranslationErrorBoundary>
       <div key={`hotel-detail-${hotel.sabre_id}`} className="bg-white sm:bg-gray-100 min-h-screen mt-0" suppressHydrationWarning>
-        {/* Promotion Banner */}
-        <PromotionBanner />
+        {/* Promotion Banner - 데이터가 있을 때만 표시 */}
+        {hasPromotionBanner && <PromotionBanner />}
       
-      {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) - 모바일 50px, 데스크톱 72px */}
-      <div className="pt-[50px] sm:pt-[72px]"></div>
+      {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) - 프로모션 베너가 있을 때만 적용 */}
+      {hasPromotionBanner && <div className="pt-[50px] sm:pt-[72px]"></div>}
 
       {/* Header with Back Button - 모든 화면 크기에서 표시 */}
       <div className="py-1 bg-white sm:bg-transparent">
@@ -1450,9 +1455,6 @@ export function HotelDetail({
           </div>
         </div>
       </div>
-
-      {/* 브레드크럼과 이미지 갤러리 사이의 간격 */}
-      <div className="pt-0 sm:pt-1"></div>
 
       {/* Hotel Info and Image Gallery */}
       <div key={`hotel-info-${hotel.sabre_id}`} suppressHydrationWarning>

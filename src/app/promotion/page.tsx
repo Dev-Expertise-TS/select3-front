@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Header } from "@/components/header"
-import { PromotionBanner } from "@/components/promotion-banner"
+import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { PromotionPageContent } from './promotion-content'
 
@@ -33,10 +33,9 @@ export default function PromotionPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <PromotionBanner />
-      <div className="pt-[50px] sm:pt-[60px]"> {/* 모바일 50px, 데스크톱 60px */}
+      <PromotionBannerWrapper>
         <PromotionPageContent />
-      </div>
+      </PromotionBannerWrapper>
       <Footer />
     </div>
   )

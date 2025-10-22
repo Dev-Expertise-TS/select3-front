@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { Header } from "@/components/header"
-import { PromotionBanner } from "@/components/promotion-banner"
+import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/features/scroll-to-top"
 import { CityCard } from "@/components/shared/city-card"
@@ -78,11 +78,8 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <PromotionBanner />
-      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 60px */}
-      <div className="pt-[50px] sm:pt-[60px]"></div>
-      
-      <main>
+      <PromotionBannerWrapper>
+        <main>
         {/* Page Header */}
         <div className="bg-gray-50">
           <div className="container mx-auto max-w-[1440px] px-4 py-8">
@@ -163,7 +160,8 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
             ))}
           </div>
         </div>
-      </main>
+        </main>
+      </PromotionBannerWrapper>
       
       <Footer />
       <ScrollToTop />
