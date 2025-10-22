@@ -57,6 +57,10 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   // 탭 메뉴 ref 추가
   const tabMenuRef = useRef<HTMLDivElement>(null)
   
+  // HTML 콘텐츠 렌더링용 ref 추가 (크롬 번역 충돌 방지)
+  const introContentRef = useRef<HTMLDivElement>(null)
+  const locationContentRef = useRef<HTMLDivElement>(null)
+  
   // 아티클 관련 상태
   const [articles, setArticles] = useState<BlogContent[]>([])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
@@ -225,6 +229,21 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     })
   }
 
+  // 크롬 번역 충돌 방지를 위한 HTML 콘텐츠 직접 삽입 (useEffect 사용)
+  useEffect(() => {
+    if (introContentRef.current && introHtml && isIntroExpanded) {
+      // 기존 내용 제거 후 새로 삽입
+      introContentRef.current.innerHTML = introHtml
+    }
+  }, [introHtml, isIntroExpanded])
+
+  useEffect(() => {
+    if (locationContentRef.current && locationHtml && isLocationExpanded) {
+      // 기존 내용 제거 후 새로 삽입
+      locationContentRef.current.innerHTML = locationHtml
+    }
+  }, [locationHtml, isLocationExpanded])
+
   return (
     <div className="bg-white sm:bg-gray-100 py-0 sm:py-1 min-h-[200px] sm:min-h-[150px]">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
@@ -364,8 +383,9 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                     {introHtml ? (
                       <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-6">
                         <div
+                          ref={introContentRef}
                           className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                          dangerouslySetInnerHTML={{ __html: introHtml }}
+                          suppressHydrationWarning
                         />
                       </div>
                     ) : (
@@ -413,8 +433,9 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                     <div className="prose max-w-none">
                       <div className="max-w-[95%] sm:max-w-[70%] mx-auto mb-3 sm:mb-6">
                         <div
+                          ref={locationContentRef}
                           className="text-gray-700 leading-relaxed prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto"
-                          dangerouslySetInnerHTML={{ __html: locationHtml }}
+                          suppressHydrationWarning
                         />
                       </div>
                     </div>
