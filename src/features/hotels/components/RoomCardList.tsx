@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { RoomCard } from "./RoomCard"
+import { TranslationErrorBoundary } from "@/components/shared/translation-error-boundary"
 
 interface RoomCardListProps {
   ratePlans: any[]
@@ -123,7 +124,7 @@ export function RoomCardList({
   // 요금 정보가 없으면 카카오 친구 추가 화면을 건너뛰고 "객실 정보가 없습니다" 메시지 표시
   if (!ratePlans || ratePlans.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500" suppressHydrationWarning>
         객실 정보가 없습니다.
       </div>
     )
@@ -132,7 +133,7 @@ export function RoomCardList({
   // 카카오 친구 추가 전 화면 (요금 정보가 있을 때만 표시)
   if (!hasAddedKakaoFriend) {
     return (
-      <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-8 sm:p-12 text-center border border-yellow-200">
+      <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-8 sm:p-12 text-center border border-yellow-200" suppressHydrationWarning>
         <div className="max-w-md mx-auto">
           {/* 메시지 */}
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
@@ -167,9 +168,10 @@ export function RoomCardList({
 
   // 카카오 친구 추가 후 객실 요금 표시
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayedRatePlans.map((rp: any, idx: number) => {
+    <TranslationErrorBoundary>
+      <div suppressHydrationWarning translate="no">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayedRatePlans.map((rp: any, idx: number) => {
         const roomType = rp.RoomType || rp.RoomName || ''
         const roomName = rp.RoomName || ''
         const description = rp.Description || ''
@@ -199,42 +201,46 @@ export function RoomCardList({
           (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
 
         return (
-          <RoomCard
-            key={`room-card-${idx}`}
-            roomType={roomType}
-            roomName={roomName}
-            description={description}
-            roomIntroduction={roomIntroduction}
-            bedType={bedType}
-            area={area}
-            occupancy={occupancy}
-            amount={amount}
-            currency={currency}
-            discount={discount}
-            isGenerating={isGenerating}
-            checkIn={checkIn}
-            checkOut={checkOut}
-            view={view}
-            isBeyondFirstRow={idx >= 3}
-            hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
-            onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
-            rooms={rooms}
-          />
+          <TranslationErrorBoundary key={`room-card-boundary-${rateKey}-${idx}`}>
+            <div key={`room-card-wrapper-${rateKey}-${idx}`} suppressHydrationWarning translate="no">
+              <RoomCard
+                roomType={roomType}
+                roomName={roomName}
+                description={description}
+                roomIntroduction={roomIntroduction}
+                bedType={bedType}
+                area={area}
+                occupancy={occupancy}
+                amount={amount}
+                currency={currency}
+                discount={discount}
+                isGenerating={isGenerating}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                view={view}
+                isBeyondFirstRow={idx >= 3}
+                hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
+                onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
+                rooms={rooms}
+              />
+            </div>
+          </TranslationErrorBoundary>
         )
-        })}
-      </div>
-      
-      {/* 더보기 버튼 */}
-      {ratePlans.length > 3 && (
-        <div className="text-center mt-8">
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-          >
-            {showAll ? `객실 타입 접기 (${ratePlans.length}개)` : `객실 타입 더보기 (${ratePlans.length - 3}개 더)`}
-          </button>
+          })}
         </div>
-      )}
-    </div>
+        
+        {/* 더보기 버튼 */}
+        {ratePlans.length > 3 && (
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+            >
+              {showAll ? `객실 타입 접기 (${ratePlans.length}개)` : `객실 타입 더보기 (${ratePlans.length - 3}개 더)`}
+            </button>
+          </div>
+        )}
+      </div>
+    </TranslationErrorBoundary>
   )
 }

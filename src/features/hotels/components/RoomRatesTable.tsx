@@ -289,7 +289,7 @@ export function RoomRatesTable({
   }
 
   return (
-    <>
+    <div suppressHydrationWarning>
       {/* 캐시 상태 표시 */}
       {cacheStats.totalProcessed > 0 && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -733,6 +733,6 @@ export function RoomRatesTable({
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }

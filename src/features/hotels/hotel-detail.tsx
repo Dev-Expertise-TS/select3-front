@@ -24,6 +24,7 @@ import { HotelInfo } from "./components/HotelInfo"
 import { RoomCardList } from "./components/RoomCardList"
 import { RoomRatesTable } from "./components/RoomRatesTable"
 import { KakaoChatButton } from "@/components/shared/kakao-chat-button"
+import { TranslationErrorBoundary } from "@/components/shared/translation-error-boundary"
 
 // Hooks
 import { useHotelBySlug, useHotelMedia, useHotel } from "@/hooks/use-hotels"
@@ -1095,6 +1096,84 @@ export function HotelDetail({
     }
   }, [hotel?.sabre_id, initialPromotions.length])
 
+  // 크롬 번역 충돌 방지: DOM 변경 감지 및 React 에러 방지 (강화 버전)
+  useEffect(() => {
+    // 크롬 번역으로 인한 DOM 변경 에러를 전역적으로 캐치
+    const handleError = (event: ErrorEvent) => {
+      const errorMessage = event.message || event.error?.message || ''
+      const errorStack = event.error?.stack || ''
+      const errorName = event.error?.name || ''
+      
+      // removeChild, NotFoundError 등 모든 DOM 에러 무시
+      if (errorMessage.includes('removeChild') || 
+          errorMessage.includes('Node') || 
+          errorMessage.includes('translate') ||
+          errorMessage.includes('NotFoundError') ||
+          errorName === 'NotFoundError' ||
+          errorStack.includes('removeChild') ||
+          errorStack.includes('NotFoundError')) {
+        console.warn('🌐 크롬 번역 DOM 에러 무시:', { message: errorMessage, name: errorName })
+        event.preventDefault()
+        event.stopPropagation()
+        event.stopImmediatePropagation()
+        return false
+      }
+    }
+
+    // Promise rejection도 캐치 (AI API 호출 실패 등)
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason?.message || String(event.reason)
+      const reasonStack = event.reason?.stack || ''
+      const reasonName = event.reason?.name || ''
+      
+      // 크롬 번역 관련 에러 무시
+      if (reason.includes('removeChild') || 
+          reason.includes('Node') || 
+          reason.includes('translate') ||
+          reason.includes('NotFoundError') ||
+          reasonName === 'NotFoundError' ||
+          reasonStack.includes('removeChild') ||
+          reasonStack.includes('NotFoundError')) {
+        console.warn('🌐 크롬 번역 Promise 에러 무시:', { reason, name: reasonName })
+        event.preventDefault()
+        return
+      }
+      
+      // AI API 호출 실패는 경고만 (페이지는 정상 작동)
+      if (reason.includes('Failed to fetch') || 
+          reason.includes('generateRoomIntroduction') ||
+          reason.includes('openai')) {
+        console.warn('⚠️ AI API 호출 실패 (계속 진행):', reason)
+        event.preventDefault()
+      }
+    }
+
+    // React의 에러도 캐치
+    const originalConsoleError = console.error
+    console.error = (...args: any[]) => {
+      const errorMsg = args.join(' ')
+      
+      // removeChild 에러는 무시
+      if (errorMsg.includes('removeChild') || 
+          errorMsg.includes('NotFoundError') ||
+          errorMsg.includes('Node')) {
+        console.warn('🌐 React 콘솔 에러 무시:', errorMsg.substring(0, 100))
+        return
+      }
+      
+      originalConsoleError.apply(console, args)
+    }
+
+    window.addEventListener('error', handleError, true) // capture phase에서 처리
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    
+    return () => {
+      window.removeEventListener('error', handleError, true)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      console.error = originalConsoleError
+    }
+  }, [])
+
   // Sabre API를 통해 객실 데이터 조회
   const { data: sabreData, isLoading: sabreLoading, error: sabreError } = useQuery({
     queryKey: ['sabre-hotel-details', hotel?.sabre_id, searchDates.checkIn, searchDates.checkOut, searchGuests.rooms, searchGuests.adults, hasSearched],
@@ -1344,9 +1423,10 @@ export function HotelDetail({
   }
 
   return (
-    <div className="bg-white sm:bg-gray-100 min-h-screen mt-0">
-      {/* Promotion Banner */}
-      <PromotionBanner />
+    <TranslationErrorBoundary>
+      <div key={`hotel-detail-${hotel.sabre_id}`} className="bg-white sm:bg-gray-100 min-h-screen mt-0" suppressHydrationWarning>
+        {/* Promotion Banner */}
+        <PromotionBanner />
       
       {/* 프로모션 베너 아래 여백 (fixed 베너가 콘텐츠를 가리지 않도록) - 모바일 50px, 데스크톱 72px */}
       <div className="pt-[50px] sm:pt-[72px]"></div>
@@ -1375,19 +1455,21 @@ export function HotelDetail({
       <div className="pt-0 sm:pt-1"></div>
 
       {/* Hotel Info and Image Gallery */}
-      <HotelInfo
-        hotel={hotel}
-        images={displayImages}
-        selectedImage={selectedImage}
-        onImageSelect={handleImageSelect}
-        onGalleryOpen={openImageGallery}
-        preloadedImages={preloadedImages}
-        imageLoadingStates={imageLoadingStates}
-        isImageLoading={isImageLoading}
-        isImageLoaded={isImageLoaded}
-        isImageError={isImageError}
-        shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
-      />
+      <div key={`hotel-info-${hotel.sabre_id}`} suppressHydrationWarning>
+        <HotelInfo
+          hotel={hotel}
+          images={displayImages}
+          selectedImage={selectedImage}
+          onImageSelect={handleImageSelect}
+          onGalleryOpen={openImageGallery}
+          preloadedImages={preloadedImages}
+          imageLoadingStates={imageLoadingStates}
+          isImageLoading={isImageLoading}
+          isImageLoaded={isImageLoaded}
+          isImageError={isImageError}
+          shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
+        />
+      </div>
 
       {/* Image Gallery Modal */}
       <ImageGallery
@@ -1411,21 +1493,25 @@ export function HotelDetail({
       />
 
       {/* Promotion */}
-      <HotelPromotion
-        promotions={hotelPromotions}
-        isLoading={isLoadingPromotions}
-      />
+      <div key={`hotel-promotion-${hotel.sabre_id}`} suppressHydrationWarning>
+        <HotelPromotion
+          promotions={hotelPromotions}
+          isLoading={isLoadingPromotions}
+        />
+      </div>
 
       {/* Hotel Tabs */}
-      <HotelTabs
-        introHtml={introHtml}
-        locationHtml={locationHtml}
-        hotelName={hotel.property_name_ko || '호텔'}
-        propertyAddress={hotel.property_address}
-        propertyDescription={hotel.property_description}
-        sabreId={hotel.sabre_id}
-        hotelBlogs={hotel.blogs}
-      />
+      <div key={`hotel-tabs-${hotel.sabre_id}`} suppressHydrationWarning>
+        <HotelTabs
+          introHtml={introHtml}
+          locationHtml={locationHtml}
+          hotelName={hotel.property_name_ko || '호텔'}
+          propertyAddress={hotel.property_address}
+          propertyDescription={hotel.property_description}
+          sabreId={hotel.sabre_id}
+          hotelBlogs={hotel.blogs}
+        />
+      </div>
 
       {/* Search Bar - Sticky */}
       <div className="sticky top-[90px] sm:top-[130px] z-40 bg-white sm:bg-gray-100 py-0 sm:py-2">
@@ -1452,7 +1538,7 @@ export function HotelDetail({
       </div>
 
       {/* Room types & rates */}
-      <div className="bg-white sm:bg-gray-100 py-0 sm:py-1 min-h-[400px] sm:min-h-[200px]">
+      <div key={`hotel-rooms-${hotel.sabre_id}`} className="bg-white sm:bg-gray-100 py-0 sm:py-1 min-h-[400px] sm:min-h-[200px]" suppressHydrationWarning translate="no">
         <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
           <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm">
 
@@ -1582,5 +1668,6 @@ export function HotelDetail({
         </div>
       </div>
     </div>
+    </TranslationErrorBoundary>
   )
 }

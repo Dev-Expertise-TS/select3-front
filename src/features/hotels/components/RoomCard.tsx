@@ -47,6 +47,9 @@ export function RoomCard({
 }: RoomCardProps) {
   const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
+  
+  // 크롬 번역 충돌 방지를 위한 텍스트 컨텐츠 ref
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // 베드 타입별 아이콘 선택
   const getBedIcon = (bedType: string) => {
@@ -117,23 +120,38 @@ export function RoomCard({
     ? roomIntroduction 
     : description || ''
   
-  // 텍스트 오버플로우 감지용
+  // 텍스트 오버플로우 감지용 & 텍스트 직접 설정용
   const descRef = useRef<HTMLSpanElement | null>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
+  // 크롬 번역 충돌 방지: textContent로 직접 텍스트 설정 (React 관리 영역 밖)
   useEffect(() => {
     const el = descRef.current
     if (!el) return
-    // isExpanded가 false일 때만 오버플로우 기준으로 판단 (클램프/높이 제한 상태)
-    if (!isExpanded) {
-      setIsOverflowing(el.scrollHeight > el.clientHeight + 1)
-    } else {
+    
+    if (isGenerating) {
+      // AI 생성 중에는 빈 텍스트
+      el.textContent = ''
       setIsOverflowing(false)
+    } else if (displayIntroduction) {
+      // textContent로 안전하게 텍스트만 설정 (HTML 없이, 크롬 번역과 충돌 없음)
+      el.textContent = displayIntroduction
+      
+      // 오버플로우 체크
+      if (!isExpanded) {
+        setIsOverflowing(el.scrollHeight > el.clientHeight + 1)
+      } else {
+        setIsOverflowing(false)
+      }
     }
-  }, [displayIntroduction, isExpanded])
+  }, [displayIntroduction, isGenerating, isExpanded])
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div 
+      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+      suppressHydrationWarning
+      translate="no"
+    >
       {/* 이미지 영역 (향후 사용 예정)
         유지 목적의 자리표시자입니다. 나중에 객실 썸네일/갤러리 영역을 복원할 때 이 위치를 사용합니다.
         예시 구조:
@@ -189,19 +207,31 @@ export function RoomCard({
         {/* 객실 소개 - 고정 높이 */}
         <div className="mb-3 sm:mb-4">
           <div className="relative">
-            <div className={`text-gray-700 text-sm leading-relaxed h-28 sm:h-36 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'} ${(!hasIntro && !isGenerating) ? 'blur-[2px] opacity-60 select-none pointer-events-none' : ''}`}>
-              {isGenerating ? (
-                <div className="flex items-center gap-2 h-full">
+            {/* AI 생성 중 표시 - 별도 레이어 */}
+            {isGenerating && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white">
+                <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-gray-500">호텔 전문 AI가 객실 소개를 준비 중입니다...</span>
+                  <span className="text-gray-500 text-sm">호텔 전문 AI가 객실 소개를 준비 중입니다...</span>
                 </div>
-              ) : (
-                <div className={isExpanded ? '' : 'h-full overflow-hidden'}>
-                  <span ref={descRef} className={isExpanded ? '' : 'line-clamp-8'}>
-                    {displayIntroduction}
-                  </span>
-                </div>
-              )}
+              </div>
+            )}
+            
+            {/* 객실 소개 텍스트 - 항상 렌더링 (조건부 렌더링 제거) */}
+            <div 
+              key={`intro-${roomType}-${hasIntro ? 'loaded' : 'empty'}`}
+              className={`text-gray-700 text-sm leading-relaxed h-28 sm:h-36 ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'} ${(!hasIntro && !isGenerating) ? 'blur-[2px] opacity-60 select-none pointer-events-none' : ''}`}
+              suppressHydrationWarning
+              translate="no"
+            >
+              <span 
+                ref={descRef} 
+                className={isExpanded ? '' : 'line-clamp-8'}
+                suppressHydrationWarning
+                translate="no"
+              >
+                {/* ref를 통해 직접 설정됨 - 초기값만 제공 */}
+              </span>
             </div>
 
             {/* 더보기 영역은 AI 미생성 블러 상태에서는 노출하지 않음 */}
