@@ -117,19 +117,32 @@ export async function getHeroImages(): Promise<HeroImageData[]> {
       const hotelMedia = mediaData?.find(m => String(m.sabre_id) === String(hotel.sabre_id))
       let mediaPath = hotelMedia?.public_url || hotelMedia?.storage_path || '/placeholder.svg'
       
-      // 미디어가 없으면 도시별 fallback
+      // city_ko를 우선으로 사용
+      let cityName = hotel.city_ko || hotel.city_en || hotel.city || 'Unknown'
+      
+      // 미디어가 없으면 도시별 fallback (cityName 기준으로 체크)
       if (mediaPath === '/placeholder.svg') {
         const cityFallbacks: Record<string, string> = {
+          '도쿄': '/destination-image/tokyo.jpg',
           'Tokyo': '/destination-image/tokyo.jpg',
+          '런던': '/destination-image/london.jpg',
           'London': '/destination-image/london.jpg',
+          '발리': '/destination-image/bali.webp',
           'Bali': '/destination-image/bali.webp',
+          '싱가폴': '/destination-image/singapore.jpg',
           'Singapore': '/destination-image/singapore.jpg',
+          '홍콩': '/destination-image/hongkong.webp',
           'Hong Kong': '/destination-image/hongkong.webp',
+          '오사카': '/destination-image/osaka.avif',
           'Osaka': '/destination-image/osaka.avif',
+          '로마': '/destination-image/roma.jpg',
           'Roma': '/destination-image/roma.jpg',
-          'Danang': '/destination-image/danang.jpg'
+          '다낭': '/destination-image/danang.jpg',
+          'Danang': '/destination-image/danang.jpg',
+          '후쿠오카': '/destination-image/fukuoka.jpg',
+          'Fukuoka': '/destination-image/fukuoka.jpg',
         }
-        mediaPath = cityFallbacks[hotel.city] || '/destination-image/tokyo.jpg'
+        mediaPath = cityFallbacks[cityName] || '/destination-image/tokyo.jpg'
       }
       
       return {
@@ -138,7 +151,7 @@ export async function getHeroImages(): Promise<HeroImageData[]> {
         property_name_en: hotel.property_name_en || 'Luxury Destination',
         slug: hotel.slug || '',
         media_path: mediaPath,
-        city: hotel.city || 'Unknown',
+        city: cityName,
         chain_name_en: chain?.chain_name_en || 'LUXURY',
         brand_name_en: getBrandDisplayName(),
       }
