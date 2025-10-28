@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       .order('image_seq', { ascending: true })
       .limit(3)
     
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
     
     // URL을 절대 URL로 변환
     const toAbsoluteUrl = (url: string) => {

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600 // 1시간마다 재검증
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://luxury-select.co.kr'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const currentDate = new Date()
 
   // 정적 페이지들 - 주요 페이지들

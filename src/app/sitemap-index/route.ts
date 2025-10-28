@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const baseUrl = 'https://luxury-select.co.kr'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const currentDate = new Date().toISOString()
 
   const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>

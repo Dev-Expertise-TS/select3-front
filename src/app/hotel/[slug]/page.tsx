@@ -16,7 +16,7 @@ function toAbsoluteUrl(url: string): string {
   }
   
   // 상대 URL인 경우 도메인 추가
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   
   // '/'로 시작하는 경우
   if (url.startsWith('/')) {
@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const rawDescription = hotel.property_details || hotel.property_location || ''
   const cleanDescription = rawDescription ? stripHtmlTags(rawDescription) : ''
   const description = cleanDescription || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   
   // 이미 조회한 이미지 데이터 중 첫 번째 이미지만 사용 (OG 이미지용)
@@ -108,7 +108,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       type: 'website',
       locale: 'ko_KR',
-      siteName: 'Select Hotels',
+      siteName: '투어비스 셀렉트',
       url,
       images: [ogImage],
     },
@@ -150,7 +150,7 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
   if (!hotel) return null
 
   const decodedSlug = decodeURIComponent(slug)
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://select-hotels.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   
   // 첫 번째 이미지만 사용 (불필요한 프리로드 방지)
   const firstImageUrl = images.length > 0 

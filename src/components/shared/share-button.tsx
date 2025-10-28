@@ -93,7 +93,7 @@ export function ShareButton({
         content: {
           title: title,
           description: shareDescription,
-          imageUrl: imageUrl || 'https://select-hotels.com/select_logo.avif',
+          imageUrl: imageUrl || (process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr') + '/select_logo.avif',
           link: {
             mobileWebUrl: url,
             webUrl: url,
