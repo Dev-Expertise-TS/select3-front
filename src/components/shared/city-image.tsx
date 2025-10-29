@@ -91,6 +91,7 @@ export function CityImage({
           sizes={sizes}
           quality={80}
           priority={priority}
+          unoptimized={true}
           onError={(e) => {
             const target = e.target as HTMLImageElement
             target.src = fallbackImage

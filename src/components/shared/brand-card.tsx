@@ -38,6 +38,7 @@ export function BrandCard({
           className="object-contain p-4 transition-all duration-300 group-hover:scale-105"
           sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 15vw"
           priority={false}
+          unoptimized={true}
           onError={(e) => {
             const target = e.target as HTMLImageElement
             target.src = '/placeholder.svg'

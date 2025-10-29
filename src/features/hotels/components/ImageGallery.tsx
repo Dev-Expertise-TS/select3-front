@@ -111,13 +111,23 @@ export function ImageGallery({
         const res = await fetch(`/api/hotels/${sabreId}/storage-images`, { cache: 'no-store' })
         const json = await res.json()
         if (res.ok && json?.success && Array.isArray(json.data?.images) && json.data.images.length > 0) {
-          const mapped: ImageItem[] = json.data.images.map((img: any) => ({
+          const mapped: (ImageItem & { sequence?: number; filename?: string })[] = json.data.images.map((img: any) => ({
             id: img.id,
             media_path: img.media_path || img.url,
             alt: img.alt || `${hotelName} 이미지 ${img.sequence || ''}`,
             isMain: img.isMain,
+            sequence: img.sequence,
+            filename: img.filename,
           }))
-          setRemoteImages(mapped)
+          const getSeq = (it: any) => {
+            if (typeof it.sequence === 'number') return it.sequence
+            const name = it.filename || it.media_path || ''
+            const m = name.match(/_(\d+)_(?:\d+)?\.|_(\d+)\./)
+            if (m) return Number(m[1] || m[2]) || 0
+            return 0
+          }
+          const sorted = mapped.sort((a,b) => getSeq(a) - getSeq(b))
+          setRemoteImages(sorted)
         }
       } catch {}
     })()
@@ -282,13 +292,18 @@ export function ImageGallery({
                       onClick={() => openDetailView(index)}
                     >
                       <NextImage
-                        src={optimizeGalleryGrid(image.media_path)}
+                        src={image.media_path}
                         alt={image.alt || `Gallery ${index + 1}`}
                         fill
                         className="object-cover transition-all duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         quality={80}
                         loading={index < 8 ? "eager" : "lazy"}
+                        unoptimized={true}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder.svg'
+                        }}
                       />
                     </div>
                   ))}
@@ -317,7 +332,7 @@ export function ImageGallery({
                 {validImages[currentImageIndex] && (
                     <NextImage
                     key={validImages[currentImageIndex].id}
-                    src={optimizeGalleryDetail(validImages[currentImageIndex].media_path)}
+                    src={validImages[currentImageIndex].media_path}
                     alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
                     fill
                     className="object-contain"
@@ -326,6 +341,11 @@ export function ImageGallery({
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
+                    unoptimized={true}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = '/placeholder.svg'
+                    }}
                   />
                 )}
               </div>

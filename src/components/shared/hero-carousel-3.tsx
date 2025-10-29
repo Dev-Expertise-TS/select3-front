@@ -189,6 +189,7 @@ export function HeroCarousel3() {
             quality={85}
             className="object-cover transition-all duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
+            unoptimized={true}
             onError={(e) => {
                           console.error(`❌ 히어로 이미지 로딩 실패: ${carouselSlides[currentSlide].image}`)
                           const target = e.target as HTMLImageElement
@@ -294,6 +295,7 @@ export function HeroCarousel3() {
                           className="object-cover transition-all duration-300 group-hover:scale-105"
                           sizes="(max-width: 1024px) 50vw, 33vw"
                           loading={index === 0 ? "eager" : "lazy"}
+                          unoptimized={true}
                           onError={(e) => {
                             console.error(`❌ 히어로 이미지 로딩 실패: ${slide.image}`)
                             const target = e.target as HTMLImageElement
