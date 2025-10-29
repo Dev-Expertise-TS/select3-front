@@ -853,6 +853,30 @@ export function HotelDetail({
   
   // 이미지 데이터 우선순위: select_hotel_media 테이블 > Storage API > Storage URL 패턴 > select_hotels 이미지 > placeholder
   const displayImages = useMemo(() => {
+    const appendVersion = (url: string): string => {
+      if (!url) return url
+      try {
+        const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'https://luxury-select.co.kr')
+        if (!u.searchParams.has('v')) {
+          // 30분 버킷 기본 캐시 버스팅 (API에서 오는 updated_at은 그대로 유지)
+          u.searchParams.set('v', String(Math.floor(Date.now() / (30 * 60 * 1000))))
+        }
+        return u.toString()
+      } catch {
+        const sep = url.includes('?') ? '&' : '?'
+        return `${url}${sep}v=${Math.floor(Date.now() / (30 * 60 * 1000))}`
+      }
+    }
+    const getSeq = (item: any): number => {
+      if (typeof item?.sequence === 'number') return item.sequence
+      const name: string = item?.filename || item?.media_path || ''
+      const m = name.match(/_(\d+)_(?:\d+)?\.|_(\d+)\./)
+      if (m) {
+        const num = Number(m[1] || m[2])
+        return isNaN(num) ? 0 : num
+      }
+      return 0
+    }
     console.log('🔄 displayImages 계산 시작... (호텔 카드와 동일 방식)', {
       hotelMediaLength: hotelMedia?.length || 0,
       allStorageImagesLength: allStorageImagesData?.images?.length || 0,
@@ -890,12 +914,12 @@ export function HotelDetail({
       console.log('✅ Supabase Storage API 사용 (우선순위 2 - fallback)');
       const convertedImages = allStorageImagesData.images.map((img) => ({
         id: img.id,
-        media_path: img.media_path || img.url,
+        media_path: appendVersion(img.media_path || img.url),
         alt: img.alt || `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지`,
         isMain: img.isMain,
         sequence: img.sequence,
         filename: img.filename
-      }));
+      })).sort((a,b) => getSeq(a) - getSeq(b));
       console.log('📋 Storage API fallback 이미지들:', { count: convertedImages.length });
       return convertedImages;
     }
@@ -903,7 +927,12 @@ export function HotelDetail({
     // 3순위: select_hotels 이미지 (패턴 URL은 사용하지 않음)
     if (hotelImages.length > 0) {
       console.log('✅ select_hotels 이미지 사용 (우선순위 4)');
-      return hotelImages;
+      return hotelImages
+        .map((img: any) => ({
+          ...img,
+          media_path: appendVersion(img.media_path || img.url || img.src)
+        }))
+        .sort((a: any,b: any) => getSeq(a) - getSeq(b));
     }
     
     // 5순위: placeholder

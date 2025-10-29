@@ -109,6 +109,7 @@ export function HotelInfo({
                       priority
                       sizes="(max-width: 768px) 100vw, 60vw"
                       quality={90}
+                      unoptimized={true}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/placeholder.svg'
