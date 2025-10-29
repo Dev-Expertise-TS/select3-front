@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+// 최신 스토리지 상태를 항상 반영
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ sabreId: string }> }
@@ -142,7 +146,10 @@ export async function GET(
     // 이미지 메타데이터 생성 (순차적으로 번호 부여)
     const images = sortedImageFiles.map((file, idx) => {
       // successPath를 사용하여 올바른 URL 생성
-      const url = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${successPath}/${file.name}`;
+      const base = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${successPath}/${file.name}`;
+      // 캐시 무효화를 위해 파일 수정시각 기반 버전 파라미터 부여
+      const version = encodeURIComponent((file.updated_at ?? new Date().toISOString()));
+      const url = `${base}?v=${version}`;
       return {
         id: `storage-${idx + 1}`,
         filename: file.name,
@@ -156,7 +163,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       data: {
         hotel: {
@@ -169,14 +176,20 @@ export async function GET(
         totalCount: images.length
       }
     });
+    // 강력 무캐시 헤더로 최신 목록 보장
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.headers.set('Pragma', 'no-cache');
+    return res;
 
   } catch (error) {
     console.error('호텔 스토리지 이미지 조회 오류:', error);
     
-    return NextResponse.json({
+    const errRes = NextResponse.json({
       success: false,
       error: '서버 오류가 발생했습니다',
       details: error instanceof Error ? error.message : '알 수 없는 오류'
     }, { status: 500 });
+    errRes.headers.set('Cache-Control', 'no-store');
+    return errRes;
   }
 }
