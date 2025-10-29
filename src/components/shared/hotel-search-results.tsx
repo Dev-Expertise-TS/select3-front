@@ -103,7 +103,8 @@ export function HotelSearchResults({
     handleBrandChange,
     setSelectedChainId,
     setSelectedBrandId,
-    setShowAllInsteadOfInitial
+    setShowAllInsteadOfInitial,
+    setDisplayCount
   } = useHotelSearchState()
   
   const {
@@ -235,10 +236,8 @@ export function HotelSearchResults({
 
 
   const handleSearch = (newQuery: string) => {
-    setSearchQuery(newQuery)
+    updateSearchQuery(newQuery)
     setDisplayCount(12) // 검색 시 표시 개수 초기화
-    // 클릭할 때마다 강제 리프레시 트리거
-    setRefreshTick((v) => v + 1)
     
     // URL 업데이트 (새로고침 시에도 검색어 유지)
     const url = new URL(window.location.href)
@@ -247,7 +246,7 @@ export function HotelSearchResults({
   }
 
   const handleFiltersChange = (newFilters: typeof filters) => {
-    setFilters(newFilters)
+    updateFilters(newFilters)
     setDisplayCount(12) // 필터 변경 시 표시 개수 초기화
   }
 
@@ -256,7 +255,7 @@ export function HotelSearchResults({
     console.log('🔄 필터 완전 초기화')
     
     // 1. 필터 상태 초기화
-    setFilters({ city: '', country: '', brand: '', chain: '' })
+    resetFilters()
     
     // 2. 선택된 체인/브랜드 ID 초기화
     setSelectedChainId(null)
@@ -292,7 +291,7 @@ export function HotelSearchResults({
       
       if (confirmed) {
         // 검색 조건 초기화
-        setSearchQuery('')
+        updateSearchQuery('')
         const url = new URL(window.location.href)
         url.searchParams.delete('q')
         window.history.pushState({}, '', url.toString())
@@ -486,7 +485,7 @@ export function HotelSearchResults({
 
 
   const handleLoadMore = () => {
-    setDisplayCount(prev => prev + 12) // 12개씩 추가 로딩
+    loadMore() // 12개씩 추가 로딩
   }
 
   const handleClearAllFilters = () => {
@@ -516,7 +515,7 @@ export function HotelSearchResults({
 
   // URL 파라미터 변경 시 검색어와 날짜 동기화
   useEffect(() => {
-    setSearchQuery(query)
+    updateSearchQuery(query)
     setDisplayCount(12) // URL 파라미터 변경 시 표시 개수 초기화
     
     // URL 파라미터가 있으면 사용, 없으면 기본값 (오늘과 2주 뒤)
@@ -613,7 +612,7 @@ export function HotelSearchResults({
     // 필터가 있고 변경이 있는 경우에만 적용
     if ((newFilters.city || newFilters.country || newFilters.brand || newFilters.chain) && filtersChanged) {
       console.log('🔍 필터 적용 (URL 또는 initialBrandId/currentChainId):', newFilters)
-      setFilters(newFilters)
+      updateFilters(newFilters)
     }
   }, [initialBrandId, currentChainId]) // finalFilterOptions, allHotels 제거하여 무한 루프 방지
 
@@ -756,7 +755,7 @@ export function HotelSearchResults({
   
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount
-  const isLoading = searchQuery.trim() 
+  const isPageLoading = searchQuery.trim() 
     ? isSearchLoading 
     : showAllInsteadOfInitial  // 필터 초기화 시 전체 호텔 로딩 상태
       ? isAllHotelsLoading
@@ -769,7 +768,7 @@ export function HotelSearchResults({
     : selectedChainId 
       ? isChainBrandLoading 
         : (showAllHotels ? isAllHotelsLoading : false)
-  const error = searchQuery.trim() 
+  const pageError = searchQuery.trim() 
     ? searchError 
     : showAllInsteadOfInitial  // 필터 초기화 시 전체 호텔 에러 상태
       ? allHotelsError
@@ -1124,7 +1123,7 @@ export function HotelSearchResults({
                 <div>
                   <HotelListSectionAllView
                     hotels={displayData}
-                    isLoading={isLoading}
+                    isLoading={isPageLoading}
                     error={error}
                     hasMoreData={hasMoreData}
                     onLoadMore={handleLoadMore}
@@ -1145,14 +1144,14 @@ export function HotelSearchResults({
               <>
                 <HotelListSectionAllView
                 title={searchQuery.trim() ? `"${searchQuery}" 검색 결과` : dynamicTitle}
-                subtitle={isLoading ? "검색 중..." : 
+                subtitle={isPageLoading ? "검색 중..." : 
                          allData && allData.length > 0 
                            ? searchQuery.trim() 
                              ? `${allData.length}개의 호텔을 찾았습니다.` 
                              : dynamicSubtitle
                            : "검색 결과가 없습니다."}
                 hotels={displayData}
-                isLoading={isLoading}
+                isLoading={isPageLoading}
                 error={error}
                 hasMoreData={hasMoreData}
                 onLoadMore={handleLoadMore}

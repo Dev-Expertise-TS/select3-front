@@ -54,6 +54,11 @@ export function useHotelSearchState() {
     setDisplayCount(prev => prev + 12)
   }, [])
   
+  // 표시 개수 초기화/설정 함수
+  const setDisplayCountSafe = useCallback((count: number) => {
+    setDisplayCount(count)
+  }, [])
+  
   // 체인 변경 함수
   const handleChainChange = useCallback((chainId: string) => {
     setSelectedChainId(chainId)
@@ -86,6 +91,7 @@ export function useHotelSearchState() {
     resetFilters,
     updateSearchQuery,
     loadMore,
+    setDisplayCount: setDisplayCountSafe,
     handleChainChange,
     handleBrandChange,
     setSelectedChainId,
