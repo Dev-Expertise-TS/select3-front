@@ -899,19 +899,7 @@ export function HotelDetail({
       return convertedImages;
     }
 
-    // 3순위: 기본 Supabase Storage URL 패턴 (5개)
-    if (storageImages.length > 0) {
-      console.log('✅ Storage URL 패턴 사용 (우선순위 3)');
-      const convertedImages = storageImages.map((url, index) => ({
-        id: `storage-${index}`,
-        media_path: url,
-        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
-        isMain: index === 0
-      }));
-      return convertedImages;
-    }
-    
-    // 4순위: select_hotels 이미지
+    // 3순위: select_hotels 이미지 (패턴 URL은 사용하지 않음)
     if (hotelImages.length > 0) {
       console.log('✅ select_hotels 이미지 사용 (우선순위 4)');
       return hotelImages;
@@ -1516,6 +1504,7 @@ export function HotelDetail({
         onImageSelect={handleImageSelect}
         loading={loadingAllImages}
         error={allImagesError}
+        sabreId={hotel.sabre_id}
       />
 
       {/* Promotion */}

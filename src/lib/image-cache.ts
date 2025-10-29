@@ -109,8 +109,8 @@ export async function checkImageExists(imageUrl: string): Promise<boolean> {
     
     const exists = response.ok;
     
-    // 캐시에 저장 (존재하지 않는 이미지는 더 짧은 TTL)
-    const ttl = exists ? 10 * 60 * 1000 : 2 * 60 * 1000; // 존재: 10분, 없음: 2분
+    // 캐시에 저장 (삭제/변경 반영을 빠르게 하기 위해 TTL 단축)
+    const ttl = exists ? 2 * 60 * 1000 : 30 * 1000; // 존재: 2분, 없음: 30초
     imageCache.set(imageUrl, exists, ttl);
     
     console.log(`✅ 이미지 확인 완료: ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)} (${exists ? '존재' : '없음'})`);
