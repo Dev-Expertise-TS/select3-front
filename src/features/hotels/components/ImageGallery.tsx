@@ -372,13 +372,17 @@ export function ImageGallery({
                         }}
                       >
                         <NextImage
-                          src={optimizeGalleryThumbnail(image.media_path)}
+                          src={image.media_path}
                           alt={image.alt || `Thumbnail ${index + 1}`}
                           fill
                           className="object-cover transition-transform duration-200 hover:scale-105"
                           sizes="64px"
                           quality={75}
                           loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/placeholder.svg'
+                          }}
                         />
                       </div>
                     ))}
