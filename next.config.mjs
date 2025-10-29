@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  // URL 정규화 정책: trailing slash 없음 (Google 색인 일관성)
+  trailingSlash: false,
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
