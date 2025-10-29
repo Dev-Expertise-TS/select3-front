@@ -175,18 +175,32 @@
   }
 
   /* data-list="bullet" 속성이 있는 li 요소를 블릿 스타일로 */
-  .blog-content ol li[data-list="bullet"] {
+  .blog-content ol li[data-list="bullet"],
+  .prose ol li[data-list="bullet"],
+  .blog-content .prose ol li[data-list="bullet"] {
     list-style: none !important;
+    list-style-type: none !important;
     position: relative;
-    padding-left: 1.5rem;
+    padding-left: 1.5rem !important;
+    margin-left: 0 !important;
   }
 
-  .blog-content ol li[data-list="bullet"]::before {
-    content: "•";
+  .blog-content ol li[data-list="bullet"]::before,
+  .prose ol li[data-list="bullet"]::before,
+  .blog-content .prose ol li[data-list="bullet"]::before {
+    content: "•" !important;
     position: absolute;
     left: 0;
-    color: #374151;
+    color: #374151 !important;
     font-weight: bold;
     font-size: 1.1em;
+    display: inline-block;
+    width: 1rem;
+  }
+
+  /* Quill 에디터의 ql-ui 클래스 숨기기 */
+  .blog-content ol li[data-list="bullet"] .ql-ui,
+  .prose ol li[data-list="bullet"] .ql-ui {
+    display: none !important;
   }
 }
