@@ -41,6 +41,7 @@ import { useHotelAnalytics } from "./hooks/use-hotel-analytics"
 // Utils & Services
 import { supabase } from "@/lib/supabase"
 import { processHotelImages, getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+import { checkMultipleImages } from "@/lib/image-cache"
 import { useHotelImages } from "@/hooks/use-hotel-images"
 import { useHotelStorageImages } from "@/hooks/use-hotel-storage-images"
 import { HotelHeroImage, HotelThumbnail } from "@/components/ui/smart-image"
@@ -915,6 +916,39 @@ export function HotelDetail({
     }];
   }, [hotelMedia, allStorageImagesData?.images, storageImages, hotelImages, hotel?.property_name_ko, hotel?.property_name_en, loadingAllImages, allImagesError]);
   
+  // 초기 렌더에서 히어로/썸네일(최대 10장) 존재 검증 후 즉시 placeholder 대체
+  const [validatedImages, setValidatedImages] = useState(displayImages)
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const firstTen = (displayImages || []).slice(0, 10)
+        if (firstTen.length === 0) {
+          setValidatedImages(displayImages)
+          return
+        }
+        const urls = firstTen.map(img => img.media_path)
+        const results = await checkMultipleImages(urls)
+        if (cancelled) return
+        const updated = [...displayImages]
+        for (let i = 0; i < firstTen.length; i++) {
+          const ok = results.get(urls[i])
+          if (ok === false) {
+            updated[i] = {
+              ...updated[i],
+              media_path: '/placeholder.svg',
+              alt: '이미지 없음',
+            }
+          }
+        }
+        setValidatedImages(updated)
+      } catch {
+        setValidatedImages(displayImages)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [displayImages])
+  
   // 이미지 preloading useEffect (최적화된 버전)
   useEffect(() => {
     if (displayImages.length > 0) {
@@ -1472,7 +1506,7 @@ export function HotelDetail({
       <div key={`hotel-info-${hotel.sabre_id}`} suppressHydrationWarning>
         <HotelInfo
           hotel={hotel}
-          images={displayImages}
+          images={validatedImages}
           selectedImage={selectedImage}
           onImageSelect={handleImageSelect}
           onGalleryOpen={openImageGallery}
@@ -1496,7 +1530,7 @@ export function HotelDetail({
               sequence: img.sequence,
               filename: img.filename,
             }))
-          : displayImages}
+          : validatedImages}
         hotelName={hotel.property_name_ko || hotel.property_name_en || '호텔명'}
         isOpen={showImageGallery}
         onClose={closeImageGallery}
