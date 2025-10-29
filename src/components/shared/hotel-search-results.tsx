@@ -25,6 +25,11 @@ import {
   type HotelFilters 
 } from '@/lib/hotel-filter-utils'
 
+// Custom hooks for hotel search
+import { useHotelSearchState } from './hooks/use-hotel-search-state'
+import { useHotelSearchData } from './hooks/use-hotel-search-data'
+import { useHotelSearchUI } from './hooks/use-hotel-search-ui'
+
 interface HotelSearchResultsProps {
   title?: string
   subtitle?: string
@@ -78,36 +83,62 @@ export function HotelSearchResults({
   articlesChainId,
   articlesChainName
 }: HotelSearchResultsProps) {
-  const searchParams = useSearchParams()
-  const query = searchParams.get('q') || ""
-  const checkInParam = searchParams.get('checkIn') || ""
-  const checkOutParam = searchParams.get('checkOut') || ""
+  // Custom hooks for state management
+  const {
+    searchQuery,
+    refreshTick,
+    displayCount,
+    selectedChainId,
+    selectedBrandId,
+    showAllInsteadOfInitial,
+    filters,
+    query,
+    checkInParam,
+    checkOutParam,
+    updateFilters,
+    resetFilters,
+    updateSearchQuery,
+    loadMore,
+    handleChainChange,
+    handleBrandChange,
+    setSelectedChainId,
+    setSelectedBrandId,
+    setShowAllInsteadOfInitial
+  } = useHotelSearchState()
   
-  const [searchQuery, setSearchQuery] = useState(query)
-  const [refreshTick, setRefreshTick] = useState(0)
-  const [displayCount, setDisplayCount] = useState(12) // 초기 표시 개수
-  const [selectedChainId, setSelectedChainId] = useState<string | null>(currentChainId || null)
-  // initialBrandId는 필터에만 사용하고, selectedBrandId는 별도 관리 (initialHotels가 있으면 사용 안함)
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(initialBrandId && !initialHotels.length ? initialBrandId : null)
-  // 브랜드/체인 페이지에서 필터 초기화 시 전체 호텔 표시 여부
-  const [showAllInsteadOfInitial, setShowAllInsteadOfInitial] = useState(false)
-  const [filters, setFilters] = useState<HotelFilters>({
-    city: '',
-    country: '',
-    brand: initialBrandId || '', // 초기 브랜드 ID 설정
-    chain: currentChainId || '' // 초기 체인 ID 설정
-  })
+  const {
+    isLoading,
+    error,
+    searchHotels,
+    getAllHotels,
+    getFilterOptions
+  } = useHotelSearchData()
+  
+  const {
+    isFilterOpen,
+    isSortOpen,
+    sortBy,
+    sortOrder,
+    viewMode,
+    isLoadingMore,
+    toggleFilter,
+    toggleSort,
+    changeSort,
+    changeViewMode,
+    setLoadingMore,
+    getSortedData,
+    getFilteredData
+  } = useHotelSearchUI()
   
   // initialBrandId가 변경되면 필터도 업데이트
   useEffect(() => {
     if (initialBrandId && initialBrandId !== filters.brand) {
-      setFilters(prev => ({
-        ...prev,
-        brand: initialBrandId
-      }))
+      updateFilters({ brand: initialBrandId })
       console.log(`🔄 [브랜드 필터 업데이트] initialBrandId: ${initialBrandId}`)
     }
-  }, [initialBrandId])
+  }, [initialBrandId, filters.brand, updateFilters])
+  
+  // 검색 날짜 상태 관리
   const [searchDates, setSearchDates] = useState(() => {
     // URL 파라미터가 있으면 사용, 없으면 기본값 (2주 뒤와 2주 뒤 + 1일)
     if (checkInParam && checkOutParam) {

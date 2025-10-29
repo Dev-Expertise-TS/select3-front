@@ -33,6 +33,11 @@ import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 import { useRoomAIProcessing } from "@/hooks/use-room-ai-processing"
 import { useTopBannerHotels } from "@/hooks/use-promotion-hotels"
 
+// Custom hooks for hotel detail processing
+import { useRoomProcessing } from "./hooks/use-room-processing"
+import { useHotelDataProcessing } from "./hooks/use-hotel-data-processing"
+import { useHotelAnalytics } from "./hooks/use-hotel-analytics"
+
 // Utils & Services
 import { supabase } from "@/lib/supabase"
 import { processHotelImages, getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
@@ -455,6 +460,25 @@ export function HotelDetail({
 }: HotelDetailProps) {
   // URL 쿼리 파라미터
   const searchParams = useSearchParams()
+  
+  // Custom hooks for data processing
+  const { processRoomData } = useRoomProcessing()
+  const { 
+    processedImages, 
+    isProcessingImages, 
+    processImages, 
+    normalizeHotelData, 
+    normalizeBenefitsData, 
+    normalizePromotionsData, 
+    normalizeBlogsData 
+  } = useHotelDataProcessing()
+  
+  const { 
+    startViewTracking, 
+    trackHotelDetailView, 
+    trackHotelSearch, 
+    trackHotelInquiry 
+  } = useHotelAnalytics()
   
   // Analytics 추적
   const { trackHotelView, trackClick, trackConversion } = useAnalytics()

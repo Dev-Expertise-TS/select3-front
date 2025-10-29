@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { devLog, devError } from '@/lib/optimization-utils'
 
 interface HotelDetailsRequest {
   hotelCode: string
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       Rooms: rooms
     }
     
-    console.log('🔢 룸 정보 (요청 전):', {
+    devLog('🔢 룸 정보 (요청 전):', {
       받은값: {
         rooms: body.rooms,
         adults: body.adults,
@@ -60,14 +61,14 @@ export async function POST(request: NextRequest) {
     
     // ratePlanCodes가 있으면 추가
     if (body.ratePlanCodes && body.ratePlanCodes.length > 0) {
-      console.log('✅ ratePlanCodes 받음:', body.ratePlanCodes)
+      devLog('✅ ratePlanCodes 받음:', body.ratePlanCodes)
       requestBody.RatePlanCode = body.ratePlanCodes
       requestBody.ExactMatchOnly = true
     } else {
-      console.log('⚠️ ratePlanCodes 없음 - 모든 Rate Plan 조회')
+      devLog('⚠️ ratePlanCodes 없음 - 모든 Rate Plan 조회')
     }
 
-    console.log('📤 Sabre Hotel Details API 요청:', requestBody)
+    devLog('📤 Sabre Hotel Details API 요청:', requestBody)
 
     // 여러 Sabre API 엔드포인트를 시도하여 객실 상세 정보 가져오기
     const descriptiveData = null
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
     // TODO: API 서버 복구 후 다시 활성화
     /*
     try {
-      console.log('📤 Hotel Avail API 요청:', {
+      devLog('📤 Hotel Avail API 요청:', {
         HotelCode: body.hotelCode.toString(),
         StartDate: body.startDate,
         EndDate: body.endDate,
@@ -101,13 +102,13 @@ export async function POST(request: NextRequest) {
       
       if (availResponse.ok) {
         descriptiveData = await availResponse.json()
-        console.log('📥 Hotel Avail API 응답:', {
+        devLog('📥 Hotel Avail API 응답:', {
           hasResult: !!descriptiveData,
           resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
           fullResponse: descriptiveData
         })
       } else {
-        console.warn('Hotel Avail API 호출 실패:', {
+        devError('Hotel Avail API 호출 실패:', {
           status: availResponse.status,
           statusText: availResponse.statusText,
           url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-avail',
@@ -115,11 +116,11 @@ export async function POST(request: NextRequest) {
         })
         // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
         if (availResponse.status === 404) {
-          console.warn('Sabre API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
+          devError('Sabre API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
         }
       }
     } catch (error) {
-      console.warn('Hotel Avail API 호출 오류:', error)
+      devError('Hotel Avail API 호출 오류:', error)
     }
     */
     
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
     /*
     if (!descriptiveData) {
       try {
-        console.log('📤 Hotel Info API 요청:', {
+        devLog('📤 Hotel Info API 요청:', {
           HotelCode: body.hotelCode.toString(),
           CodeContext: 'GLOBAL'
         })
@@ -148,13 +149,13 @@ export async function POST(request: NextRequest) {
         
         if (infoResponse.ok) {
           descriptiveData = await infoResponse.json()
-          console.log('📥 Hotel Info API 응답:', {
+          devLog('📥 Hotel Info API 응답:', {
             hasResult: !!descriptiveData,
             resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
             fullResponse: descriptiveData
           })
       } else {
-        console.warn('Hotel Info API 호출 실패:', {
+        devError('Hotel Info API 호출 실패:', {
           status: infoResponse.status,
           statusText: infoResponse.statusText,
           url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-info',
@@ -162,11 +163,11 @@ export async function POST(request: NextRequest) {
         })
         // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
         if (infoResponse.status === 404) {
-          console.warn('Sabre Hotel Info API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
+          devError('Sabre Hotel Info API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
         }
       }
       } catch (error) {
-        console.warn('Hotel Info API 호출 오류:', error)
+        devError('Hotel Info API 호출 오류:', error)
       }
     }
     */
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
     /*
     if (!descriptiveData) {
       try {
-        console.log('📤 Hotel Search API 요청:', {
+        devLog('📤 Hotel Search API 요청:', {
           HotelCode: body.hotelCode.toString()
         })
         
@@ -191,13 +192,13 @@ export async function POST(request: NextRequest) {
         
         if (searchResponse.ok) {
           descriptiveData = await searchResponse.json()
-          console.log('📥 Hotel Search API 응답:', {
+          devLog('📥 Hotel Search API 응답:', {
             hasResult: !!descriptiveData,
             resultKeys: descriptiveData ? Object.keys(descriptiveData) : 'no result',
             fullResponse: descriptiveData
           })
       } else {
-        console.warn('Hotel Search API 호출 실패:', {
+        devError('Hotel Search API 호출 실패:', {
           status: searchResponse.status,
           statusText: searchResponse.statusText,
           url: 'https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-search',
@@ -205,11 +206,11 @@ export async function POST(request: NextRequest) {
         })
         // 404 오류인 경우 API 서버 문제로 간주하고 계속 진행
         if (searchResponse.status === 404) {
-          console.warn('Sabre Hotel Search API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
+          devError('Sabre Hotel Search API 서버가 응답하지 않습니다. 기본 데이터로 진행합니다.')
         }
       }
       } catch (error) {
-        console.warn('Hotel Search API 호출 오류:', error)
+        devError('Hotel Search API 호출 오류:', error)
       }
     }
     */
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
         signal: AbortSignal.timeout(15000)
       })
     } catch (fetchError) {
-      console.error('❌ Sabre API 네트워크 오류:', fetchError)
+      devError('❌ Sabre API 네트워크 오류:', fetchError)
       
       // 네트워크 오류인 경우 사용자 친화적인 메시지 반환
       if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest) {
     
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Sabre API 응답 오류:', response.status, response.statusText, errorText)
+      devError('Sabre API 응답 오류:', response.status, response.statusText, errorText)
       
       let userFriendlyMessage = `Sabre API 호출 실패: ${response.status} ${response.statusText}`
       try {
@@ -275,7 +276,7 @@ export async function POST(request: NextRequest) {
     
     const result = await response.json()
     
-    console.log('📥 Sabre API 응답:', {
+    devLog('📥 Sabre API 응답:', {
       hasResult: !!result,
       resultKeys: result ? Object.keys(result) : 'no result',
       hasGetHotelDetailsRS: !!result?.GetHotelDetailsRS,
@@ -284,7 +285,7 @@ export async function POST(request: NextRequest) {
     
     // 룸 개수별 요금 확인을 위한 상세 로깅
     const hasRoomStays = result?.GetHotelDetailsRS?.RoomStays?.RoomStay
-    console.log('🔍 RoomStays 존재 여부:', !!hasRoomStays)
+    devLog('🔍 RoomStays 존재 여부:', !!hasRoomStays)
     
     if (hasRoomStays) {
       const roomStays = Array.isArray(result.GetHotelDetailsRS.RoomStays.RoomStay) 
@@ -295,7 +296,7 @@ export async function POST(request: NextRequest) {
       const roomRates = firstRoomStay?.RoomRates?.RoomRate
       const firstRate = Array.isArray(roomRates) ? roomRates[0] : roomRates
       
-      console.log('🏨 룸 응답 상세 분석 (서버):', {
+      devLog('🏨 룸 응답 상세 분석 (서버):', {
         요청값: {
           requestedRooms: rooms,
           requestedAdultsPerRoom: adultsPerRoom,
@@ -321,7 +322,7 @@ export async function POST(request: NextRequest) {
       const hotelRateInfo = hotelDetailsInfo?.HotelRateInfo
       const rooms = hotelRateInfo?.Rooms?.Room
       
-      console.log('🏨 대체 응답 구조 상세 분석:', {
+      devLog('🏨 대체 응답 구조 상세 분석:', {
         hasHotelDetailsInfo: !!hotelDetailsInfo,
         hotelDetailsInfoKeys: hotelDetailsInfo ? Object.keys(hotelDetailsInfo) : 'N/A',
         hasHotelRateInfo: !!hotelRateInfo,
@@ -339,7 +340,7 @@ export async function POST(request: NextRequest) {
         const firstRoom = roomArray[0]
         const ratePlans = firstRoom?.RatePlans?.RatePlan
         
-        console.log('🏨 RatePlans 상세 분석:', {
+        devLog('🏨 RatePlans 상세 분석:', {
           hasRatePlans: !!ratePlans,
           ratePlansType: Array.isArray(ratePlans) ? 'array' : typeof ratePlans,
           ratePlansCount: Array.isArray(ratePlans) ? ratePlans.length : (ratePlans ? 1 : 0),
@@ -379,7 +380,7 @@ export async function POST(request: NextRequest) {
     )
 
   } catch (error) {
-    console.error('Hotel details API 오류:', error)
+    devError('Hotel details API 오류:', error)
     return NextResponse.json<HotelDetailsResponse>(
       {
         success: false,
