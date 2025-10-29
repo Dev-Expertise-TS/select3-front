@@ -173,4 +173,20 @@
   .blog-content ol ol ol {
     list-style-type: lower-roman !important;
   }
+
+  /* data-list="bullet" 속성이 있는 li 요소를 블릿 스타일로 */
+  .blog-content ol li[data-list="bullet"] {
+    list-style: none !important;
+    position: relative;
+    padding-left: 1.5rem;
+  }
+
+  .blog-content ol li[data-list="bullet"]::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #374151;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
 }
