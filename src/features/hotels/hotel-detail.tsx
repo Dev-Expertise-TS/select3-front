@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
 // React
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 
 // External libraries
 import { useQuery } from "@tanstack/react-query"
@@ -918,6 +918,7 @@ export function HotelDetail({
   
   // 초기 렌더에서 히어로/썸네일(최대 10장) 존재 검증 후 즉시 placeholder 대체
   const [validatedImages, setValidatedImages] = useState(displayImages)
+  const lastCheckedKeyRef = useRef<string | null>(null)
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -928,6 +929,11 @@ export function HotelDetail({
           return
         }
         const urls = firstTen.map(img => img.media_path)
+        const key = urls.join(',')
+        if (lastCheckedKeyRef.current === key) {
+          return
+        }
+        lastCheckedKeyRef.current = key
         const results = await checkMultipleImages(urls)
         if (cancelled) return
         const updated = [...displayImages]

@@ -101,11 +101,35 @@ export async function checkImageExists(imageUrl: string): Promise<boolean> {
   try {
     console.log(`🔍 이미지 존재 확인 중: ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
     
+    // 호환 가능한 타임아웃 신호 생성 (Safari 등 AbortSignal.timeout 미지원 대비)
+    const createTimeoutSignal = (ms: number): { signal?: AbortSignal; cancel?: () => void } => {
+      try {
+        // 표준 지원 시 활용
+        // @ts-expect-error - 런타임 환경에 따라 존재하지 않을 수 있음
+        if (typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).timeout === 'function') {
+          // @ts-expect-error
+          const sig = (AbortSignal as any).timeout(ms) as AbortSignal
+          return { signal: sig, cancel: undefined }
+        }
+      } catch {}
+      // 폴리필: AbortController + setTimeout
+      if (typeof AbortController !== 'undefined') {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), ms)
+        return { signal: controller.signal, cancel: () => clearTimeout(timer) }
+      }
+      return { signal: undefined, cancel: undefined }
+    }
+
+    const { signal, cancel } = createTimeoutSignal(5000)
+
     // HEAD 요청으로 이미지 존재 여부 확인
     const response = await fetch(imageUrl, { 
       method: 'HEAD',
-      signal: AbortSignal.timeout(5000) // 5초 타임아웃
+      // 일부 환경에서 signal 미지원일 수 있어 옵션 병합은 조건부로
+      ...(signal ? { signal } : {})
     });
+    cancel?.()
     
     const exists = response.ok;
     
