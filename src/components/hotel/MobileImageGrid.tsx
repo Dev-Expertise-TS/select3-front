@@ -63,7 +63,7 @@ export function MobileImageGrid({
       <div className={cn("lg:hidden", className)}>
         <div className="relative aspect-[4/3] rounded-none sm:rounded-lg overflow-hidden">
           <Image
-            src={optimizeHeroImageMobile(currentImage.media_path)}
+            src={currentImage.media_path}
             alt={hotelName}
             fill
             className="object-cover cursor-pointer"
@@ -122,12 +122,16 @@ export function MobileImageGrid({
             <div className="flex-1 relative bg-black">
               <div className="relative w-full h-full">
                 <Image
-                  src={optimizeGalleryDetail(currentImage.media_path)}
+                  src={currentImage.media_path}
                   alt={`${hotelName} - 이미지 ${currentImageIndex + 1}`}
                   fill
                   className="object-contain"
                   unoptimized={true}
                   sizes="100vw"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = '/placeholder.svg'
+                  }}
                 />
                 
                 {/* 네비게이션 버튼 */}
@@ -168,13 +172,17 @@ export function MobileImageGrid({
                       )}
                     >
                       <Image
-                        src={optimizeGalleryThumbnail(image.media_path)}
+                        src={image.media_path}
                         alt={`${hotelName} 썸네일 ${index + 1}`}
                         fill
                         className="object-cover"
                         unoptimized={true}
                         sizes="64px"
                         loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder.svg'
+                        }}
                       />
                     </button>
                   ))}
