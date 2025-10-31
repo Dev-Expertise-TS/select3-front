@@ -114,7 +114,7 @@ export default function RootLayout({
         <AnalyticsProvider>
           <QueryProvider>
             {/* GTM 디버그 헬퍼 (개발 환경에서만 작동) */}
-            {process.env.NODE_ENV === 'development' && <GTMDebug />}
+            <GTMDebug />
             
             <Suspense fallback={null}>
               <Header />

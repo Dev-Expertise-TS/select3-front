@@ -10,14 +10,19 @@ export function useAnalytics() {
   // 페이지 뷰 추적 - GTM을 통해 전송
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).dataLayer) {
-      const url = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
-      
+      // pathname과 searchParams 안전하게 처리
+      const safePathname = String(pathname || window.location.pathname || '')
+      const searchParamsString = searchParams && typeof searchParams.toString === 'function'
+        ? String(searchParams.toString())
+        : ''
+      const url = searchParamsString ? safePathname + '?' + searchParamsString : safePathname
+
       // GTM을 통해 페이지 뷰 전송 (GTM의 GA4 Configuration 태그가 자동 처리)
-      (window as any).dataLayer.push({
+      ;(window as any).dataLayer.push({
         event: 'page_view',
         page_title: document.title,
         page_location: window.location.origin + url,
-        page_path: pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+        page_path: url
       })
     }
   }, [pathname, searchParams])
