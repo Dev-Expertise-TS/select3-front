@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { RoomCard } from "./RoomCard"
 import { TranslationErrorBoundary } from "@/components/shared/translation-error-boundary"
+import { useAnalytics } from "@/hooks/use-analytics"
 
 interface RoomCardListProps {
   ratePlans: any[]
@@ -15,6 +16,8 @@ interface RoomCardListProps {
   checkOut?: string
   onRequestIntro?: (index: number) => void
   rooms?: number
+  hotelId?: number
+  hotelName?: string
 }
 
 // localStorage 키
@@ -30,10 +33,13 @@ export function RoomCardList({
   checkIn,
   checkOut,
   onRequestIntro,
-  rooms = 1
+  rooms = 1,
+  hotelId,
+  hotelName
 }: RoomCardListProps) {
   const [showAll, setShowAll] = useState(false)
   const [hasAddedKakaoFriend, setHasAddedKakaoFriend] = useState(false)
+  const { trackEvent } = useAnalytics()
 
   // 컴포넌트 마운트 시 localStorage에서 카카오 친구 추가 상태 확인
   useEffect(() => {
@@ -107,6 +113,31 @@ export function RoomCardList({
 
   // 카카오 친구 추가 버튼 클릭 핸들러
   const handleKakaoFriendAdd = () => {
+    // ✅ GA4 이벤트 추적
+    trackEvent('click', 'kakao_friend_add', 'hotel_detail_room_rates')
+    
+    // ✅ GTM dataLayer
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: 'kakao_friend_add',
+        button_location: 'hotel_detail_room_rates',
+        hotel_id: hotelId || null,
+        hotel_name: hotelName || null,
+        check_in: checkIn || null,
+        check_out: checkOut || null,
+        rooms: rooms || 1,
+        timestamp: new Date().toISOString()
+      })
+    }
+    
+    console.log('🎯 [Analytics] 카카오 친구 추가 클릭:', {
+      호텔ID: hotelId,
+      호텔명: hotelName,
+      체크인: checkIn,
+      체크아웃: checkOut,
+      룸수: rooms
+    })
+    
     try {
       // localStorage에 카카오 친구 추가 상태 저장 (영구 저장)
       localStorage.setItem(KAKAO_FRIEND_ADDED_KEY, 'true')

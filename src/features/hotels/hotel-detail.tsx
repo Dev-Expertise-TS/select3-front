@@ -1681,6 +1681,8 @@ export function HotelDetail({
                         processSingleRoomIntro(ratePlanCodes, hotel.property_name_ko, index, searchDates.checkIn, searchDates.checkOut)
                       }}
                       rooms={searchGuests.rooms}
+                      hotelId={hotel?.sabre_id}
+                      hotelName={hotel?.property_name_ko || hotel?.property_name_en}
                     />
                     </div>
                     
