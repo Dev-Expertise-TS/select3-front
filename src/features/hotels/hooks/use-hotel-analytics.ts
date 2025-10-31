@@ -51,9 +51,10 @@ export function useHotelAnalytics() {
       referrer: document.referrer
     }
 
-    // Google Analytics 4 이벤트 전송
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'hotel_detail_view', {
+    // GTM을 통해 이벤트 전송 (GTM이 GA4로 전달)
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      ;(window as any).dataLayer.push({
+        event: 'hotel_detail_view',
         hotel_id: eventData.hotel_id,
         hotel_name: eventData.hotel_name,
         city: eventData.city,
@@ -101,9 +102,10 @@ export function useHotelAnalytics() {
       referrer: document.referrer
     }
 
-    // Google Analytics 4 이벤트 전송
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'hotel_search', {
+    // GTM을 통해 이벤트 전송 (GTM이 GA4로 전달)
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      ;(window as any).dataLayer.push({
+        event: 'hotel_search',
         search_term: eventData.search_query,
         city: eventData.city,
         country: eventData.country,
@@ -145,9 +147,10 @@ export function useHotelAnalytics() {
       referrer: document.referrer
     }
 
-    // Google Analytics 4 이벤트 전송
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'hotel_inquiry', {
+    // GTM을 통해 이벤트 전송 (GTM이 GA4로 전달)
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      ;(window as any).dataLayer.push({
+        event: 'hotel_inquiry',
         hotel_id: eventData.hotel_id,
         hotel_name: eventData.hotel_name,
         inquiry_type: eventData.inquiry_type,

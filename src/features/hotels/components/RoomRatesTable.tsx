@@ -258,42 +258,29 @@ export function RoomRatesTable({
           
           <button 
             onClick={() => {
-              // ✅ GA4 네이티브 이벤트 전송 (구체적인 이벤트명 사용)
-              if (typeof window !== 'undefined' && window.gtag) {
-                window.gtag('event', 'kakao_consultation', {
-                  event_category: 'engagement',
-                  event_label: 'error_state',
-                  button_location: 'error_state',
-                  button_type: 'consultation',
-                  error_context: 'no_rates_available'
-                })
-                console.log('✅ [GA4] 카카오톡 상담 이벤트 전송 완료: kakao_consultation')
-              } else {
-                console.warn('⚠️ [GA4] gtag 함수가 로드되지 않았습니다.')
-              }
-              
-              // ✅ 기존 trackEvent도 유지 (호환성)
-              trackEvent('kakao_consultation', 'engagement', 'error_state')
-              
-              // ✅ GTM dataLayer 상세 데이터
+              // ✅ GTM을 통해 이벤트 전송 (GTM이 GA4로 전달)
               if (typeof window !== 'undefined' && (window as any).dataLayer) {
                 (window as any).dataLayer.push({
                   event: 'kakao_consultation',
+                  event_category: 'engagement',
+                  event_label: 'error_state',
                   button_location: 'error_state',
                   button_type: 'consultation',
                   error_context: 'no_rates_available',
                   timestamp: new Date().toISOString()
                 })
-                console.log('✅ [GTM] dataLayer push 완료')
+                console.log('✅ [GTM] 카카오톡 상담 이벤트 전송 완료: kakao_consultation')
               } else {
                 console.warn('⚠️ [GTM] dataLayer가 없습니다.')
               }
+              
+              // ✅ 기존 trackEvent도 유지 (호환성)
+              trackEvent('kakao_consultation', 'engagement', 'error_state')
               
               console.log('💬 [Analytics] 카카오톡 상담 클릭 (에러 상태):', {
                 위치: 'error_state',
                 버튼타입: 'consultation',
                 에러컨텍스트: 'no_rates_available',
-                gtag_로드: typeof window !== 'undefined' && typeof window.gtag !== 'undefined',
                 dataLayer_로드: typeof window !== 'undefined' && typeof (window as any).dataLayer !== 'undefined'
               })
               

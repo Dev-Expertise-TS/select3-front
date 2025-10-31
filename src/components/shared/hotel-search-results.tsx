@@ -370,9 +370,10 @@ export function HotelSearchResults({
           console.log('🔄 브랜드 변경 → 체인 페이지 이동:', chainId)
           
           // Analytics: 브랜드 선택 추적
-          if (typeof window !== 'undefined' && window.gtag) {
+          if (typeof window !== 'undefined' && (window as any).dataLayer) {
             const selectedBrand = finalFilterOptions?.brands?.find((b: any) => b.id === value)
-            window.gtag('event', 'select_brand', {
+            ;(window as any).dataLayer.push({
+              event: 'select_brand',
               event_category: 'filter',
               event_label: selectedBrand?.label || value,
               brand_id: value,
