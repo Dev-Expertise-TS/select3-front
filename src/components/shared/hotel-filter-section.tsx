@@ -112,8 +112,22 @@ export function HotelFilterSection({
                   <select
                     value={selectedBrandId || ""}
                     onChange={(e) => {
-                      if (e.target.value) {
-                        onBrandChange(e.target.value)
+                      const value = e.target.value
+                      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                        ;(window as any).dataLayer.push({
+                          event: 'select_brand',
+                          event_category: 'filter',
+                          event_label: (() => {
+                            const b = selectedChainBrands.find((br: any) => String(br.brand_id) === String(value))
+                            return b?.brand_name_en || b?.brand_name_ko || value
+                          })(),
+                          brand_id: value || 'all',
+                          chain_id: selectedChainId ? String(selectedChainId) : null,
+                          timestamp: new Date().toISOString(),
+                        })
+                      }
+                      if (value) {
+                        onBrandChange(value)
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors"

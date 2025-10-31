@@ -211,7 +211,23 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
           <label className="block text-sm font-medium text-gray-700 mb-2">브랜드</label>
           <select
             value={filters.brand}
-            onChange={(e) => handleFilterChange('brand', e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value
+              if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                ;(window as any).dataLayer.push({
+                  event: 'select_brand',
+                  event_category: 'filter',
+                  event_label: (() => {
+                    const b = filterOptions.brands.find((br: any) => String(br.id) === String(value))
+                    return b?.label || value
+                  })(),
+                  brand_id: value || 'all',
+                  chain_id: undefined,
+                  timestamp: new Date().toISOString(),
+                })
+              }
+              handleFilterChange('brand', value)
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">전체</option>
