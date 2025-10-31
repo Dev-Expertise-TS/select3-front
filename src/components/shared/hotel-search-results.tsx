@@ -350,49 +350,51 @@ export function HotelSearchResults({
       }
     }
     
-    // 브랜드 필터 변경 시 해당 브랜드가 속한 체인을 자동 선택
+    // 브랜드 필터 변경 시 해당 브랜드가 속한 체인을 자동 선택 + select_brand 이벤트 전송
     if (type === 'brand') {
       console.log('🔄 브랜드 필터 변경:', value)
-      if (value) {
-        // 브랜드 선택 시 해당 브랜드가 속한 체인을 자동 선택
-        let chainId = null
-        if (finalFilterOptions && finalFilterOptions.brands) {
-          const selectedBrand = finalFilterOptions.brands.find((b: any) => b.id === value)
-          if (selectedBrand && selectedBrand.chain_id) {
-            chainId = String(selectedBrand.chain_id)
-            newFilters.chain = chainId
-            console.log('🔄 브랜드 선택 → 체인 자동 선택:', newFilters.chain)
-          }
+      const stringValue = value != null ? String(value) : ''
+
+      // 선택된 브랜드/체인 robust 탐색 (id 타입 불일치 대응)
+      let selectedBrand: any | undefined
+      let chainId: string | null = null
+      if (finalFilterOptions && Array.isArray(finalFilterOptions.brands)) {
+        selectedBrand = finalFilterOptions.brands.find((b: any) => {
+          const bid = b?.id != null ? String(b.id) : ''
+          return bid === stringValue
+        })
+        if (selectedBrand && selectedBrand.chain_id != null) {
+          chainId = String(selectedBrand.chain_id)
+          newFilters.chain = chainId
+          console.log('🔄 브랜드 선택 → 체인 자동 선택:', newFilters.chain)
         }
-        
-        // onBrandChange 핸들러가 있으면(브랜드/체인 페이지) 항상 해당 체인 페이지로 이동
+      }
+
+      // Analytics: 항상 select_brand 이벤트 전송 (페이지 이동 여부와 무관)
+      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+        ;(window as any).dataLayer.push({
+          event: 'select_brand',
+          event_category: 'filter',
+          event_label: selectedBrand?.label || stringValue || 'all',
+          brand_id: stringValue || 'all',
+          chain_id: chainId,
+          timestamp: new Date().toISOString(),
+        })
+      }
+
+      if (stringValue) {
+        // onBrandChange 핸들러가 있으면(브랜드/체인 페이지) 해당 체인 페이지로 이동
         if (onBrandChange && chainId) {
           console.log('🔄 브랜드 변경 → 체인 페이지 이동:', chainId)
-          
-          // Analytics: 브랜드 선택 추적
-          if (typeof window !== 'undefined' && (window as any).dataLayer) {
-            const selectedBrand = finalFilterOptions?.brands?.find((b: any) => b.id === value)
-            ;(window as any).dataLayer.push({
-              event: 'select_brand',
-              event_category: 'filter',
-              event_label: selectedBrand?.label || value,
-              brand_id: value,
-              chain_id: chainId
-            })
-          }
-          
-          // 페이지 이동
-          onBrandChange(value, chainId)
+          onBrandChange(stringValue, chainId)
           return // 페이지 이동하므로 나머지 로직 실행하지 않음
         }
-        
+
         // onBrandChange가 없으면 (전체보기 페이지) 필터만 적용
-        // initialHotels가 없을 때만 selectedBrandId 설정
         if (initialHotels.length === 0) {
-          setSelectedBrandId(value)
-          console.log('🔄 브랜드 필터 변경 → selectedBrandId 설정:', value)
+          setSelectedBrandId(stringValue)
+          console.log('🔄 브랜드 필터 변경 → selectedBrandId 설정:', stringValue)
         }
-        
         console.log('🔄 브랜드 필터 선택 → 필터만 적용')
       } else {
         // 브랜드 전체 선택 시 체인도 전체로 초기화
