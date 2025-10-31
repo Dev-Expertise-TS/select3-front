@@ -304,6 +304,18 @@ export function RoomCard({
                   currency: currency,
                   timestamp: new Date().toISOString()
                 })
+                // 보조 이벤트: 호텔 문의 공통 스키마
+                ;(window as any).dataLayer.push({
+                  event: 'hotel_inquiry',
+                  inquiry_type: 'kakao',
+                  contact_method: 'kakao_chat',
+                  button_location: 'room_card',
+                  room_type: roomType,
+                  room_name: roomName,
+                  amount: typeof amount === 'number' ? amount : 0,
+                  currency: currency,
+                  timestamp: new Date().toISOString()
+                })
                 console.log('✅ [GTM] 카카오톡 상담 이벤트 전송 완료: kakao_consultation')
               } else {
                 console.warn('⚠️ [GTM] dataLayer가 없습니다.')

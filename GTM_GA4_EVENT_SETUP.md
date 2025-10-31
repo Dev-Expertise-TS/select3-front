@@ -6,6 +6,17 @@
 - ✅ **GA4**: "이벤트 만들기"로 `kakao_consultation`, `hotel_search`, `kakao_friend_add` 등록 완료
 - ❓ **GTM**: `dataLayer` 이벤트를 감지하여 GA4로 전달하는 태그 설정 필요
 
+### 🔄 신규 코드 연동(중요)
+다음 이벤트가 코드에서 자동으로 전송됩니다. GTM에서 각각에 대한 트리거/태그 설정이 필요합니다.
+
+- 페이지 진입/경로 변경:
+  - `page_view_custom` (공통) — 파라미터: `page_path`, `page_type`
+  - 주요 섹션 진입 시 보조 이벤트: `view_testimonials`, `view_promotion`, `view_hotel_list`, `view_hotel_region`, `view_blog`
+- 내비게이션 클릭:
+  - `nav_click` — 파라미터: `nav_location`(`header`/`bottom_nav`/`bottom_nav_menu`), `nav_href`, `event_label`
+- 기존 버튼/행동:
+  - `kakao_consultation`, `kakao_friend_add`, `hotel_search`, `select_brand`, `hotel_detail_view`, `hotel_inquiry`
+
 ## ⚠️ 중요 포인트
 
 ### 1. GA4의 "이벤트 만들기"는 영향 없음
@@ -84,6 +95,18 @@ GA4의 "이벤트 만들기"는 단순히 **이벤트를 정의/등록**하는 �
 - `select_brand`
 - `hotel_inquiry`
 
+#### (신규) 페이지 진입/경로 이벤트 태그
+
+- `page_view_custom` (맞춤 이벤트 트리거: 이벤트 이름 = `page_view_custom`)
+  - 이벤트 파라미터 매핑 권장: `page_path`, `page_type`
+- 보조 섹션 이벤트(선택): `view_testimonials`, `view_promotion`, `view_hotel_list`, `view_hotel_region`, `view_blog`
+  - 각 이벤트 이름으로 맞춤 이벤트 트리거 생성 → GA4 Event 태그 1:1 매핑
+
+#### (신규) 내비게이션 클릭 이벤트 태그
+
+- `nav_click` (맞춤 이벤트 트리거: 이벤트 이름 = `nav_click`)
+  - 이벤트 파라미터 매핑: `event_label`(메뉴명), `nav_location`, `nav_href`
+
 ---
 
 ### 4단계: DataLayer 변수 설정 (선택사항)
@@ -103,6 +126,13 @@ GA4의 "이벤트 만들기"는 단순히 **이벤트를 정의/등록**하는 �
 - `DLV - search_term`
 - `DLV - hotel_id`
 - 등등...
+
+#### (신규) 페이지/내비 전용 변수 권장 추가
+- `DLV - page_path` → `page_path`
+- `DLV - page_type` → `page_type`
+- `DLV - nav_location` → `nav_location`
+- `DLV - nav_href` → `nav_href`
+- `DLV - event_label` → `event_label`
 
 ---
 

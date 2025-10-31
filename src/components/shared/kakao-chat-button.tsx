@@ -41,6 +41,14 @@ export function KakaoChatButton({
         button_text: text || '카카오톡 상담하기',
         timestamp: new Date().toISOString()
       })
+      // 보조 이벤트: 호텔 문의 공통 스키마
+      ;(window as any).dataLayer.push({
+        event: 'hotel_inquiry',
+        inquiry_type: 'kakao',
+        contact_method: 'kakao_chat',
+        button_location: location,
+        timestamp: new Date().toISOString()
+      })
       console.log('✅ [GTM] 카카오톡 상담 이벤트 전송 완료: kakao_consultation')
     } else {
       console.warn('⚠️ [GTM] dataLayer가 없습니다.')

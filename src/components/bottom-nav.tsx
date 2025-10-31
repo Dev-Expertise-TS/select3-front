@@ -55,6 +55,18 @@ export function BottomNav() {
                     ? "text-blue-600" 
                     : "text-gray-600 hover:text-gray-900"
                 )}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                    ;(window as any).dataLayer.push({
+                      event: 'nav_click',
+                      event_category: 'navigation',
+                      event_label: item.label,
+                      nav_location: 'bottom_nav',
+                      nav_href: item.href,
+                      timestamp: new Date().toISOString(),
+                    })
+                  }
+                }}
               >
                 <Icon className={cn(
                   "w-5 h-5 mb-1 transition-transform group-active:scale-90",
@@ -112,7 +124,19 @@ export function BottomNav() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={toggleMenu}
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                          ;(window as any).dataLayer.push({
+                            event: 'nav_click',
+                            event_category: 'navigation',
+                            event_label: item.label,
+                            nav_location: 'bottom_nav_menu',
+                            nav_href: item.href,
+                            timestamp: new Date().toISOString(),
+                          })
+                        }
+                        toggleMenu()
+                      }}
                       className={cn(
                         "flex items-center px-4 py-3 rounded-lg transition-colors",
                         isActive 

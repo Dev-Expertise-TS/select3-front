@@ -56,6 +56,18 @@ export function Header() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                          (window as any).dataLayer.push({
+                            event: 'nav_click',
+                            event_category: 'navigation',
+                            event_label: item.label,
+                            nav_location: 'header',
+                            nav_href: item.href,
+                            timestamp: new Date().toISOString(),
+                          })
+                        }
+                      }}
                     >
                       <Image
                         src="/tourvis_logo.jpg"
@@ -71,6 +83,18 @@ export function Header() {
                     <Link
                       href={item.href}
                       className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                          (window as any).dataLayer.push({
+                            event: 'nav_click',
+                            event_category: 'navigation',
+                            event_label: item.label,
+                            nav_location: 'header',
+                            nav_href: item.href,
+                            timestamp: new Date().toISOString(),
+                          })
+                        }
+                      }}
                     >
                       {item.label}
                     </Link>

@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { GTMDebug } from "@/components/analytics/gtm-debug"
+import { RouteEvents } from "@/components/analytics/route-events"
 
 // BottomNav가 usePathname을 사용하므로 동적 렌더링 필요
 export const dynamic = 'force-dynamic'
@@ -115,6 +116,7 @@ export default function RootLayout({
           <QueryProvider>
             {/* GTM 디버그 헬퍼 (개발 환경에서만 작동) */}
             <GTMDebug />
+            <RouteEvents />
             
             <Suspense fallback={null}>
               <Header />

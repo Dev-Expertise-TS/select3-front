@@ -553,6 +553,25 @@ export function HotelDetail({
   useEffect(() => {
     if (initialHotel) {
       trackHotelView(initialHotel.property_name_ko || initialHotel.property_name_en || 'Unknown Hotel', String(initialHotel.sabre_id))
+      // GTM 커스텀 이벤트: hotel_detail_view (GTM 트리거용)
+      try {
+        trackHotelDetailView({
+          sabre_id: String(initialHotel.sabre_id),
+          name_ko: initialHotel.property_name_ko,
+          name_en: initialHotel.property_name_en,
+          city_ko: initialHotel.city_ko,
+          city_en: initialHotel.city_en,
+          city: initialHotel.city,
+          country_ko: initialHotel.country_ko,
+          country_en: initialHotel.country_en,
+          country: initialHotel.country,
+          brand_id: initialHotel.brand_id,
+          chain_id: initialHotel.chain_id,
+          star_rating: initialHotel.star_rating,
+        })
+      } catch (_e) {
+        // noop
+      }
     }
   }, [initialHotel, trackHotelView])
 
