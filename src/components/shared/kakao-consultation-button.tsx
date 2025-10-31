@@ -35,17 +35,44 @@ export function KakaoConsultationButton() {
   }, [])
 
   const handleClick = () => {
-    // GA4 이벤트 전송
-    trackEvent('click', 'kakao_consultation', 'floating_button')
-    
-    // GTM dataLayer에도 push
-    if (typeof window !== 'undefined' && window.dataLayer) {
-      window.dataLayer.push({
-        event: 'kakao_click',
+    // ✅ GA4 네이티브 이벤트 전송 (구체적인 이벤트명 사용)
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'kakao_consultation', {
+        event_category: 'engagement',
+        event_label: 'floating_button',
         button_location: 'floating_button',
-        button_type: 'consultation'
+        button_type: 'consultation',
+        button_style: 'floating'
       })
+      console.log('✅ [GA4] 카카오톡 상담 이벤트 전송 완료: kakao_consultation')
+    } else {
+      console.warn('⚠️ [GA4] gtag 함수가 로드되지 않았습니다.')
     }
+    
+    // ✅ 기존 trackEvent도 유지 (호환성)
+    trackEvent('kakao_consultation', 'engagement', 'floating_button')
+    
+    // ✅ GTM dataLayer 상세 데이터
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: 'kakao_consultation',
+        button_location: 'floating_button',
+        button_type: 'consultation',
+        button_style: 'floating',
+        timestamp: new Date().toISOString()
+      })
+      console.log('✅ [GTM] dataLayer push 완료')
+    } else {
+      console.warn('⚠️ [GTM] dataLayer가 없습니다.')
+    }
+    
+    console.log('💬 [Analytics] 카카오톡 상담 플로팅 버튼 클릭:', {
+      위치: 'floating_button',
+      버튼타입: 'consultation',
+      버튼스타일: 'floating',
+      gtag_로드: typeof window !== 'undefined' && typeof window.gtag !== 'undefined',
+      dataLayer_로드: typeof window !== 'undefined' && typeof (window as any).dataLayer !== 'undefined'
+    })
   }
 
   return (
