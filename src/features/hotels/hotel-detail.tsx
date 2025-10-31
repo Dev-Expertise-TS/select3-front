@@ -607,39 +607,17 @@ export function HotelDetail({
       // 로딩 상태 설정
       setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loading'))
       
-      // 이미지 존재 여부를 먼저 확인 (캐싱된 결과 사용)
-      import('@/lib/image-cache').then(({ checkImageExists }) => {
-        return checkImageExists(decodedSrc);
-      }).then((exists) => {
-        if (!exists) {
-          // 이미지가 존재하지 않으면 preload하지 않음
-          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
-          console.log(`⏭️ 이미지 존재하지 않음, preload 건너뜀: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`);
-          return;
-        }
-        
-        // 이미지가 존재하면 preload 진행
-        const img = new window.Image()
-        img.onload = () => {
-          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
-          console.log(`✅ 이미지 preload 완료: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
-        }
-        img.onerror = (error) => {
-          setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
-          
-          console.warn(`⚠️ 이미지 preload 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`, {
-            error: error,
-            errorType: typeof error,
-            errorMessage: error instanceof Error ? error.message : String(error),
-            timestamp: new Date().toISOString(),
-            note: '이미지 preload 실패는 페이지 기능에 영향을 주지 않습니다.'
-          })
-        }
-        img.src = decodedSrc
-      }).catch((error) => {
+      // 존재 여부 사전 확인을 생략하고 실제 로딩 결과만 반영 (HEAD 403 등으로 인한 오탐 제거)
+      const img = new window.Image()
+      img.onload = () => {
+        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
+        console.log(`✅ 이미지 preload 완료: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
+      }
+      img.onerror = (error) => {
         setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
-        console.warn(`⚠️ 이미지 존재 여부 확인 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`, error);
-      });
+        console.warn(`⚠️ 이미지 preload 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
+      }
+      img.src = decodedSrc
       
       return new Set([...prev, decodedSrc])
     })
@@ -905,26 +883,45 @@ export function HotelDetail({
       allImagesError: allImagesError
     });
 
-    // 1순위: select_hotel_media 테이블 (호텔 카드와 동일)
+    // 강력 모드: 스토리지 API가 성공적으로 이미지 목록을 반환하면 이를 최우선 사용
+    if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
+      console.log('✅ 강력 모드: Supabase Storage API 우선 사용');
+      const convertedImages = allStorageImagesData.images.map((img) => ({
+        id: img.id,
+        media_path: appendVersion(img.media_path || img.url),
+        alt: img.alt || `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지`,
+        isMain: img.isMain,
+        sequence: img.sequence,
+        filename: img.filename
+      })).sort((a,b) => getSeq(a) - getSeq(b));
+      console.log('📋 Storage API 이미지들:', { count: convertedImages.length });
+      return convertedImages;
+    }
+
+    // 2순위: select_hotel_media 테이블 (부족하면 절대 URL로 보정)
     if (hotelMedia && hotelMedia.length > 0) {
-      console.log('✅ select_hotel_media 테이블 사용 (우선순위 1) - 호텔 카드와 동일');
+      console.log('✅ select_hotel_media 테이블 사용 (우선순위 2)');
+      const toAbsolute = (path: string | null | undefined) => {
+        if (!path || typeof path !== 'string') return ''
+        if (path.startsWith('http')) return path
+        // 상대경로 보정: hotel-media 버킷 공개 경로 기준
+        // storage_path 예: public/<slug>/<file>
+        const base = 'https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/'
+        return appendVersion(base + path.replace(/^\/?/, ''))
+      }
       const convertedImages = hotelMedia.map((media: any, index: number) => ({
         id: media.id || `media-${index}`,
-        media_path: media.public_url || media.storage_path || '/placeholder.svg',
+        media_path: toAbsolute(media.public_url) || toAbsolute(media.storage_path) || '/placeholder.svg',
         alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${media.image_seq || index + 1}`,
         isMain: media.image_seq === 1 || index === 0,
-        sequence: media.image_seq || index + 1,
+        sequence: typeof media.image_seq === 'number' ? media.image_seq : (index + 1),
         filename: media.file_name
-      }));
-      console.log('📋 select_hotel_media 이미지들:', {
+      })).sort((a,b) => getSeq(a) - getSeq(b))
+      console.log('📋 select_hotel_media 이미지들(보정 포함):', {
         count: convertedImages.length,
-        images: convertedImages.map((img: any) => ({ 
-          id: img.id, 
-          media_path: img.media_path, 
-          sequence: img.sequence 
-        }))
-      });
-      return convertedImages;
+        images: convertedImages.map((img: any) => ({ id: img.id, media_path: img.media_path, sequence: img.sequence }))
+      })
+      return convertedImages
     }
     console.log('⚠️ select_hotel_media 테이블이 비어있음 (호텔 카드와 동일 방식)');
 
