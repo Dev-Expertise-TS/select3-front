@@ -46,9 +46,13 @@ export function optimizeSupabaseImage(
     return url
   }
 
-  // 이미 transform 파라미터가 있으면 제거 (중복 방지)
-  const cleanUrl = url.split('?')[0]
-
+  // URL에서 기존 쿼리 파라미터 분리
+  const [baseUrl, existingQuery] = url.split('?')
+  
+  // 기존 쿼리에서 버전 파라미터 추출 (v=...)
+  const existingParams = new URLSearchParams(existingQuery || '')
+  const versionParam = existingParams.get('v')
+  
   // 기본값 설정
   const {
     width,
@@ -66,14 +70,16 @@ export function optimizeSupabaseImage(
   if (quality) params.push(`quality=${quality}`)
   if (format !== 'origin') params.push(`format=${format}`)
   if (resize) params.push(`resize=${resize}`)
+  // 버전 파라미터가 있으면 유지
+  if (versionParam) params.push(`v=${versionParam}`)
 
-  // 파라미터가 없으면 원본 반환
-  if (params.length === 0) {
-    return cleanUrl
+  // Transform 파라미터가 없어도 버전 파라미터만 있는 경우 처리
+  if (params.length === 0 && !versionParam) {
+    return url
   }
 
-  // Supabase Transform API URL 생성
-  return `${cleanUrl}?${params.join('&')}`
+  // Supabase Transform API URL 생성 (버전 파라미터 포함)
+  return `${baseUrl}?${params.join('&')}`
 }
 
 /**

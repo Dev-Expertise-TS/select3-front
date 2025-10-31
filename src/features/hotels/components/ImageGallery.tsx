@@ -292,14 +292,13 @@ export function ImageGallery({
                       onClick={() => openDetailView(index)}
                     >
                       <NextImage
-                        src={image.media_path}
+                        src={optimizeGalleryGrid(image.media_path)}
                         alt={image.alt || `Gallery ${index + 1}`}
                         fill
                         className="object-cover transition-all duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         quality={80}
                         loading={index < 8 ? "eager" : "lazy"}
-                        unoptimized={true}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.src = '/placeholder.svg'
@@ -332,7 +331,7 @@ export function ImageGallery({
                 {validImages[currentImageIndex] && (
                     <NextImage
                     key={validImages[currentImageIndex].id}
-                    src={validImages[currentImageIndex].media_path}
+                    src={optimizeGalleryDetail(validImages[currentImageIndex].media_path)}
                     alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
                     fill
                     className="object-contain"
@@ -341,7 +340,6 @@ export function ImageGallery({
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
-                    unoptimized={true}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
                       target.src = '/placeholder.svg'
@@ -392,7 +390,7 @@ export function ImageGallery({
                         }}
                       >
                         <NextImage
-                          src={image.media_path}
+                          src={optimizeGalleryThumbnail(image.media_path)}
                           alt={image.alt || `Thumbnail ${index + 1}`}
                           fill
                           className="object-cover transition-transform duration-200 hover:scale-105"

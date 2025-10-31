@@ -69,7 +69,6 @@ export function MobileImageGrid({
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
-            unoptimized={true}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"
             loading="eager"
@@ -122,11 +121,10 @@ export function MobileImageGrid({
             <div className="flex-1 relative bg-black">
               <div className="relative w-full h-full">
                 <Image
-                  src={currentImage.media_path}
+                  src={optimizeGalleryDetail(currentImage.media_path)}
                   alt={`${hotelName} - 이미지 ${currentImageIndex + 1}`}
                   fill
                   className="object-contain"
-                  unoptimized={true}
                   sizes="100vw"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
@@ -172,11 +170,10 @@ export function MobileImageGrid({
                       )}
                     >
                       <Image
-                        src={image.media_path}
+                        src={optimizeGalleryThumbnail(image.media_path)}
                         alt={`${hotelName} 썸네일 ${index + 1}`}
                         fill
                         className="object-cover"
-                        unoptimized={true}
                         sizes="64px"
                         loading="lazy"
                         onError={(e) => {
