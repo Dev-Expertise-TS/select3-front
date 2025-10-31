@@ -113,8 +113,26 @@ export function RoomCardList({
 
   // 카카오 친구 추가 버튼 클릭 핸들러
   const handleKakaoFriendAdd = () => {
-    // ✅ GA4 이벤트 추적
-    trackEvent('click', 'kakao_friend_add', 'hotel_detail_room_rates')
+    // ✅ GA4 이벤트 추적 (더 구체적인 이벤트명 사용)
+    // 'click' 대신 'kakao_friend_add'로 이벤트명 변경하여 GA4에서 더 명확하게 확인 가능
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'kakao_friend_add', {
+        event_category: 'engagement',
+        event_label: 'hotel_detail_room_rates',
+        hotel_id: hotelId || undefined,
+        hotel_name: hotelName || undefined,
+        check_in: checkIn || undefined,
+        check_out: checkOut || undefined,
+        rooms: rooms || 1,
+        button_location: 'hotel_detail_room_rates'
+      })
+      console.log('✅ [GA4] 이벤트 전송 완료: kakao_friend_add')
+    } else {
+      console.warn('⚠️ [GA4] gtag 함수가 로드되지 않았습니다.')
+    }
+    
+    // ✅ 기존 trackEvent도 유지 (호환성)
+    trackEvent('kakao_friend_add', 'engagement', 'hotel_detail_room_rates')
     
     // ✅ GTM dataLayer
     if (typeof window !== 'undefined' && (window as any).dataLayer) {
@@ -128,6 +146,9 @@ export function RoomCardList({
         rooms: rooms || 1,
         timestamp: new Date().toISOString()
       })
+      console.log('✅ [GTM] dataLayer push 완료')
+    } else {
+      console.warn('⚠️ [GTM] dataLayer가 없습니다.')
     }
     
     console.log('🎯 [Analytics] 카카오 친구 추가 클릭:', {
@@ -135,7 +156,9 @@ export function RoomCardList({
       호텔명: hotelName,
       체크인: checkIn,
       체크아웃: checkOut,
-      룸수: rooms
+      룸수: rooms,
+      gtag_로드: typeof window !== 'undefined' && typeof window.gtag !== 'undefined',
+      dataLayer_로드: typeof window !== 'undefined' && typeof (window as any).dataLayer !== 'undefined'
     })
     
     try {
