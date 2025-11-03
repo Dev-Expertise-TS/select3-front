@@ -461,7 +461,8 @@ export function HotelSearchResults({
     // 브랜드 페이지에서 initialBrandId가 있으면 해당 브랜드만 필터링
     if (hasInitialBrandId && initialHotels.length > 0) {
       const brandFilteredHotels = initialHotels.filter((hotel: any) => {
-        return hotel.brand_id === initialBrandId
+        // 타입 일치를 위해 문자열로 변환하여 비교
+        return String(hotel.brand_id) === String(initialBrandId)
       })
       console.log(`🔍 [브랜드 필터링] initialBrandId: ${initialBrandId}, 필터링된 호텔 수: ${brandFilteredHotels.length}`)
       return brandFilteredHotels
