@@ -54,20 +54,14 @@ const nextConfig = {
     ];
   },
 
-  // ✅ 호스트 301 일원화: apex → www
+  // ✅ 호스트 301 일원화: www → apex
   async redirects() {
     return [
       {
-        // apex 도메인으로 들어온 모든 요청을 www로 영구 리다이렉트
+        // www 도메인으로 들어온 모든 요청을 apex로 영구 리다이렉트
         source: '/:path*',
         has: [{ type: 'host', value: 'www.luxury-select.co.kr' }],
         destination: 'https://luxury-select.co.kr/:path*',
-        permanent: true,
-      },
-      // 선택: 슬래시 정규화(마감 슬래시 제거)
-      {
-        source: '/:path*/',
-        destination: '/:path*',
         permanent: true,
       },
     ];
