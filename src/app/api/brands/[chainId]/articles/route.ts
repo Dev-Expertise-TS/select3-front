@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+/**
+ * brand_id_connect 컬럼 파싱 함수
+ * 콤마로 구분된 brand_id 문자열을 배열로 변환
+ * 예: "71,72,73" -> [71, 72, 73]
+ */
+function parseBrandIdConnect(brandIdConnect: string | null | undefined): number[] {
+  if (!brandIdConnect) return []
+  
+  if (typeof brandIdConnect === 'string') {
+    // JSON 배열 형식인 경우
+    if (brandIdConnect.startsWith('[') && brandIdConnect.endsWith(']')) {
+      try {
+        return JSON.parse(brandIdConnect).map((id: any) => parseInt(String(id)))
+      } catch {
+        // JSON 파싱 실패 시 쉼표로 구분
+        return brandIdConnect
+          .replace(/[\[\]]/g, '')
+          .split(',')
+          .map(id => parseInt(id.trim()))
+          .filter(id => !isNaN(id))
+      }
+    }
+    // 쉼표로 구분된 문자열
+    return brandIdConnect
+      .split(',')
+      .map(id => parseInt(id.trim()))
+      .filter(id => !isNaN(id))
+  }
+  
+  return []
+}
+
+/**
+ * 브랜드 ID 배열 중 하나라도 일치하는지 확인
+ */
+function hasBrandMatch(blogBrandIds: number[], chainBrandIds: number[]): boolean {
+  return blogBrandIds.some(blogBrandId => chainBrandIds.includes(blogBrandId))
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ chainId: string }> }
@@ -9,7 +48,7 @@ export async function GET(
     const supabase = await createClient()
     const { chainId } = await params
     
-    console.log(`[ API ] 브랜드 ${chainId}의 아티클 조회 시작`)
+    console.log(`[ API ] 체인 ${chainId}의 아티클 조회 시작 (brand_id_connect 기반)`)
     
     // 1. 해당 체인의 브랜드들 조회
     const { data: brands, error: brandsError } = await supabase
@@ -33,94 +72,18 @@ export async function GET(
         meta: {
           count: 0,
           chainId: parseInt(chainId),
-          brands: []
+          brands: [],
+          method: 'brand_id_connect'
         }
       })
     }
     
-    const brandIds = brands.map(brand => brand.brand_id)
-    console.log(`[ API ] 조회할 브랜드 ID들:`, brandIds)
+    // 체인에 속한 모든 브랜드 ID 추출
+    const chainBrandIds = brands.map(brand => brand.brand_id)
+    console.log(`[ API ] 체인 ${chainId}의 브랜드 ID들:`, chainBrandIds)
     
-    // 2. 해당 브랜드들의 호텔들 조회
-    const { data: hotels, error: hotelsError } = await supabase
-      .from('select_hotels')
-      .select('*')
-      .in('brand_id', brandIds)
-      .not('blogs', 'is', null)
-    
-    if (hotelsError) {
-      console.error('[ API ] 호텔 조회 에러:', hotelsError)
-      return NextResponse.json(
-        { success: false, error: "호텔 정보를 가져오는데 실패했습니다." },
-        { status: 500 }
-      )
-    }
-    
-    // 클라이언트에서 publish 필터링 (false 제외)
-    const filteredHotels = (hotels || []).filter((h: any) => h.publish !== false)
-    
-    if (filteredHotels.length === 0) {
-      console.log(`[ API ] 체인 ${chainId}에 아티클이 있는 호텔이 없음`)
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: {
-          count: 0,
-          chainId: parseInt(chainId),
-          brands: brands,
-          hotels: []
-        }
-      })
-    }
-    
-    // 3. 모든 호텔의 blogs 필드에서 slug 추출
-    const allBlogSlugs = new Set<string>()
-    const hotelBlogMap = new Map<string, string[]>() // 호텔명 -> 블로그 슬러그 배열
-    
-    filteredHotels.forEach(hotel => {
-      if (hotel.blogs) {
-        let blogSlugs: string[] = []
-        
-        if (typeof hotel.blogs === 'string') {
-          if (hotel.blogs.startsWith('[') && hotel.blogs.endsWith(']')) {
-            try {
-              blogSlugs = JSON.parse(hotel.blogs)
-            } catch (parseError) {
-              blogSlugs = hotel.blogs.split(',').map(slug => slug.trim()).filter(slug => slug.length > 0)
-            }
-          } else {
-            blogSlugs = hotel.blogs.split(',').map(slug => slug.trim()).filter(slug => slug.length > 0)
-          }
-        } else if (Array.isArray(hotel.blogs)) {
-          blogSlugs = hotel.blogs
-        }
-        
-        if (blogSlugs.length > 0) {
-          hotelBlogMap.set(`${hotel.property_name_ko || hotel.property_name_en}`, blogSlugs)
-          blogSlugs.forEach(slug => allBlogSlugs.add(slug))
-        }
-      }
-    })
-    
-    const uniqueBlogSlugs = Array.from(allBlogSlugs)
-    console.log(`[ API ] 발견된 블로그 슬러그 ${uniqueBlogSlugs.length}개:`, uniqueBlogSlugs.slice(0, 5))
-    
-    if (uniqueBlogSlugs.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: {
-          count: 0,
-          chainId: parseInt(chainId),
-          brands: brands,
-          hotels: filteredHotels.length,
-          blogSlugs: []
-        }
-      })
-    }
-    
-    // 4. 블로그 데이터 조회
-    const { data: blogs, error: blogsError } = await supabase
+    // 2. select_hotel_blogs 테이블에서 모든 블로그 조회 (brand_id_connect 컬럼 포함)
+    const { data: allBlogs, error: blogsError } = await supabase
       .from('select_hotel_blogs')
       .select(`
         slug,
@@ -128,11 +91,12 @@ export async function GET(
         main_image,
         sub_title,
         created_at,
-        updated_at
+        updated_at,
+        brand_id_connect,
+        publish
       `)
-      .in('slug', uniqueBlogSlugs)
-      .order('updated_at', { ascending: false })
-      .limit(12) // 최대 12개만
+      .eq('publish', true)
+      .not('brand_id_connect', 'is', null)
     
     if (blogsError) {
       console.error('[ API ] 블로그 조회 에러:', blogsError)
@@ -142,18 +106,62 @@ export async function GET(
       )
     }
     
-    console.log(`[ API ] 브랜드 ${chainId}의 아티클 ${blogs?.length || 0}개 조회 완료`)
+    if (!allBlogs || allBlogs.length === 0) {
+      console.log(`[ API ] brand_id_connect가 설정된 블로그가 없음`)
+      return NextResponse.json({
+        success: true,
+        data: [],
+        meta: {
+          count: 0,
+          chainId: parseInt(chainId),
+          brands: brands,
+          method: 'brand_id_connect'
+        }
+      })
+    }
+    
+    // 3. 클라이언트에서 brand_id_connect 필터링
+    const matchedBlogs = allBlogs.filter(blog => {
+      const blogBrandIds = parseBrandIdConnect(blog.brand_id_connect)
+      const hasMatch = hasBrandMatch(blogBrandIds, chainBrandIds)
+      
+      if (hasMatch) {
+        console.log(`[ API ] ✅ 블로그 "${blog.main_title}" 매칭:`, {
+          blogBrandIds,
+          chainBrandIds,
+          matched: blogBrandIds.filter(id => chainBrandIds.includes(id))
+        })
+      }
+      
+      return hasMatch
+    })
+    
+    // 최신순 정렬 및 최대 12개 제한
+    const sortedBlogs = matchedBlogs
+      .sort((a, b) => {
+        const dateA = new Date(a.updated_at || a.created_at)
+        const dateB = new Date(b.updated_at || b.created_at)
+        return dateB.getTime() - dateA.getTime()
+      })
+      .slice(0, 12)
+    
+    // brand_id_connect 필드 제거 (클라이언트에 노출하지 않음)
+    const blogsWithoutConnect = sortedBlogs.map(blog => {
+      const { brand_id_connect, publish, ...rest } = blog
+      return rest
+    })
+    
+    console.log(`[ API ] 체인 ${chainId}의 아티클 ${blogsWithoutConnect.length}개 조회 완료 (brand_id_connect 기반)`)
     
     return NextResponse.json({
       success: true,
-      data: blogs || [],
+      data: blogsWithoutConnect,
       meta: {
-        count: blogs?.length || 0,
+        count: blogsWithoutConnect.length,
         chainId: parseInt(chainId),
         brands: brands,
-        hotels: filteredHotels.length,
-        blogSlugs: uniqueBlogSlugs.length,
-        requestedSlugs: uniqueBlogSlugs.slice(0, 10) // 디버깅용
+        totalBlogsChecked: allBlogs.length,
+        method: 'brand_id_connect'
       }
     })
   } catch (error) {
