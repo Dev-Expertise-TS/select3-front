@@ -191,9 +191,6 @@ export function Header() {
           </div>
         </div>
       </header>
-      
-      {/* Spacer */}
-      <div className="h-12 md:h-16" aria-hidden="true" />
     </>
   )
 }

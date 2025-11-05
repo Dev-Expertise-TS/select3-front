@@ -130,7 +130,7 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
 
   return (
     <div className="w-full">
-      <section className={`relative ${hasPromotionBanner ? 'mt-0.5 pt-0 pb-0 sm:py-8' : 'mt-0 pt-0 pb-0 sm:py-4'} mb-0`}>
+      <section className={`relative ${hasPromotionBanner ? 'mt-0 pt-0 pb-0 sm:py-0' : 'mt-0 pt-0 pb-0 sm:py-4'} mb-0`}>
         <SectionContainer className="px-0 sm:px-4">
           <div className="relative">
             {/* 모바일 슬라이드 뷰 */}
