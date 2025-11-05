@@ -83,7 +83,7 @@ export default async function TestimonialsPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <Header />
-      <PromotionBannerWrapper noGap={true}>
+      <PromotionBannerWrapper>
         <main>
         {/* 헤더 */}
         <div className="bg-white border-b">

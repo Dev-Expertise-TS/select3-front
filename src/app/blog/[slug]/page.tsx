@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Header } from "@/components/header"
-import { PromotionBanner } from "@/components/promotion-banner"
+import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { BlogDetailSection } from '@/features/blog/blog-detail-section'
 
@@ -63,12 +63,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <PromotionBanner />
-      {/* 프로모션 베너 아래 여백: 모바일 50px, 데스크톱 72px */}
-      <div className="pt-[50px] sm:pt-[72px]"></div>
-      <main>
-        <BlogDetailSection slug={slug} />
-      </main>
+      <PromotionBannerWrapper>
+        <main>
+          <BlogDetailSection slug={slug} />
+        </main>
+      </PromotionBannerWrapper>
       <Footer />
     </div>
   )
