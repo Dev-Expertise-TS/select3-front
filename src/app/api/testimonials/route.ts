@@ -10,6 +10,7 @@ export async function GET() {
 
     // select_satisfaction_survey와 select_hotels를 조인하여 slug 정보 가져오기
     // 랜딩 페이지용: pick = true인 것만 가져오기
+    // sort 컬럼 기준 오름차순 정렬 (작은 값이 왼쪽에 배치)
     const { data, error } = await supabase
       .from('select_satisfaction_survey')
       .select(`
@@ -18,6 +19,7 @@ export async function GET() {
         property_name_kr,
         booking_number,
         sabre_id,
+        sort,
         created_at,
         select_hotels!inner(slug)
       `)
@@ -26,6 +28,7 @@ export async function GET() {
       .not('property_name_kr', 'is', null)
       .not('booking_number', 'is', null)
       .not('sabre_id', 'is', null)
+      .order('sort', { ascending: true, nullsLast: true })
       .order('created_at', { ascending: false })
       .limit(12)
 
@@ -46,6 +49,7 @@ export async function GET() {
         property_name_kr: item.property_name_kr,
         booking_number: item.booking_number,
         sabre_id: item.sabre_id,
+        sort: item.sort,
         created_at: item.created_at,
         slug: item.select_hotels.slug,
       }))

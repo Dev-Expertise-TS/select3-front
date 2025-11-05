@@ -11,6 +11,7 @@ interface SatisfactionSurvey {
   property_name_kr: string
   booking_number: string
   sabre_id: string
+  sort: number | null
   slug: string
   created_at: string
 }
@@ -20,6 +21,7 @@ interface Testimonial {
   content: string
   hotel: string
   bookingNumber: string
+  sort: number | null
   slug: string
 }
 
@@ -50,9 +52,15 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
             content: item.review_text,
             hotel: item.property_name_kr,
             bookingNumber: item.booking_number,
+            sort: item.sort,
             slug: item.slug,
           }))
+          // API에서 이미 sort 순서로 정렬되어 오므로 그대로 사용
           setTestimonials(transformedData)
+          console.log('✅ 고객 후기 로드 완료:', {
+            count: transformedData.length,
+            sortValues: transformedData.map(t => ({ id: t.id, sort: t.sort, hotel: t.hotel }))
+          })
         }
       } catch (error) {
         console.error('Failed to fetch testimonials:', error)
