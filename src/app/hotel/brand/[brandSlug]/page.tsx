@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { getBrandHotelsData } from './brand-hotels-server'
 import { getAllActiveBrands } from '@/lib/brand-data-server'
 import { BrandImmersivePage } from './components/brand-immersive-page'
-import { generateBrandDescription } from '@/lib/ai-brand-description'
 
 // 정적 경로 생성 (SSG)
 export async function generateStaticParams() {
@@ -81,9 +80,11 @@ export default async function BrandHotelsPage({ params }: { params: Promise<{ br
   
   const { brand, hotels } = data
   
-  // AI로 브랜드 설명 생성 (캐시됨)
-  const aiDescription = await generateBrandDescription(brand)
+  // 폴백 설명 (초기 렌더링용)
+  const brandName = brand.brand_name_ko || brand.brand_name_en
+  const fallbackDescription = brand.brand_description_ko || brand.brand_description || 
+    `${brandName}는 세계적인 럭셔리 호텔 브랜드로, 최고의 서비스를 제공하고 있습니다.`
   
-  return <BrandImmersivePage brand={brand} hotels={hotels || []} aiDescription={aiDescription} />
+  return <BrandImmersivePage brand={brand} hotels={hotels || []} aiDescription={fallbackDescription} />
 }
 

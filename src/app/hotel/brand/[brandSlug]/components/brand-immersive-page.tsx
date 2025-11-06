@@ -20,17 +20,102 @@ interface BrandImmersivePageProps {
 export function BrandImmersivePage({ brand, hotels, aiDescription }: BrandImmersivePageProps) {
   const [mounted, setMounted] = useState(false)
   const [shuffledImages, setShuffledImages] = useState<Array<{url: string, alt: string, slug: string}>>([])
+  const [displayedDescription, setDisplayedDescription] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
   
+  // AI 설명 스트리밍
+  useEffect(() => {
+    let cancelled = false
+    
+    async function streamDescription() {
+      // 초기값으로 폴백 설명 설정
+      if (aiDescription) {
+        setDisplayedDescription(aiDescription)
+      }
+      
+      setIsStreaming(true)
+      
+      try {
+        const res = await fetch('/api/brand/description-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brand })
+        })
+
+        if (!res.ok || !res.body) {
+          setIsStreaming(false)
+          return
+        }
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder('utf-8')
+        let buffer = ''
+        let fullText = ''
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done || cancelled) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const events = buffer.split('\n\n')
+          buffer = events.pop() || ''
+
+          for (const evt of events) {
+            const line = evt.trim()
+            if (!line.startsWith('data:')) continue
+            
+            const data = line.replace(/^data:\s*/, '')
+            if (data === '[DONE]') {
+              setIsStreaming(false)
+              return
+            }
+
+            try {
+              const json = JSON.parse(data)
+              const content = json.content
+              if (content && !cancelled) {
+                fullText += content
+                setDisplayedDescription(fullText)
+              }
+            } catch {
+              // JSON 파싱 오류 무시
+            }
+          }
+        }
+        
+        setIsStreaming(false)
+      } catch (error) {
+        console.error('AI 설명 스트리밍 오류:', error)
+        setIsStreaming(false)
+      }
+    }
+
+    streamDescription()
+
+    return () => {
+      cancelled = true
+    }
+  }, [brand, aiDescription])
+
   // 이미지 셔플 및 그리드 채우기
   useEffect(() => {
-    // 모든 호텔 이미지 수집
-    const hotelImages = hotels
+    // 모든 호텔 이미지 수집 (중복 제거)
+    const uniqueImages = new Map<string, { url: string; alt: string; slug: string }>()
+    
+    hotels
       .filter(h => h.image)
-      .map(h => ({
-        url: h.image,
-        alt: h.property_name_ko || h.property_name_en,
-        slug: h.slug
-      }))
+      .forEach(h => {
+        // URL 기준으로 중복 제거
+        if (!uniqueImages.has(h.image)) {
+          uniqueImages.set(h.image, {
+            url: h.image,
+            alt: h.property_name_ko || h.property_name_en,
+            slug: h.slug
+          })
+        }
+      })
+
+    const hotelImages = Array.from(uniqueImages.values())
 
     if (hotelImages.length === 0) {
       setMounted(true)
@@ -43,10 +128,21 @@ export function BrandImmersivePage({ brand, hotels, aiDescription }: BrandImmers
     // 데스크톱: 6열 × 10행 = 60개
     const minRequiredImages = 80
 
-    // 이미지가 부족하면 반복해서 채우기
-    let filledImages = [...hotelImages]
-    while (filledImages.length < minRequiredImages) {
-      filledImages = [...filledImages, ...hotelImages]
+    let filledImages: typeof hotelImages = []
+    
+    if (hotelImages.length >= minRequiredImages) {
+      // 충분한 이미지가 있으면 중복 없이 사용
+      filledImages = [...hotelImages].slice(0, minRequiredImages)
+    } else {
+      // 이미지가 부족하면 최소한의 반복으로 채우기
+      filledImages = [...hotelImages]
+      
+      // 필요한 만큼만 반복 추가 (셔플해서 패턴 방지)
+      while (filledImages.length < minRequiredImages) {
+        const remaining = minRequiredImages - filledImages.length
+        const shuffledCopy = [...hotelImages].sort(() => Math.random() - 0.5)
+        filledImages = [...filledImages, ...shuffledCopy.slice(0, remaining)]
+      }
     }
 
     // 클라이언트에서만 셔플 (Hydration 오류 방지)
@@ -139,7 +235,7 @@ export function BrandImmersivePage({ brand, hotels, aiDescription }: BrandImmers
           </div>
 
           {/* 브랜드 설명 */}
-          <p 
+          <div 
             className={`text-base md:text-xl text-white leading-relaxed font-medium mb-12 max-w-2xl mx-auto ${mounted ? 'animate-fade-in' : 'opacity-0'}`}
             style={{ 
               animationDelay: '900ms', 
@@ -147,8 +243,9 @@ export function BrandImmersivePage({ brand, hotels, aiDescription }: BrandImmers
               textShadow: '0 3px 12px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9)'
             }}
           >
-            {aiDescription}
-          </p>
+            {displayedDescription || aiDescription}
+            {isStreaming && <span className="inline-block w-1 h-5 bg-white ml-1 animate-pulse"></span>}
+          </div>
 
           {/* 호텔 수 */}
           <div 

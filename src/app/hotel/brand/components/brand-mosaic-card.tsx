@@ -24,12 +24,32 @@ export function BrandMosaicCard({ brand }: BrandMosaicCardProps) {
       return
     }
 
+    // 중복 제거 (URL 기준)
+    const uniqueImages = new Map<string, { url: string; alt: string }>()
+    brand.hotel_images.forEach(img => {
+      if (!uniqueImages.has(img.url)) {
+        uniqueImages.set(img.url, img)
+      }
+    })
+    
+    const hotelImages = Array.from(uniqueImages.values())
+    
     // 최소 20개 이미지 확보
     const minImages = 20
-    let filledImages = [...brand.hotel_images]
+    let filledImages: typeof hotelImages = []
     
-    while (filledImages.length < minImages) {
-      filledImages = [...filledImages, ...brand.hotel_images]
+    if (hotelImages.length >= minImages) {
+      // 충분한 이미지가 있으면 중복 없이 사용
+      filledImages = [...hotelImages].slice(0, minImages)
+    } else {
+      // 이미지가 부족하면 최소한의 반복으로 채우기
+      filledImages = [...hotelImages]
+      
+      while (filledImages.length < minImages) {
+        const remaining = minImages - filledImages.length
+        const shuffledCopy = [...hotelImages].sort(() => Math.random() - 0.5)
+        filledImages = [...filledImages, ...shuffledCopy.slice(0, remaining)]
+      }
     }
 
     // 셔플

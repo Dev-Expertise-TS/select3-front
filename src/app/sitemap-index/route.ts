@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+// 모든 sitemap을 통합하는 인덱스
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const currentDate = new Date().toISOString()
@@ -15,15 +16,19 @@ export async function GET() {
     <lastmod>${currentDate}</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-chains</loc>
+    <loc>${baseUrl}/sitemap-hotel-lists</loc>
     <lastmod>${currentDate}</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-blog</loc>
+    <loc>${baseUrl}/sitemap-brands</loc>
     <lastmod>${currentDate}</lastmod>
   </sitemap>
   <sitemap>
     <loc>${baseUrl}/sitemap-destinations</loc>
+    <lastmod>${currentDate}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-blog</loc>
     <lastmod>${currentDate}</lastmod>
   </sitemap>
   <sitemap>
@@ -35,6 +40,7 @@ export async function GET() {
   return new NextResponse(sitemapIndex, {
     headers: {
       'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
     },
   })
 }
