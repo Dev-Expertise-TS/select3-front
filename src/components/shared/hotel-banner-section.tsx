@@ -30,7 +30,7 @@ export function HotelBannerSection({
   }
 
   return (
-    <section className={`py-4 sm:py-8 ${className || ''}`}>
+    <section className={`py-[10px] ${className || ''}`}>
       <SectionContainer>
         <HotelAdBanner hotel={bannerHotel} />
       </SectionContainer>

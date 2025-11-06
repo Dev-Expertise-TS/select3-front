@@ -209,7 +209,7 @@ export async function GET() {
     if (chainIds.length > 0) {
       const { data: chainData, error: chainError } = await supabase
         .from('hotel_chains')
-        .select('chain_id, chain_name_en, chain_name_ko, slug, status, chain_sort_order')
+        .select('chain_id, chain_name_en, chain_name_ko, chain_slug, status, chain_sort_order')
         .in('chain_id', chainIds)
         .eq('status', 'active')
       

@@ -39,7 +39,7 @@ interface HotelSearchResultsProps {
   hidePromotionBanner?: boolean  // 프로모션 배너 숨김 여부
   // 체인 페이지용 props
   initialHotels?: any[]
-  allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  allChains?: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; chain_slug: string }>
   selectedChainBrands?: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
   currentChainName?: string
   currentChainId?: string
@@ -234,7 +234,10 @@ export function HotelSearchResults({
       brands: finalFilterOptions?.brands?.length || 0,
       chains: finalFilterOptions?.chains?.length || 0,
       샘플도시: finalFilterOptions?.cities?.slice(0, 3),
-      샘플브랜드: finalFilterOptions?.brands?.slice(0, 3)
+      샘플브랜드: finalFilterOptions?.brands?.slice(0, 3),
+      샘플체인: finalFilterOptions?.chains?.slice(0, 3),
+      서버체인: serverFilterOptions?.chains?.slice(0, 3),
+      클라이언트체인: clientFilterOptions?.chains?.slice(0, 3)
     })
   }, [serverFilterOptions, clientFilterOptions, finalFilterOptions])
   

@@ -20,15 +20,15 @@ interface HotelRow {
 async function getChainHotels(chainSlug: string) {
   const supabase = await createClient()
   
-  console.log(`[ Server ] 체인 slug '${chainSlug}'로 호텔 검색 시작`)
+  console.log(`[ Server ] 체인 chain_slug '${chainSlug}'로 호텔 검색 시작`)
   
-  // 1. hotel_chains에서 slug로 체인 찾기
+  // 1. hotel_chains에서 chain_slug로 체인 찾기
   const { data: chains, error: chainsError } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_ko, slug')
-    .eq('slug', chainSlug)
+    .select('chain_id, chain_name_en, chain_name_ko, chain_slug')
+    .eq('chain_slug', chainSlug)
   
-  console.log(`[ Server ] hotel_chains slug 조회 결과:`, { data: chains, error: chainsError })
+  console.log(`[ Server ] hotel_chains chain_slug 조회 결과:`, { data: chains, error: chainsError })
   
   if (chainsError) {
     console.error('[ Server ] 호텔 체인 조회 에러:', chainsError)
@@ -143,7 +143,7 @@ async function getChainHotels(chainSlug: string) {
   // 6. 모든 체인 조회 (필터용)
   const { data: allChains, error: allChainsError } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_ko, slug')
+    .select('chain_id, chain_name_en, chain_name_ko, chain_slug')
     .order('chain_name_en')
   
   if (allChainsError) {

@@ -12,7 +12,7 @@ async function getAllChainsAndBrands() {
   // 1. 모든 체인 조회
   const { data: allChains, error: chainsError } = await supabase
     .from('hotel_chains')
-    .select('chain_id, chain_name_en, chain_name_ko, slug')
+    .select('chain_id, chain_name_en, chain_name_ko, chain_slug')
     .order('chain_name_en')
   
   console.log(`[ Server ] 모든 체인 조회 결과:`, { data: allChains, error: chainsError })

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
 
 interface ChainBrandPageClientProps {
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; chain_slug: string }>
   allBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string; chain_id: number }>
 }
 

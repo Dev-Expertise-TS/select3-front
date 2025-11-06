@@ -4,7 +4,12 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 
 // Hotel search state management hook
-export function useHotelSearchState() {
+export function useHotelSearchState(initialFilters?: {
+  countries?: string[]
+  cities?: string[]
+  brands?: string[]
+  chains?: string[]
+}) {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ""
   const checkInParam = searchParams.get('checkIn') || ""
@@ -13,16 +18,20 @@ export function useHotelSearchState() {
   const [searchQuery, setSearchQuery] = useState(query)
   const [refreshTick, setRefreshTick] = useState(0)
   const [displayCount, setDisplayCount] = useState(12)
-  const [selectedChainId, setSelectedChainId] = useState<string | null>(null)
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
+  const [selectedChainId, setSelectedChainId] = useState<string | null>(
+    initialFilters?.chains?.[0] || null
+  )
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(
+    initialFilters?.brands?.[0] || null
+  )
   const [showAllInsteadOfInitial, setShowAllInsteadOfInitial] = useState(false)
   
-  // 필터 상태 관리
+  // 필터 상태 관리 (초기값 설정)
   const [filters, setFilters] = useState({
-    city: '',
-    country: '',
-    brand: '',
-    chain: ''
+    city: initialFilters?.cities?.[0] || '',
+    country: initialFilters?.countries?.[0] || '',
+    brand: initialFilters?.brands?.[0] || '',
+    chain: initialFilters?.chains?.[0] || ''
   })
   
   // 필터 업데이트 함수

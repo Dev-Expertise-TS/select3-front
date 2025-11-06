@@ -61,6 +61,40 @@ export async function getHotelPageData() {
     }
   }
 
+  // 3-1. 체인 정보 조회 (필터 옵션용)
+  const chainIds = [...new Set(hotels.filter((hotel: any) => hotel.chain_id).map((hotel: any) => hotel.chain_id))]
+  let chainData: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string }> = []
+  
+  console.log('🔍 [HotelPage] 호텔의 chain_id 현황:', {
+    총호텔수: hotels.length,
+    chain_id있는호텔: hotels.filter((h: any) => h.chain_id).length,
+    고유chain_id개수: chainIds.length,
+    chain_id샘플: hotels.filter((h: any) => h.chain_id).slice(0, 5).map((h: any) => ({ 
+      sabre_id: h.sabre_id, 
+      name: h.property_name_ko,
+      chain_id: h.chain_id 
+    }))
+  })
+  
+  if (chainIds.length > 0) {
+    const { data: chainResult, error: chainError } = await supabase
+      .from('hotel_chains')
+      .select('chain_id, chain_name_en, chain_name_ko')
+      .in('chain_id', chainIds)
+    
+    if (chainError) {
+      console.error('❌ [HotelPage] 체인 조회 실패:', chainError)
+    } else {
+      chainData = chainResult || []
+      console.log('✅ [HotelPage] 체인 조회 완료:', {
+        조회된체인수: chainData.length,
+        체인샘플: chainData.slice(0, 3)
+      })
+    }
+  } else {
+    console.warn('⚠️ [HotelPage] chain_id가 있는 호텔이 없습니다. select_hotels 테이블의 chain_id 컬럼을 확인하세요.')
+  }
+
   // 4. 데이터 변환 (useAllHotels와 동일한 형식)
   const allHotels = transformHotelsToAllViewCardData(hotels, firstImages, brandData)
   console.log('✅ [HotelPage] 데이터 변환 완료:', allHotels?.length || 0, '개')
@@ -106,11 +140,14 @@ export async function getHotelPageData() {
       brands.set(hotel.brand_name_en, existing)
     }
     
-    // 체인
+    // 체인 (chainData에서 체인명 조회)
     if (hotel.chain_id) {
+      const chainInfo = chainData.find(c => c.chain_id === hotel.chain_id)
+      const chainLabel = chainInfo?.chain_name_ko || chainInfo?.chain_name_en || `Chain ${hotel.chain_id}`
+      
       const existing = chains.get(hotel.chain_id) || { 
         id: String(hotel.chain_id), 
-        label: `Chain ${hotel.chain_id}`, 
+        label: chainLabel, 
         count: 0 
       }
       existing.count++
@@ -129,7 +166,10 @@ export async function getHotelPageData() {
     countries: filterOptions.countries.length,
     cities: filterOptions.cities.length,
     brands: filterOptions.brands.length,
-    chains: filterOptions.chains.length
+    chains: filterOptions.chains.length,
+    체인데이터조회: chainData.length,
+    체인샘플: chainData.slice(0, 3),
+    필터체인샘플: filterOptions.chains.slice(0, 3)
   })
 
   // 배너 호텔 대기

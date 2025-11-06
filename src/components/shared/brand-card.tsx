@@ -8,7 +8,7 @@ export interface BrandCardProps {
   chainId: number
   chainName: string
   chainNameKr?: string
-  slug: string
+  slug: string  // chain_slug 값
   logoPath: string
   className?: string
 }
@@ -17,7 +17,7 @@ export function BrandCard({
   chainId,
   chainName,
   chainNameKr,
-  slug,
+  slug,  // chain_slug
   logoPath,
   className
 }: BrandCardProps) {

@@ -42,7 +42,7 @@ function makeHotelHref(hotel: Hotel) {
 interface BrandHotelsClientProps {
   hotels: Hotel[]
   displayName: string
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; chain_slug: string }>
   selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
 }
 

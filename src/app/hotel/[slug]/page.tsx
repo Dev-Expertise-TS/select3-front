@@ -5,6 +5,10 @@ import { HotelDetail } from "@/features/hotels/hotel-detail"
 import { Metadata } from "next"
 import { HotelNotFound } from "@/components/hotel/HotelNotFound"
 import { getHotelDetailData } from './hotel-detail-server'
+import { getCityBySlug } from '@/lib/city-data-server'
+import { getCityHotelsData } from './city-hotels-server'
+import { HotelSearchResults } from '@/components/shared/hotel-search-results'
+import { Suspense } from 'react'
 
 // URL을 절대 URL로 변환하는 함수
 function toAbsoluteUrl(url: string): string {
@@ -59,7 +63,54 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const decodedSlug = decodeURIComponent(slug)
   
-  // getHotelDetailData를 재사용하여 중복 조회 방지
+  // 1순위: 도시 slug 확인
+  const city = await getCityBySlug(slug)
+  if (city) {
+    const cityData = await getCityHotelsData(slug)
+    if (cityData) {
+      const cityName = cityData.city.city_ko || cityData.city.city_en || '도시'
+      const countryName = cityData.city.country_ko || cityData.city.country_en || ''
+      const hotelCount = cityData.hotels.length
+      
+      const title = `${cityName} 프리미엄 호텔 ${hotelCount}곳 | 투어비스 셀렉트`
+      const description = `${cityName}${countryName ? `, ${countryName}` : ''}의 최고급 호텔 ${hotelCount}곳을 만나보세요. 프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.`
+      
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+      const url = `${baseUrl}/hotel/${slug}`
+      
+      return {
+        title,
+        description,
+        openGraph: {
+          title,
+          description,
+          url,
+          siteName: '투어비스 셀렉트',
+          locale: 'ko_KR',
+          type: 'website',
+          images: [
+            {
+              url: `${baseUrl}/select_logo.avif`,
+              width: 1200,
+              height: 630,
+              alt: `${cityName} 프리미엄 호텔`
+            }
+          ]
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title,
+          description,
+          images: [`${baseUrl}/select_logo.avif`]
+        },
+        alternates: {
+          canonical: url
+        }
+      }
+    }
+  }
+  
+  // 2순위: 호텔 slug로 처리
   const detailData = await getHotelDetailData(slug)
   
   if (!detailData) {
@@ -192,7 +243,39 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
 export default async function HotelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   
-  // 서버사이드에서 호텔 상세 데이터 미리 페칭 (호텔 + 이미지 + 혜택 + 프로모션 + 블로그)
+  // 1순위: 도시 slug 확인
+  const city = await getCityBySlug(slug)
+  if (city) {
+    const cityData = await getCityHotelsData(slug)
+    
+    if (cityData) {
+      const { city: cityInfo, hotels, filterOptions } = cityData
+      const cityName = cityInfo.city_ko || cityInfo.city_en || '도시'
+      const countryName = cityInfo.country_ko || cityInfo.country_en || ''
+      
+      return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+          <HotelSearchResults 
+            title={`${cityName} 호텔 & 리조트`}
+            subtitle={`${cityName}${countryName ? `, ${countryName}` : ''}의 프리미엄 호텔 ${hotels.length}곳`}
+            showAllHotels={true}
+            hideSearchBar={false}
+            showFilters={true}
+            hidePromotionBanner={false}
+            initialHotels={hotels}
+            serverFilterOptions={filterOptions}
+            initialFilters={{
+              countries: cityInfo.country_code ? [cityInfo.country_code] : [],
+              cities: [cityInfo.city_code]
+            }}
+            enableFilterNavigation={true}
+          />
+        </Suspense>
+      )
+    }
+  }
+  
+  // 2순위: 호텔 slug로 처리
   const detailData = await getHotelDetailData(slug)
   
   // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시 (Header/Footer 포함)

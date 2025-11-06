@@ -134,10 +134,10 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
                       {/* 도시 카드 그리드 */}
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
                         {countryData.cities.map((region, index) => {
-                          // 필터 파라미터 생성 (city_code 사용)
-                          const filterParams = new URLSearchParams({
-                            city: region.city_code, // city_code를 필터 ID로 사용
-                          })
+                          // city_slug가 있으면 새 경로 방식, 없으면 기존 쿼리 방식 (fallback)
+                          const href = region.city_slug 
+                            ? `/hotel/${region.city_slug}`
+                            : `/hotel?city=${region.city_code}`
                           
                           return (
                             <CityCard
@@ -146,7 +146,7 @@ export function RegionListClient({ regions, cityImages, hotelCounts }: RegionLis
                               cityKo={region.city_ko}
                               cityEn={region.city_en}
                               countryKo={region.country_ko}
-                              href={`/hotel?${filterParams.toString()}`}
+                              href={href}
                               preloadedImageUrl={cityImages[region.city_code]}
                               priority={index < 12}
                             />

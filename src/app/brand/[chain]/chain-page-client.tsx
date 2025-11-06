@@ -10,7 +10,7 @@ interface ChainPageClientProps {
     chain_name_ko?: string
   }
   transformedHotels: any[]
-  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; slug: string }>
+  allChains: Array<{ chain_id: number; chain_name_en: string; chain_name_ko?: string; chain_slug: string }>
   selectedChainBrands: Array<{ brand_id: number; brand_name_en: string; brand_name_ko?: string }>
   initialBrandId?: string | null
   serverFilterOptions: {
@@ -48,8 +48,8 @@ export function ChainPageClient({
   // 체인 변경 핸들러 - 해당 체인 페이지로 이동
   const handleChainChange = (chainId: string) => {
     const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
-    if (selectedChain?.slug) {
-      router.push(`/brand/${selectedChain.slug}`)
+    if (selectedChain?.chain_slug) {
+      router.push(`/brand/${selectedChain.chain_slug}`)
     } else {
       router.push(`/brand/brand?chain=${chainId}`)
     }
@@ -57,10 +57,10 @@ export function ChainPageClient({
 
   // 브랜드 변경 핸들러 - 해당 브랜드의 체인 페이지로 이동 (브랜드 선택 상태 유지)
   const handleBrandChange = (brandId: string, chainId: string) => {
-    // 해당 체인의 slug 찾기
+    // 해당 체인의 chain_slug 찾기
     const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
-    if (selectedChain?.slug) {
-      router.push(`/brand/${selectedChain.slug}?brand=${brandId}`)
+    if (selectedChain?.chain_slug) {
+      router.push(`/brand/${selectedChain.chain_slug}?brand=${brandId}`)
     } else {
       router.push(`/brand/brand?chain=${chainId}&brand=${brandId}`)
     }
