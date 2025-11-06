@@ -188,42 +188,38 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
       return
     }
 
-    // 이미지 개수에 따라 그리드 설정 결정
+    // 이미지 개수에 따라 그리드 설정 및 필요한 타일 수 계산
     const imageCount = hotelImages.length
     let cols = 'grid-cols-6'
     let mdCols = 'md:grid-cols-5'
     let lgCols = 'lg:grid-cols-6'
     let rows = 'auto-rows-[minmax(120px,1fr)]'
-    let maxTiles = 80
+    let baseCols = 6 // 기본 열 수 (lg 기준)
     
     if (imageCount <= 6) {
-      // 이미지가 매우 적으면 큰 타일 (2열)
       cols = 'grid-cols-2'
       mdCols = 'md:grid-cols-2'
       lgCols = 'lg:grid-cols-3'
       rows = 'auto-rows-[minmax(250px,1fr)]'
-      maxTiles = imageCount
+      baseCols = 3
     } else if (imageCount <= 12) {
-      // 이미지가 적으면 중간 타일 (3열)
       cols = 'grid-cols-3'
       mdCols = 'md:grid-cols-3'
       lgCols = 'lg:grid-cols-4'
       rows = 'auto-rows-[minmax(200px,1fr)]'
-      maxTiles = imageCount
+      baseCols = 4
     } else if (imageCount <= 30) {
-      // 이미지가 보통이면 작은 타일 (4-5열)
       cols = 'grid-cols-4'
       mdCols = 'md:grid-cols-4'
       lgCols = 'lg:grid-cols-5'
       rows = 'auto-rows-[minmax(150px,1fr)]'
-      maxTiles = Math.min(imageCount, 40)
+      baseCols = 5
     } else {
-      // 이미지가 많으면 매우 작은 타일 (6열)
       cols = 'grid-cols-4'
       mdCols = 'md:grid-cols-5'
       lgCols = 'lg:grid-cols-6'
       rows = 'auto-rows-[minmax(120px,1fr)]'
-      maxTiles = 80
+      baseCols = 6
     }
 
     setGridConfig({ 
@@ -231,12 +227,39 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
       rows 
     })
 
-    // 중복 없이 사용 (설정된 최대 타일만큼만 표시)
-    const actualTiles = Math.min(hotelImages.length, maxTiles)
-    const filledImages = [...hotelImages].slice(0, actualTiles)
+    // 화면을 완전히 채우기 위한 계산
+    // 대략 15행 정도 채우기 (viewport height 고려)
+    const estimatedRows = 15
+    const minRequiredTiles = baseCols * estimatedRows
 
-    // 최종 셔플 (Hydration 오류 방지)
-    const shuffled = filledImages.sort(() => Math.random() - 0.5)
+    // 필요한 만큼 이미지 준비 (중복 최소화)
+    let finalImages = [...hotelImages]
+    
+    if (finalImages.length < minRequiredTiles) {
+      // 부족하면 반복하되, 최대한 분산 배치
+      const repetitions = Math.ceil(minRequiredTiles / hotelImages.length)
+      const batches: typeof hotelImages[] = []
+      
+      for (let i = 0; i < repetitions; i++) {
+        const shuffled = [...hotelImages].sort(() => Math.random() - 0.5)
+        batches.push(shuffled)
+      }
+      
+      // 인터리빙으로 병합 (같은 이미지가 멀리 떨어지도록)
+      finalImages = []
+      for (let i = 0; i < hotelImages.length && finalImages.length < minRequiredTiles; i++) {
+        for (let j = 0; j < batches.length && finalImages.length < minRequiredTiles; j++) {
+          if (batches[j][i]) {
+            finalImages.push(batches[j][i])
+          }
+        }
+      }
+    }
+
+    // 최종 셔플
+    const shuffled = finalImages
+      .slice(0, minRequiredTiles)
+      .sort(() => Math.random() - 0.5)
     
     setShuffledImages(shuffled)
     setMounted(true)
@@ -248,18 +271,27 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
     <div className="relative min-h-screen bg-black overflow-hidden">
       {/* 모자이크 배경 그리드 - 클릭 불가 */}
       {mounted && shuffledImages.length > 0 && (
-        <div className={`absolute inset-0 grid ${gridConfig.cols} ${gridConfig.rows} gap-1 p-1 pointer-events-none overflow-hidden`}>
+        <div className={`absolute inset-0 grid ${gridConfig.cols} ${gridConfig.rows} gap-0.5 p-0.5 pointer-events-none overflow-hidden`}>
           {shuffledImages.map((img, idx) => {
-            // 이미지가 적을 때는 span 효과 없이 균등하게 배치
-            const useSpan = shuffledImages.length > 20
+            // 타일 크기 패턴 생성 (빈 공간 최소화)
+            let spanClass = ''
+            
+            if (shuffledImages.length > 20) {
+              // 다양한 크기로 빈 공간 최소화
+              if (idx % 11 === 0) {
+                spanClass = 'col-span-2 row-span-2' // 큰 타일
+              } else if (idx % 7 === 0) {
+                spanClass = 'col-span-2' // 가로로 긴 타일
+              } else if (idx % 5 === 0) {
+                spanClass = 'row-span-2' // 세로로 긴 타일
+              }
+              // 나머지는 1x1 타일
+            }
+            
             return (
               <div
                 key={`${img.slug}-${idx}`}
-                className={`relative overflow-hidden ${
-                  useSpan && idx % 7 === 0 ? 'col-span-2 row-span-2' : 
-                  useSpan && idx % 5 === 0 ? 'row-span-2' : 
-                  ''
-                } ${mounted ? 'animate-fade-in' : 'opacity-0'}`}
+                className={`relative overflow-hidden ${spanClass} ${mounted ? 'animate-fade-in' : 'opacity-0'}`}
             style={{
               animationDelay: `${idx * 50}ms`,
               animationFillMode: 'forwards'
@@ -366,22 +398,22 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
             className={`relative flex flex-col gap-4 items-center pointer-events-auto ${mounted ? 'animate-slide-up' : 'opacity-0 translate-y-10'}`}
             style={{ animationDelay: '1500ms', animationFillMode: 'forwards' }}
           >
-            {/* 버튼 배경 어두운 영역 - 자연스러운 그라데이션 */}
+            {/* 버튼 배경 - 버튼 크기만큼만 살짝 어둡게 */}
             <div 
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none rounded-full"
               style={{
-                left: '-80px',
-                right: '-80px',
-                top: '-60px',
-                bottom: '-60px',
-                background: 'radial-gradient(ellipse, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 80%)',
-                filter: 'blur(20px)'
+                left: '-20px',
+                right: '-20px',
+                top: '-20px',
+                bottom: '-20px',
+                background: 'radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.2) 50%, transparent 80%)',
+                filter: 'blur(15px)'
               }}
             ></div>
             
             <a
               href={`/hotel?brand_id=${brand.brand_id}`}
-              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/15 backdrop-blur-md hover:bg-white/25 border border-white/30 hover:border-white/50 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline"
+              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/15 backdrop-blur-md hover:bg-white/25 border border-white/30 hover:border-white/50 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-lg"
             >
               <span className="text-white text-sm md:text-base font-medium tracking-wide pointer-events-none">
                 {brand.brand_name_ko || brand.brand_name_en} 호텔 보기
@@ -391,7 +423,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
             
             <a
               href="/hotel/brand"
-              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline"
+              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-lg"
             >
               <ArrowLeft className="w-5 h-5 text-white transition-transform group-hover:-translate-x-1 pointer-events-none" />
               <span className="text-white text-sm md:text-base font-medium tracking-wide pointer-events-none">
