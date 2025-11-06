@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 
-export const runtime = 'edge'
+// Edge Runtime 제거 - Node.js runtime 사용 (setTimeout 안정성)
+// export const runtime = 'edge'
 
 interface BrandInfo {
   brand_name_en: string
@@ -11,21 +12,29 @@ interface BrandInfo {
 
 /**
  * 브랜드 설명 스트리밍 API
+ * 호텔 객실 AI와 동일한 패턴: OpenAI response.body를 그대로 프록시
  */
 export async function POST(req: NextRequest) {
   try {
     const { brand } = await req.json() as { brand: BrandInfo }
 
     if (!brand?.brand_name_en) {
+      console.error('[Brand AI] 브랜드 정보 누락')
       return new Response('브랜드 정보가 필요합니다', { status: 400 })
     }
 
+    const brandName = brand.brand_name_ko || brand.brand_name_en
+    console.log(`[Brand AI] ${brandName} 설명 생성 시작`)
+
     // OpenAI API 키 확인
-    if (!process.env.OPENAI_API_KEY) {
-      // 폴백 설명 반환 (스트리밍 형식)
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      console.error('[Brand AI] OPENAI_API_KEY 환경 변수 누락')
       const fallback = generateFallbackDescription(brand)
       return streamText(fallback)
     }
+
+    console.log(`[Brand AI] API 키 확인 완료 (길이: ${apiKey.length})`)
 
     // OpenAI API 호출
     const prompt = `다음 럭셔리 호텔 브랜드에 대한 매력적인 소개 문구를 한국어로 300자 정도로 작성해주세요.
@@ -39,11 +48,13 @@ export async function POST(req: NextRequest) {
 - 럭셔리하고 품격 있는 어조
 - 투어비스 셀렉트 예약 혜택 암시 (마지막 문장)`
 
+    console.log('[Brand AI] OpenAI API 호출 중...')
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
@@ -64,67 +75,29 @@ export async function POST(req: NextRequest) {
     })
 
     if (!response.ok) {
-      console.error('OpenAI API 오류:', response.status, response.statusText)
+      const errorText = await response.text()
+      console.error(`[Brand AI] OpenAI API 오류: ${response.status} ${response.statusText}`)
+      console.error(`[Brand AI] 오류 상세: ${errorText}`)
       const fallback = generateFallbackDescription(brand)
       return streamText(fallback)
     }
 
-    // OpenAI 스트림을 SSE 형식으로 변환
-    return new Response(
-      new ReadableStream({
-        async start(controller) {
-          const reader = response.body?.getReader()
-          if (!reader) {
-            controller.close()
-            return
-          }
+    if (!response.body) {
+      console.error('[Brand AI] OpenAI API 응답 바디 없음')
+      const fallback = generateFallbackDescription(brand)
+      return streamText(fallback)
+    }
 
-          const decoder = new TextDecoder()
-          let buffer = ''
+    console.log('[Brand AI] OpenAI API 응답 수신, 스트리밍 시작')
 
-          try {
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
-
-              buffer += decoder.decode(value, { stream: true })
-              const lines = buffer.split('\n')
-              buffer = lines.pop() || ''
-
-              for (const line of lines) {
-                const trimmed = line.trim()
-                if (!trimmed || trimmed === 'data: [DONE]') continue
-                if (trimmed.startsWith('data: ')) {
-                  const data = trimmed.slice(6)
-                  try {
-                    const json = JSON.parse(data)
-                    const content = json.choices?.[0]?.delta?.content
-                    if (content) {
-                      controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`)
-                    }
-                  } catch (e) {
-                    // JSON 파싱 오류 무시
-                  }
-                }
-              }
-            }
-
-            controller.enqueue('data: [DONE]\n\n')
-            controller.close()
-          } catch (error) {
-            console.error('스트리밍 오류:', error)
-            controller.close()
-          }
-        },
-      }),
-      {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      }
-    )
+    // 호텔 객실 AI와 동일한 방식: OpenAI response.body를 그대로 프록시
+    return new Response(response.body, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    })
   } catch (error) {
     console.error('브랜드 설명 생성 오류:', error)
     return new Response('서버 오류', { status: 500 })
@@ -149,24 +122,43 @@ function generateFallbackDescription(brand: BrandInfo): string {
 
 /**
  * 텍스트를 스트리밍 형식으로 반환 (폴백용)
+ * OpenAI 원본 형식과 동일하게: choices[0].delta.content
  */
 function streamText(text: string): Response {
+  console.log('[Brand AI] 폴백 텍스트 스트리밍 시작, 길이:', text.length)
+  
   return new Response(
     new ReadableStream({
-      start(controller) {
-        // 한 글자씩 천천히 전송
-        const chars = text.split('')
-        let i = 0
-        const interval = setInterval(() => {
-          if (i < chars.length) {
-            controller.enqueue(`data: ${JSON.stringify({ content: chars[i] })}\n\n`)
-            i++
-          } else {
-            controller.enqueue('data: [DONE]\n\n')
-            controller.close()
-            clearInterval(interval)
+      async start(controller) {
+        const encoder = new TextEncoder()
+        
+        try {
+          // 2-3글자씩 묶어서 전송
+          const chars = text.split('')
+          let i = 0
+          
+          while (i < chars.length) {
+            const chunk = chars.slice(i, i + 2).join('')
+            // OpenAI 원본 형식과 동일하게
+            const message = `data: ${JSON.stringify({ 
+              choices: [{ delta: { content: chunk } }] 
+            })}\n\n`
+            controller.enqueue(encoder.encode(message))
+            i += 2
+            
+            // Promise 기반 딜레이
+            if (i < chars.length) {
+              await new Promise(resolve => setTimeout(resolve, 80))
+            }
           }
-        }, 60) // 60ms 간격 (타이핑 속도 조절)
+          
+          console.log('[Brand AI] 폴백 텍스트 스트리밍 완료')
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
+        } catch (error) {
+          console.error('[Brand AI] 폴백 스트리밍 오류:', error)
+          controller.close()
+        }
       },
     }),
     {
@@ -178,4 +170,5 @@ function streamText(text: string): Response {
     }
   )
 }
+
 

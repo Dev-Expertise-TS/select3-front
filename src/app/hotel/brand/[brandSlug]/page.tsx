@@ -78,13 +78,13 @@ export default async function BrandHotelsPage({ params }: { params: Promise<{ br
     notFound()
   }
   
-  const { brand, hotels } = data
+  const { brand, hotels, allHotelImages } = data
   
   // 폴백 설명 (초기 렌더링용)
   const brandName = brand.brand_name_ko || brand.brand_name_en
   const fallbackDescription = brand.brand_description_ko || brand.brand_description || 
     `${brandName}는 세계적인 럭셔리 호텔 브랜드로, 최고의 서비스를 제공하고 있습니다.`
   
-  return <BrandImmersivePage brand={brand} hotels={hotels || []} aiDescription={fallbackDescription} />
+  return <BrandImmersivePage brand={brand} hotels={hotels || []} allHotelImages={allHotelImages || []} aiDescription={fallbackDescription} />
 }
 

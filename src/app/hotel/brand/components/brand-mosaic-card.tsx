@@ -17,6 +17,7 @@ interface BrandMosaicCardProps {
 export function BrandMosaicCard({ brand }: BrandMosaicCardProps) {
   const [mounted, setMounted] = useState(false)
   const [shuffledImages, setShuffledImages] = useState<Array<{ url: string; alt: string }>>([])
+  const [gridCols, setGridCols] = useState('grid-cols-4')
 
   useEffect(() => {
     if (brand.hotel_images.length === 0) {
@@ -24,38 +25,42 @@ export function BrandMosaicCard({ brand }: BrandMosaicCardProps) {
       return
     }
 
-    // 중복 제거 (URL 기준)
+    // 중복 제거 (URL 기준) 및 빈 URL 필터링
     const uniqueImages = new Map<string, { url: string; alt: string }>()
-    brand.hotel_images.forEach(img => {
-      if (!uniqueImages.has(img.url)) {
-        uniqueImages.set(img.url, img)
-      }
-    })
+    brand.hotel_images
+      .filter(img => img.url && img.url.trim() !== '') // 빈 URL 필터링
+      .forEach(img => {
+        if (!uniqueImages.has(img.url)) {
+          uniqueImages.set(img.url, img)
+        }
+      })
     
     const hotelImages = Array.from(uniqueImages.values())
     
-    // 최소 20개 이미지 확보
-    const minImages = 20
-    let filledImages: typeof hotelImages = []
+    // 이미지 개수에 따라 그리드 열 수 결정
+    const imageCount = hotelImages.length
+    let cols = 'grid-cols-4'
+    let maxTiles = 20
     
-    if (hotelImages.length >= minImages) {
-      // 충분한 이미지가 있으면 중복 없이 사용
-      filledImages = [...hotelImages].slice(0, minImages)
+    if (imageCount <= 4) {
+      cols = 'grid-cols-2' // 큰 타일
+      maxTiles = imageCount
+    } else if (imageCount <= 9) {
+      cols = 'grid-cols-3' // 중간 타일
+      maxTiles = imageCount
     } else {
-      // 이미지가 부족하면 최소한의 반복으로 채우기
-      filledImages = [...hotelImages]
-      
-      while (filledImages.length < minImages) {
-        const remaining = minImages - filledImages.length
-        const shuffledCopy = [...hotelImages].sort(() => Math.random() - 0.5)
-        filledImages = [...filledImages, ...shuffledCopy.slice(0, remaining)]
-      }
+      cols = 'grid-cols-4' // 작은 타일
+      maxTiles = Math.min(imageCount, 20)
     }
+    
+    setGridCols(cols)
+
+    // 중복 없이 사용 (설정된 최대 타일만큼만 표시)
+    const actualTiles = Math.min(hotelImages.length, maxTiles)
+    const filledImages = [...hotelImages].slice(0, actualTiles)
 
     // 셔플
-    const shuffled = filledImages
-      .slice(0, minImages)
-      .sort(() => Math.random() - 0.5)
+    const shuffled = filledImages.sort(() => Math.random() - 0.5)
     
     setShuffledImages(shuffled)
     setMounted(true)
@@ -74,7 +79,7 @@ export function BrandMosaicCard({ brand }: BrandMosaicCardProps) {
     >
       {/* 모자이크 배경 그리드 */}
       {mounted && shuffledImages.length > 0 && (
-        <div className="absolute inset-0 grid grid-cols-4 gap-px overflow-hidden">
+        <div className={`absolute inset-0 grid ${gridCols} gap-px overflow-hidden`}>
           {shuffledImages.map((img, idx) => (
             <div
               key={`${brand.brand_id}-${idx}`}

@@ -61,10 +61,12 @@ export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
         .not('image', 'is', null)
         .limit(30)
       
-      const hotel_images = hotels?.map(h => ({
-        url: h.image!,
-        alt: h.property_name_ko || h.property_name_en || brand.brand_name_en || 'Hotel'
-      })) || []
+      const hotel_images = hotels
+        ?.filter(h => h.image && h.image.trim() !== '') // 빈 URL 필터링
+        .map(h => ({
+          url: h.image!,
+          alt: h.property_name_ko || h.property_name_en || brand.brand_name_en || 'Hotel'
+        })) || []
       
       return {
         ...brand,

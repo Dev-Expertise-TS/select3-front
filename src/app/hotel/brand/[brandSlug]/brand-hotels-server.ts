@@ -55,6 +55,15 @@ export async function getBrandHotelsData(brandSlug: string) {
   
   const firstImages = getFirstImagePerHotel(mediaData || [])
   
+  // 모자이크용 모든 이미지 추출 (빈 URL 필터링)
+  const allHotelImages = mediaData
+    ?.filter(media => media.public_url && media.public_url.trim() !== '')
+    .map(media => ({
+      sabre_id: media.sabre_id,
+      url: media.public_url,
+      slug: media.slug
+    })) || []
+  
   // 4. 브랜드 정보 조회
   const brandIds = hotels.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
   let brandData = []
@@ -149,6 +158,7 @@ export async function getBrandHotelsData(brandSlug: string) {
   return {
     brand,
     hotels: allHotels,
+    allHotelImages, // 모자이크용 모든 이미지
     filterOptions,
     articles: articles || []
   }
