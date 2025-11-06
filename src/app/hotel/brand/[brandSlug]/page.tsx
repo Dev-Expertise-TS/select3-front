@@ -29,17 +29,33 @@ export async function generateMetadata({ params }: { params: Promise<{ brandSlug
   
   const { brand, hotels } = data
   const brandName = brand.brand_name_ko || brand.brand_name_en || '브랜드'
+  const brandNameEn = brand.brand_name_en || brandName
   const hotelCount = hotels.length
   
-  const title = `${brandName} 호텔 ${hotelCount}곳 | 투어비스 셀렉트`
-  const description = `${brandName}의 프리미엄 호텔 ${hotelCount}곳을 만나보세요. 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.`
+  const title = `${brandName}(${brandNameEn}) 럭셔리 호텔 ${hotelCount}곳 | 투어비스 셀렉트`
+  const description = `${brandName}(${brandNameEn})의 프리미엄 럭셔리 호텔 ${hotelCount}곳. 한국 최고의 호텔 전문 컨시어지가 고객님의 ${brandName} 호텔 예약을 도와드립니다. 특별한 혜택과 전문 상담 서비스를 경험하세요.`
   
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const url = `${baseUrl}/hotel/brand/${brandSlug}`
   
+  // 대표 이미지 선택 (첫 번째 호텔 이미지 또는 로고)
+  const ogImage = hotels[0]?.image || `${baseUrl}/select_logo.avif`
+  
   return {
     title,
     description,
+    keywords: [
+      brandName,
+      brandNameEn,
+      '럭셔리 호텔',
+      '프리미엄 호텔',
+      '호텔 예약',
+      '컨시어지',
+      '투어비스 셀렉트',
+      '특급 호텔',
+      `${brandName} 호텔`,
+      `${brandNameEn} hotels`
+    ],
     openGraph: {
       title,
       description,
@@ -49,10 +65,10 @@ export async function generateMetadata({ params }: { params: Promise<{ brandSlug
       type: 'website',
       images: [
         {
-          url: `${baseUrl}/select_logo.avif`,
+          url: ogImage,
           width: 1200,
           height: 630,
-          alt: `${brandName} 호텔`
+          alt: `${brandName}(${brandNameEn}) 럭셔리 호텔`
         }
       ]
     },
@@ -60,10 +76,21 @@ export async function generateMetadata({ params }: { params: Promise<{ brandSlug
       card: 'summary_large_image',
       title,
       description,
-      images: [`${baseUrl}/select_logo.avif`]
+      images: [ogImage]
     },
     alternates: {
       canonical: url
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     }
   }
 }
@@ -82,9 +109,87 @@ export default async function BrandHotelsPage({ params }: { params: Promise<{ br
   
   // 폴백 설명 (초기 렌더링용)
   const brandName = brand.brand_name_ko || brand.brand_name_en
+  const brandNameEn = brand.brand_name_en || brandName
   const fallbackDescription = brand.brand_description_ko || brand.brand_description || 
     `${brandName}는 세계적인 럭셔리 호텔 브랜드로, 최고의 서비스를 제공하고 있습니다.`
   
-  return <BrandImmersivePage brand={brand} hotels={hotels || []} allHotelImages={allHotelImages || []} aiDescription={fallbackDescription} />
+  // Structured Data (JSON-LD) 생성
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${brandName}(${brandNameEn}) 럭셔리 호텔`,
+    description: fallbackDescription,
+    url: `${baseUrl}/hotel/brand/${brandSlug}`,
+    mainEntity: {
+      '@type': 'ItemList',
+      name: `${brandName} 호텔 목록`,
+      numberOfItems: hotels.length,
+      itemListElement: hotels.slice(0, 10).map((hotel: any, index: number) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Hotel',
+          name: hotel.property_name_ko || hotel.property_name_en,
+          url: `${baseUrl}/hotel/${hotel.slug}`,
+          image: hotel.image,
+          brand: {
+            '@type': 'Brand',
+            name: brandNameEn
+          }
+        }
+      }))
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: '호텔',
+          item: `${baseUrl}/hotel`
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: '브랜드',
+          item: `${baseUrl}/hotel/brand`
+        },
+        {
+          '@type': 'ListItem',
+          position: 4,
+          name: brandName,
+          item: `${baseUrl}/hotel/brand/${brandSlug}`
+        }
+      ]
+    },
+    provider: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl,
+      logo: `${baseUrl}/select_logo.avif`
+    }
+  }
+  
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <BrandImmersivePage 
+        brand={brand} 
+        hotels={hotels || []} 
+        allHotelImages={allHotelImages || []} 
+        aiDescription={fallbackDescription} 
+      />
+    </>
+  )
 }
 

@@ -266,9 +266,23 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
   }, [hotels, allHotelImages])
 
   const brandName = brand.brand_name_ko || brand.brand_name_en
+  
+  // 브랜드명 길이에 따른 폰트 크기 결정
+  const getBrandFontSize = () => {
+    const displayName = brand.brand_name_ko || brand.brand_name_en
+    const nameLength = displayName?.length || 0
+    
+    if (nameLength > 15) {
+      return 'text-xs md:text-sm' // 매우 긴 이름
+    } else if (nameLength > 10) {
+      return 'text-sm md:text-base' // 긴 이름
+    } else {
+      return 'text-sm md:text-base' // 짧은 이름
+    }
+  }
 
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
+    <article className="relative min-h-screen bg-black overflow-hidden">
       {/* 모자이크 배경 그리드 - 클릭 불가 */}
       {mounted && shuffledImages.length > 0 && (
         <div className={`absolute inset-0 grid ${gridConfig.cols} ${gridConfig.rows} gap-0.5 p-0.5 pointer-events-none overflow-hidden`}>
@@ -327,16 +341,16 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
       ></div>
 
       {/* 중앙 콘텐츠 - 최상위 레이어 */}
-      <div className="relative z-50 min-h-screen flex items-center justify-center px-6 pointer-events-none">
+      <section className="relative z-50 min-h-screen flex items-center justify-center px-6 pointer-events-none">
         <div className="max-w-4xl text-center">
           {/* 브랜드명 */}
-          <div 
+          <header 
             className={`mb-8 ${mounted ? 'animate-slide-up' : 'opacity-0 translate-y-10'}`}
             style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
           >
             {brand.brand_name_ko && (
               <h1 
-                className="text-3xl md:text-5xl lg:text-6xl font-extralight text-white mb-4 tracking-tighter leading-none"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-none"
                 style={{ textShadow: '0 4px 20px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.9)' }}
               >
                 {brand.brand_name_ko}
@@ -348,7 +362,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
             >
               {brand.brand_name_en}
             </p>
-          </div>
+          </header>
 
           {/* 구분선 */}
           <div 
@@ -380,7 +394,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
             )}
           </div>
 
-          {/* 호텔 수 */}
+          {/* 컨시어지 안내 */}
           <div 
             className={`text-sm md:text-base text-white mb-12 ${mounted ? 'animate-fade-in' : 'opacity-0'}`}
             style={{ 
@@ -389,50 +403,55 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
               textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.8)'
             }}
           >
-            <div className="mb-1">TOURVIS SELECT에서 예약 가능한</div>
-            <div className="text-white font-medium">{hotels.length}개 {brand.brand_name_en.toUpperCase()} 호텔</div>
+            <div className="mb-1 font-bold">고객님의 {brand.brand_name_en.toUpperCase()} 호텔 예약을 도와드릴</div>
+            <div className="text-white font-bold">한국 최고의 호텔 전문 컨시어지 상담이 준비되어 있습니다.</div>
           </div>
 
           {/* CTA 버튼 */}
-          <div 
-            className={`relative flex flex-col gap-4 items-center pointer-events-auto ${mounted ? 'animate-slide-up' : 'opacity-0 translate-y-10'}`}
+          <nav 
+            className={`flex flex-col gap-4 items-center pointer-events-auto ${mounted ? 'animate-slide-up' : 'opacity-0 translate-y-10'}`}
             style={{ animationDelay: '1500ms', animationFillMode: 'forwards' }}
+            aria-label="브랜드 호텔 탐색"
           >
-            {/* 버튼 배경 - 버튼 크기만큼만 살짝 어둡게 */}
-            <div 
-              className="absolute pointer-events-none rounded-full"
-              style={{
-                left: '-20px',
-                right: '-20px',
-                top: '-20px',
-                bottom: '-20px',
-                background: 'radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.2) 50%, transparent 80%)',
-                filter: 'blur(15px)'
-              }}
-            ></div>
-            
             <a
               href={`/hotel?brand_id=${brand.brand_id}`}
-              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/15 backdrop-blur-md hover:bg-white/25 border border-white/30 hover:border-white/50 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-lg"
+              className="group inline-flex items-center justify-center gap-2 w-48 md:w-56 h-14 px-6 bg-white/20 backdrop-blur-xl hover:bg-white/30 border-2 border-white/40 hover:border-white/60 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+              style={{
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+              }}
             >
-              <span className="text-white text-sm md:text-base font-medium tracking-wide pointer-events-none">
-                {brand.brand_name_ko || brand.brand_name_en} 호텔 보기
+              <span 
+                className={`text-white ${getBrandFontSize()} font-semibold tracking-wide pointer-events-none flex items-center gap-1 min-w-0`}
+                style={{
+                  textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 1px rgba(0,0,0,1)'
+                }}
+              >
+                <span className="truncate">{brand.brand_name_ko || brand.brand_name_en}</span>
+                <span className="whitespace-nowrap flex-shrink-0">보기</span>
               </span>
-              <ArrowRight className="w-5 h-5 text-white transition-transform group-hover:translate-x-1 pointer-events-none" />
+              <ArrowRight className="w-5 h-5 text-white transition-transform group-hover:translate-x-1 pointer-events-none drop-shadow-lg flex-shrink-0" />
             </a>
             
             <a
               href="/hotel/brand"
-              className="group inline-flex items-center justify-center gap-3 w-64 md:w-80 px-8 py-4 bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-lg"
+              className="group inline-flex items-center justify-center gap-2 w-48 md:w-56 h-14 px-6 bg-white/15 backdrop-blur-xl hover:bg-white/25 border-2 border-white/30 hover:border-white/50 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+              style={{
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
+              }}
             >
-              <ArrowLeft className="w-5 h-5 text-white transition-transform group-hover:-translate-x-1 pointer-events-none" />
-              <span className="text-white text-sm md:text-base font-medium tracking-wide pointer-events-none">
+              <ArrowLeft className="w-5 h-5 text-white transition-transform group-hover:-translate-x-1 pointer-events-none drop-shadow-lg flex-shrink-0" />
+              <span 
+                className="text-white text-sm md:text-base font-semibold tracking-wide pointer-events-none whitespace-nowrap"
+                style={{
+                  textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 1px rgba(0,0,0,1)'
+                }}
+              >
                 브랜드 목록 보기
               </span>
             </a>
-          </div>
+          </nav>
         </div>
-      </div>
+      </section>
 
       {/* CSS 애니메이션 */}
       <style jsx>{`
@@ -464,7 +483,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
           animation: slide-up 0.8s ease-out;
         }
       `}</style>
-    </div>
+    </article>
   )
 }
 

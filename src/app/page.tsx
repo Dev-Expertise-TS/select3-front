@@ -15,8 +15,56 @@ import TestimonialsSection from "@/components/shared/testimonials-section"
 export const revalidate = 1800
 
 export default function HomePage() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  
+  // Organization Structured Data
+  const organizationData = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: '투어비스 셀렉트',
+    alternateName: 'Tourvis Select',
+    url: baseUrl,
+    logo: `${baseUrl}/select_logo.avif`,
+    description: '프리미엄 호텔 & 리조트를 특별한 혜택과 함께 만나보세요. 투어비스 셀렉트에서 최고의 여행 경험을 시작하세요.',
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      availableLanguage: ['ko', 'en']
+    },
+    sameAs: [
+      'https://pf.kakao.com/_cxmxgNG'
+    ]
+  }
+
+  // WebSite Structured Data
+  const websiteData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: '투어비스 셀렉트',
+    url: baseUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${baseUrl}/search-results?q={search_term_string}`
+      },
+      'query-input': 'required name=search_term_string'
+    }
+  }
+
   return (
     <div className="bg-background">
+      {/* Organization Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
+      />
+      {/* WebSite Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData) }}
+      />
+      
       <main>
         <PromotionBannerWrapper>
           <Hero />

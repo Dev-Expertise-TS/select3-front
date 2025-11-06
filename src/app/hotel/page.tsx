@@ -8,13 +8,29 @@ export const revalidate = 300
 
 export const metadata: Metadata = {
   title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
-  description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
+  description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다. 2인 조식, $100 크레딧, 객실 업그레이드 등 다양한 혜택을 누리세요.',
+  keywords: [
+    '럭셔리 호텔',
+    '프리미엄 호텔',
+    '5성급 호텔',
+    '특급 호텔',
+    '호텔 예약',
+    '리조트',
+    '호텔 컨시어지',
+    '투어비스 셀렉트',
+    '호텔 혜택',
+    'Virtuoso'
+  ],
   openGraph: {
     title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
     description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
+    url: 'https://luxury-select.co.kr/hotel',
+    siteName: '투어비스 셀렉트',
+    locale: 'ko_KR',
+    type: 'website',
     images: [
       {
-        url: '/select_logo.avif',
+        url: 'https://luxury-select.co.kr/select_logo.avif',
         width: 1200,
         height: 630,
         alt: '투어비스 셀렉트 전체 호텔',
@@ -22,10 +38,24 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
+    card: 'summary_large_image',
     title: '전체 호텔 & 리조트 | 투어비스 셀렉트',
     description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요. 투어비스 셀렉트에서 제공하는 특별한 혜택과 함께 럭셔리 숙박을 예약하실 수 있습니다.',
-    images: ['/select_logo.avif'],
+    images: ['https://luxury-select.co.kr/select_logo.avif'],
   },
+  alternates: {
+    canonical: 'https://luxury-select.co.kr/hotel'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  }
 }
 
 export default async function AllHotelResortPage({
@@ -119,9 +149,49 @@ export default async function AllHotelResortPage({
   const initialFilters = brandId ? { brands: [brandId] } : undefined
   console.log('🔍 [Brand Filter] initialFilters:', initialFilters)
   
+  // CollectionPage Structured Data
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  const collectionPageData = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: '전체 호텔 & 리조트',
+    description: '전 세계 최고의 프리미엄 호텔과 리조트를 만나보세요.',
+    url: `${baseUrl}/hotel`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: '호텔',
+          item: `${baseUrl}/hotel`
+        }
+      ]
+    },
+    provider: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl,
+      logo: `${baseUrl}/select_logo.avif`
+    }
+  }
+  
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
-      <HotelSearchResults 
+    <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageData) }}
+      />
+      
+      <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+        <HotelSearchResults 
         title="호텔 & 리조트 전체보기"
         subtitle="전 세계 프리미엄 호텔과 리조트를 모두 확인해보세요"
         showAllHotels={true}
@@ -133,6 +203,7 @@ export default async function AllHotelResortPage({
         serverBannerHotel={bannerHotel}
         initialFilters={initialFilters}
       />
-    </Suspense>
+      </Suspense>
+    </>
   )
 }

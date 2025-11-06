@@ -1,9 +1,62 @@
+import { Metadata } from "next"
 import { Header } from "@/components/header"
 import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import Image from "next/image"
 import Link from "next/link"
 import { Check, Sparkles, Crown, Coffee, DollarSign, Clock, ArrowUp, Star, Users, CreditCard, ArrowRight, Gift, Bell } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: '투어비스 셀렉트 소개 | 럭셔리 호텔 전문 플랫폼',
+  description: '세계 최고 럭셔리 호텔의 특별한 혜택을 전문 컨시어지 상담과 함께 경험하세요. Virtuoso, 하얏트 프리베, IHG 등 글로벌 럭셔리 체인 공식 인증 에이전트 투어비스 셀렉트.',
+  keywords: [
+    '투어비스 셀렉트',
+    '럭셔리 호텔',
+    '프리미엄 호텔',
+    '호텔 컨시어지',
+    'Virtuoso',
+    '하얏트 프리베',
+    'IHG',
+    '샹그릴라 서클',
+    '호텔 혜택',
+    '특급 호텔'
+  ],
+  openGraph: {
+    title: '투어비스 셀렉트 소개 | 럭셔리 호텔 전문 플랫폼',
+    description: '세계 최고 럭셔리 호텔의 특별한 혜택을 전문 컨시어지 상담과 함께 경험하세요.',
+    url: 'https://luxury-select.co.kr/about',
+    siteName: '투어비스 셀렉트',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [
+      {
+        url: 'https://luxury-select.co.kr/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '투어비스 셀렉트 소개 | 럭셔리 호텔 전문 플랫폼',
+    description: '세계 최고 럭셔리 호텔의 특별한 혜택을 전문 컨시어지 상담과 함께 경험하세요.',
+    images: ['https://luxury-select.co.kr/select_logo.avif']
+  },
+  alternates: {
+    canonical: 'https://luxury-select.co.kr/about'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  }
+}
 
 // 혜택 아이콘 매핑 함수 (랜딩 페이지와 동일)
 function getBenefitIcon(index: number) {
@@ -21,8 +74,49 @@ function getBenefitIcon(index: number) {
 }
 
 export default function AboutPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  
+  // AboutPage Structured Data
+  const aboutPageData = {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: '투어비스 셀렉트 소개',
+    description: '세계 최고 럭셔리 호텔의 특별한 혜택을 전문 컨시어지 상담과 함께 경험하세요.',
+    url: `${baseUrl}/about`,
+    mainEntity: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      alternateName: 'Tourvis Select',
+      url: baseUrl,
+      logo: `${baseUrl}/select_logo.avif`,
+      description: '프리미엄 호텔 & 리조트 전문 컨시어지 서비스'
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: '소개',
+          item: `${baseUrl}/about`
+        }
+      ]
+    }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageData) }}
+      />
+      
       <Header />
       <PromotionBanner />
       

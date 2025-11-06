@@ -76,6 +76,7 @@ export function BrandMosaicCard({ brand }: BrandMosaicCardProps) {
     <Link
       href={`/hotel/brand/${brand.brand_slug}`}
       className="group relative aspect-square overflow-hidden bg-black transition-all duration-300 active:scale-95"
+      aria-label={`${brandName} 브랜드 호텔 보기`}
     >
       {/* 모자이크 배경 그리드 */}
       {mounted && shuffledImages.length > 0 && (

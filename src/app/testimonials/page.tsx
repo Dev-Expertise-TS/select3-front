@@ -10,7 +10,51 @@ import { KakaoChatButton } from '@/components/shared/kakao-chat-button'
 
 export const metadata: Metadata = {
   title: '고객 후기 | 투어비스 셀렉트',
-  description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
+  description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요. 실제 투숙객들이 경험한 특별한 혜택과 럭셔리 호텔 경험을 확인하세요.',
+  keywords: [
+    '호텔 후기',
+    '고객 후기',
+    '투어비스 셀렉트 후기',
+    '럭셔리 호텔 리뷰',
+    '호텔 이용 후기',
+    '프리미엄 호텔 후기',
+    '실제 후기'
+  ],
+  openGraph: {
+    title: '고객 후기 | 투어비스 셀렉트',
+    description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
+    url: 'https://luxury-select.co.kr/testimonials',
+    siteName: '투어비스 셀렉트',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [
+      {
+        url: 'https://luxury-select.co.kr/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트 고객 후기'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '고객 후기 | 투어비스 셀렉트',
+    description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
+    images: ['https://luxury-select.co.kr/select_logo.avif']
+  },
+  alternates: {
+    canonical: 'https://luxury-select.co.kr/testimonials'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  }
 }
 
 export const revalidate = 1800 // 30분마다 재검증
@@ -80,8 +124,48 @@ export default async function TestimonialsPage() {
           slug: item.select_hotels.slug,
         }))
     : []
+  
+  // CollectionPage Structured Data for Testimonials
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  const testimonialsPageData = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: '고객 후기',
+    description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
+    url: `${baseUrl}/testimonials`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: '고객 후기',
+          item: `${baseUrl}/testimonials`
+        }
+      ]
+    },
+    provider: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl,
+      logo: `${baseUrl}/select_logo.avif`
+    }
+  }
+  
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(testimonialsPageData) }}
+      />
+      
       <Header />
       <PromotionBannerWrapper>
         <main>

@@ -16,6 +16,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
     const supabase = await createClient()
     
     const { slug } = await params
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
     
     const { data: blog, error } = await supabase
       .from("select_hotel_blogs")
@@ -36,15 +37,41 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       openGraph: {
         title: blog.main_title,
         description: blog.sub_title || '투어비스 셀렉트 호텔 매거진의 상세 아티클을 확인하세요.',
-        images: blog.main_image ? [blog.main_image] : undefined,
+        url: `${baseUrl}/blog/${slug}`,
+        siteName: '투어비스 셀렉트',
+        locale: 'ko_KR',
         type: 'article',
+        images: blog.main_image ? [{
+          url: blog.main_image,
+          width: 1200,
+          height: 630,
+          alt: blog.main_title
+        }] : [{
+          url: `${baseUrl}/select_logo.avif`,
+          width: 1200,
+          height: 630,
+          alt: '투어비스 셀렉트'
+        }],
       },
       twitter: {
         card: 'summary_large_image',
         title: blog.main_title,
         description: blog.sub_title || '투어비스 셀렉트 호텔 매거진의 상세 아티클을 확인하세요.',
-        images: blog.main_image ? [blog.main_image] : undefined,
+        images: blog.main_image ? [blog.main_image] : [`${baseUrl}/select_logo.avif`],
       },
+      alternates: {
+        canonical: `${baseUrl}/blog/${slug}`
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      }
     }
   } catch (error) {
     console.error('Metadata generation error:', error)
@@ -59,9 +86,57 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = await params
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  
+  // 블로그 데이터 가져오기
+  const { createClient } = await import('@/lib/supabase/server')
+  const supabase = await createClient()
+  
+  const { data: blog } = await supabase
+    .from("select_hotel_blogs")
+    .select("main_title, sub_title, main_image, created_at, updated_at")
+    .eq("slug", slug)
+    .single()
+  
+  // Article Structured Data (블로그 데이터가 있을 때만)
+  const articleData = blog ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: blog.main_title,
+    description: blog.sub_title || '',
+    image: blog.main_image || `${baseUrl}/select_logo.avif`,
+    datePublished: blog.created_at,
+    dateModified: blog.updated_at || blog.created_at,
+    author: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/select_logo.avif`
+      }
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${baseUrl}/blog/${slug}`
+    }
+  } : null
   
   return (
     <div className="min-h-screen bg-background">
+      {/* Article Structured Data */}
+      {articleData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleData) }}
+        />
+      )}
+      
       <Header />
       <PromotionBannerWrapper>
         <main>

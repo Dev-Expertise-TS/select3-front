@@ -4,7 +4,42 @@ import { Footer } from "@/components/footer"
 
 export const metadata: Metadata = {
   title: "서비스 이용약관 | 투어비스 셀렉트",
-  description: "투어비스 셀렉트 서비스 이용약관",
+  description: "투어비스 셀렉트 서비스 이용약관. 본 약관은 투어비스 셀렉트 서비스 이용과 관련된 권리, 의무 및 책임사항을 규정합니다.",
+  openGraph: {
+    title: "서비스 이용약관 | 투어비스 셀렉트",
+    description: "투어비스 셀렉트 서비스 이용약관",
+    url: 'https://luxury-select.co.kr/terms',
+    siteName: '투어비스 셀렉트',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [
+      {
+        url: 'https://luxury-select.co.kr/select_logo.avif',
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트 서비스 이용약관'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "서비스 이용약관 | 투어비스 셀렉트",
+    description: "투어비스 셀렉트 서비스 이용약관",
+    images: ['https://luxury-select.co.kr/select_logo.avif']
+  },
+  alternates: {
+    canonical: 'https://luxury-select.co.kr/terms'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  }
 }
 
 export default function TermsPage() {
