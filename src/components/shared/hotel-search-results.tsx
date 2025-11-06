@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
@@ -58,6 +58,15 @@ interface HotelSearchResultsProps {
   showArticles?: boolean
   articlesChainId?: string
   articlesChainName?: string
+  // 초기 필터 상태 (도시별 페이지용)
+  initialFilters?: {
+    countries?: string[]
+    cities?: string[]
+    brands?: string[]
+    chains?: string[]
+  }
+  // 필터 선택 시 페이지 라우팅 여부 (도시별/브랜드별/체인별 페이지 전환)
+  enableFilterNavigation?: boolean
 }
 
 export function HotelSearchResults({ 
@@ -81,8 +90,14 @@ export function HotelSearchResults({
   // 아티클 섹션용 props
   showArticles = false,
   articlesChainId,
-  articlesChainName
+  articlesChainName,
+  // 초기 필터 상태
+  initialFilters,
+  // 필터 네비게이션 활성화 여부
+  enableFilterNavigation = false
 }: HotelSearchResultsProps) {
+  const router = useRouter()
+  
   // Custom hooks for state management
   const {
     searchQuery,
@@ -105,7 +120,7 @@ export function HotelSearchResults({
     setSelectedBrandId,
     setShowAllInsteadOfInitial,
     setDisplayCount
-  } = useHotelSearchState()
+  } = useHotelSearchState(initialFilters)
   
   const {
     isLoading,
@@ -282,7 +297,7 @@ export function HotelSearchResults({
   }
 
   // 개별 필터 변경 핸들러 (부분집합 자동 연동)
-  const handleSingleFilterChange = (type: keyof typeof filters, value: string) => {
+  const handleSingleFilterChange = async (type: keyof typeof filters, value: string) => {
     // 검색 조건이 있고 필터를 선택하려고 할 때
     if (searchQuery.trim() && value) {
       const confirmed = window.confirm(
@@ -299,6 +314,60 @@ export function HotelSearchResults({
       } else {
         // 사용자가 취소한 경우 필터 적용하지 않음
         return
+      }
+    }
+    
+    // enableFilterNavigation이 true일 때만 필터 선택 시 페이지 라우팅
+    if (enableFilterNavigation) {
+      // 도시 필터 변경 시 해당 도시 페이지로 라우팅 (클라이언트 사이드)
+      if (type === 'city' && value) {
+        try {
+          // city_code에서 city_slug 조회
+          const response = await fetch(`/api/cities/slug?cityCode=${value}`)
+          const data = await response.json()
+          
+          if (data.success && data.citySlug) {
+            // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
+            router.push(`/hotel/${data.citySlug}`)
+            return
+          }
+        } catch (error) {
+          console.error('도시 slug 조회 실패:', error)
+        }
+      }
+      
+      // 브랜드 필터 변경 시 해당 브랜드 페이지로 라우팅 (클라이언트 사이드)
+      if (type === 'brand' && value) {
+        try {
+          // brand_name_en에서 brand_slug 조회
+          const response = await fetch(`/api/brands/slug?brandName=${encodeURIComponent(value)}`)
+          const data = await response.json()
+          
+          if (data.success && data.brandSlug) {
+            // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
+            router.push(`/hotel/brand/${data.brandSlug}`)
+            return
+          }
+        } catch (error) {
+          console.error('브랜드 slug 조회 실패:', error)
+        }
+      }
+      
+      // 체인 필터 변경 시 해당 체인 페이지로 라우팅 (클라이언트 사이드)
+      if (type === 'chain' && value) {
+        try {
+          // chain_id에서 chain_slug 조회
+          const response = await fetch(`/api/chains/slug?chainId=${value}`)
+          const data = await response.json()
+          
+          if (data.success && data.chainSlug) {
+            // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
+            router.push(`/hotel/chain/${data.chainSlug}`)
+            return
+          }
+        } catch (error) {
+          console.error('체인 slug 조회 실패:', error)
+        }
       }
     }
     
