@@ -98,7 +98,7 @@ async function getChainHotels(chainSlug: string) {
       .from('select_hotels')
       .select('*')
       .in('brand_id', brandIds)
-      .or('publish.is.null,publish.eq.true') // DB 레벨에서 publish 필터링
+      .or('publish.is.null,publish.eq.true') // 비공개 호텔 제외
     
     console.log(`[ Server ] select_hotels 조회 결과:`, { 
       count: hotelData?.length || 0, 

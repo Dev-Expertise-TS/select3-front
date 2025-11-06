@@ -49,7 +49,7 @@ interface HotelSearchResultsProps {
   serverFilterOptions?: {
     countries: Array<{ id: string; label: string; count: number }>
     cities: Array<{ id: string; label: string; count: number }>
-    brands: Array<{ id: string; label: string; count: number; chain_id?: number | null; chain_name_ko?: string | null }>
+    brands: Array<{ id: string; label: string; count?: number; chain_id?: number | null; chain_name_ko?: string | null; brand_name_en?: string }>
     chains: Array<{ id: string; label: string; count: number }>
   }
   // 배너 호텔 (서버에서 조회)
@@ -188,7 +188,9 @@ export function HotelSearchResults({
   const { data: clientBannerHotel, isLoading: isBannerLoading } = useBannerHotel({ enabled: !serverBannerHotel })
   const bannerHotel = serverBannerHotel || clientBannerHotel
   const { data: chainBrandHotels, isLoading: isChainBrandLoading, error: chainBrandError } = useChainBrandHotels(selectedChainId)
-  const { data: brandHotels, isLoading: isBrandLoading, error: brandError } = useBrandHotels(selectedBrandId)
+  // brand_id가 숫자일 때만 useBrandHotels 실행 (브랜드 전용 페이지)
+  const brandIdNumber = selectedBrandId && !isNaN(Number(selectedBrandId)) ? selectedBrandId : null
+  const { data: brandHotels, isLoading: isBrandLoading, error: brandError } = useBrandHotels(brandIdNumber)
   const { data: chainBrands } = useChainBrands(selectedChainId)
   
   // 필터 옵션: 서버 데이터가 있어도 브랜드/체인은 항상 클라이언트에서 fetch
@@ -618,6 +620,7 @@ export function HotelSearchResults({
     const cityParam = urlParams.get('city')
     const countryParam = urlParams.get('country')
     const brandParam = urlParams.get('brand')
+    const brandIdParam = urlParams.get('brand_id') // brand_id 파라미터 추가 지원
     const chainParam = urlParams.get('chain')
     
     // 필터 데이터가 아직 없으면 대기
@@ -626,10 +629,11 @@ export function HotelSearchResults({
     }
     
     // URL 파라미터가 있으면 우선 사용, 없으면 initialBrandId/currentChainId 사용
+    // brand_id 파라미터 우선, 없으면 brand 파라미터 (하위 호환성)
     const newFilters = {
       city: cityParam || '',
       country: '',
-      brand: brandParam || initialBrandId || '',
+      brand: brandIdParam || brandParam || initialBrandId || '',
       chain: chainParam || currentChainId || ''
     }
     
@@ -667,12 +671,13 @@ export function HotelSearchResults({
     }
     
     // 브랜드 선택 시 자동으로 체인 선택 (URL 파라미터로 브랜드가 전달된 경우)
-    if (brandParam && !chainParam && finalFilterOptions?.brands) {
-      const selectedBrand = finalFilterOptions.brands.find((b: any) => b.id === brandParam)
+    const effectiveBrandParam = brandIdParam || brandParam
+    if (effectiveBrandParam && !chainParam && finalFilterOptions?.brands) {
+      const selectedBrand = finalFilterOptions.brands.find((b: any) => b.id === effectiveBrandParam)
       if (selectedBrand && selectedBrand.chain_id) {
         newFilters.chain = String(selectedBrand.chain_id)
         console.log('🔄 URL 브랜드 파라미터 → 체인 자동 선택:', {
-          brand: brandParam,
+          brand: effectiveBrandParam,
           chain: selectedBrand.chain_id
         })
       }
@@ -831,6 +836,19 @@ export function HotelSearchResults({
   
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount
+  
+  // displayData 디버깅
+  useEffect(() => {
+    console.log('🎯 [ displayData 상태 ]', {
+      allDataLength: allData?.length || 0,
+      displayCount,
+      displayDataLength: displayData?.length || 0,
+      displayData샘플: displayData?.slice(0, 2).map(h => ({
+        name: h?.property_name_ko,
+        sabre_id: h?.sabre_id
+      }))
+    })
+  }, [displayData, allData, displayCount])
   const isPageLoading = searchQuery.trim() 
     ? isSearchLoading 
     : showAllInsteadOfInitial  // 필터 초기화 시 전체 호텔 로딩 상태
@@ -1163,20 +1181,27 @@ export function HotelSearchResults({
                                       </button>
                                     </span>
                                   )}
-                                  {filters.brand && (
-                                    <span className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                      브랜드: {finalFilterOptions?.brands.find((b: any) => b.id === filters.brand)?.label}
-                                      <button
-                                        onClick={() => handleSingleFilterChange('brand', '')}
-                                        className="ml-1 text-blue-600 hover:text-blue-800"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  )}
+                                  {filters.brand && (() => {
+                                    const selectedBrand = finalFilterOptions?.brands?.find((b: any) => String(b.id) === String(filters.brand))
+                                    const brandLabel = selectedBrand?.label || 
+                                      (serverFilterOptions?.brands?.find((b: any) => String(b.id) === String(filters.brand))?.label) ||
+                                      filters.brand
+                                    
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                        브랜드: {brandLabel}
+                                        <button
+                                          onClick={() => handleSingleFilterChange('brand', '')}
+                                          className="ml-1 text-blue-600 hover:text-blue-800"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    )
+                                  })()}
                                   {filters.chain && (
                                     <span className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                      체인: {finalFilterOptions?.chains.find((c: any) => c.id === filters.chain)?.label}
+                                      체인: {finalFilterOptions?.chains?.find((c: any) => String(c.id) === String(filters.chain))?.label || filters.chain}
                                       <button
                                         onClick={() => handleSingleFilterChange('chain', '')}
                                         className="ml-1 text-blue-600 hover:text-blue-800"

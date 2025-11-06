@@ -110,27 +110,8 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // /hotel?brand=Aman 형태의 요청을 /hotel/brand/aman으로 리다이렉트
-  if (pathname === '/hotel' && searchParams.has('brand')) {
-    const brandName = searchParams.get('brand')
-    
-    if (brandName) {
-      const brandSlug = BRAND_NAME_TO_SLUG[brandName] || brandName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      
-      // 새 URL 생성
-      const newUrl = new URL(`/hotel/brand/${brandSlug}`, request.url)
-      
-      // brand 파라미터 제외한 나머지 쿼리 파라미터 복사
-      searchParams.forEach((value, key) => {
-        if (key !== 'brand') {
-          newUrl.searchParams.set(key, value)
-        }
-      })
-      
-      // 301 영구 리다이렉트
-      return NextResponse.redirect(newUrl, { status: 301 })
-    }
-  }
+  // 브랜드 필터는 리다이렉트하지 않고 그대로 전달
+  // /hotel?brand=Aman → 전체 호텔 페이지에서 브랜드 필터 적용
   
   return NextResponse.next()
 }

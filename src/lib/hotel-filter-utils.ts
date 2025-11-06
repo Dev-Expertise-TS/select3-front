@@ -29,11 +29,23 @@ export interface FilterOptions {
  * @returns 해당 체인에 속한 브랜드 ID 목록
  */
 export function getChainBrandIds(chainId: string, brands?: Array<{ id: string; chain_id?: string }>): string[] {
-  if (!chainId || !brands) return []
+  if (!chainId || !brands) {
+    console.log('⚠️ [체인 필터] chainId 또는 brands 없음:', { chainId, brandsCount: brands?.length || 0 })
+    return []
+  }
   
-  return brands
-    .filter((b: any) => String(b.chain_id) === chainId)
-    .map((b: any) => b.id)
+  const matchingBrands = brands.filter((b: any) => String(b.chain_id) === chainId)
+  const brandIds = matchingBrands.map((b: any) => b.id)
+  
+  console.log('🔍 [체인 필터] 브랜드 ID 목록 생성:', {
+    체인ID: chainId,
+    전체브랜드수: brands.length,
+    매칭된브랜드수: matchingBrands.length,
+    브랜드ID목록: brandIds,
+    매칭된브랜드샘플: matchingBrands.slice(0, 3).map((b: any) => ({ id: b.id, label: b.label, chain_id: b.chain_id }))
+  })
+  
+  return brandIds
 }
 
 /**
@@ -71,8 +83,26 @@ export function filterHotel(hotel: any, filters: HotelFilters, chainBrandIds: st
   }
   
   // 체인 필터
-  if (filters.chain && chainBrandIds.length > 0) {
-    if (!chainBrandIds.includes(String(hotel.brand_id))) {
+  if (filters.chain) {
+    if (chainBrandIds.length === 0) {
+      console.warn('⚠️ [체인 필터] chainBrandIds가 비어있음 - chain_id가 brands 배열에 포함되어 있는지 확인 필요')
+      return false
+    }
+    
+    const hotelBrandId = String(hotel.brand_id)
+    const isMatch = chainBrandIds.includes(hotelBrandId)
+    
+    if (!isMatch && process.env.NODE_ENV === 'development') {
+      console.log('🔍 [체인 필터 불일치]', {
+        호텔명: hotel.property_name_ko,
+        호텔brand_id: hotelBrandId,
+        체인필터: filters.chain,
+        허용된brand_ids: chainBrandIds.slice(0, 5),
+        매칭여부: isMatch
+      })
+    }
+    
+    if (!isMatch) {
       return false
     }
   }

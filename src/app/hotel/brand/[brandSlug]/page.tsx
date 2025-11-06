@@ -1,9 +1,9 @@
 import { Metadata } from 'next'
-import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import { HotelSearchResults } from '@/components/shared/hotel-search-results'
 import { getBrandHotelsData } from './brand-hotels-server'
 import { getAllActiveBrands } from '@/lib/brand-data-server'
+import { BrandImmersivePage } from './components/brand-immersive-page'
+import { generateBrandDescription } from '@/lib/ai-brand-description'
 
 // 정적 경로 생성 (SSG)
 export async function generateStaticParams() {
@@ -79,26 +79,11 @@ export default async function BrandHotelsPage({ params }: { params: Promise<{ br
     notFound()
   }
   
-  const { brand, hotels, filterOptions } = data
-  const brandName = brand.brand_name_ko || brand.brand_name_en || '브랜드'
+  const { brand, hotels } = data
   
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
-      <HotelSearchResults 
-        title={`${brandName} 호텔 & 리조트`}
-        subtitle={`${brandName}의 프리미엄 호텔 ${hotels.length}곳`}
-        showAllHotels={true}
-        hideSearchBar={false}
-        showFilters={true}
-        hidePromotionBanner={false}
-        initialHotels={hotels}
-        serverFilterOptions={filterOptions}
-        initialFilters={{
-          brands: [brand.brand_name_en]
-        }}
-        enableFilterNavigation={true}
-      />
-    </Suspense>
-  )
+  // AI로 브랜드 설명 생성 (캐시됨)
+  const aiDescription = await generateBrandDescription(brand)
+  
+  return <BrandImmersivePage brand={brand} hotels={hotels || []} aiDescription={aiDescription} />
 }
 

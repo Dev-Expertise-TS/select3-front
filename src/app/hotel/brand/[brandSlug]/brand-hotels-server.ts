@@ -1,4 +1,4 @@
-import { getBrandBySlug, getHotelsByBrandName } from '@/lib/brand-data-server'
+import { getBrandBySlug, getHotelsByBrandId } from '@/lib/brand-data-server'
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
@@ -16,8 +16,8 @@ export async function getBrandHotelsData(brandSlug: string) {
   
   const supabase = await createClient()
   
-  // 2. 해당 브랜드의 호텔 목록 조회 (brand_name_en 기준)
-  const hotels = await getHotelsByBrandName(brand.brand_name_en)
+  // 2. 해당 브랜드의 호텔 목록 조회 (brand_id 기준)
+  const hotels = await getHotelsByBrandId(String(brand.brand_id))
   
   if (!hotels || hotels.length === 0) {
     return {
@@ -137,17 +137,20 @@ export async function getBrandHotelsData(brandSlug: string) {
     chains: Array.from(chains.values()).sort((a, b) => a.label.localeCompare(b.label))
   }
   
-  console.log('✅ [BrandHotelsPage] 데이터 조회 완료:', {
-    brand: brand.brand_name_en,
-    brandId: brand.brand_id,
-    hotelsCount: allHotels.length,
-    citiesCount: filterOptions.cities.length
-  })
+  // 7. 브랜드 관련 아티클 조회
+  const { data: articles } = await supabase
+    .from('select_hotel_blogs')
+    .select('id, slug, main_image, main_title, sub_title, created_at, updated_at')
+    .contains('related_brand_ids', [brand.brand_id])
+    .eq('publish', true)
+    .order('created_at', { ascending: false })
+    .limit(6)
   
   return {
     brand,
     hotels: allHotels,
-    filterOptions
+    filterOptions,
+    articles: articles || []
   }
 }
 

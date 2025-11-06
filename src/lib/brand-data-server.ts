@@ -24,9 +24,10 @@ export async function getBrandBySlug(brandSlug: string) {
 /**
  * brand_id로 해당 브랜드의 호텔 목록 조회
  */
-export async function getHotelsByBrandId(brandId: string) {
+export async function getHotelsByBrandId(brandId: string | number) {
   const supabase = await createClient()
   
+  // publish = null 또는 publish = true인 호텔만 조회
   const { data: hotels, error: hotelsError } = await supabase
     .from('select_hotels')
     .select('*')
