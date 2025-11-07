@@ -11,11 +11,12 @@ import { useRouter } from "next/navigation"
 import { generateSlug } from "@/lib/hotel-utils"
 
 interface SimpleHotelSearchProps {
-  onSearch?: (query: string) => void
+  onSearch?: (query: string) => void | Promise<void>
   className?: string
   initialQuery?: string
   placeholder?: string
   mobilePlaceholder?: string
+  isBusy?: boolean
 }
 
 export function SimpleHotelSearch({
@@ -23,12 +24,14 @@ export function SimpleHotelSearch({
   className = "",
   initialQuery = "",
   placeholder = "호텔명, 국가, 또는 지역으로 검색하세요",
-  mobilePlaceholder = "호텔명 또는 지역 검색"
+  mobilePlaceholder = "호텔명 또는 지역 검색",
+  isBusy
 }: SimpleHotelSearchProps) {
   const router = useRouter()
   const supabase = createClient()
   
-  const [isSearching, setIsSearching] = useState(false)
+  const [internalSearching, setInternalSearching] = useState(false)
+  const isSearching = typeof isBusy === 'boolean' ? isBusy : internalSearching
   const [searchQuery, setSearchQuery] = useState(initialQuery || "")
   const isMobile = useIsMobile()
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -176,7 +179,9 @@ export function SimpleHotelSearch({
     if (isSearching) return
     
     setSuggestionError(null)
-    setIsSearching(true)
+    if (typeof isBusy !== 'boolean') {
+      setInternalSearching(true)
+    }
     
     try {
       const query = searchQuery.trim()
@@ -202,7 +207,9 @@ export function SimpleHotelSearch({
     } catch (error) {
       console.error('검색 중 오류 발생:', error)
     } finally {
-      setIsSearching(false)
+      if (typeof isBusy !== 'boolean') {
+        setInternalSearching(false)
+      }
     }
   }
 
