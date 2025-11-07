@@ -23,20 +23,51 @@ async function getChainHotels(chainSlug: string) {
   console.log(`[ Server ] 체인 chain_slug '${chainSlug}'로 호텔 검색 시작`)
   
   // 1. hotel_chains에서 chain_slug로 체인 찾기
-  const { data: chains, error: chainsError } = await supabase
+  const { data: directChains, error: chainsError } = await supabase
     .from('hotel_chains')
     .select('chain_id, chain_name_en, chain_name_ko, chain_slug')
     .eq('chain_slug', chainSlug)
   
-  console.log(`[ Server ] hotel_chains chain_slug 조회 결과:`, { data: chains, error: chainsError })
+  console.log(`[ Server ] hotel_chains chain_slug 조회 결과:`, { data: directChains, error: chainsError })
   
   if (chainsError) {
     console.error('[ Server ] 호텔 체인 조회 에러:', chainsError)
     return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
+  let chains = directChains
+
+  // 체인 slug로 직접 매칭되지 않는 경우 brand_slug로 역추적 (예: pan-pacific)
   if (!chains || chains.length === 0) {
-    console.warn(`[ Server ] slug '${chainSlug}'와 매칭되는 체인을 찾을 수 없습니다.`)
+    console.warn(`[ Server ] slug '${chainSlug}'와 매칭되는 체인을 찾을 수 없습니다. brand_slug 기반 역검색 시도.`)
+
+    const { data: brandBySlug, error: brandSlugError } = await supabase
+      .from('hotel_brands')
+      .select('chain_id, brand_id, brand_name_en, brand_name_ko, brand_slug')
+      .eq('brand_slug', chainSlug)
+      .maybeSingle()
+
+    if (brandSlugError) {
+      console.error('[ Server ] brand_slug 역검색 에러:', brandSlugError)
+    }
+
+    if (brandBySlug?.chain_id) {
+      const { data: chainById, error: chainByIdError } = await supabase
+        .from('hotel_chains')
+        .select('chain_id, chain_name_en, chain_name_ko, chain_slug')
+        .eq('chain_id', brandBySlug.chain_id)
+
+      if (chainByIdError) {
+        console.error('[ Server ] chain_id로 체인 조회 에러:', chainByIdError)
+      } else {
+        chains = chainById || []
+        console.log(`[ Server ] brand_slug '${chainSlug}'로 체인 역매칭 성공:`, chains?.[0])
+      }
+    }
+  }
+
+  if (!chains || chains.length === 0) {
+    console.warn(`[ Server ] slug '${chainSlug}'에 해당하는 체인을 최종적으로 찾지 못했습니다.`)
     return { chain: null, hotels: [], allChains: [], selectedChainBrands: [] }
   }
   
