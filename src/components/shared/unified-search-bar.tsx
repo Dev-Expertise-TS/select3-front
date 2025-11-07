@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X, MapPin, Hotel, FileText } from 'lucide-react'
+import { Search, X, MapPin, Hotel, FileText, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { useUnifiedSearch } from '@/hooks/use-unified-search'
@@ -20,6 +20,7 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
   const { data, isLoading } = useUnifiedSearch(query)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionRef = useRef<HTMLDivElement>(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   const suggestions = useMemo(() => data ?? [], [data])
   const regionSuggestions = useMemo(() => suggestions.filter((s: any) => s.type === 'region').slice(0, 5), [suggestions])
@@ -36,9 +37,12 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
       if (!q) return
       // 입력 제출 시 추천 레이어 닫기
       setIsFocused(false)
+      setIsSearching(true)
       const params = new URLSearchParams()
       params.set('q', q)
       router.push(`${submitTo}?${params.toString()}`)
+      // 페이지 이동 후 로딩 상태 해제 (실제로는 페이지 언마운트되므로 타이머는 백업용)
+      setTimeout(() => setIsSearching(false), 3000)
     },
     [query, router, submitTo]
   )
@@ -103,12 +107,20 @@ export function UnifiedSearchBar({ className = '', placeholder = '호텔/아티�
         <button
           type="submit"
           className={cn(
-            'rounded-md px-4 md:px-5 py-1.5 text-sm font-medium text-white whitespace-nowrap min-w-[72px] flex-shrink-0',
-            isLoading ? 'bg-gray-400' : 'bg-gray-900 hover:bg-black'
+            'rounded-md px-4 md:px-5 py-1.5 text-sm font-medium text-white whitespace-nowrap min-w-[72px] flex-shrink-0 flex items-center justify-center gap-1.5',
+            isSearching ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black'
           )}
-          aria-busy={isLoading}
+          disabled={isSearching}
+          aria-busy={isSearching}
         >
-          검색
+          {isSearching ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>검색중</span>
+            </>
+          ) : (
+            '검색'
+          )}
         </button>
       </div>
 
