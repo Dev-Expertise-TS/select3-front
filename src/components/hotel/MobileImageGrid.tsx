@@ -69,8 +69,8 @@ export function MobileImageGrid({
             className="object-cover cursor-pointer"
             onClick={openModal}
             priority
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             fetchPriority="high"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
             loading="eager"
             onError={(e) => {
               const target = e.target as HTMLImageElement

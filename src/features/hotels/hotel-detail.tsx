@@ -587,7 +587,33 @@ export function HotelDetail({
   )
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(initialPromotions.length === 0)
 
-  // 이미지 로딩 상태 관리 (기존 로직 유지)
+  // LCP 이미지 preload (초기 문서에서 즉시 검색 가능하게)
+  useEffect(() => {
+    if (initialImages.length > 0 && typeof window !== 'undefined') {
+      const firstImage = initialImages[0]
+      const firstImageUrl = firstImage.public_url || firstImage.storage_path
+      
+      if (firstImageUrl) {
+        // 절대 URL로 변환
+        const absoluteUrl = firstImageUrl.startsWith('http') 
+          ? firstImageUrl 
+          : `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${firstImageUrl.replace(/^\/?/, '')}`
+        
+        // 기존 preload link가 있는지 확인
+        const existingLink = document.querySelector(`link[rel="preload"][as="image"][href="${absoluteUrl}"]`)
+        if (!existingLink) {
+          const link = document.createElement('link')
+          link.rel = 'preload'
+          link.as = 'image'
+          link.href = absoluteUrl
+          link.setAttribute('fetchpriority', 'high')
+          document.head.appendChild(link)
+        }
+      }
+    }
+  }, [initialImages])
+
+  // 이미지 로딩 상태 관리 (리플로우 최소화를 위한 최적화)
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())
   const [imageLoadingStates, setImageLoadingStates] = useState<Map<string, 'loading' | 'loaded' | 'error'>>(new Map())
 
@@ -598,24 +624,38 @@ export function HotelDetail({
       ? decodeURIComponent(src) 
       : src;
     
-    // 디버깅 로그 제거됨
-    
     // 현재 상태를 함수 내부에서 확인하여 의존성 제거
     setPreloadedImages(prev => {
       if (prev.has(decodedSrc)) return prev
       
-      // 로딩 상태 설정
-      setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loading'))
+      // 배치 업데이트로 리플로우 최소화 (requestAnimationFrame 사용)
+      requestAnimationFrame(() => {
+        setImageLoadingStates(prevState => {
+          const newState = new Map(prevState)
+          newState.set(decodedSrc, 'loading')
+          return newState
+        })
+      })
       
-      // 존재 여부 사전 확인을 생략하고 실제 로딩 결과만 반영 (HEAD 403 등으로 인한 오탐 제거)
+      // 이미지 로딩 (비동기, DOM 읽기 최소화)
       const img = new window.Image()
       img.onload = () => {
-        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'loaded'))
-        console.log(`✅ 이미지 preload 완료: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
+        requestAnimationFrame(() => {
+          setImageLoadingStates(prevState => {
+            const newState = new Map(prevState)
+            newState.set(decodedSrc, 'loaded')
+            return newState
+          })
+        })
       }
-      img.onerror = (error) => {
-        setImageLoadingStates(prevState => new Map(prevState).set(decodedSrc, 'error'))
-        console.warn(`⚠️ 이미지 preload 실패: ${decodedSrc.substring(decodedSrc.lastIndexOf('/') + 1)}`)
+      img.onerror = () => {
+        requestAnimationFrame(() => {
+          setImageLoadingStates(prevState => {
+            const newState = new Map(prevState)
+            newState.set(decodedSrc, 'error')
+            return newState
+          })
+        })
       }
       img.src = decodedSrc
       

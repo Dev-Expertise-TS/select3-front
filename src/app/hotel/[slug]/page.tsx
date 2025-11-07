@@ -186,6 +186,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     other: {
       'fb:app_id': process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '',
+      // LCP 이미지 preload (Next.js 15에서는 other에 직접 추가할 수 없으므로 클라이언트에서 처리)
+      'lcp-image': firstImage || '',
     },
   }
 }

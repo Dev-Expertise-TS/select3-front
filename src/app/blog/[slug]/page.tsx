@@ -10,13 +10,14 @@ interface BlogDetailPageProps {
 
 
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  const { slug } = await params
+  const canonicalUrl = `${baseUrl}/blog/${slug}`
+  
   try {
     // 서버 사이드에서 직접 Supabase 호출
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
-    
-    const { slug } = await params
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
     
     const { data: blog, error } = await supabase
       .from("select_hotel_blogs")
@@ -28,6 +29,9 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       return {
         title: '아티클 상세 | 투어비스 셀렉트',
         description: '투어비스 셀렉트 호텔 매거진의 상세 아티클을 확인하세요.',
+        alternates: {
+          canonical: canonicalUrl
+        }
       }
     }
 
@@ -37,7 +41,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       openGraph: {
         title: blog.main_title,
         description: blog.sub_title || '투어비스 셀렉트 호텔 매거진의 상세 아티클을 확인하세요.',
-        url: `${baseUrl}/blog/${slug}`,
+        url: canonicalUrl,
         siteName: '투어비스 셀렉트',
         locale: 'ko_KR',
         type: 'article',
@@ -60,7 +64,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
         images: blog.main_image ? [blog.main_image] : [`${baseUrl}/select_logo.avif`],
       },
       alternates: {
-        canonical: `${baseUrl}/blog/${slug}`
+        canonical: canonicalUrl
       },
       robots: {
         index: true,
@@ -76,10 +80,13 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
   } catch (error) {
     console.error('Metadata generation error:', error)
     
-    // 기본 메타데이터 (오류 시)
+    // 기본 메타데이터 (오류 시에도 canonical 포함)
     return {
       title: '아티클 상세 | 투어비스 셀렉트',
       description: '투어비스 셀렉트 호텔 매거진의 상세 아티클을 확인하세요.',
+      alternates: {
+        canonical: canonicalUrl
+      }
     }
   }
 }

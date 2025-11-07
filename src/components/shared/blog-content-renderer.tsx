@@ -262,6 +262,36 @@ export function BlogContentRenderer({
     return sections
   }
 
+  // HTML 콘텐츠 내 이미지 태그에 alt 속성 추가 함수
+  const addAltToImages = (html: string): string => {
+    if (!html) return html
+    
+    // img 태그를 찾아서 alt 속성이 없으면 추가
+    return html.replace(/<img\s+([^>]*?)>/gi, (match, attributes) => {
+      // alt 속성이 이미 있는지 확인
+      if (/alt\s*=/i.test(attributes)) {
+        return match // 이미 alt가 있으면 그대로 반환
+      }
+      
+      // alt 속성이 없으면 추가
+      // src에서 이미지 파일명 추출하여 기본 alt로 사용
+      const srcMatch = attributes.match(/src\s*=\s*["']([^"']+)["']/i)
+      let altText = blog.main_title || '블로그 이미지'
+      
+      if (srcMatch && srcMatch[1]) {
+        // URL에서 파일명 추출
+        const fileName = srcMatch[1].split('/').pop()?.split('?')[0] || ''
+        if (fileName) {
+          // 파일명에서 확장자 제거하고 공백으로 변환
+          altText = fileName.replace(/\.(jpg|jpeg|png|gif|webp|avif)$/i, '').replace(/[-_]/g, ' ') || blog.main_title || '블로그 이미지'
+        }
+      }
+      
+      // alt 속성 추가
+      return `<img ${attributes} alt="${altText}">`
+    })
+  }
+
   const contentSections = getContentSections()
 
   return (
@@ -320,21 +350,26 @@ export function BlogContentRenderer({
 
       {/* 본문 내용 */}
       <article className={cn("prose prose-lg max-w-none", contentClassName)}>
-        {contentSections.map((section, index) => (
-          <div key={`content-${index}`} className="mb-6">
-            <div 
-              className="blog-content text-gray-800 leading-relaxed whitespace-pre-wrap prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:ml-4 [&_li]:mb-2 [&_li[data-list='bullet']]:list-none [&_li[data-list='bullet']]:before:content-['•'] [&_li[data-list='bullet']]:before:absolute [&_li[data-list='bullet']]:before:left-0 [&_li[data-list='bullet']]:before:text-gray-600 [&_li[data-list='bullet']]:before:font-bold [&_li[data-list='bullet']]:pl-6 [&_li[data-list='bullet']]:relative [&_.ql-ui]:hidden"
-              dangerouslySetInnerHTML={{ __html: section.content || '' }}
-              suppressHydrationWarning
-              translate="no"
-            />
-            
-            {/* 호텔 카드 CTA 렌더링 */}
-            {section.sabreId && (
-              <HotelCardCtaWrapper sabreId={section.sabreId} />
-            )}
-          </div>
-        ))}
+        {contentSections.map((section, index) => {
+          // 이미지에 alt 속성 추가
+          const processedContent = addAltToImages(section.content || '')
+          
+          return (
+            <div key={`content-${index}`} className="mb-6">
+              <div 
+                className="blog-content text-gray-800 leading-relaxed whitespace-pre-wrap prose prose-gray max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-3 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:ml-4 [&_li]:mb-2 [&_li[data-list='bullet']]:list-none [&_li[data-list='bullet']]:before:content-['•'] [&_li[data-list='bullet']]:before:absolute [&_li[data-list='bullet']]:before:left-0 [&_li[data-list='bullet']]:before:text-gray-600 [&_li[data-list='bullet']]:before:font-bold [&_li[data-list='bullet']]:pl-6 [&_li[data-list='bullet']]:relative [&_.ql-ui]:hidden"
+                dangerouslySetInnerHTML={{ __html: processedContent }}
+                suppressHydrationWarning
+                translate="no"
+              />
+              
+              {/* 호텔 카드 CTA 렌더링 */}
+              {section.sabreId && (
+                <HotelCardCtaWrapper sabreId={section.sabreId} />
+              )}
+            </div>
+          )
+        })}
       </article>
     </div>
   )

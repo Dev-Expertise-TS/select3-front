@@ -107,6 +107,7 @@ export function HotelInfo({
                       fill
                       className="object-cover transition-opacity duration-300"
                       priority
+                      fetchPriority="high"
                       sizes="(max-width: 768px) 100vw, 60vw"
                       quality={90}
                       unoptimized={true}
