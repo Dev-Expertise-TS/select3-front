@@ -54,7 +54,7 @@ export function Header() {
           isScrolled ? "shadow-md" : "",
         )}
       >
-          <div className="container mx-auto max-w-[1440px] px-4">
+          <div className="container mx-auto max-w-[1440px] px-2 lg:px-2 xl:px-4">
             <div className="flex h-12 md:h-16 items-center justify-between">
             <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors py-0 my-0">
               <div className="w-20 h-10 md:w-28 md:h-14 py-0 my-0">
@@ -81,7 +81,7 @@ export function Header() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                      className="flex items-center whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {
                           (window as any).dataLayer.push({
@@ -109,7 +109,7 @@ export function Header() {
                     <>
                       <Link
                         href={item.href}
-                        className="flex items-center gap-1 text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                        className="flex items-center gap-1 whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
                         onClick={() => {
                           if (typeof window !== 'undefined' && (window as any).dataLayer) {
                             (window as any).dataLayer.push({
@@ -157,7 +157,7 @@ export function Header() {
                   ) : (
                     <Link
                       href={item.href}
-                      className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-4"
+                      className="whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {
                           (window as any).dataLayer.push({
@@ -175,7 +175,7 @@ export function Header() {
                     </Link>
                   )}
                   {index < desktopNavItems.length - 1 && (
-                    <div className="w-px h-4 bg-gray-300 mx-2"></div>
+                    <div className="w-px h-4 bg-gray-300 mx-0.5 lg:mx-1 xl:mx-2"></div>
                   )}
                 </div>
               ))}
