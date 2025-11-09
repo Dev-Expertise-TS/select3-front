@@ -8,17 +8,17 @@ export async function GET() {
   try {
     const supabase = await createClient()
     
-    // topic pages 목록 가져오기
-    const { data: topicPages, error: topicPagesError } = await supabase
-      .from('select_topic_pages')
+    // recommendation pages 목록 가져오기
+    const { data: recommendationPages, error: recommendationPagesError } = await supabase
+      .from('select_recommendation_pages')
       .select('slug, updated_at, sitemap_priority, sitemap_changefreq')
       .eq('publish', true)
       .not('slug', 'is', null)
       .not('slug', 'eq', '')
       .limit(500)
 
-    if (topicPagesError) {
-      console.error('토픽 페이지 sitemap 생성 중 오류:', topicPagesError)
+    if (recommendationPagesError) {
+      console.error('추천 페이지 sitemap 생성 중 오류:', recommendationPagesError)
       return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
         headers: {
           'Content-Type': 'application/xml',
@@ -26,7 +26,7 @@ export async function GET() {
       })
     }
 
-    if (!topicPages || topicPages.length === 0) {
+    if (!recommendationPages || recommendationPages.length === 0) {
       return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
         headers: {
           'Content-Type': 'application/xml',
@@ -34,7 +34,7 @@ export async function GET() {
       })
     }
 
-    const topicPageUrls = topicPages.map((page) => {
+    const recommendationPageUrls = recommendationPages.map((page) => {
       const lastModified = page.updated_at ? new Date(page.updated_at) : currentDate
       const priority = page.sitemap_priority || 0.6
       const changefreq = page.sitemap_changefreq || 'weekly'
@@ -49,7 +49,7 @@ export async function GET() {
     }).join('')
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${topicPageUrls}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${recommendationPageUrls}
 </urlset>`
 
     return new NextResponse(sitemap, {
@@ -58,7 +58,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('토픽 페이지 sitemap 생성 중 오류:', error)
+    console.error('추천 페이지 sitemap 생성 중 오류:', error)
     return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
       headers: {
         'Content-Type': 'application/xml',

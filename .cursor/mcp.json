@@ -1,15 +1,42 @@
 {
   "mcpServers": {
-    "v0": {
+    "Virtual Traveling Bot": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
-        "@vercel/v0-mcp"
+        "@smithery/cli@latest",
+        "run",
+        "@mfukushim/map-traveler-mcp",
+        "--key",
+        "d7e93f07-455c-4180-8cef-d1e265819f62"
+      ],
+      "env": {}
+    },
+    "Airbnb Search and Listing Server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@openbnb-org/mcp-server-airbnb",
+        "--key",
+        "d7e93f07-455c-4180-8cef-d1e265819f62"
+      ],
+      "env": {}
+    },
+    "v0": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.v0.dev",
+        "--header",
+        "Authorization: Bearer ${V0_API_KEY}"
       ],
       "env": {
-        "V0_API_KEY": "${V0_API_KEY}"
+        "V0_API_KEY": "v1:fjknd9BbsBGkH3pHqr9sgmYK:FTo13cZ3jBZAwLeylDApKa2h"
       }
     }
   }
 }
-

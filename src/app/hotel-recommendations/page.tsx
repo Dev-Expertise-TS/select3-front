@@ -1,8 +1,10 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { PromotionBannerWrapper } from '@/components/promotion-banner-wrapper'
 import { createClient } from '@/lib/supabase/server'
+import { Sparkles } from 'lucide-react'
+import { RecommendationsClient } from './recommendations-client'
 
 export const metadata: Metadata = {
   title: '호텔 추천 | 투어비스 셀렉트',
@@ -15,135 +17,86 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600 // 1시간마다 재검증
 
-async function getTopicPages() {
+async function getRecommendationPages() {
   const supabase = await createClient()
   
-  const { data: topicPages, error } = await supabase
-    .from('select_topic_pages')
+  const { data: recommendationPages, error } = await supabase
+    .from('select_recommendation_pages')
     .select('id, slug, title_ko, intro_rich_ko, hero_image_url, hashtags')
     .eq('publish', true)
     .order('created_at', { ascending: false })
     .limit(50)
   
   if (error) {
-    console.error('토픽 페이지 목록 조회 실패:', error)
+    console.error('추천 페이지 목록 조회 실패:', error)
     return []
   }
   
-  return topicPages || []
+  return recommendationPages || []
 }
 
 export default async function HotelRecommendationsPage() {
-  const topicPages = await getTopicPages()
+  const recommendationPages = await getRecommendationPages()
   
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main>
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-blue-600 to-purple-700 text-white py-16 sm:py-24">
-          <div className="container mx-auto max-w-[1440px] px-4 text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-              호텔 추천
-            </h1>
-            <p className="text-lg sm:text-xl text-blue-50 max-w-2xl mx-auto">
-              테마별, 여행 스타일별로 엄선한 프리미엄 호텔을 만나보세요
-            </p>
+      <PromotionBannerWrapper>
+        <main>
+        {/* Hero Section - Simple & Clean v0 Style */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+          {/* Subtle Background Pattern */}
+          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+          
+          {/* Simple Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40" />
+          
+          {/* Content */}
+          <div className="relative container mx-auto max-w-[1440px] px-4 py-12 sm:py-16 md:py-20">
+            <div className="max-w-4xl mx-auto text-center space-y-4">
+              {/* Simple Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium">
+                <Sparkles className="w-4 h-4" />
+                <span>전문가 선정 컬렉션</span>
+              </div>
+              
+              {/* Clean Typography */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+                호텔 추천
+              </h1>
+              
+              {/* Simple Description */}
+              <p className="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto">
+                테마별, 여행 스타일별로 엄선한 프리미엄 호텔을 만나보세요
+              </p>
+              
+              {/* Minimal Stats */}
+              <div className="flex justify-center gap-6 pt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                  <span>인기 추천</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full" />
+                  <span>전문가 선정</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-pink-400 rounded-full" />
+                  <span>특별 혜택</span>
+                </div>
+              </div>
+            </div>
           </div>
+          
+          {/* Clean Bottom Border */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
         </div>
         
-        {/* Breadcrumbs */}
-        <div className="bg-gray-50 border-b border-gray-200">
-          <div className="container mx-auto max-w-[1440px] px-4 py-3">
-            <nav className="flex items-center text-sm text-gray-600">
-              <Link href="/" className="hover:text-blue-600 transition-colors">
-                Home
-              </Link>
-              <span className="mx-2">/</span>
-              <span className="text-gray-900 font-medium">호텔 추천</span>
-            </nav>
-          </div>
-        </div>
-        
-        {/* Topic Pages Grid */}
-        <div className="py-12 sm:py-16">
-          <div className="container mx-auto max-w-[1440px] px-4">
-            {topicPages.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-gray-400 text-6xl mb-4">📚</div>
-                <p className="text-gray-600">준비 중인 콘텐츠입니다.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {topicPages.map((page) => (
-                  <Link
-                    key={page.id}
-                    href={`/hotel-recommendations/${page.slug}`}
-                    className="group bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
-                  >
-                    {/* Image */}
-                    {page.hero_image_url ? (
-                      <div 
-                        className="h-48 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${page.hero_image_url})` }}
-                      >
-                        <div className="h-full bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
-                          <h2 className="text-xl font-bold text-white">
-                            {page.title_ko}
-                          </h2>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                        <h2 className="text-xl font-bold text-white px-6 text-center">
-                          {page.title_ko}
-                        </h2>
-                      </div>
-                    )}
-                    
-                    {/* Content */}
-                    <div className="p-6">
-                      {page.intro_rich_ko && (
-                        <div 
-                          className="text-sm text-gray-600 line-clamp-3 mb-4"
-                          dangerouslySetInnerHTML={{ 
-                            __html: page.intro_rich_ko.replace(/<[^>]*>/g, ' ').slice(0, 150) + '...'
-                          }}
-                        />
-                      )}
-                      
-                      {/* Hashtags */}
-                      {page.hashtags && page.hashtags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {page.hashtags.slice(0, 3).map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* View More */}
-                      <div className="pt-4 border-t border-gray-100">
-                        <span className="text-sm text-blue-600 font-medium group-hover:text-blue-700 inline-flex items-center gap-1">
-                          자세히 보기
-                          <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
+        {/* Client Component with Filtering */}
+        <RecommendationsClient initialPages={recommendationPages} />
+        </main>
+      </PromotionBannerWrapper>
       
       <Footer />
     </div>

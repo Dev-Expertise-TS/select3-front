@@ -4,8 +4,19 @@ const nextConfig = {
   // URL 정규화: trailing slash 없음
   trailingSlash: false,
 
-  eslint: { ignoreDuringBuilds: true },
+  // Next.js 16: eslint 설정은 더 이상 next.config에서 지원하지 않음
+  // eslint.config.mjs 또는 .eslintrc 파일 사용
   typescript: { ignoreBuildErrors: true },
+
+  // Next.js 16: Cache Components
+  // 기존 revalidate/dynamic 설정과 호환되지 않으므로 일단 비활성화
+  // 점진적으로 "use cache" 디렉티브로 마이그레이션 필요
+  cacheComponents: false,
+
+  // Next.js 16: Turbopack 설정 (experimental에서 top-level로 이동)
+  turbopack: {
+    // Turbopack 관련 설정 (필요시 추가)
+  },
 
   images: {
     unoptimized: false,
@@ -20,14 +31,19 @@ const nextConfig = {
       { protocol: 'https', hostname: 'flagcdn.com' },
     ],
     formats: ['image/avif', 'image/webp'],
-    qualities: [75, 80, 85, 90, 95, 100],
+    // Next.js 16: 기본 quality는 75로 변경됨
+    qualities: [75],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 604800,
+    // Next.js 16: 16px는 4.2%만 사용하므로 제거됨
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    // Next.js 16: 기본값이 4시간(14400초)으로 변경됨
+    minimumCacheTTL: 14400,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    loader: 'default',
-    loaderFile: undefined,
+    // Next.js 16: 보안 강화 - 로컬 IP 최적화 기본 차단
+    dangerouslyAllowLocalIP: false,
+    // Next.js 16: 최대 리다이렉트 제한 (기본 3)
+    maximumRedirects: 3,
   },
 
   experimental: {
