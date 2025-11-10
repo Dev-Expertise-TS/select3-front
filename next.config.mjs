@@ -65,6 +65,11 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // HSTS: HTTPS 강제 (Google Canonical 권장)
+          { 
+            key: 'Strict-Transport-Security', 
+            value: 'max-age=63072000; includeSubDomains; preload' 
+          },
         ],
       },
     ];

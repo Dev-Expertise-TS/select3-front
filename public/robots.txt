@@ -13,8 +13,9 @@ Disallow: /api/
 # 사이트맵 위치
 Sitemap: https://luxury-select.co.kr/sitemap.xml
 Sitemap: https://luxury-select.co.kr/sitemap-hotel
-Sitemap: https://luxury-select.co.kr/sitemap-chains
-Sitemap: https://luxury-select.co.kr/sitemap-blog
+Sitemap: https://luxury-select.co.kr/sitemap-hotel-lists
+Sitemap: https://luxury-select.co.kr/sitemap-brands
 Sitemap: https://luxury-select.co.kr/sitemap-destinations
+Sitemap: https://luxury-select.co.kr/sitemap-blog
 Sitemap: https://luxury-select.co.kr/sitemap-topic-pages
 Sitemap: https://luxury-select.co.kr/sitemap-index

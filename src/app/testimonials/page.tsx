@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { KakaoChatButton } from '@/components/shared/kakao-chat-button'
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+
 export const metadata: Metadata = {
   title: '고객 후기 | 투어비스 셀렉트',
   description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요. 실제 투숙객들이 경험한 특별한 혜택과 럭셔리 호텔 경험을 확인하세요.',
@@ -23,13 +25,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: '고객 후기 | 투어비스 셀렉트',
     description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
-    url: 'https://luxury-select.co.kr/testimonials',
+    url: `${baseUrl}/testimonials`,
     siteName: '투어비스 셀렉트',
     locale: 'ko_KR',
     type: 'website',
     images: [
       {
-        url: 'https://luxury-select.co.kr/select_logo.avif',
+        url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: '투어비스 셀렉트 고객 후기'
@@ -40,10 +42,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '고객 후기 | 투어비스 셀렉트',
     description: '투어비스 셀렉트를 이용하신 고객들의 생생한 후기를 만나보세요.',
-    images: ['https://luxury-select.co.kr/select_logo.avif']
+    images: [`${baseUrl}/select_logo.avif`]
   },
   alternates: {
-    canonical: 'https://luxury-select.co.kr/testimonials'
+    canonical: `${baseUrl}/testimonials`
   },
   robots: {
     index: true,
