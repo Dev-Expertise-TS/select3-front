@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // city_code → city_slug 매핑
+// ⚠️ 중요: select_regions 테이블의 city_slug 값과 정확히 일치해야 함!
 const CITY_CODE_TO_SLUG: Record<string, string> = {
-  'DANANG': 'danang',
+  'DAN': 'da-nang',       // 다낭 (city_code: DAN)
+  'DANANG': 'da-nang',    // 레거시 호환
   'BANGKOK': 'bangkok',
   'BALI': 'bali',
   'TOKYO': 'tokyo',
@@ -11,7 +13,7 @@ const CITY_CODE_TO_SLUG: Record<string, string> = {
   'HONG_KONG': 'hong-kong',
   'SINGAPORE': 'singapore',
   'PHUKET': 'phuket',
-  'SAMUI': 'samui',
+  'SAMUI': 'ko-samui',
   'SEOUL': 'seoul',
   'BUSAN': 'busan',
   'PARIS': 'paris',
@@ -21,11 +23,11 @@ const CITY_CODE_TO_SLUG: Record<string, string> = {
   'DUBAI': 'dubai',
   'MALDIVES': 'maldives',
   'KYOTO': 'kyoto',
-  'HOIAN': 'hoian',
-  'CONDAO': 'condao',
+  'HOIAN': 'hoi-an',
+  'CONDAO': 'con-dao',
   'SANYA': 'sanya',
-  'NINHOA': 'ninhoa',
-  'PHUQUOC': 'phuquoc',
+  'NINHOA': 'ninh-hoa',
+  'PHUQUOC': 'phu-quoc',
   'UBUD': 'ubud',
   'DENPASAR': 'denpasar',
   'MANILA': 'manila',
