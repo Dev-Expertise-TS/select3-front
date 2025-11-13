@@ -9,10 +9,12 @@ export async function GET(
     const supabase = await createClient()
     const { sabreId } = await params
     
-    // 먼저 호텔 정보를 가져와서 blogs 필드 확인
+    console.log(`🔍 [API] 호텔 ${sabreId}의 블로그 조회 시작...`)
+    
+    // 먼저 호텔 정보를 가져오기
     const { data: hotel, error: hotelError } = await supabase
       .from("select_hotels")
-      .select("blogs, property_name_ko")
+      .select("sabre_id, property_name_ko")
       .eq("sabre_id", sabreId)
       .single()
 
@@ -24,53 +26,7 @@ export async function GET(
       )
     }
 
-    if (!hotel || !hotel.blogs) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: {
-          count: 0,
-          hotelName: hotel?.property_name_ko || "알 수 없는 호텔"
-        }
-      })
-    }
-
-    // blogs 필드에서 slug 목록 추출
-    let blogSlugs: string[] = []
-    
-    if (typeof hotel.blogs === 'string') {
-      // JSON 문자열인지 확인 (배열 형태)
-      if (hotel.blogs.startsWith('[') && hotel.blogs.endsWith(']')) {
-        try {
-          blogSlugs = JSON.parse(hotel.blogs)
-        } catch (parseError) {
-          console.warn("JSON parsing failed, treating as comma-separated string:", parseError)
-          blogSlugs = hotel.blogs.split(',').map(slug => slug.trim()).filter(slug => slug.length > 0)
-        }
-      } else {
-        // 단순 문자열인 경우 (쉼표로 구분된 경우 처리)
-        blogSlugs = hotel.blogs.split(',').map(slug => slug.trim()).filter(slug => slug.length > 0)
-      }
-    } else if (Array.isArray(hotel.blogs)) {
-      // 이미 배열인 경우
-      blogSlugs = hotel.blogs
-    } else if (hotel.blogs) {
-      // 단일 값인 경우
-      blogSlugs = [String(hotel.blogs)]
-    }
-
-    if (blogSlugs.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        meta: {
-          count: 0,
-          hotelName: hotel.property_name_ko
-        }
-      })
-    }
-
-    // 블로그 데이터 조회
+    // 블로그 데이터 조회 (s1_sabre_id ~ s12_sabre_id 중 하나라도 일치하는 블로그 찾기)
     const { data: blogs, error: blogsError } = await supabase
       .from("select_hotel_blogs")
       .select(`
@@ -93,8 +49,9 @@ export async function GET(
         created_at,
         updated_at
       `)
-      .in("slug", blogSlugs)
-      .order("updated_at", { ascending: false })
+      .or(`s1_sabre_id.eq.${sabreId},s2_sabre_id.eq.${sabreId},s3_sabre_id.eq.${sabreId},s4_sabre_id.eq.${sabreId},s5_sabre_id.eq.${sabreId},s6_sabre_id.eq.${sabreId},s7_sabre_id.eq.${sabreId},s8_sabre_id.eq.${sabreId},s9_sabre_id.eq.${sabreId},s10_sabre_id.eq.${sabreId},s11_sabre_id.eq.${sabreId},s12_sabre_id.eq.${sabreId}`)
+      .eq('publish', true)
+      .order("created_at", { ascending: false })
 
     if (blogsError) {
       console.error("Blogs fetch error:", blogsError)
@@ -104,14 +61,15 @@ export async function GET(
       )
     }
 
+    console.log(`✅ [API] 호텔 ${sabreId}의 블로그 ${blogs?.length || 0}개 조회 완료`)
+
     return NextResponse.json({
       success: true,
       data: blogs || [],
       meta: {
         count: blogs?.length || 0,
-        hotelName: hotel.property_name_ko,
-        sabreId: sabreId,
-        requestedSlugs: blogSlugs
+        hotelName: hotel?.property_name_ko || "알 수 없는 호텔",
+        sabreId: sabreId
       }
     })
   } catch (error) {

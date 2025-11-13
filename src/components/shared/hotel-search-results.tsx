@@ -955,12 +955,6 @@ export function HotelSearchResults({
                             placeholder="호텔명, 국가, 또는 지역으로 검색하세요"
                             isBusy={isLoading}
                           />
-                          <SimpleHotelSearch 
-                            onSearch={handleSearch}
-                            initialQuery={searchQuery}
-                            placeholder="호텔명, 국가, 또는 지역으로 검색하세요"
-                            isBusy={isLoading}
-                          />
                             </div>
                           </div>
                         </div>

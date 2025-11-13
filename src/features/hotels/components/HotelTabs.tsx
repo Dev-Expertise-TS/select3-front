@@ -280,7 +280,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             >
               위치 및 교통
             </button>
-            {hotelBlogs && (
+            {sabreId && (
               <button
                 onClick={() => setActiveTab("articles")}
                 className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all ${

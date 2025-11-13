@@ -59,11 +59,11 @@ export async function getHotelDetailData(slug: string) {
       .select('surface, promotion_title, promotion_description, start_date, end_date')
       .eq('sabre_id', sabreId),
     
-    // 5. 호텔 블로그 조회
+    // 5. 호텔 블로그 조회 (s1~s12_sabre_id 중 하나라도 일치하는 블로그 찾기)
     supabase
       .from('select_hotel_blogs')
       .select('id, slug, main_image, main_title, sub_title, created_at')
-      .contains('related_sabre_ids', [sabreId])
+      .or(`s1_sabre_id.eq.${sabreId},s2_sabre_id.eq.${sabreId},s3_sabre_id.eq.${sabreId},s4_sabre_id.eq.${sabreId},s5_sabre_id.eq.${sabreId},s6_sabre_id.eq.${sabreId},s7_sabre_id.eq.${sabreId},s8_sabre_id.eq.${sabreId},s9_sabre_id.eq.${sabreId},s10_sabre_id.eq.${sabreId},s11_sabre_id.eq.${sabreId},s12_sabre_id.eq.${sabreId}`)
       .eq('publish', true)
       .order('created_at', { ascending: false })
       .limit(3)
