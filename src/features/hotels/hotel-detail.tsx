@@ -1650,6 +1650,7 @@ export function HotelDetail({
           propertyDescription={hotel.property_description}
           sabreId={hotel.sabre_id}
           hotelBlogs={hotel.blogs}
+          initialBlogs={initialBlogs}
         />
       </div>
 

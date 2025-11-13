@@ -44,9 +44,10 @@ interface HotelTabsProps {
   propertyDescription?: string
   sabreId?: number
   hotelBlogs?: string | null
+  initialBlogs?: any[]
 }
 
-export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId, hotelBlogs }: HotelTabsProps) {
+export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress, propertyDescription, sabreId, hotelBlogs, initialBlogs = [] }: HotelTabsProps) {
   const [activeTab, setActiveTab] = useState("benefits")
   
   // 접기/펼치기 상태 추가
@@ -61,8 +62,8 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   const introContentRef = useRef<HTMLDivElement>(null)
   const locationContentRef = useRef<HTMLDivElement>(null)
   
-  // 아티클 관련 상태
-  const [articles, setArticles] = useState<BlogContent[]>([])
+  // 아티클 관련 상태 (initialBlogs로 초기화)
+  const [articles, setArticles] = useState<BlogContent[]>(initialBlogs || [])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
   const [articlesError, setArticlesError] = useState<string | null>(null)
   
@@ -127,6 +128,14 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }, [sabreId, isLoadingBenefits])
 
+  // 초기 블로그 데이터가 있으면 fetch 플래그 설정
+  useEffect(() => {
+    if (initialBlogs && initialBlogs.length > 0) {
+      articlesFetchedRef.current = true
+      console.log(`✅ 호텔 ${sabreId}의 초기 블로그 ${initialBlogs.length}개 로드됨 (서버)`)
+    }
+  }, [initialBlogs, sabreId])
+
   // 호텔별 아티클 데이터 가져오기
   const fetchHotelArticles = useCallback(async () => {
     if (!sabreId || articlesFetchedRef.current || isLoadingArticles) {
@@ -137,6 +146,8 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       articlesFetchedRef.current = true
       setIsLoadingArticles(true)
       setArticlesError(null)
+      
+      console.log(`🔍 호텔 ${sabreId}의 블로그 API 호출 시작...`)
       
       const response = await fetch(`/api/hotels/${sabreId}/blogs`)
       const data = await response.json()
@@ -280,7 +291,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
             >
               위치 및 교통
             </button>
-            {sabreId && (
+            {articles.length > 0 && (
               <button
                 onClick={() => setActiveTab("articles")}
                 className={`flex items-center justify-center sm:justify-start gap-1 sm:gap-2 py-3 sm:py-0 sm:pb-3 px-2 sm:px-0 font-semibold text-sm sm:text-base whitespace-nowrap transition-all ${
