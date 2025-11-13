@@ -4,6 +4,8 @@ import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import WithKidsClient from "./with-kids-client"
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+
 export const metadata: Metadata = {
   title: "아이와 함께 떠나는 여행 | 투어비스 셀렉트",
   description: "키즈풀, 키즈 클럽, 베이비시팅 서비스까지 가족 여행에 어울리는 호텔 추천. 아이와 함께하는 특별한 가족 휴가를 위한 최고의 럭셔리 호텔을 만나보세요.",
@@ -20,13 +22,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "아이와 함께 떠나는 여행 | 투어비스 셀렉트",
     description: "키즈풀, 키즈 클럽, 베이비시팅 서비스까지 가족 여행에 어울리는 호텔 추천",
-    url: 'https://luxury-select.co.kr/with-kids',
+    url: `${baseUrl}/with-kids`,
     siteName: '투어비스 셀렉트',
     locale: 'ko_KR',
     type: 'website',
     images: [
       {
-        url: 'https://luxury-select.co.kr/select_logo.avif',
+        url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: '아이와 함께 떠나는 여행'
@@ -37,10 +39,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "아이와 함께 떠나는 여행 | 투어비스 셀렉트",
     description: "키즈풀, 키즈 클럽, 베이비시팅 서비스까지 가족 여행에 어울리는 호텔 추천",
-    images: ['https://luxury-select.co.kr/select_logo.avif']
+    images: [`${baseUrl}/select_logo.avif`]
   },
   alternates: {
-    canonical: 'https://luxury-select.co.kr/with-kids'
+    canonical: `${baseUrl}/with-kids`
   },
   robots: {
     index: true,

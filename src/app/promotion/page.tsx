@@ -4,6 +4,8 @@ import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { PromotionPageContent } from './promotion-content'
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+
 // 프로모션 페이지 캐시: 10분마다 재검증 (자주 변경됨)
 export const revalidate = 600
 
@@ -22,13 +24,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: '프로모션 호텔 | 투어비스 셀렉트',
     description: '투어비스 셀렉트에서 진행 중인 특별한 호텔 프로모션을 만나보세요. 최고의 럭셔리 호텔과 리조트를 특별한 가격으로 예약하실 수 있습니다.',
-    url: 'https://luxury-select.co.kr/promotion',
+    url: `${baseUrl}/promotion`,
     siteName: '투어비스 셀렉트',
     locale: 'ko_KR',
     type: 'website',
     images: [
       {
-        url: 'https://luxury-select.co.kr/select_logo.avif',
+        url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: '투어비스 셀렉트 프로모션',
@@ -39,10 +41,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '프로모션 호텔 | 투어비스 셀렉트',
     description: '투어비스 셀렉트에서 진행 중인 특별한 호텔 프로모션을 만나보세요. 최고의 럭셔리 호텔과 리조트를 특별한 가격으로 예약하실 수 있습니다.',
-    images: ['https://luxury-select.co.kr/select_logo.avif'],
+    images: [`${baseUrl}/select_logo.avif`],
   },
   alternates: {
-    canonical: 'https://luxury-select.co.kr/promotion'
+    canonical: `${baseUrl}/promotion`
   },
   robots: {
     index: true,

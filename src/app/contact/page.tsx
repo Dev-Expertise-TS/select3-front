@@ -3,6 +3,8 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ContactContent } from "./contact-content"
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+
 export const metadata: Metadata = {
   title: "문의하기 | 투어비스 셀렉트",
   description: "럭셔리 호텔 예약 문의, 컨시어지 상담 문의를 카카오톡으로 편리하게 이용하세요. 전문 상담사가 신속하게 답변해드립니다.",
@@ -18,13 +20,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: '문의하기 | 투어비스 셀렉트',
     description: '럭셔리 호텔 예약 문의, 컨시어지 상담 문의를 카카오톡으로 편리하게 이용하세요.',
-    url: 'https://luxury-select.co.kr/contact',
+    url: `${baseUrl}/contact`,
     siteName: '투어비스 셀렉트',
     locale: 'ko_KR',
     type: 'website',
     images: [
       {
-        url: 'https://luxury-select.co.kr/select_logo.avif',
+        url: `${baseUrl}/select_logo.avif`,
         width: 1200,
         height: 630,
         alt: '투어비스 셀렉트 문의하기'
@@ -35,10 +37,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '문의하기 | 투어비스 셀렉트',
     description: '럭셔리 호텔 예약 문의, 컨시어지 상담 문의를 카카오톡으로 편리하게 이용하세요.',
-    images: ['https://luxury-select.co.kr/select_logo.avif']
+    images: [`${baseUrl}/select_logo.avif`]
   },
   alternates: {
-    canonical: 'https://luxury-select.co.kr/contact'
+    canonical: `${baseUrl}/contact`
   },
   robots: {
     index: true,

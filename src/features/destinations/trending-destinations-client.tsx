@@ -35,10 +35,10 @@ export function TrendingDestinationsClient({
         {/* Destinations Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {destinations.map((destination, index) => {
-            // 필터 파라미터 생성 (city_code 사용)
-            const filterParams = new URLSearchParams({
-              city: destination.city_code, // city_code를 필터 ID로 사용
-            })
+            // city_slug가 있으면 새 경로 방식, 없으면 기존 쿼리 방식 (fallback)
+            const href = destination.city_slug 
+              ? `/hotel/${destination.city_slug}`
+              : `/hotel?city=${destination.city_code}`
             
             return (
               <CityCard
@@ -47,7 +47,7 @@ export function TrendingDestinationsClient({
                 cityKo={destination.city_ko}
                 cityEn={destination.city_en}
                 countryKo={destination.country_ko}
-                href={`/hotel?${filterParams.toString()}`}
+                href={href}
                 preloadedImageUrl={cityImages[destination.city_code]}  // ⚡ 서버에서 미리 가져온 이미지
                 priority={index < 4}  // 첫 4개는 우선 로딩
               />
