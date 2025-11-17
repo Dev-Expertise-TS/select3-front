@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { Star, Utensils, MessageCircle, Bed, Shield, FileText } from "lucide-react"
 import { BlogContentRenderer } from "@/components/shared"
 
@@ -66,6 +66,34 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
   const [articles, setArticles] = useState<BlogContent[]>(initialBlogs || [])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
   const [articlesError, setArticlesError] = useState<string | null>(null)
+  const hasInitialArticleContent = useMemo(() => {
+    if (!initialBlogs || initialBlogs.length === 0) {
+      return false
+    }
+    return initialBlogs.some((blog) => {
+      if (!blog) return false
+      const contentFields = [
+        blog.s1_contents,
+        blog.s2_contents,
+        blog.s3_contents,
+        blog.s4_contents,
+        blog.s5_contents,
+        blog.s6_contents,
+        blog.s7_contents,
+        blog.s8_contents,
+        blog.s9_contents,
+        blog.s10_contents,
+        blog.s11_contents,
+        blog.s12_contents,
+      ]
+      return contentFields.some((content) => typeof content === 'string' && content.trim() !== '')
+    })
+  }, [initialBlogs])
+  
+  // initialBlogs 변경 시 상태 업데이트
+  useEffect(() => {
+    setArticles(initialBlogs || [])
+  }, [initialBlogs])
   
   // 혜택 관련 상태
   const [hotelBenefits, setHotelBenefits] = useState<any[]>([])
@@ -128,13 +156,15 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
     }
   }, [sabreId, isLoadingBenefits])
 
-  // 초기 블로그 데이터가 있으면 fetch 플래그 설정
+  // 초기 블로그 데이터가 있고 실제 콘텐츠가 존재하면 fetch 생략
   useEffect(() => {
-    if (initialBlogs && initialBlogs.length > 0) {
+    if (hasInitialArticleContent) {
       articlesFetchedRef.current = true
-      console.log(`✅ 호텔 ${sabreId}의 초기 블로그 ${initialBlogs.length}개 로드됨 (서버)`)
+      console.log(`✅ 호텔 ${sabreId}의 초기 블로그 ${initialBlogs?.length || 0}개 로드됨 (서버)` )
+    } else {
+      articlesFetchedRef.current = false
     }
-  }, [initialBlogs, sabreId])
+  }, [hasInitialArticleContent, initialBlogs ? initialBlogs.length : 0, sabreId])
 
   // 호텔별 아티클 데이터 가져오기
   const fetchHotelArticles = useCallback(async () => {
@@ -577,7 +607,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                             />
                           </div>
                           
-                          {/* 아티클 링크 */}
+                          {/* 아티클 링크 - 블로그 상세 페이지로 이동 */}
                           <div className="flex justify-center">
                             <a
                               href={`/blog/${article.slug}`}
@@ -586,7 +616,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
                               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                             >
                               <FileText className="h-4 w-4 mr-2" />
-                              전체 아티클 보기
+                              블로그 페이지에서 보기
                             </a>
                           </div>
                         </div>
