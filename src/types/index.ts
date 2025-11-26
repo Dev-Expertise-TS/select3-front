@@ -128,10 +128,12 @@ export type CamelCase<S extends string> = S extends `${infer F}_${infer R}` ? `$
 export type SnakeCase<S extends string> = S extends `${infer F}${infer R}` ? `${Lowercase<F>}${SnakeCase<R>}` : S
 
 // 숫자 유틸리티 타입들
-export type Add<A extends number, B extends number> = A extends number ? B extends number ? A + B : never : never
-export type Subtract<A extends number, B extends number> = A extends number ? B extends number ? A - B : never : never
-export type Multiply<A extends number, B extends number> = A extends number ? B extends number ? A * B : never : never
-export type Divide<A extends number, B extends number> = A extends number ? B extends number ? A / B : never : never
+// 주의: TypeScript 타입 시스템에서는 수학 연산을 직접 수행할 수 없습니다.
+// 이 타입들은 실제로 작동하지 않으므로 사용하지 마세요.
+// export type Add<A extends number, B extends number> = A extends number ? B extends number ? A + B : never : never
+// export type Subtract<A extends number, B extends number> = A extends number ? B extends number ? A - B : never : never
+// export type Multiply<A extends number, B extends number> = A extends number ? B extends number ? A * B : never : never
+// export type Divide<A extends number, B extends number> = A extends number ? B extends number ? A / B : never : never
 
 // 타입 가드 타입들
 export type TypeGuard<T> = (value: any) => value is T

@@ -107,7 +107,7 @@ export async function checkImageExists(imageUrl: string): Promise<boolean> {
         // 표준 지원 시 활용
         // @ts-expect-error - 런타임 환경에 따라 존재하지 않을 수 있음
         if (typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).timeout === 'function') {
-          // @ts-expect-error
+          // @ts-expect-error - AbortSignal.timeout은 실험적 API로 타입 정의에 없을 수 있음
           const sig = (AbortSignal as any).timeout(ms) as AbortSignal
           return { signal: sig, cancel: undefined }
         }

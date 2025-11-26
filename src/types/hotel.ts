@@ -194,16 +194,16 @@ export interface ApiResponse<T = any> {
 }
 
 // 호텔 상세 API 응답
-export interface HotelDetailsApiResponse extends ApiResponse<HotelDetail> {}
+export type HotelDetailsApiResponse = ApiResponse<HotelDetail>
 
 // 호텔 검색 API 응답
-export interface HotelSearchApiResponse extends ApiResponse<HotelSearchResult> {}
+export type HotelSearchApiResponse = ApiResponse<HotelSearchResult>
 
 // 호텔 목록 API 응답
-export interface HotelListApiResponse extends ApiResponse<HotelDetail[]> {}
+export type HotelListApiResponse = ApiResponse<HotelDetail[]>
 
 // 필터 옵션 API 응답
-export interface FilterOptionsApiResponse extends ApiResponse<FilterData> {}
+export type FilterOptionsApiResponse = ApiResponse<FilterData>
 
 // Rate Plan 관련 타입들
 export interface RatePlanCode {
@@ -230,7 +230,7 @@ export interface RatePlanCode {
 }
 
 // Rate Plan API 응답
-export interface RatePlansApiResponse extends ApiResponse<RatePlanCode[]> {}
+export type RatePlansApiResponse = ApiResponse<RatePlanCode[]>
 
 // Rate Plan Codes API 응답
-export interface RatePlanCodesApiResponse extends ApiResponse<string[]> {}
+export type RatePlanCodesApiResponse = ApiResponse<string[]>

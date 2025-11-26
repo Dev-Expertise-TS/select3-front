@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Hero } from "@/features/hero"
 import { SearchSection } from "@/features/search"
@@ -13,6 +14,14 @@ import TestimonialsSection from "@/components/shared/testimonials-section"
 
 // 페이지 레벨 캐시 설정: 30분마다 재검증
 export const revalidate = 1800
+
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: baseUrl
+  }
+}
 
 export default function HomePage() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'

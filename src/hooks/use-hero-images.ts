@@ -157,7 +157,7 @@ export function useHeroImages() {
           let mediaPath = hotelMedia?.public_url || hotelMedia?.storage_path || '/placeholder.svg'
           
           // city_ko를 우선으로 사용
-          let cityName = hotel.city_ko || hotel.city_en || hotel.city || 'Unknown'
+          const cityName = hotel.city_ko || hotel.city_en || hotel.city || 'Unknown'
           
           // 미디어가 없으면 도시별 fallback 이미지 사용 (cityName 기준으로 체크)
           if (mediaPath === '/placeholder.svg') {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface BrandImmersivePageProps {
   brand: {
@@ -432,7 +433,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
               <ArrowRight className="w-5 h-5 text-white transition-transform group-hover:translate-x-1 pointer-events-none drop-shadow-lg flex-shrink-0" />
             </a>
             
-            <a
+            <Link
               href="/hotel/brand"
               className="group inline-flex items-center justify-center gap-2 w-48 md:w-56 h-14 px-6 bg-white/15 backdrop-blur-xl hover:bg-white/25 border-2 border-white/30 hover:border-white/50 transition-all duration-300 rounded-full cursor-pointer pointer-events-auto relative z-[100] no-underline shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
               style={{
@@ -448,7 +449,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
               >
                 브랜드 목록 보기
               </span>
-            </a>
+            </Link>
           </nav>
         </div>
       </section>

@@ -124,7 +124,6 @@ export function HeroCarousel3() {
     if (isMobile && carouselSlides.length > 0) {
       setCurrentSlide(Math.floor(Math.random() * carouselSlides.length))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shuffleToken])
 
   // 이미지 전환 시 새로운 랜덤 이미지 가져오기
