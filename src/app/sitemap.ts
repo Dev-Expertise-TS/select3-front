@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { validateSitemapEntry } from '@/lib/sitemap-validator'
 
 // 정적 페이지 전용 sitemap
 // 동적 페이지는 개별 sitemap에서 관리
@@ -109,5 +110,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
+  // 리디렉션되는 URL 제거 및 최종 목적지 URL만 반환
   return staticPages
+    .map(validateSitemapEntry)
+    .filter((entry): entry is MetadataRoute.Sitemap[0] => entry !== null)
 }

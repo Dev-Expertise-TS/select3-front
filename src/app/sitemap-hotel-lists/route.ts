@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 // 호텔 목록 페이지들 (도시별/브랜드별/체인별)
 export async function GET() {
@@ -23,9 +24,17 @@ export async function GET() {
 
     if (!citiesError && cities && cities.length > 0) {
       cities.forEach((city) => {
+        const url = `${baseUrl}/hotel/${city.city_slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        
+        // 리디렉션되는 URL 제외
+        if (!isValidSitemapUrl(normalizedUrl)) {
+          return
+        }
+        
         urls.push(`
   <url>
-    <loc>${baseUrl}/hotel/${city.city_slug}</loc>
+    <loc>${normalizedUrl}</loc>
     <lastmod>${currentDate.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -43,10 +52,18 @@ export async function GET() {
 
     if (!brandsError && brands && brands.length > 0) {
       brands.forEach((brand) => {
+        const url = `${baseUrl}/hotel/brand/${brand.brand_slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        
+        // 리디렉션되는 URL 제외
+        if (!isValidSitemapUrl(normalizedUrl)) {
+          return
+        }
+        
         const lastModified = brand.updated_at ? new Date(brand.updated_at) : currentDate
         urls.push(`
   <url>
-    <loc>${baseUrl}/hotel/brand/${brand.brand_slug}</loc>
+    <loc>${normalizedUrl}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -64,10 +81,18 @@ export async function GET() {
 
     if (!chainsError && chains && chains.length > 0) {
       chains.forEach((chain) => {
+        const url = `${baseUrl}/hotel/chain/${chain.chain_slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        
+        // 리디렉션되는 URL 제외
+        if (!isValidSitemapUrl(normalizedUrl)) {
+          return
+        }
+        
         const lastModified = chain.updated_at ? new Date(chain.updated_at) : currentDate
         urls.push(`
   <url>
-    <loc>${baseUrl}/hotel/chain/${chain.chain_slug}</loc>
+    <loc>${normalizedUrl}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

@@ -4,6 +4,11 @@ const nextConfig = {
   // URL 정규화: trailing slash 없음
   trailingSlash: false,
 
+  // baseline-browser-mapping 경고 비활성화
+  env: {
+    BASELINE_BROWSER_MAPPING_SILENT: 'true',
+  },
+
   // Next.js 16: eslint 설정은 더 이상 next.config에서 지원하지 않음
   // eslint.config.mjs 또는 .eslintrc 파일 사용
   typescript: { ignoreBuildErrors: true },

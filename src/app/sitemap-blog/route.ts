@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
@@ -34,12 +35,21 @@ export async function GET() {
       })
     }
 
-    const blogUrls = blogs.map((blog) => {
+    // 리디렉션되는 URL 제거 및 최종 목적지 URL만 포함
+    const validBlogUrls = blogs
+      .map((blog) => {
+        const url = `${baseUrl}/blog/${blog.slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        return isValidSitemapUrl(normalizedUrl) ? { blog, url: normalizedUrl } : null
+      })
+      .filter((item): item is { blog: typeof blogs[0]; url: string } => item !== null)
+
+    const blogUrls = validBlogUrls.map(({ blog, url }) => {
       const lastModified = blog.updated_at ? new Date(blog.updated_at) : 
                           blog.created_at ? new Date(blog.created_at) : currentDate
       return `
   <url>
-    <loc>${baseUrl}/blog/${blog.slug}</loc>
+    <loc>${url}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
@@ -34,14 +35,23 @@ export async function GET() {
       })
     }
 
-    const recommendationPageUrls = recommendationPages.map((page) => {
+    // 리디렉션되는 URL 제거 및 최종 목적지 URL만 포함
+    const validRecommendationPageUrls = recommendationPages
+      .map((page) => {
+        const url = `${baseUrl}/hotel-recommendations/${page.slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        return isValidSitemapUrl(normalizedUrl) ? { page, url: normalizedUrl } : null
+      })
+      .filter((item): item is { page: typeof recommendationPages[0]; url: string } => item !== null)
+
+    const recommendationPageUrls = validRecommendationPageUrls.map(({ page, url }) => {
       const lastModified = page.updated_at ? new Date(page.updated_at) : currentDate
       const priority = page.sitemap_priority || 0.6
       const changefreq = page.sitemap_changefreq || 'weekly'
       
       return `
   <url>
-    <loc>${baseUrl}/hotel-recommendations/${page.slug}</loc>
+    <loc>${url}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
@@ -34,12 +35,21 @@ export async function GET() {
       })
     }
 
-    const cityUrls = cities.map((city) => {
+    // 리디렉션되는 URL 제거 및 최종 목적지 URL만 포함
+    const validCityUrls = cities
+      .map((city) => {
+        const url = `${baseUrl}/destination/${city.city_slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        return isValidSitemapUrl(normalizedUrl) ? { city, url: normalizedUrl } : null
+      })
+      .filter((item): item is { city: typeof cities[0]; url: string } => item !== null)
+
+    const cityUrls = validCityUrls.map(({ city, url }) => {
       const lastModified = city.updated_at ? new Date(city.updated_at) : 
                           city.created_at ? new Date(city.created_at) : currentDate
       return `
   <url>
-    <loc>${baseUrl}/destination/${city.city_slug}</loc>
+    <loc>${url}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

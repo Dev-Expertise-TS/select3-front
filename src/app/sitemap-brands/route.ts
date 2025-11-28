@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 // 브랜드 관련 모든 페이지 (체인, 브랜드, 브랜드 상세)
 export async function GET() {
@@ -22,6 +23,14 @@ export async function GET() {
 
     if (!chainsError && chains && chains.length > 0) {
       chains.forEach((chain) => {
+        const url = `${baseUrl}/brand/${chain.slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        
+        // 리디렉션되는 URL 제외
+        if (!isValidSitemapUrl(normalizedUrl)) {
+          return
+        }
+        
         const lastModified = chain.updated_at 
           ? new Date(chain.updated_at) 
           : chain.created_at 
@@ -29,7 +38,7 @@ export async function GET() {
             : currentDate
         urls.push(`
   <url>
-    <loc>${baseUrl}/brand/${chain.slug}</loc>
+    <loc>${normalizedUrl}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -47,6 +56,14 @@ export async function GET() {
 
     if (!brandDetailsError && brandDetails && brandDetails.length > 0) {
       brandDetails.forEach((brand) => {
+        const url = `${baseUrl}/brand/detail/${brand.brand_slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        
+        // 리디렉션되는 URL 제외
+        if (!isValidSitemapUrl(normalizedUrl)) {
+          return
+        }
+        
         const lastModified = brand.updated_at 
           ? new Date(brand.updated_at) 
           : brand.created_at 
@@ -54,7 +71,7 @@ export async function GET() {
             : currentDate
         urls.push(`
   <url>
-    <loc>${baseUrl}/brand/detail/${brand.brand_slug}</loc>
+    <loc>${normalizedUrl}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

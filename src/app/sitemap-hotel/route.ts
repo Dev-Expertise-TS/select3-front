@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { normalizeSitemapUrl, isValidSitemapUrl } from '@/lib/sitemap-validator'
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
@@ -28,18 +29,26 @@ export async function GET() {
     if (!hotels || hotels.length === 0) {
       return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
         headers: {
-     
           'Content-Type': 'application/xml',
         },
       })
     }
 
-    const hotelUrls = hotels.map((hotel) => {
+    // 리디렉션되는 URL 제거 및 최종 목적지 URL만 포함
+    const validHotelUrls = hotels
+      .map((hotel) => {
+        const url = `${baseUrl}/hotel/${hotel.slug}`
+        const normalizedUrl = normalizeSitemapUrl(url)
+        return isValidSitemapUrl(normalizedUrl) ? { hotel, url: normalizedUrl } : null
+      })
+      .filter((item): item is { hotel: typeof hotels[0]; url: string } => item !== null)
+
+    const hotelUrls = validHotelUrls.map(({ hotel, url }) => {
       const lastModified = hotel.updated_at ? new Date(hotel.updated_at) : 
                           hotel.created_at ? new Date(hotel.created_at) : currentDate
       return `
   <url>
-    <loc>${baseUrl}/hotel/${hotel.slug}</loc>
+    <loc>${url}</loc>
     <lastmod>${lastModified.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
