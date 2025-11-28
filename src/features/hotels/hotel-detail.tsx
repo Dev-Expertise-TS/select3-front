@@ -54,6 +54,7 @@ interface HotelDetailProps {
   initialBenefits?: any[]; // 서버에서 전달받은 혜택 데이터
   initialPromotions?: any[]; // 서버에서 전달받은 프로모션 데이터
   initialBlogs?: any[]; // 서버에서 전달받은 블로그 데이터
+  initialRateKey?: string; // URL 쿼리 파라미터로 전달받은 RateKey
   searchDates?: {
     checkIn?: string;
     checkOut?: string;
@@ -457,10 +458,13 @@ export function HotelDetail({
   initialImages = [],
   initialBenefits = [],
   initialPromotions = [],
-  initialBlogs = []
+  initialBlogs = [],
+  initialRateKey
 }: HotelDetailProps) {
   // URL 쿼리 파라미터
   const searchParams = useSearchParams()
+  // rateKey는 서버에서 전달받은 값 또는 클라이언트에서 읽은 값 사용
+  const rateKeyFromUrl = searchParams.get('rateKey') || initialRateKey
   
   // Custom hooks for data processing
   const { processRoomData } = useRoomProcessing()
@@ -1493,8 +1497,21 @@ export function HotelDetail({
       return []
     }
     
-    return extractRatePlansFromSabreData(sabreData.ratePlans)
-  }, [sabreData?.ratePlans]) // sabreData.ratePlans가 변경될 때만 재계산
+    const allRatePlans = extractRatePlansFromSabreData(sabreData.ratePlans)
+    
+    // rateKey가 URL에 있으면 해당 RateKey만 필터링
+    if (rateKeyFromUrl) {
+      const filtered = allRatePlans.filter((rp: any) => rp.RateKey === rateKeyFromUrl)
+      console.log('🔍 rateKey 필터링:', {
+        rateKey: rateKeyFromUrl,
+        전체객실수: allRatePlans.length,
+        필터링된객실수: filtered.length
+      })
+      return filtered
+    }
+    
+    return allRatePlans
+  }, [sabreData?.ratePlans, rateKeyFromUrl]) // sabreData.ratePlans와 rateKeyFromUrl이 변경될 때만 재계산
   
   console.log('🔍 ratePlanCodes 상태:', {
     hasSabreData: !!sabreData,
@@ -1721,7 +1738,6 @@ export function HotelDetail({
                 <div className="space-y-8">
                   {/* 객실 카드 리스트 */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">객실 타입별 요금</h3>
                     <RoomCardList
                       ratePlans={ratePlanCodes}
                       roomIntroductions={roomIntroductions}
@@ -1739,7 +1755,8 @@ export function HotelDetail({
                       }}
                       rooms={searchGuests.rooms}
                       hotelId={hotel?.sabre_id}
-                      hotelName={hotel?.property_name_ko || hotel?.property_name_en}
+                    hotelName={hotel?.property_name_ko || hotel?.property_name_en}
+                    highlightedRateKey={rateKeyFromUrl || undefined}
                     />
                     </div>
                     

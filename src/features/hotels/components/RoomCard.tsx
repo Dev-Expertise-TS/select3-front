@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Bed, Users, Ruler } from "lucide-react"
 import { useAnalytics } from "@/hooks/use-analytics"
+import { cn } from "@/lib/utils"
 
 interface RoomCardProps {
   roomType: string
@@ -23,6 +24,7 @@ interface RoomCardProps {
   hasIntro?: boolean
   onRequestIntro?: () => void
   rooms?: number
+  isHighlighted?: boolean
 }
 
 export function RoomCard({
@@ -43,7 +45,8 @@ export function RoomCard({
   isBeyondFirstRow = false,
   hasIntro = false,
   onRequestIntro,
-  rooms = 1
+  rooms = 1,
+  isHighlighted = false
 }: RoomCardProps) {
   const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -148,7 +151,12 @@ export function RoomCard({
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+      className={cn(
+        "rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow duration-200",
+        isHighlighted
+          ? "bg-gradient-to-br from-amber-50 via-white to-white border-amber-200 ring-2 ring-amber-300"
+          : "bg-white border-gray-200"
+      )}
       suppressHydrationWarning
       translate="no"
     >

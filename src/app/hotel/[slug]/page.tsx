@@ -242,8 +242,16 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
   return JSON.stringify(structuredData)
 }
 
-export default async function HotelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function HotelDetailPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { slug } = await params
+  const resolvedSearchParams = await searchParams
+  const rateKey = resolvedSearchParams.rateKey as string | undefined
   
   // 1순위: 도시 slug 확인
   const city = await getCityBySlug(slug)
@@ -318,6 +326,7 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
           initialBenefits={benefits}
           initialPromotions={promotions}
           initialBlogs={blogs}
+          initialRateKey={rateKey}
         />
       </main>
       <Footer />

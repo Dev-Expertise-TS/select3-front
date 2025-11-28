@@ -18,6 +18,7 @@ interface RoomCardListProps {
   rooms?: number
   hotelId?: number
   hotelName?: string
+  highlightedRateKey?: string
 }
 
 // localStorage 키
@@ -35,10 +36,13 @@ export function RoomCardList({
   onRequestIntro,
   rooms = 1,
   hotelId,
-  hotelName
+  hotelName,
+  highlightedRateKey
 }: RoomCardListProps) {
   const [showAll, setShowAll] = useState(false)
   const [hasAddedKakaoFriend, setHasAddedKakaoFriend] = useState(false)
+  const [selectedBedTypes, setSelectedBedTypes] = useState<string[]>([])
+  const [selectedViewTypes, setSelectedViewTypes] = useState<string[]>([])
   const { trackEvent } = useAnalytics()
 
   // 컴포넌트 마운트 시 localStorage에서 카카오 친구 추가 상태 확인
@@ -54,11 +58,8 @@ export function RoomCardList({
     }
   }, [])
   
-  // 처음 3개만 보여주고, 더보기 버튼 클릭 시 전체 표시
-  const displayedRatePlans = showAll ? ratePlans : ratePlans.slice(0, 3)
-
   // AI 처리는 hotel-detail.tsx에서 자동으로 호출되므로 여기서는 제거
-  // 베드 타입 추출 함수
+  // 베드 타입 추출 함수 (사용 전에 정의 필요)
   const extractBedTypeFromDescription = (description: string): string => {
     if (!description || description === 'N/A') return '베드 정보 없음'
     
@@ -109,6 +110,101 @@ export function RoomCardList({
     }
     
     return '기준 2인 / 최대 2인'
+  }
+
+  // 뷰 타입 추출 함수
+  const extractViewTypeFromDescription = (roomViewDescription: string | null | undefined): string | null => {
+    if (!roomViewDescription || roomViewDescription === 'N/A' || roomViewDescription === null) return null
+    
+    // 뷰 타입 키워드 매칭
+    const viewKeywords = [
+      { keyword: 'OCEAN VIEW', type: '오션 뷰' },
+      { keyword: 'SEA VIEW', type: '바다 뷰' },
+      { keyword: 'CITY VIEW', type: '시티 뷰' },
+      { keyword: 'MOUNTAIN VIEW', type: '마운틴 뷰' },
+      { keyword: 'GARDEN VIEW', type: '가든 뷰' },
+      { keyword: 'POOL VIEW', type: '풀 뷰' },
+      { keyword: 'RIVER VIEW', type: '리버 뷰' },
+      { keyword: 'LAKE VIEW', type: '레이크 뷰' },
+      { keyword: 'INTERIOR VIEW', type: '인테리어 뷰' },
+      { keyword: 'STREET VIEW', type: '스트리트 뷰' },
+      { keyword: 'HARBOR VIEW', type: '하버 뷰' },
+      { keyword: 'OCEAN', type: '오션 뷰' },
+      { keyword: 'SEA', type: '바다 뷰' },
+      { keyword: 'CITY', type: '시티 뷰' },
+      { keyword: 'MOUNTAIN', type: '마운틴 뷰' },
+      { keyword: 'GARDEN', type: '가든 뷰' },
+      { keyword: 'POOL', type: '풀 뷰' },
+      { keyword: 'RIVER', type: '리버 뷰' },
+      { keyword: 'LAKE', type: '레이크 뷰' },
+      { keyword: 'INTERIOR', type: '인테리어 뷰' },
+      { keyword: 'STREET', type: '스트리트 뷰' },
+      { keyword: 'HARBOR', type: '하버 뷰' }
+    ]
+    
+    const upperDescription = roomViewDescription.toUpperCase()
+    
+    for (const { keyword, type } of viewKeywords) {
+      if (upperDescription.includes(keyword)) {
+        return type
+      }
+    }
+    
+    return null
+  }
+
+  // 사용 가능한 베드 타입 목록 추출
+  const availableBedTypes = Array.from(
+    new Set(
+      ratePlans.map((rp: any) => 
+        extractBedTypeFromDescription(rp.Description || '')
+      ).filter((bedType: string) => bedType && bedType !== '베드 정보 없음')
+    )
+  ).sort()
+
+  // 사용 가능한 뷰 타입 목록 추출
+  const availableViewTypes = Array.from(
+    new Set(
+      ratePlans.map((rp: any) => 
+        extractViewTypeFromDescription(rp.RoomViewDescription || rp.RoomView || null)
+      ).filter((viewType: string | null) => viewType !== null)
+    )
+  ).sort()
+
+  // 베드 타입과 뷰 타입 필터링
+  const filteredRatePlans = ratePlans.filter((rp: any) => {
+    const bedType = extractBedTypeFromDescription(rp.Description || '')
+    const viewType = extractViewTypeFromDescription(rp.RoomViewDescription || rp.RoomView || null)
+    
+    const bedTypeMatch = selectedBedTypes.length === 0 || selectedBedTypes.includes(bedType)
+    const viewTypeMatch = selectedViewTypes.length === 0 || (viewType && selectedViewTypes.includes(viewType))
+    
+    return bedTypeMatch && viewTypeMatch
+  })
+
+  // 처음 3개만 보여주고, 더보기 버튼 클릭 시 전체 표시
+  const displayedRatePlans = showAll ? filteredRatePlans : filteredRatePlans.slice(0, 3)
+
+  // 베드 타입 필터 토글
+  const toggleBedType = (bedType: string) => {
+    setSelectedBedTypes(prev => 
+      prev.includes(bedType)
+        ? prev.filter(type => type !== bedType)
+        : [...prev, bedType]
+    )
+    // 필터 변경 시 더보기 자동 펼침
+    setShowAll(true)
+  }
+
+  // 뷰 타입 필터 토글
+  const toggleViewType = (viewType: string) => {
+    setSelectedViewTypes(prev => 
+      prev.includes(viewType)
+        ? prev.filter(type => type !== viewType)
+        : [...prev, viewType]
+    )
+    // 필터 변경 시 더보기 자동 펼침
+    setShowAll(true)
   }
 
   // 카카오 친구 추가 버튼 클릭 핸들러
@@ -205,75 +301,156 @@ export function RoomCardList({
   return (
     <TranslationErrorBoundary>
       <div suppressHydrationWarning translate="no">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* 베드 타입 및 뷰 타입 필터 */}
+        {(availableBedTypes.length > 0 || availableViewTypes.length > 0) && (
+          <div className="mb-6">
+            {/* 필터를 한 행에 모두 표시 */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {/* 베드 타입 필터 */}
+              {availableBedTypes.length > 0 && (
+                <>
+                  <span className="text-sm font-medium text-gray-700 mr-2">베드 타입:</span>
+                  {availableBedTypes.map((bedType) => {
+                    const isSelected = selectedBedTypes.includes(bedType)
+                    return (
+                      <button
+                        key={bedType}
+                        onClick={() => toggleBedType(bedType)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {bedType}
+                        {isSelected && (
+                          <span className="ml-2 text-xs">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </>
+              )}
+              
+              {/* 뷰 타입 필터 */}
+              {availableViewTypes.length > 0 && (
+                <>
+                  {availableBedTypes.length > 0 && (
+                    <span className="text-sm text-gray-400 mx-2">|</span>
+                  )}
+                  <span className="text-sm font-medium text-gray-700 mr-2">전망:</span>
+                  {availableViewTypes.map((viewType) => {
+                    const isSelected = selectedViewTypes.includes(viewType)
+                    return (
+                      <button
+                        key={viewType}
+                        onClick={() => toggleViewType(viewType)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {viewType}
+                        {isSelected && (
+                          <span className="ml-2 text-xs">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </>
+              )}
+            </div>
+            
+            {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+              <div className="text-sm text-gray-600 mb-2">
+                {filteredRatePlans.length}개의 객실이 표시됩니다
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 필터링된 결과가 없을 때 */}
+        {filteredRatePlans.length === 0 && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) ? (
+          <div className="text-center py-12 text-gray-500">
+            <p className="mb-4">선택한 필터에 해당하는 객실이 없습니다.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedRatePlans.map((rp: any, idx: number) => {
-        const roomType = rp.RoomType || rp.RoomName || ''
-        const roomName = rp.RoomName || ''
-        const description = rp.Description || ''
-        const view = rp.RoomViewDescription || rp.RoomView || null
-        const amount = rp.AmountAfterTax || rp.Amount || rp.Total || 0
-        const currency = rp.Currency || 'KRW'
-        const rateKey: string = rp.RateKey || ''
-        
-        // AI 처리 함수들과 동일한 키 생성 방식 사용
-        const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
-        const roomIntroduction = roomIntroductions.get(introKey) || undefined
-        
-        
-        // 베드 타입과 수용 인원 추출
-        const bedType = extractBedTypeFromDescription(description)
-        const occupancy = extractOccupancy(description)
-        
-        // 면적 정보 제거 (실제 데이터가 없으므로)
-        const area = undefined
-        
-        // 할인 정보 제거
-        const discount = undefined
-        
-        // AI 처리 중인지 확인 - 더 정확한 조건
-        const isGenerating = isGeneratingIntroductions && 
-          currentProcessingRow === idx && 
-          (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
+                const roomType = rp.RoomType || rp.RoomName || ''
+                const roomName = rp.RoomName || ''
+                const description = rp.Description || ''
+                const view = rp.RoomViewDescription || rp.RoomView || null
+                const amount = rp.AmountAfterTax || rp.Amount || rp.Total || 0
+                const currency = rp.Currency || 'KRW'
+                const rateKey: string = rp.RateKey || ''
+                
+                // AI 처리 함수들과 동일한 키 생성 방식 사용
+                const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
+                const roomIntroduction = roomIntroductions.get(introKey) || undefined
+                
+                
+                // 베드 타입과 수용 인원 추출
+                const bedType = extractBedTypeFromDescription(description)
+                const occupancy = extractOccupancy(description)
+                
+                // 면적 정보 제거 (실제 데이터가 없으므로)
+                const area = undefined
+                
+                // 할인 정보 제거
+                const discount = undefined
+                
+                // AI 처리 중인지 확인 - 더 정확한 조건
+                const isGenerating = isGeneratingIntroductions && 
+                  currentProcessingRow === idx && 
+                  (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
+
+        const isHighlighted = highlightedRateKey === rateKey
 
         return (
-          <TranslationErrorBoundary key={`room-card-boundary-${rateKey}-${idx}`}>
-            <div key={`room-card-wrapper-${rateKey}-${idx}`} suppressHydrationWarning translate="no">
-              <RoomCard
-                roomType={roomType}
-                roomName={roomName}
-                description={description}
-                roomIntroduction={roomIntroduction}
-                bedType={bedType}
-                area={area}
-                occupancy={occupancy}
-                amount={amount}
-                currency={currency}
-                discount={discount}
-                isGenerating={isGenerating}
-                checkIn={checkIn}
-                checkOut={checkOut}
-                view={view}
-                isBeyondFirstRow={idx >= 3}
-                hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
-                onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
+                  <TranslationErrorBoundary key={`room-card-boundary-${rateKey}-${idx}`}>
+                    <div key={`room-card-wrapper-${rateKey}-${idx}`} suppressHydrationWarning translate="no">
+                      <RoomCard
+                        roomType={roomType}
+                        roomName={roomName}
+                        description={description}
+                        roomIntroduction={roomIntroduction}
+                        bedType={bedType}
+                        area={area}
+                        occupancy={occupancy}
+                        amount={amount}
+                        currency={currency}
+                        discount={discount}
+                        isGenerating={isGenerating}
+                        checkIn={checkIn}
+                        checkOut={checkOut}
+                        view={view}
+                        isBeyondFirstRow={idx >= 3}
+                        hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
+                        onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
                 rooms={rooms}
-              />
+                isHighlighted={isHighlighted}
+                      />
+                    </div>
+                  </TranslationErrorBoundary>
+                )
+              })} 
             </div>
-          </TranslationErrorBoundary>
-        )
-          })}
-        </div>
-        
-        {/* 더보기 버튼 */}
-        {ratePlans.length > 3 && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-            >
-              {showAll ? `객실 타입 접기 (${ratePlans.length}개)` : `객실 타입 더보기 (${ratePlans.length - 3}개 더)`}
-            </button>
-          </div>
+            
+            {/* 더보기 버튼 */}
+            {filteredRatePlans.length > 3 && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                >
+                  {showAll ? `객실 타입 접기 (${filteredRatePlans.length}개)` : `객실 타입 더보기 (${filteredRatePlans.length - 3}개 더)`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </TranslationErrorBoundary>
