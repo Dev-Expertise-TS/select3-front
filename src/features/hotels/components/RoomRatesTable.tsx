@@ -388,98 +388,101 @@ export function RoomRatesTable({
             )}
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* 베드 타입 필터 */}
-            {availableBedTypes.length > 1 && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h5 className="text-xs font-medium text-gray-600">베드 타입</h5>
-                  {selectedBedTypes.length > 0 && (
-                    <button
-                      onClick={() => setSelectedBedTypes([])}
-                      className="text-xs text-blue-600 hover:text-blue-800 underline"
-                    >
-                      해제
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {availableBedTypes.map((bedType) => {
-                    const count = ratePlans.filter((rp: any) => 
-                      extractBedTypeFromDescription(rp.Description || '') === bedType
-                    ).length
-                    
-                    return (
+          {/* 베드 타입 및 뷰 타입 필터 - 임시로 숨김 처리 (나중에 재사용 가능) */}
+          {false && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 베드 타입 필터 */}
+              {availableBedTypes.length > 1 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="text-xs font-medium text-gray-600">베드 타입</h5>
+                    {selectedBedTypes.length > 0 && (
                       <button
-                        key={bedType}
-                        onClick={() => {
-                          if (selectedBedTypes.includes(bedType)) {
-                            setSelectedBedTypes(selectedBedTypes.filter(type => type !== bedType))
-                          } else {
-                            setSelectedBedTypes([...selectedBedTypes, bedType])
-                          }
-                        }}
-                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${
-                          selectedBedTypes.includes(bedType)
-                            ? 'bg-blue-100 text-blue-800 border-blue-300'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
+                        onClick={() => setSelectedBedTypes([])}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
                       >
-                        {bedType} ({count})
+                        해제
                       </button>
-                    )
-                  })}
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {availableBedTypes.map((bedType) => {
+                      const count = ratePlans.filter((rp: any) => 
+                        extractBedTypeFromDescription(rp.Description || '') === bedType
+                      ).length
+                      
+                      return (
+                        <button
+                          key={bedType}
+                          onClick={() => {
+                            if (selectedBedTypes.includes(bedType)) {
+                              setSelectedBedTypes(selectedBedTypes.filter(type => type !== bedType))
+                            } else {
+                              setSelectedBedTypes([...selectedBedTypes, bedType])
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                            selectedBedTypes.includes(bedType)
+                              ? 'bg-blue-100 text-blue-800 border-blue-300'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {bedType} ({count})
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* 뷰 타입 필터 */}
-            {availableViewTypes.length > 1 && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h5 className="text-xs font-medium text-gray-600">뷰 타입</h5>
-                  {selectedViewTypes.length > 0 && (
-                    <button
-                      onClick={() => setSelectedViewTypes([])}
-                      className="text-xs text-green-600 hover:text-green-800 underline"
-                    >
-                      해제
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {availableViewTypes.map((viewType) => {
-                    const count = ratePlans.filter((rp: any) => 
-                      extractViewTypeFromDescription(rp.RoomViewDescription || '') === viewType
-                    ).length
-                    
-                    return (
+              {/* 뷰 타입 필터 */}
+              {availableViewTypes.length > 1 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="text-xs font-medium text-gray-600">뷰 타입</h5>
+                    {selectedViewTypes.length > 0 && (
                       <button
-                        key={viewType}
-                        onClick={() => {
-                          if (selectedViewTypes.includes(viewType)) {
-                            setSelectedViewTypes(selectedViewTypes.filter(type => type !== viewType))
-                          } else {
-                            setSelectedViewTypes([...selectedViewTypes, viewType])
-                          }
-                        }}
-                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${
-                          selectedViewTypes.includes(viewType)
-                            ? 'bg-green-100 text-green-800 border-green-300'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
+                        onClick={() => setSelectedViewTypes([])}
+                        className="text-xs text-green-600 hover:text-green-800 underline"
                       >
-                        {viewType} ({count})
+                        해제
                       </button>
-                    )
-                  })}
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {availableViewTypes.map((viewType) => {
+                      const count = ratePlans.filter((rp: any) => 
+                        extractViewTypeFromDescription(rp.RoomViewDescription || '') === viewType
+                      ).length
+                      
+                      return (
+                        <button
+                          key={viewType}
+                          onClick={() => {
+                            if (selectedViewTypes.includes(viewType)) {
+                              setSelectedViewTypes(selectedViewTypes.filter(type => type !== viewType))
+                            } else {
+                              setSelectedViewTypes([...selectedViewTypes, viewType])
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                            selectedViewTypes.includes(viewType)
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {viewType} ({count})
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
-          {/* 필터 상태 표시 */}
-          {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+          {/* 필터 상태 표시 - 임시로 숨김 처리 (나중에 재사용 가능) */}
+          {false && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <div className="text-xs text-gray-600">
                 {selectedBedTypes.length > 0 && (
