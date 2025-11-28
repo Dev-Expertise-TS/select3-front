@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "powershell -ExecutionPolicy Bypass -File ./scripts/build.ps1",
+    "build": "node scripts/build.js",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
