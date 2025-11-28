@@ -51,32 +51,9 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedBrand, setSelectedBrand] = useState<string>("all")
 
-  // 첫 6개 이미지 preload
-  useEffect(() => {
-    const priorityImages = hotels.slice(0, 6).map(hotel => hotel.image)
-    
-    priorityImages.forEach(imageUrl => {
-      if (imageUrl && imageUrl !== '/placeholder.svg') {
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.as = 'image'
-        link.href = imageUrl
-        document.head.appendChild(link)
-      }
-    })
-
-    // cleanup function
-    return () => {
-      priorityImages.forEach(imageUrl => {
-        if (imageUrl && imageUrl !== '/placeholder.svg') {
-          const existingLink = document.querySelector(`link[href="${imageUrl}"]`)
-          if (existingLink) {
-            document.head.removeChild(existingLink)
-          }
-        }
-      })
-    }
-  }, [hotels])
+  // 이미지 preload는 Next.js Image 컴포넌트의 priority 속성으로 자동 처리됨
+  // 수동 preload는 Next.js Image 최적화 URL과 불일치하여 경고 발생하므로 제거
+  // HotelCard 컴포넌트에서 priority={index < 6}로 설정된 이미지가 자동으로 preload됨
 
   const cities = useMemo(() => {
     const uniqueCities = Array.from(new Set(hotels.map((hotel) => hotel.location)))

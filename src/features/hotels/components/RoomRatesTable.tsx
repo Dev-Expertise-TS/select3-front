@@ -389,9 +389,9 @@ export function RoomRatesTable({
           </div>
           
           {/* 베드 타입 및 뷰 타입 필터 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-          {false && (
+          {/* 주석 해제하여 다시 활성화:
+          {(availableBedTypes.length > 1 || availableViewTypes.length > 1) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* 베드 타입 필터 */}
               {availableBedTypes.length > 1 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -434,8 +434,6 @@ export function RoomRatesTable({
                   </div>
                 </div>
               )}
-
-              {/* 뷰 타입 필터 */}
               {availableViewTypes.length > 1 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -480,9 +478,10 @@ export function RoomRatesTable({
               )}
             </div>
           )}
+          */}
 
           {/* 필터 상태 표시 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-          {false && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+          {/* 주석 해제하여 다시 활성화: {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <div className="text-xs text-gray-600">
                 {selectedBedTypes.length > 0 && (
@@ -500,7 +499,7 @@ export function RoomRatesTable({
                 </span>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       )}
 

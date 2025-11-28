@@ -591,31 +591,9 @@ export function HotelDetail({
   )
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(initialPromotions.length === 0)
 
-  // LCP 이미지 preload (초기 문서에서 즉시 검색 가능하게)
-  useEffect(() => {
-    if (initialImages.length > 0 && typeof window !== 'undefined') {
-      const firstImage = initialImages[0]
-      const firstImageUrl = firstImage.public_url || firstImage.storage_path
-      
-      if (firstImageUrl) {
-        // 절대 URL로 변환
-        const absoluteUrl = firstImageUrl.startsWith('http') 
-          ? firstImageUrl 
-          : `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${firstImageUrl.replace(/^\/?/, '')}`
-        
-        // 기존 preload link가 있는지 확인
-        const existingLink = document.querySelector(`link[rel="preload"][as="image"][href="${absoluteUrl}"]`)
-        if (!existingLink) {
-          const link = document.createElement('link')
-          link.rel = 'preload'
-          link.as = 'image'
-          link.href = absoluteUrl
-          link.setAttribute('fetchpriority', 'high')
-          document.head.appendChild(link)
-        }
-      }
-    }
-  }, [initialImages])
+  // LCP 이미지 preload는 Next.js Image 컴포넌트의 priority 속성으로 자동 처리됨
+  // 수동 preload는 Next.js Image 최적화 URL과 불일치하여 경고 발생하므로 제거
+  // HotelInfo 컴포넌트에서 priority={true}로 설정된 이미지가 자동으로 preload됨
 
   // 이미지 로딩 상태 관리 (리플로우 최소화를 위한 최적화)
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set())

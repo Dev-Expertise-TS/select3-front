@@ -68,10 +68,10 @@ export function MobileImageGrid({
             fill
             className="object-cover cursor-pointer"
             onClick={openModal}
-            priority
+            priority={true}
             fetchPriority="high"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
-            loading="eager"
+            unoptimized={false}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = '/placeholder.svg'

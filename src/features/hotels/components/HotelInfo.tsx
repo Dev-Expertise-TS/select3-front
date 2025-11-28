@@ -54,14 +54,14 @@ export function HotelInfo({
         <div className="bg-white rounded-none sm:rounded-lg shadow-none sm:shadow-sm pt-0 px-0 pb-3 sm:pt-5 sm:px-6 sm:pb-6">
           {/* Image Gallery - 위로 이동 */}
           <div className="rounded-none sm:rounded-lg overflow-hidden mb-2 sm:mb-3 px-0 sm:px-0">
-            {/* 모바일: MobileImageGrid 컴포넌트 사용 */}
+            {/* 모바일: MobileImageGrid 컴포넌트 사용 (priority는 MobileImageGrid에서 처리) */}
             <MobileImageGrid
               images={images}
               hotelName={hotel.property_name_ko || hotel.property_name_en || '호텔명'}
               className="block sm:hidden"
             />
             
-            {/* 데스크톱: 기존 레이아웃 */}
+            {/* 데스크톱: 기존 레이아웃 (priority는 여기서만 처리) */}
             <div className="hidden sm:flex gap-2 h-[400px]">
               {/* 메인 이미지 */}
               <div
@@ -106,11 +106,11 @@ export function HotelInfo({
                       alt={images[selectedImage]?.alt || images[0]?.alt || hotel.property_name_ko || '호텔 이미지'}
                       fill
                       className="object-cover transition-opacity duration-300"
-                      priority
+                      priority={true}
                       fetchPriority="high"
                       sizes="(max-width: 768px) 100vw, 60vw"
                       quality={90}
-                      unoptimized={true}
+                      unoptimized={false}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/placeholder.svg'
@@ -165,8 +165,8 @@ export function HotelInfo({
                             className="object-cover transition-opacity duration-300"
                             sizes="(max-width: 768px) 50vw, 20vw"
                             quality={85}
-                            loading={index < 2 ? "eager" : "lazy"}
-                            unoptimized={true}
+                            loading="lazy"
+                            unoptimized={false}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.src = '/placeholder.svg'

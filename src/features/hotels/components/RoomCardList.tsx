@@ -302,11 +302,9 @@ export function RoomCardList({
     <TranslationErrorBoundary>
       <div suppressHydrationWarning translate="no">
         {/* 베드 타입 및 뷰 타입 필터 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-        {false && (availableBedTypes.length > 0 || availableViewTypes.length > 0) && (
+        {/* 주석 해제하여 다시 활성화: {(availableBedTypes.length > 0 || availableViewTypes.length > 0) && (
           <div className="mb-6">
-            {/* 필터를 한 행에 모두 표시 */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {/* 베드 타입 필터 */}
               {availableBedTypes.length > 0 && (
                 <>
                   <span className="text-sm font-medium text-gray-700 mr-2">베드 타입:</span>
@@ -331,8 +329,6 @@ export function RoomCardList({
                   })}
                 </>
               )}
-              
-              {/* 뷰 타입 필터 */}
               {availableViewTypes.length > 0 && (
                 <>
                   {availableBedTypes.length > 0 && (
@@ -361,22 +357,21 @@ export function RoomCardList({
                 </>
               )}
             </div>
-            
-            {/* 필터 상태 표시 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-            {false && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+            {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
               <div className="text-sm text-gray-600 mb-2">
                 {filteredRatePlans.length}개의 객실이 표시됩니다
               </div>
             )}
           </div>
-        )}
+        )} */}
 
         {/* 필터링된 결과가 없을 때 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-        {false && filteredRatePlans.length === 0 && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) ? (
+        {/* 주석 해제하여 다시 활성화: {filteredRatePlans.length === 0 && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) ? (
           <div className="text-center py-12 text-gray-500">
             <p className="mb-4">선택한 필터에 해당하는 객실이 없습니다.</p>
           </div>
-        ) : (
+        ) : ( */}
+        {(
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedRatePlans.map((rp: any, idx: number) => {
