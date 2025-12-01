@@ -191,7 +191,8 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
 
   // 날짜가 두 번째 달에 속하는지 확인
   const isSecondMonth = (date: Date) => {
-    return date.getMonth() === currentMonth.getMonth() + 1
+    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+    return date.getMonth() === nextMonth.getMonth() && date.getFullYear() === nextMonth.getFullYear()
   }
 
   // 날짜가 특정 달에 속하는지 확인
@@ -324,7 +325,10 @@ export function DatePicker({ checkIn, checkOut, onDatesChange, onClose, guests }
              {/* 두 번째 달 */}
              <div>
                <h3 className="text-lg font-semibold text-black mb-4 text-center">
-                 {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 2}월
+                 {(() => {
+                   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+                   return `${nextMonth.getFullYear()}년 ${nextMonth.getMonth() + 1}월`
+                 })()}
                </h3>
                
                <div className="grid grid-cols-7 gap-1">
