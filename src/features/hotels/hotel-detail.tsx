@@ -268,6 +268,21 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             return ''
           })()
           
+          // 룸 개수 추출 (RoomDescription.Text에서 BEDROOMS 정보 추출)
+          const roomCount: string = (() => {
+            const roomDescText = description.toUpperCase()
+            // "2 BEDROOMS" 또는 "BEDROOMS" 패턴 찾기
+            const bedroomsMatch = roomDescText.match(/(\d+)\s*BEDROOMS?/i)
+            if (bedroomsMatch && bedroomsMatch[1]) {
+              return `${bedroomsMatch[1]}룸`
+            }
+            // "BEDROOMS"만 있는 경우 (숫자가 없으면 1룸으로 간주)
+            if (roomDescText.includes('BEDROOMS')) {
+              return '1룸'
+            }
+            return ''
+          })()
+          
           // 디버깅 로그 추가
           console.log('Rate Plan 추출 결과:', {
             RateKey: rateKey,
@@ -278,6 +293,7 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             RoomTypeCode: roomTypeCode,
             BookingCode: bookingCode,
             ProductCode: productCode,
+            RoomCount: roomCount,
             RoomViewDescription: roomViewDescription,
             originalData: p
           })
@@ -295,6 +311,7 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             RoomTypeCode: roomTypeCode,
             BookingCode: bookingCode,
             ProductCode: productCode,
+            RoomCount: roomCount, // 룸 개수 정보 추가
             // 추가 필드들
             RatePlanDescription: '',
             RatePlanType: '',

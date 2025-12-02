@@ -45,6 +45,7 @@ export function RoomCardList({
   const [hasAddedKakaoFriend, setHasAddedKakaoFriend] = useState(false)
   const [selectedBedTypes, setSelectedBedTypes] = useState<string[]>([])
   const [selectedViewTypes, setSelectedViewTypes] = useState<string[]>([])
+  const [selectedRoomCounts, setSelectedRoomCounts] = useState<string[]>([])
   const { trackEvent } = useAnalytics()
 
   // 컴포넌트 마운트 시 localStorage에서 카카오 친구 추가 상태 확인
@@ -173,15 +174,24 @@ export function RoomCardList({
     )
   ).sort()
 
-  // 베드 타입과 뷰 타입 필터링
+  // 사용 가능한 룸 개수 목록 추출
+  const availableRoomCounts = Array.from(
+    new Set(
+      ratePlans.map((rp: any) => rp.RoomCount || '').filter((roomCount: string) => roomCount !== '')
+    )
+  ).sort()
+
+  // 베드 타입, 뷰 타입, 룸 개수 필터링
   const filteredRatePlans = ratePlans.filter((rp: any) => {
     const bedType = extractBedTypeFromDescription(rp.Description || '')
     const viewType = extractViewTypeFromDescription(rp.RoomViewDescription || rp.RoomView || null)
+    const roomCount = rp.RoomCount || ''
     
     const bedTypeMatch = selectedBedTypes.length === 0 || selectedBedTypes.includes(bedType)
     const viewTypeMatch = selectedViewTypes.length === 0 || (viewType && selectedViewTypes.includes(viewType))
+    const roomCountMatch = selectedRoomCounts.length === 0 || (roomCount && selectedRoomCounts.includes(roomCount))
     
-    return bedTypeMatch && viewTypeMatch
+    return bedTypeMatch && viewTypeMatch && roomCountMatch
   })
 
   // 처음 3개만 보여주고, 더보기 버튼 클릭 시 전체 표시
@@ -204,6 +214,17 @@ export function RoomCardList({
       prev.includes(viewType)
         ? prev.filter(type => type !== viewType)
         : [...prev, viewType]
+    )
+    // 필터 변경 시 더보기 자동 펼침
+    setShowAll(true)
+  }
+
+  // 룸 개수 필터 토글
+  const toggleRoomCount = (roomCount: string) => {
+    setSelectedRoomCounts(prev => 
+      prev.includes(roomCount)
+        ? prev.filter(count => count !== roomCount)
+        : [...prev, roomCount]
     )
     // 필터 변경 시 더보기 자동 펼침
     setShowAll(true)
@@ -303,8 +324,8 @@ export function RoomCardList({
   return (
     <TranslationErrorBoundary>
       <div suppressHydrationWarning translate="no">
-        {/* 베드 타입 및 뷰 타입 필터 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-        {/* 주석 해제하여 다시 활성화: {(availableBedTypes.length > 0 || availableViewTypes.length > 0) && (
+        {/* 베드 타입, 뷰 타입, 룸 개수 필터 */}
+        {(availableBedTypes.length > 0 || availableViewTypes.length > 0 || availableRoomCounts.length > 0) && (
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {availableBedTypes.length > 0 && (
@@ -358,22 +379,48 @@ export function RoomCardList({
                   })}
                 </>
               )}
+              {availableRoomCounts.length > 0 && (
+                <>
+                  {(availableBedTypes.length > 0 || availableViewTypes.length > 0) && (
+                    <span className="text-sm text-gray-400 mx-2">|</span>
+                  )}
+                  <span className="text-sm font-medium text-gray-700 mr-2">룸 개수:</span>
+                  {availableRoomCounts.map((roomCount) => {
+                    const isSelected = selectedRoomCounts.includes(roomCount)
+                    return (
+                      <button
+                        key={roomCount}
+                        onClick={() => toggleRoomCount(roomCount)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {roomCount}
+                        {isSelected && (
+                          <span className="ml-2 text-xs">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </>
+              )}
             </div>
-            {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0) && (
+            {(selectedBedTypes.length > 0 || selectedViewTypes.length > 0 || selectedRoomCounts.length > 0) && (
               <div className="text-sm text-gray-600 mb-2">
                 {filteredRatePlans.length}개의 객실이 표시됩니다
               </div>
             )}
           </div>
-        )} */}
+        )}
 
-        {/* 필터링된 결과가 없을 때 - 임시로 숨김 처리 (나중에 재사용 가능) */}
-        {/* 주석 해제하여 다시 활성화: {filteredRatePlans.length === 0 && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0) ? (
+        {/* 필터링된 결과가 없을 때 */}
+        {filteredRatePlans.length === 0 && (selectedBedTypes.length > 0 || selectedViewTypes.length > 0 || selectedRoomCounts.length > 0) ? (
           <div className="text-center py-12 text-gray-500">
             <p className="mb-4">선택한 필터에 해당하는 객실이 없습니다.</p>
           </div>
-        ) : ( */}
-        {(
+        ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedRatePlans.map((rp: any, idx: number) => {
