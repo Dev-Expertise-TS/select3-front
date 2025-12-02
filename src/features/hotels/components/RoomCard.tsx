@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Bed, Users, Ruler } from "lucide-react"
+import { Bed, Users, Ruler, Home } from "lucide-react"
 import { useAnalytics } from "@/hooks/use-analytics"
 import { cn } from "@/lib/utils"
 
@@ -26,6 +26,7 @@ interface RoomCardProps {
   rooms?: number
   isHighlighted?: boolean
   productCode?: string
+  roomCount?: string
 }
 
 export function RoomCard({
@@ -48,7 +49,8 @@ export function RoomCard({
   onRequestIntro,
   rooms = 1,
   isHighlighted = false,
-  productCode
+  productCode,
+  roomCount
 }: RoomCardProps) {
   const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -223,11 +225,21 @@ export function RoomCard({
 
         {/* 베드 타입과 수용 인원 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-full ${getBedColor(bedType)}`}>
-              {getBedIcon(bedType)}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className={`p-2 rounded-full ${getBedColor(bedType)}`}>
+                {getBedIcon(bedType)}
+              </div>
+              <span className="text-gray-700 font-medium">{bedType}</span>
             </div>
-            <span className="text-gray-700 font-medium">{bedType}</span>
+            {roomCount && (
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-full text-purple-600 bg-purple-50">
+                  <Home className="w-5 h-5" />
+                </div>
+                <span className="text-gray-700 font-medium">{roomCount}</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1 text-gray-600">
             <Users className="w-4 h-4" />

@@ -196,6 +196,13 @@ export function RoomCardList({
 
   // 처음 3개만 보여주고, 더보기 버튼 클릭 시 전체 표시
   const displayedRatePlans = showAll ? filteredRatePlans : filteredRatePlans.slice(0, 3)
+  
+  // 원본 배열에서의 인덱스를 찾기 위한 Map 생성
+  const originalIndexMap = new Map<string, number>()
+  ratePlans.forEach((rp: any, idx: number) => {
+    const key = `${rp.RateKey || ''}-${rp.RoomType || ''}-${rp.ProductCode || ''}`
+    originalIndexMap.set(key, idx)
+  })
 
   // 베드 타입 필터 토글
   const toggleBedType = (bedType: string) => {
@@ -432,6 +439,11 @@ export function RoomCardList({
                 const currency = rp.Currency || 'KRW'
                 const rateKey: string = rp.RateKey || ''
                 const productCode = rp.ProductCode || ''
+                const roomCount = rp.RoomCount || ''
+                
+                // 원본 배열에서의 인덱스 찾기
+                const originalKey = `${rateKey}-${roomType}-${productCode}`
+                const originalIdx = originalIndexMap.get(originalKey) ?? idx
                 
                 // AI 처리 함수들과 동일한 키 생성 방식 사용
                 const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
@@ -448,9 +460,9 @@ export function RoomCardList({
                 // 할인 정보 제거
                 const discount = undefined
                 
-                // AI 처리 중인지 확인 - 더 정확한 조건
+                // AI 처리 중인지 확인 - 더 정확한 조건 (원본 인덱스 사용)
                 const isGenerating = isGeneratingIntroductions && 
-                  currentProcessingRow === idx && 
+                  currentProcessingRow === originalIdx && 
                   (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
 
         const isHighlighted = highlightedRateKey === rateKey || highlightedProductCode === productCode
@@ -473,12 +485,13 @@ export function RoomCardList({
                         checkIn={checkIn}
                         checkOut={checkOut}
                         view={view}
-                        isBeyondFirstRow={idx >= 3}
+                        isBeyondFirstRow={originalIdx >= 3}
                         hasIntro={!!(roomIntroduction && roomIntroduction !== '호텔 전문 AI가 객실 소개를 준비 중입니다...')}
-                        onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
+                        onRequestIntro={onRequestIntro ? () => onRequestIntro(originalIdx) : undefined}
                 rooms={rooms}
                 isHighlighted={isHighlighted}
                 productCode={productCode}
+                roomCount={roomCount}
                       />
                     </div>
                   </TranslationErrorBoundary>

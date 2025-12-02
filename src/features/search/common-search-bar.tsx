@@ -410,7 +410,11 @@ export function CommonSearchBar({
       // 선택된 호텔이 있으면 상세 페이지로 이동, 없으면 검색 결과로
       if (selectedHotel) {
         const slug = selectedHotel.slug || generateSlug(selectedHotel.name)
-        router.push(`/hotel/${slug}`)
+        const params = new URLSearchParams()
+        if (localCheckIn) params.set('checkIn', localCheckIn)
+        if (localCheckOut) params.set('checkOut', localCheckOut)
+        const queryString = params.toString()
+        router.push(`/hotel/${slug}${queryString ? `?${queryString}` : ''}`)
       } else if (onSearch) {
         const result = onSearch(query, dates, localGuests) as unknown
         if (typeof (result as any)?.then === 'function') {
