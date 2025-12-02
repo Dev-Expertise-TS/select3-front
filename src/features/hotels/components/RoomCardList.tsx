@@ -19,6 +19,7 @@ interface RoomCardListProps {
   hotelId?: number
   hotelName?: string
   highlightedRateKey?: string
+  highlightedProductCode?: string
 }
 
 // localStorage 키
@@ -37,7 +38,8 @@ export function RoomCardList({
   rooms = 1,
   hotelId,
   hotelName,
-  highlightedRateKey
+  highlightedRateKey,
+  highlightedProductCode
 }: RoomCardListProps) {
   const [showAll, setShowAll] = useState(false)
   const [hasAddedKakaoFriend, setHasAddedKakaoFriend] = useState(false)
@@ -382,6 +384,7 @@ export function RoomCardList({
                 const amount = rp.AmountAfterTax || rp.Amount || rp.Total || 0
                 const currency = rp.Currency || 'KRW'
                 const rateKey: string = rp.RateKey || ''
+                const productCode = rp.ProductCode || ''
                 
                 // AI 처리 함수들과 동일한 키 생성 방식 사용
                 const introKey = `${roomType}-${roomName}-${rp.RateKey || 'N/A'}`
@@ -403,7 +406,7 @@ export function RoomCardList({
                   currentProcessingRow === idx && 
                   (!roomIntroduction || roomIntroduction.includes('호텔 전문 AI가 객실 소개를 준비 중입니다'))
 
-        const isHighlighted = highlightedRateKey === rateKey
+        const isHighlighted = highlightedRateKey === rateKey || highlightedProductCode === productCode
 
         return (
                   <TranslationErrorBoundary key={`room-card-boundary-${rateKey}-${idx}`}>
@@ -428,6 +431,7 @@ export function RoomCardList({
                         onRequestIntro={onRequestIntro ? () => onRequestIntro(idx) : undefined}
                 rooms={rooms}
                 isHighlighted={isHighlighted}
+                productCode={productCode}
                       />
                     </div>
                   </TranslationErrorBoundary>

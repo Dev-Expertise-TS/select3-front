@@ -54,7 +54,7 @@ interface HotelDetailProps {
   initialBenefits?: any[]; // 서버에서 전달받은 혜택 데이터
   initialPromotions?: any[]; // 서버에서 전달받은 프로모션 데이터
   initialBlogs?: any[]; // 서버에서 전달받은 블로그 데이터
-  initialRateKey?: string; // URL 쿼리 파라미터로 전달받은 RateKey
+  initialProductCode?: string; // URL 쿼리 파라미터로 전달받은 ProductCode
   searchDates?: {
     checkIn?: string;
     checkOut?: string;
@@ -250,6 +250,24 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             return rateKey // RateKey를 기본값으로 사용
           })()
           
+          // ProductCode 추출
+          const productCode: string = (() => {
+            const paths = [
+              ['ProductCode'],
+              ['Room', 'ProductCode'],
+              ['RatePlan', 'ProductCode'],
+              ['RoomType', 'ProductCode'],
+              ['Product', 'Code']
+            ]
+            
+            for (const path of paths) {
+              const v = deepGetFn(p, path)
+              if (typeof v === 'string' && v) return v
+              if (typeof v === 'number') return String(v)
+            }
+            return ''
+          })()
+          
           // 디버깅 로그 추가
           console.log('Rate Plan 추출 결과:', {
             RateKey: rateKey,
@@ -259,6 +277,7 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             AmountBeforeTax: amountBeforeTax,
             RoomTypeCode: roomTypeCode,
             BookingCode: bookingCode,
+            ProductCode: productCode,
             RoomViewDescription: roomViewDescription,
             originalData: p
           })
@@ -275,6 +294,7 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
             AmountBeforeTax: amountBeforeTax,
             RoomTypeCode: roomTypeCode,
             BookingCode: bookingCode,
+            ProductCode: productCode,
             // 추가 필드들
             RatePlanDescription: '',
             RatePlanType: '',
@@ -410,35 +430,46 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
   if (convertedRateInfos) {
     console.log('✅ 7차 경로: ConvertedRateInfo 정보 발견:', convertedRateInfos)
     const rateInfoArray: unknown[] = Array.isArray(convertedRateInfos) ? convertedRateInfos : [convertedRateInfos]
-    const result = rateInfoArray.map((rateInfo: any) => ({
-      RateKey: rateInfo?.RateKey || '',
-      RoomType: '', // ConvertedRateInfo에는 객실 상세 정보가 없을 수 있음
-      RoomName: '',
-      Description: '',
-      RoomViewDescription: null,
-      RoomView: null,
-      Currency: rateInfo?.CurrencyCode || 'KRW',
-      AmountAfterTax: rateInfo?.AmountAfterTax || 0,
-      AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
-      AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
-      StartDate: rateInfo?.StartDate || '',
-      EndDate: rateInfo?.EndDate || '',
-      RoomTypeCode: '',
-      BookingCode: '',
-      RatePlanDescription: '',
-      RatePlanType: '',
-      RateDescription: '',
-      PlanDescription: '',
-      RateInfo: '',
-      PlanInfo: '',
-      RateCategory: '',
-      RoomCategory: '',
-      MealPlan: '',
-      CancellationPolicy: '',
-      DepositRequired: '',
-      Prepaid: '',
-      _original: rateInfo
-    }))
+    const result = rateInfoArray.map((rateInfo: any) => {
+      // ProductCode 추출
+      const productCode = rateInfo?.ProductCode || 
+                         rateInfo?.Room?.ProductCode || 
+                         rateInfo?.RatePlan?.ProductCode || 
+                         rateInfo?.RoomType?.ProductCode || 
+                         rateInfo?.Product?.Code || 
+                         ''
+      
+      return {
+        RateKey: rateInfo?.RateKey || '',
+        RoomType: '', // ConvertedRateInfo에는 객실 상세 정보가 없을 수 있음
+        RoomName: '',
+        Description: '',
+        RoomViewDescription: null,
+        RoomView: null,
+        Currency: rateInfo?.CurrencyCode || 'KRW',
+        AmountAfterTax: rateInfo?.AmountAfterTax || 0,
+        AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
+        AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
+        StartDate: rateInfo?.StartDate || '',
+        EndDate: rateInfo?.EndDate || '',
+        RoomTypeCode: '',
+        BookingCode: '',
+        ProductCode: typeof productCode === 'string' ? productCode : (typeof productCode === 'number' ? String(productCode) : ''),
+        RatePlanDescription: '',
+        RatePlanType: '',
+        RateDescription: '',
+        PlanDescription: '',
+        RateInfo: '',
+        PlanInfo: '',
+        RateCategory: '',
+        RoomCategory: '',
+        MealPlan: '',
+        CancellationPolicy: '',
+        DepositRequired: '',
+        Prepaid: '',
+        _original: rateInfo
+      }
+    })
     console.log('✅ 7차 경로 결과:', result)
     return result
   }
@@ -459,13 +490,9 @@ export function HotelDetail({
   initialBenefits = [],
   initialPromotions = [],
   initialBlogs = [],
-  initialRateKey
+  initialProductCode,
+  searchDates: initialSearchDates
 }: HotelDetailProps) {
-  // URL 쿼리 파라미터
-  const searchParams = useSearchParams()
-  // rateKey는 서버에서 전달받은 값 또는 클라이언트에서 읽은 값 사용
-  const rateKeyFromUrl = searchParams.get('rateKey') || initialRateKey
-  
   // Custom hooks for data processing
   const { processRoomData } = useRoomProcessing()
   const { 
@@ -513,6 +540,14 @@ export function HotelDetail({
 
   // 검색 관련 상태
   const [searchDates, setSearchDates] = useState(() => {
+    // URL에서 전달받은 날짜가 있으면 사용, 없으면 기본값 (2주 후)
+    if (initialSearchDates?.checkIn && initialSearchDates?.checkOut) {
+      return {
+        checkIn: initialSearchDates.checkIn,
+        checkOut: initialSearchDates.checkOut
+      }
+    }
+    
     const today = new Date()
     const twoWeeksLater = new Date(today)
     twoWeeksLater.setDate(today.getDate() + 14)
@@ -544,14 +579,6 @@ export function HotelDetail({
     getCacheInfo
   } = useRoomAIProcessing()
 
-  // URL로부터 checkIn/checkOut이 오면 초기화
-  useEffect(() => {
-    const ci = searchParams?.get('checkIn') || ''
-    const co = searchParams?.get('checkOut') || ''
-    if (ci && co) {
-      setSearchDates({ checkIn: ci, checkOut: co })
-    }
-  }, [searchParams])
 
   // 호텔 상세 페이지 뷰 추적
   useEffect(() => {
@@ -668,13 +695,9 @@ export function HotelDetail({
   }
 
   
-  // URL에서 sabreId 읽기
-  const sabreIdParam = Number(searchParams?.get('sabreId') || 0)
-
   // 호텔 데이터 조회: 초기 데이터 우선, 없으면 클라이언트에서 조회
   const { data: hotelBySlug, isLoading, error } = useHotelBySlug(hotelSlug)
-  const { data: hotelById } = useHotel(sabreIdParam)
-  const hotel = initialHotel || hotelById || hotelBySlug
+  const hotel = initialHotel || hotelBySlug
 
   // 에러 처리: 호텔 데이터 조회 실패 시
   useEffect(() => {
@@ -683,19 +706,27 @@ export function HotelDetail({
       console.warn('호텔 데이터 조회 실패 (클라이언트):', {
         originalSlug: hotelSlug,
         decodedSlug: decodedSlug,
-        sabreIdParam,
         error: error.message || error,
         stack: error.stack
       })
     }
-  }, [error, hotelSlug, decodedSlug, sabreIdParam, initialHotel])
+  }, [error, hotelSlug, decodedSlug, initialHotel])
   
   // 페이지 렌더링/리프레시 시 자동으로 검색 실행 상태로 전환 (테이블 데이터 자동 로드)
+  // URL에서 날짜가 전달된 경우 즉시 검색 실행
   useEffect(() => {
-    if (hotel?.sabre_id && !hasSearched) {
-      setHasSearched(true)
+    if (hotel?.sabre_id) {
+      if (initialSearchDates?.checkIn && initialSearchDates?.checkOut) {
+        // URL에서 날짜가 전달된 경우 즉시 검색 실행
+        if (!hasSearched) {
+          setHasSearched(true)
+        }
+      } else if (!hasSearched) {
+        // 날짜가 없으면 기본 동작 (자동 검색 실행)
+        setHasSearched(true)
+      }
     }
-  }, [hotel?.sabre_id, hasSearched])
+  }, [hotel?.sabre_id, hasSearched, initialSearchDates?.checkIn, initialSearchDates?.checkOut])
   
   // ===== 프로모션 관련 함수들 =====
   const fetchHotelPromotions = async (sabreId: number) => {
@@ -1477,19 +1508,20 @@ export function HotelDetail({
     
     const allRatePlans = extractRatePlansFromSabreData(sabreData.ratePlans)
     
-    // rateKey가 URL에 있으면 해당 RateKey만 필터링
-    if (rateKeyFromUrl) {
-      const filtered = allRatePlans.filter((rp: any) => rp.RateKey === rateKeyFromUrl)
-      console.log('🔍 rateKey 필터링:', {
-        rateKey: rateKeyFromUrl,
-        전체객실수: allRatePlans.length,
-        필터링된객실수: filtered.length
-      })
-      return filtered
+    // productCode가 있으면 해당 ProductCode를 가진 항목을 첫 번째로 정렬
+    if (initialProductCode) {
+      const sortedPlans = [...allRatePlans]
+      const productCodeIndex = sortedPlans.findIndex((rp: any) => rp.ProductCode === initialProductCode)
+      
+      if (productCodeIndex > -1) {
+        // 해당 ProductCode를 가진 항목을 첫 번째로 이동
+        const [highlightedPlan] = sortedPlans.splice(productCodeIndex, 1)
+        return [highlightedPlan, ...sortedPlans]
+      }
     }
     
     return allRatePlans
-  }, [sabreData?.ratePlans, rateKeyFromUrl]) // sabreData.ratePlans와 rateKeyFromUrl이 변경될 때만 재계산
+  }, [sabreData?.ratePlans, initialProductCode]) // sabreData.ratePlans와 initialProductCode가 변경될 때만 재계산
   
   console.log('🔍 ratePlanCodes 상태:', {
     hasSabreData: !!sabreData,
@@ -1734,7 +1766,8 @@ export function HotelDetail({
                       rooms={searchGuests.rooms}
                       hotelId={hotel?.sabre_id}
                     hotelName={hotel?.property_name_ko || hotel?.property_name_en}
-                    highlightedRateKey={rateKeyFromUrl || undefined}
+                    highlightedRateKey={undefined}
+                    highlightedProductCode={initialProductCode}
                     />
                     </div>
                     

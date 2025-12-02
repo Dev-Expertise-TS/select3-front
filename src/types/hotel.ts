@@ -220,6 +220,7 @@ export interface RatePlanCode {
   EndDate: string
   RoomTypeCode: string
   BookingCode: string
+  ProductCode?: string
   RatePlanDescription: string
   RatePlanType: string
   RateDescription: string

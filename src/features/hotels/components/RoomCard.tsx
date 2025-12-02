@@ -25,6 +25,7 @@ interface RoomCardProps {
   onRequestIntro?: () => void
   rooms?: number
   isHighlighted?: boolean
+  productCode?: string
 }
 
 export function RoomCard({
@@ -46,7 +47,8 @@ export function RoomCard({
   hasIntro = false,
   onRequestIntro,
   rooms = 1,
-  isHighlighted = false
+  isHighlighted = false,
+  productCode
 }: RoomCardProps) {
   const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -152,9 +154,9 @@ export function RoomCard({
   return (
     <div 
       className={cn(
-        "rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow duration-200",
+        "rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300",
         isHighlighted
-          ? "bg-gradient-to-br from-amber-50 via-white to-white border-amber-200 ring-2 ring-amber-300"
+          ? "bg-gradient-to-br from-blue-50 via-indigo-50 to-white border-blue-400 ring-4 ring-blue-300 shadow-xl transform scale-[1.02]"
           : "bg-white border-gray-200"
       )}
       suppressHydrationWarning
@@ -171,13 +173,34 @@ export function RoomCard({
       {/* 카드 내용 */}
       <div className="p-4 sm:p-6">
         {/* 객실명과 타입 */}
-        <div className="mb-3 sm:mb-4">
+        <div className={cn("mb-3 sm:mb-4", isHighlighted && "relative")}>
+          {isHighlighted && (
+            <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+              추천
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-0 mb-1">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-              {roomType || roomName}
-            </h3>
+            <div className="flex flex-col gap-1">
+              <h3 className={cn(
+                "text-base sm:text-lg font-semibold",
+                isHighlighted ? "text-blue-700 font-bold" : "text-gray-900"
+              )}>
+                {roomType || roomName}
+              </h3>
+              {productCode && (
+                <span className={cn(
+                  "text-xs font-mono",
+                  isHighlighted ? "text-blue-600 font-semibold" : "text-gray-500"
+                )}>
+                  Product Code: {productCode}
+                </span>
+              )}
+            </div>
             {view && view !== 'N/A' && (
-              <span className="text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded self-start">
+              <span className={cn(
+                "text-xs px-2 py-1 rounded self-start",
+                isHighlighted ? "bg-blue-100 text-blue-700 font-semibold" : "text-gray-600 bg-blue-50"
+              )}>
                 {view}
               </span>
             )}
