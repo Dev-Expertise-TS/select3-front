@@ -174,10 +174,12 @@ export function RoomCardList({
     )
   ).sort()
 
-  // 사용 가능한 룸 개수 목록 추출
+  // 사용 가능한 룸 개수 목록 추출 (1룸 제외, 2룸 이상만 필터로 표시)
   const availableRoomCounts = Array.from(
     new Set(
-      ratePlans.map((rp: any) => rp.RoomCount || '').filter((roomCount: string) => roomCount !== '')
+      ratePlans
+        .map((rp: any) => rp.RoomCount || '')
+        .filter((roomCount: string) => roomCount !== '' && roomCount !== '1룸')
     )
   ).sort()
 

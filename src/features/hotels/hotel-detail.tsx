@@ -955,41 +955,9 @@ export function HotelDetail({
       allImagesError: allImagesError
     });
 
-    // 강력 모드: 스토리지 API가 성공적으로 이미지 목록을 반환하면 이를 최우선 사용
-    if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
-      console.log('✅ 강력 모드: Supabase Storage API 우선 사용');
-      
-      // 먼저 파일명의 실제 seq 번호로 정렬
-      const sorted = [...allStorageImagesData.images].sort((a, b) => getSeq(a) - getSeq(b))
-      
-      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
-      const convertedImages = sorted.map((img, index) => ({
-        id: img.id,
-        media_path: appendVersion(img.media_path || img.url),
-        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
-        isMain: index === 0,
-        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
-        filename: img.filename
-      }))
-      
-      console.log('📋 Storage API 이미지들(seq 재할당):', { 
-        count: convertedImages.length,
-        images: convertedImages.slice(0, 10).map((img: any) => ({ 
-          filename: img.filename,
-          원본seq: getSeq(img),
-          재할당seq: img.sequence 
-        }))
-      });
-      // 첫 10개 이미지 상세 정보 출력
-      convertedImages.slice(0, 10).forEach((img: any, idx: number) => {
-        console.log(`  ${idx + 1}. ${img.filename} - 원본seq: ${getSeq(img)}, 재할당seq: ${img.sequence}`);
-      });
-      return convertedImages;
-    }
-
-    // 2순위: select_hotel_media 테이블 (부족하면 절대 URL로 보정)
+    // 1순위: select_hotel_media 테이블 (빠르고 안정적)
     if (hotelMedia && hotelMedia.length > 0) {
-      console.log('✅ select_hotel_media 테이블 사용 (우선순위 2)');
+      console.log('✅ select_hotel_media 테이블 사용 (우선순위 1 - 권장)');
       const toAbsolute = (path: string | null | undefined) => {
         if (!path || typeof path !== 'string') return ''
         if (path.startsWith('http')) return path
@@ -1026,9 +994,9 @@ export function HotelDetail({
       })
       return convertedImages
     }
-    console.log('⚠️ select_hotel_media 테이블이 비어있음 (호텔 카드와 동일 방식)');
+    console.log('⚠️ select_hotel_media 테이블이 비어있음, Storage API로 fallback');
 
-    // 2순위: Supabase Storage API 모든 이미지 (fallback)
+    // 2순위: Supabase Storage API (fallback - DB 데이터 없을 때)
     if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
       console.log('✅ Supabase Storage API 사용 (우선순위 2 - fallback)');
       
