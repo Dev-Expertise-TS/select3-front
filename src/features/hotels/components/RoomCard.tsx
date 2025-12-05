@@ -189,14 +189,15 @@ export function RoomCard({
               )}>
                 {roomType || roomName}
               </h3>
-              {productCode && (
+              {/* Product Code 표시 숨김 처리 */}
+              {/* {productCode && (
                 <span className={cn(
                   "text-xs font-mono",
                   isHighlighted ? "text-blue-600 font-semibold" : "text-gray-500"
                 )}>
                   Product Code: {productCode}
                 </span>
-              )}
+              )} */}
             </div>
             {view && view !== 'N/A' && (
               <span className={cn(

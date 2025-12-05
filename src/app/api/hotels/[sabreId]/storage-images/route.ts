@@ -62,9 +62,9 @@ export async function GET(
 
     // 여러 경로 시도
     const paths = [
+      `public/${decodedSlug}`,        // public 폴더 (1순위)
       decodedSlug,                    // 기본 경로
-      `public/${decodedSlug}`,        // public 폴더 포함
-      `${decodedSlug}`,               // 동일하지만 명시적
+      `originals/${decodedSlug}`,     // originals 폴더 (fallback)
     ];
 
     let files = null;
@@ -124,14 +124,15 @@ export async function GET(
       /\.(avif|webp|jpg|jpeg|png)$/i.test(f.name)
     );
 
-    // 파일명에서 숫자 추출하여 정렬 (예: _01_, _02_, _11_ 등)
+    // 파일명에서 seq 숫자 추출하여 정렬 (예: conrad-osaka_312869_13.jpg -> 13)
     const sortedImageFiles = imageFiles.sort((a, b) => {
-      // 파일명에서 숫자 부분 추출 (예: "slug_62024_05_1600w.avif" -> 5)
-      const getNumber = (name: string) => {
-        const match = name.match(/_(\d+)_/);
+      // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
+      const getSeqNumber = (name: string) => {
+        // 패턴: _숫자.확장자 (예: _13.jpg, _01.avif)
+        const match = name.match(/_(\d+)\.[^.]+$/);
         return match ? parseInt(match[1], 10) : 0;
       };
-      return getNumber(a.name) - getNumber(b.name);
+      return getSeqNumber(a.name) - getSeqNumber(b.name);
     });
 
     console.log('✅ Storage API 완료:', {
@@ -140,10 +141,16 @@ export async function GET(
       sabreId,
       totalFiles: files?.length || 0,
       imageFiles: sortedImageFiles.length,
-      firstImage: sortedImageFiles[0]?.name
+      firstFiveImages: sortedImageFiles.slice(0, 5).map(f => f.name)
     });
 
-    // 이미지 메타데이터 생성 (순차적으로 번호 부여)
+    // seq 번호 추출 함수
+    const getSeqNumber = (name: string): number => {
+      const match = name.match(/_(\d+)\.[^.]+$/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
+    // 이미지 메타데이터 생성 (정렬 후 연속된 sequence 할당)
     const images = sortedImageFiles.map((file, idx) => {
       // successPath를 사용하여 올바른 URL 생성
       const base = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${successPath}/${file.name}`;
@@ -153,11 +160,11 @@ export async function GET(
       return {
         id: `storage-${idx + 1}`,
         filename: file.name,
-        sequence: idx + 1, // 순차 번호 (1, 2, 3, 4, ... 연속)
+        sequence: idx + 1, // 정렬 후 연속된 순서 (1, 2, 3, 4, 5...)
         media_path: url,
         url,
         alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
-        isMain: idx === 0,
+        isMain: idx === 0, // 첫 번째 파일이 메인
         size: file.metadata?.size ?? 0,
         lastModified: file.updated_at ?? new Date().toISOString(),
       };

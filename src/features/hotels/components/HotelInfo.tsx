@@ -24,6 +24,7 @@ interface HotelInfoProps {
     description_en?: string
   }
   images: ImageItem[]
+  totalImagesCount?: number // 전체 이미지 개수 (이미지 더 보기 오버레이용)
   selectedImage: number
   onImageSelect: (index: number) => void
   onGalleryOpen: () => void
@@ -37,7 +38,8 @@ interface HotelInfoProps {
 
 export function HotelInfo({ 
   hotel, 
-  images, 
+  images,
+  totalImagesCount,
   selectedImage, 
   onImageSelect, 
   onGalleryOpen,
@@ -134,6 +136,8 @@ export function HotelInfo({
                     {images.slice(1, 5).map((media, index) => {
                       const isLoading = isImageLoading?.(media.media_path) || (!preloadedImages.has(media.media_path) && !isImageLoaded?.(media.media_path))
                       const hasError = isImageError?.(media.media_path)
+                      const isLastThumbnail = index === 3 // 4번째 썸네일 (0-based index)
+                      const hasMoreImages = (totalImagesCount ?? images.length) > 5 // 전체 이미지가 5개 초과인지
                       
                       return (
                         <div
@@ -172,6 +176,15 @@ export function HotelInfo({
                               target.src = '/placeholder.svg'
                             }}
                           />
+                          
+                          {/* "이미지 더 보기" 오버레이 - 마지막 썸네일 & 추가 이미지가 있을 때 */}
+                          {isLastThumbnail && hasMoreImages && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 transition-opacity group-hover:bg-black/70">
+                              <div className="text-white text-center">
+                                <div className="text-base font-semibold">이미지 더 보기</div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     })}

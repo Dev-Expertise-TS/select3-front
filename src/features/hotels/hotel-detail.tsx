@@ -937,9 +937,11 @@ export function HotelDetail({
     const getSeq = (item: any): number => {
       if (typeof item?.sequence === 'number') return item.sequence
       const name: string = item?.filename || item?.media_path || ''
-      const m = name.match(/_(\d+)_(?:\d+)?\.|_(\d+)\./)
+      // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
+      // 예: conrad-osaka_312869_13.jpg -> 13
+      const m = name.match(/_(\d+)\.[^.]+$/)
       if (m) {
-        const num = Number(m[1] || m[2])
+        const num = Number(m[1])
         return isNaN(num) ? 0 : num
       }
       return 0
@@ -956,15 +958,32 @@ export function HotelDetail({
     // 강력 모드: 스토리지 API가 성공적으로 이미지 목록을 반환하면 이를 최우선 사용
     if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
       console.log('✅ 강력 모드: Supabase Storage API 우선 사용');
-      const convertedImages = allStorageImagesData.images.map((img) => ({
+      
+      // 먼저 파일명의 실제 seq 번호로 정렬
+      const sorted = [...allStorageImagesData.images].sort((a, b) => getSeq(a) - getSeq(b))
+      
+      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
+      const convertedImages = sorted.map((img, index) => ({
         id: img.id,
         media_path: appendVersion(img.media_path || img.url),
-        alt: img.alt || `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지`,
-        isMain: img.isMain,
-        sequence: img.sequence,
+        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
+        isMain: index === 0,
+        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
         filename: img.filename
-      })).sort((a,b) => getSeq(a) - getSeq(b));
-      console.log('📋 Storage API 이미지들:', { count: convertedImages.length });
+      }))
+      
+      console.log('📋 Storage API 이미지들(seq 재할당):', { 
+        count: convertedImages.length,
+        images: convertedImages.slice(0, 10).map((img: any) => ({ 
+          filename: img.filename,
+          원본seq: getSeq(img),
+          재할당seq: img.sequence 
+        }))
+      });
+      // 첫 10개 이미지 상세 정보 출력
+      convertedImages.slice(0, 10).forEach((img: any, idx: number) => {
+        console.log(`  ${idx + 1}. ${img.filename} - 원본seq: ${getSeq(img)}, 재할당seq: ${img.sequence}`);
+      });
       return convertedImages;
     }
 
@@ -979,17 +998,31 @@ export function HotelDetail({
         const base = 'https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/'
         return appendVersion(base + path.replace(/^\/?/, ''))
       }
-      const convertedImages = hotelMedia.map((media: any, index: number) => ({
+      
+      // 먼저 파일명의 실제 seq 번호로 정렬
+      const sortedMedia = [...hotelMedia].sort((a: any, b: any) => {
+        const seqA = getSeq({ filename: a.file_name, sequence: a.image_seq })
+        const seqB = getSeq({ filename: b.file_name, sequence: b.image_seq })
+        return seqA - seqB
+      })
+      
+      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
+      const convertedImages = sortedMedia.map((media: any, index: number) => ({
         id: media.id || `media-${index}`,
         media_path: toAbsolute(media.public_url) || toAbsolute(media.storage_path) || '/placeholder.svg',
-        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${media.image_seq || index + 1}`,
-        isMain: media.image_seq === 1 || index === 0,
-        sequence: typeof media.image_seq === 'number' ? media.image_seq : (index + 1),
+        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
+        isMain: index === 0,
+        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
         filename: media.file_name
-      })).sort((a,b) => getSeq(a) - getSeq(b))
-      console.log('📋 select_hotel_media 이미지들(보정 포함):', {
+      }))
+      
+      console.log('📋 select_hotel_media 이미지들(seq 재할당):', {
         count: convertedImages.length,
-        images: convertedImages.map((img: any) => ({ id: img.id, media_path: img.media_path, sequence: img.sequence }))
+        images: convertedImages.slice(0, 10).map((img: any) => ({ 
+          filename: img.filename, 
+          원본seq: getSeq(img),
+          재할당seq: img.sequence 
+        }))
       })
       return convertedImages
     }
@@ -998,15 +1031,28 @@ export function HotelDetail({
     // 2순위: Supabase Storage API 모든 이미지 (fallback)
     if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
       console.log('✅ Supabase Storage API 사용 (우선순위 2 - fallback)');
-      const convertedImages = allStorageImagesData.images.map((img) => ({
+      
+      // 먼저 파일명의 실제 seq 번호로 정렬
+      const sorted = [...allStorageImagesData.images].sort((a, b) => getSeq(a) - getSeq(b))
+      
+      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
+      const convertedImages = sorted.map((img, index) => ({
         id: img.id,
         media_path: appendVersion(img.media_path || img.url),
-        alt: img.alt || `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지`,
-        isMain: img.isMain,
-        sequence: img.sequence,
+        alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
+        isMain: index === 0,
+        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
         filename: img.filename
-      })).sort((a,b) => getSeq(a) - getSeq(b));
-      console.log('📋 Storage API fallback 이미지들:', { count: convertedImages.length });
+      }))
+      
+      console.log('📋 Storage API fallback 이미지들(seq 재할당):', { 
+        count: convertedImages.length,
+        images: convertedImages.slice(0, 10).map((img: any) => ({ 
+          filename: img.filename,
+          원본seq: getSeq(img),
+          재할당seq: img.sequence 
+        }))
+      });
       return convertedImages;
     }
 
@@ -1069,6 +1115,43 @@ export function HotelDetail({
     })()
     return () => { cancelled = true }
   }, [displayImages])
+  
+  // 그리드용 이미지 (seq 1~5만 표시)
+  const gridImages = useMemo(() => {
+    const getSeqFromImage = (img: any): number => {
+      if (typeof img?.sequence === 'number') return img.sequence
+      const name: string = img?.filename || img?.media_path || ''
+      const m = name.match(/_(\d+)\.[^.]+$/)
+      if (m) {
+        const num = Number(m[1])
+        return isNaN(num) ? 0 : num
+      }
+      return 0
+    }
+    
+    // seq 1~5인 이미지만 필터링하여 그리드에 표시
+    const filtered = validatedImages.filter((img: any) => {
+      const seq = getSeqFromImage(img)
+      return seq >= 1 && seq <= 5
+    })
+    
+    console.log('🎯 그리드 이미지 필터링:', {
+      전체이미지: validatedImages.length,
+      그리드이미지: filtered.length,
+      이미지정보: filtered.map((img: any) => ({
+        seq: getSeqFromImage(img),
+        filename: img.filename
+      }))
+    })
+    
+    // 그리드에 표시될 이미지 상세 정보 출력
+    console.log('🖼️ 그리드에 표시될 이미지 (seq 1~5):');
+    filtered.forEach((img: any, idx: number) => {
+      console.log(`  그리드 ${idx + 1}위: ${img.filename} - seq: ${getSeqFromImage(img)}`);
+    });
+    
+    return filtered
+  }, [validatedImages])
   
   // 이미지 preloading useEffect (최적화된 버전)
   useEffect(() => {
@@ -1641,7 +1724,8 @@ export function HotelDetail({
       <div key={`hotel-info-${hotel.sabre_id}`} suppressHydrationWarning>
         <HotelInfo
           hotel={hotel}
-          images={validatedImages}
+          images={gridImages}
+          totalImagesCount={validatedImages.length}
           selectedImage={selectedImage}
           onImageSelect={handleImageSelect}
           onGalleryOpen={openImageGallery}

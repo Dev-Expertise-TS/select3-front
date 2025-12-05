@@ -122,8 +122,10 @@ export function ImageGallery({
           const getSeq = (it: any) => {
             if (typeof it.sequence === 'number') return it.sequence
             const name = it.filename || it.media_path || ''
-            const m = name.match(/_(\d+)_(?:\d+)?\.|_(\d+)\./)
-            if (m) return Number(m[1] || m[2]) || 0
+            // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
+            // 예: conrad-osaka_312869_13.jpg -> 13
+            const m = name.match(/_(\d+)\.[^.]+$/)
+            if (m) return Number(m[1]) || 0
             return 0
           }
           const sorted = mapped.sort((a,b) => getSeq(a) - getSeq(b))
