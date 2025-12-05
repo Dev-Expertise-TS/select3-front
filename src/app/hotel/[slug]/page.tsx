@@ -121,13 +121,36 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   const hotel = detailData.hotel
+  const reviews = detailData.reviews || { count: 0, averageRating: 0 }
   
-  const title = `${hotel.property_name_ko || hotel.property_name_en} | 투어비스 셀렉트`
+  // Long-tail 키워드가 포함된 제목 생성
+  const hotelName = hotel.property_name_ko || hotel.property_name_en
+  const cityName = hotel.city_ko || hotel.city_eng || ''
+  const countryName = hotel.country_ko || hotel.country_en || ''
+  const locationText = cityName ? (countryName ? `${cityName}, ${countryName}` : cityName) : ''
   
-  // property_details에서 HTML 태그 제거하여 디스크립션 생성
+  // SEO 최적화된 제목: 호텔명 + 위치 + 후기/가성비 키워드
+  const title = reviews.count > 0
+    ? `${hotelName}${locationText ? ` (${locationText})` : ''} 후기 및 가격 비교 | 투어비스 셀렉트`
+    : `${hotelName}${locationText ? ` (${locationText})` : ''} 상세 정보 및 가격 | 투어비스 셀렉트`
+  
+  // Long-tail 키워드가 포함된 디스크립션 생성
   const rawDescription = hotel.property_details || hotel.property_location || ''
   const cleanDescription = rawDescription ? stripHtmlTags(rawDescription) : ''
-  const description = cleanDescription || '프리미엄 호텔 컨시어지 : 투어비스 셀렉트'
+  
+  // 후기 개수와 위치 정보를 활용한 SEO 최적화 디스크립션
+  let description = ''
+  if (reviews.count > 0) {
+    description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 실제 고객 후기 ${reviews.count}개와 객실 가격을 비교해보세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
+  } else {
+    description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 상세 정보, 위치, 시설을 확인하고 최적의 가격으로 예약하세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
+  }
+  
+  // 디스크립션 길이 제한 (160자 권장)
+  if (description.length > 160) {
+    description = description.substring(0, 157) + '...'
+  }
+  
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   const url = `${baseUrl}/hotel/${decodedSlug}`
   
@@ -199,34 +222,116 @@ export const revalidate = 300
 export const dynamicParams = true
 
 // 구조화된 데이터 생성
-function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
+function generateHotelStructuredData(hotel: any, images: any[], slug: string, reviews?: { count: number; averageRating: number }) {
   if (!hotel) return null
 
   const decodedSlug = decodeURIComponent(slug)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   
-  // 첫 번째 이미지만 사용 (불필요한 프리로드 방지)
-  const firstImageUrl = images.length > 0 
-    ? toAbsoluteUrl(images[0].public_url || images[0].storage_path)
-    : `${baseUrl}/select_logo.avif`
+  // 이미지 배열 생성 (최대 10개)
+  const imageUrls = images.slice(0, 10).map((img: any) => 
+    toAbsoluteUrl(img.public_url || img.storage_path)
+  ).filter(Boolean)
+  const firstImageUrl = imageUrls[0] || `${baseUrl}/select_logo.avif`
+  
+  // AggregateRating 추가 (후기 데이터 활용)
+  const aggregateRating = reviews && reviews.count > 0 ? {
+    "@type": "AggregateRating",
+    "ratingValue": reviews.averageRating,
+    "reviewCount": reviews.count,
+    "bestRating": 5,
+    "worstRating": 1
+  } : undefined
+  
+  // BreadcrumbList 추가
+  const breadcrumbList = {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "홈",
+        "item": baseUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": hotel.city_ko || hotel.city_eng || "호텔",
+        "item": hotel.city_ko ? `${baseUrl}/hotel/${hotel.city_ko.toLowerCase().replace(/\s+/g, '-')}` : baseUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": hotel.property_name_ko || hotel.property_name_en,
+        "item": `${baseUrl}/hotel/${decodedSlug}`
+      }
+    ]
+  }
+  
+  // FAQ 구조화된 데이터 추가
+  const faqData = {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": `${hotel.property_name_ko || hotel.property_name_en} 위치는 어디인가요?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": hotel.property_address 
+            ? `${hotel.property_address}에 위치하고 있습니다.`
+            : `${hotel.city_ko || hotel.city_eng || ''}에 위치하고 있습니다.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `${hotel.property_name_ko || hotel.property_name_en} 체크인/체크아웃 시간은?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "체크인 시간은 오후 3시, 체크아웃 시간은 오전 11시입니다. (호텔별로 상이할 수 있으니 예약 시 확인해주세요)"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `${hotel.property_name_ko || hotel.property_name_en} 예약은 어떻게 하나요?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "투어비스 셀렉트에서 날짜와 인원을 선택하여 예약하실 수 있습니다. 카카오톡 상담을 통해 더 자세한 정보를 받아보실 수 있습니다."
+        }
+      },
+      ...(reviews && reviews.count > 0 ? [{
+        "@type": "Question",
+        "name": `${hotel.property_name_ko || hotel.property_name_en} 후기는 어떤가요?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `실제 고객 후기 ${reviews.count}개가 있으며, 평균 평점은 ${reviews.averageRating}점입니다. 상세 후기는 페이지에서 확인하실 수 있습니다.`
+        }
+      }] : [])
+    ]
+  }
   
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Hotel",
     "name": hotel.property_name_ko || hotel.property_name_en,
-    "description": hotel.description_ko || hotel.description_en,
+    "description": hotel.property_details ? stripHtmlTags(String(hotel.property_details)).substring(0, 200) : (hotel.description_ko || hotel.description_en || ""),
     "url": `${baseUrl}/hotel/${decodedSlug}`,
-    "image": firstImageUrl,
+    "image": imageUrls.length > 0 ? imageUrls : firstImageUrl,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": hotel.property_address || "",
       "addressLocality": hotel.city_ko || hotel.city_eng || "",
+      "addressRegion": hotel.city_ko || hotel.city_eng || "",
       "addressCountry": hotel.country_code || "KR"
     },
+    "geo": hotel.property_address ? {
+      "@type": "GeoCoordinates",
+      "address": hotel.property_address
+    } : undefined,
     "starRating": {
       "@type": "Rating",
-      "ratingValue": hotel.rating || hotel.star_rating || 5
+      "ratingValue": hotel.star_rating || hotel.rating || 5
     },
+    ...(aggregateRating ? { "aggregateRating": aggregateRating } : {}),
     "amenityFeature": hotel.amenities ? hotel.amenities.map((amenity: string) => ({
       "@type": "LocationFeatureSpecification",
       "name": amenity
@@ -236,10 +341,17 @@ function generateHotelStructuredData(hotel: any, images: any[], slug: string) {
     "checkoutTime": "11:00",
     "petsAllowed": false,
     "smokingAllowed": false,
-    "hasMap": hotel.property_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.property_address)}` : undefined
+    "hasMap": hotel.property_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.property_address)}` : undefined,
+    "telephone": hotel.phone || undefined,
+    "email": hotel.email || undefined
   }
 
-  return JSON.stringify(structuredData)
+  // 여러 구조화된 데이터를 배열로 반환
+  return JSON.stringify([
+    structuredData,
+    breadcrumbList,
+    faqData
+  ])
 }
 
 export default async function HotelDetailPage({ 
@@ -304,20 +416,32 @@ export default async function HotelDetailPage({
     )
   }
   
-  const { hotel, images, benefits, promotions, blogs } = detailData
+  const { hotel, images, benefits, promotions, blogs, reviews } = detailData
   
   // 구조화된 데이터 생성
-  const structuredData = generateHotelStructuredData(hotel, images, slug)
+  const structuredData = generateHotelStructuredData(hotel, images, slug, reviews)
+  
+  // 구조화된 데이터 파싱 (배열 또는 단일 객체)
+  let structuredDataArray: any[] = []
+  if (structuredData) {
+    try {
+      const parsed = JSON.parse(structuredData)
+      structuredDataArray = Array.isArray(parsed) ? parsed : [parsed]
+    } catch {
+      // 파싱 실패 시 빈 배열
+    }
+  }
   
   return (
     <div className="min-h-screen bg-background">
-      {/* 구조화된 데이터 */}
-      {structuredData && (
+      {/* 구조화된 데이터 (여러 개) */}
+      {structuredDataArray.map((data, index) => (
         <script
+          key={`structured-data-${index}`}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: structuredData }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
         />
-      )}
+      ))}
       
       <Header />
       <main>

@@ -4,13 +4,23 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 1800 // 30분마다 재검증
 
+// Fisher-Yates 셔플 알고리즘 (랜덤 순서)
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export async function GET() {
   try {
     const supabase = await createClient()
 
     // select_satisfaction_survey와 select_hotels를 조인하여 slug 정보 가져오기
     // 랜딩 페이지용: pick = true인 것만 가져오기
-    // sort 컬럼 기준 오름차순 정렬 (작은 값이 왼쪽에 배치)
+    // 랜덤 순서로 표시 (캐시 시간마다 새로운 순서)
     const { data, error } = await supabase
       .from('select_satisfaction_survey')
       .select(`
@@ -28,8 +38,6 @@ export async function GET() {
       .not('property_name_kr', 'is', null)
       .not('booking_number', 'is', null)
       .not('sabre_id', 'is', null)
-      .order('sort', { ascending: true, nullsLast: true })
-      .order('created_at', { ascending: false })
       .limit(12)
 
     if (error) {
@@ -40,19 +48,21 @@ export async function GET() {
       )
     }
 
-    // slug가 있는 데이터만 필터링
-    const validData = (data || [])
-      .filter((item: any) => item.select_hotels?.slug)
-      .map((item: any) => ({
-        id: item.id,
-        review_text: item.review_text,
-        property_name_kr: item.property_name_kr,
-        booking_number: item.booking_number,
-        sabre_id: item.sabre_id,
-        sort: item.sort,
-        created_at: item.created_at,
-        slug: item.select_hotels.slug,
-      }))
+    // slug가 있는 데이터만 필터링하고 랜덤 순서로 섞기
+    const validData = shuffleArray(
+      (data || [])
+        .filter((item: any) => item.select_hotels?.slug)
+        .map((item: any) => ({
+          id: item.id,
+          review_text: item.review_text,
+          property_name_kr: item.property_name_kr,
+          booking_number: item.booking_number,
+          sabre_id: item.sabre_id,
+          sort: item.sort,
+          created_at: item.created_at,
+          slug: item.select_hotels.slug,
+        }))
+    )
 
     return NextResponse.json(
       {
