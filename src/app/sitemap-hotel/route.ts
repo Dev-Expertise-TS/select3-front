@@ -9,12 +9,13 @@ export async function GET() {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
     
-    // 호텔 목록 가져오기
+    // 호텔 목록 가져오기 (공개된 호텔만)
     const { data: hotels, error: hotelsError } = await supabase
       .from('select_hotels')
-      .select('slug, updated_at, created_at')
+      .select('slug, updated_at, created_at, publish')
       .not('slug', 'is', null)
       .not('slug', 'eq', '')
+      .or('publish.is.null,publish.eq.true') // publish가 null이거나 true인 것만
       .limit(5000)
 
     if (hotelsError) {
@@ -35,7 +36,9 @@ export async function GET() {
     }
 
     // 리디렉션되는 URL 제거 및 최종 목적지 URL만 포함
+    // publish가 false인 호텔은 제외
     const validHotelUrls = hotels
+      .filter((hotel) => hotel.publish !== false) // 명시적으로 false인 것만 제외
       .map((hotel) => {
         const url = `${baseUrl}/hotel/${hotel.slug}`
         const normalizedUrl = normalizeSitemapUrl(url)
@@ -62,6 +65,7 @@ export async function GET() {
     return new NextResponse(sitemap, {
       headers: {
         'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1시간 캐시
       },
     })
   } catch (error) {

@@ -2,7 +2,19 @@
 
 ## 📋 개요
 
-Canonical URL을 수정한 후 Google Search Console에 사이트맵을 제출하여 변경사항을 빠르게 인덱싱하도록 합니다.
+호텔 상세 페이지 SEO 개선 후 Google Search Console에 사이트맵을 제출하여 변경사항을 빠르게 인덱싱하도록 합니다.
+
+## ✅ 사이트맵 준비 완료 상태
+
+- ✅ 사이트맵 인덱스: `/sitemap-index` (모든 사이트맵 통합)
+- ✅ 정적 페이지: `/sitemap.xml`
+- ✅ 호텔 상세 페이지: `/sitemap-hotel` (공개된 호텔만 포함)
+- ✅ 호텔 목록 페이지: `/sitemap-hotel-lists`
+- ✅ 브랜드 페이지: `/sitemap-brands`
+- ✅ 목적지 페이지: `/sitemap-destinations`
+- ✅ 블로그 페이지: `/sitemap-blog`
+- ✅ 토픽 페이지: `/sitemap-topic-pages`
+- ✅ robots.txt에 모든 사이트맵 등록 완료
 
 ## 🎯 제출할 사이트맵
 
@@ -85,12 +97,43 @@ https://luxury-select.co.kr/sitemap-index
 
 제출 전에 사이트맵이 정상적으로 작동하는지 확인하세요:
 
-### 브라우저에서 확인
+### 1. 브라우저에서 확인
+
+**사이트맵 인덱스 (메인):**
 ```
 https://luxury-select.co.kr/sitemap-index
+```
+
+**개별 사이트맵:**
+```
 https://luxury-select.co.kr/sitemap.xml
 https://luxury-select.co.kr/sitemap-hotel
+https://luxury-select.co.kr/sitemap-hotel-lists
+https://luxury-select.co.kr/sitemap-brands
+https://luxury-select.co.kr/sitemap-destinations
+https://luxury-select.co.kr/sitemap-blog
+https://luxury-select.co.kr/sitemap-topic-pages
 ```
+
+### 2. XML 유효성 검사
+
+각 사이트맵이 올바른 XML 형식인지 확인:
+- XML 선언: `<?xml version="1.0" encoding="UTF-8"?>`
+- 올바른 네임스페이스: `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"`
+- 유효한 URL 형식
+- `lastmod` 날짜 형식 (ISO 8601)
+
+### 3. 사이트맵 크기 확인
+
+- **단일 사이트맵**: 최대 50,000개 URL
+- **단일 사이트맵 파일 크기**: 최대 50MB (압축 전)
+- 현재 호텔 사이트맵: 최대 5,000개로 제한 (안전 범위 내)
+
+### 4. URL 유효성 확인
+
+- 모든 URL이 `https://luxury-select.co.kr` 도메인 사용
+- 리디렉션되는 URL 제외됨
+- 공개되지 않은 호텔(`publish=false`) 제외됨
 
 ### 사이트맵 인덱스 구조
 Sitemap Index는 다음 사이트맵들을 포함합니다:
@@ -134,11 +177,34 @@ Sitemap Index는 다음 사이트맵들을 포함합니다:
 ## 🚀 빠른 제출 (권장)
 
 **가장 간단한 방법:**
-1. Google Search Console 접속
-2. Sitemaps 메뉴로 이동
-3. `sitemap-index` 입력 후 제출
+1. [Google Search Console](https://search.google.com/search-console) 접속
+2. 속성 선택: `luxury-select.co.kr`
+3. 왼쪽 메뉴: **"색인 생성"** → **"Sitemaps"** 클릭
+4. **"새 사이트맵 추가"** 입력란에 다음 중 하나 입력:
+   - `sitemap-index` (권장 - 모든 사이트맵 포함)
+   - 또는 전체 URL: `https://luxury-select.co.kr/sitemap-index`
+5. **"제출"** 버튼 클릭
+
+**제출할 URL:**
+```
+https://luxury-select.co.kr/sitemap-index
+```
 
 이것만으로 모든 페이지가 Google에 제출됩니다!
+
+### 제출 후 확인 사항
+
+1. **제출 상태 확인** (몇 분 내)
+   - "성공" 상태 표시 확인
+   - 발견된 URL 수 확인
+
+2. **처리 시간**
+   - Google이 사이트맵을 처리하는 데 몇 시간~며칠 소요
+   - 대량의 페이지는 더 오래 걸릴 수 있음
+
+3. **색인 생성 모니터링**
+   - Search Console → 색인 생성 → 페이지
+   - 제출된 URL 수와 실제 색인된 URL 수 비교
 
 ## 📅 업데이트 일정
 
