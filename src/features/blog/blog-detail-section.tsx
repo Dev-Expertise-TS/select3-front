@@ -24,6 +24,19 @@ interface BlogDetail {
   s11_contents: string | null
   s12_contents: string | null
   created_at: string
+  // 호텔 sabre_id 필드들 (CTA 렌더링용)
+  s1_sabre_id: number | null
+  s2_sabre_id: number | null
+  s3_sabre_id: number | null
+  s4_sabre_id: number | null
+  s5_sabre_id: number | null
+  s6_sabre_id: number | null
+  s7_sabre_id: number | null
+  s8_sabre_id: number | null
+  s9_sabre_id: number | null
+  s10_sabre_id: number | null
+  s11_sabre_id: number | null
+  s12_sabre_id: number | null
 }
 
 interface BlogDetailResponse {

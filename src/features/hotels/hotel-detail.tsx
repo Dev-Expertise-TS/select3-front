@@ -1487,11 +1487,21 @@ export function HotelDetail({
         })
         
         if (!response.ok) {
-          const errorData = await response.json()
+          let errorData: any = {}
+          try {
+            const text = await response.text()
+            if (text) {
+              errorData = JSON.parse(text)
+            }
+          } catch (parseError) {
+            // JSON 파싱 실패 시 빈 객체 유지
+            console.warn('⚠️ 에러 응답 JSON 파싱 실패:', parseError)
+          }
+          
           console.error('❌ Hotel Details API 응답 오류:', {
             status: response.status,
             statusText: response.statusText,
-            errorData
+            errorData: Object.keys(errorData).length > 0 ? errorData : '빈 응답 또는 파싱 실패'
           })
           throw new Error(errorData.error || `API 호출 실패: ${response.status} ${response.statusText}`)
         }

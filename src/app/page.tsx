@@ -18,9 +18,43 @@ export const revalidate = 1800
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
 
 export const metadata: Metadata = {
+  title: '투어비스 셀렉트 | 프리미엄 호텔 & 리조트 특별 혜택',
+  description: '럭셔리 호텔 & 리조트를 특별한 혜택과 함께 만나보세요. 2인 조식 무료, $100 식음료 크레딧, 객실 업그레이드 등 7가지 혜택을 제공합니다.',
   alternates: {
     canonical: baseUrl
-  }
+  },
+  openGraph: {
+    title: '투어비스 셀렉트 | 프리미엄 호텔 & 리조트 특별 혜택',
+    description: '럭셔리 호텔 & 리조트를 특별한 혜택과 함께 만나보세요. 2인 조식 무료, $100 식음료 크레딧, 객실 업그레이드 등 7가지 혜택을 제공합니다.',
+    url: baseUrl,
+    siteName: '투어비스 셀렉트',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [
+      {
+        url: `${baseUrl}/select_og_image.jpg`,
+        width: 1200,
+        height: 630,
+        alt: '투어비스 셀렉트 - 프리미엄 호텔 & 리조트'
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '투어비스 셀렉트 | 프리미엄 호텔 & 리조트 특별 혜택',
+    description: '럭셔리 호텔 & 리조트를 특별한 혜택과 함께 만나보세요. 2인 조식 무료, $100 식음료 크레딧, 객실 업그레이드 등 7가지 혜택을 제공합니다.',
+    images: [`${baseUrl}/select_og_image.jpg`],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 }
 
 export default function HomePage() {
