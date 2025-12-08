@@ -1194,6 +1194,27 @@ export function HotelDetail({
     staleTime: 5 * 60 * 1000,
   })
   
+  // HTML 파싱: <ol> 태그 안의 <li> 요소에 data-list="bullet" 속성 추가 (dot 블릿 표시용)
+  const processOlTags = (html: string | null): string | null => {
+    if (!html) return null
+    // <ol> 태그 안의 <li> 요소에 data-list="bullet" 속성 추가
+    // 정규식으로 <ol>...</ol> 블록을 찾아서 내부의 <li> 태그에 속성 추가
+    return html.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, content) => {
+      // <ol> 태그의 속성 추출
+      const olTagMatch = match.match(/<ol([^>]*)>/i)
+      const olAttributes = olTagMatch ? olTagMatch[1] : ''
+      // 내부의 <li> 태그에 data-list="bullet" 속성 추가
+      const processedContent = content.replace(/<li([^>]*)>/gi, (liMatch, liAttrs) => {
+        // 이미 data-list 속성이 있으면 유지, 없으면 추가
+        if (liAttrs.includes('data-list=')) {
+          return liMatch
+        }
+        return `<li${liAttrs} data-list="bullet">`
+      })
+      return `<ol${olAttributes}>${processedContent}</ol>`
+    })
+  }
+
   // 호텔 소개 HTML 결정 (select_hotels > sabre_hotels 순서로 변경, select_hotels 우선)
   const introHtml = useMemo(() => {
     const rawSelect = hotel?.property_details as unknown
@@ -1242,14 +1263,18 @@ export function HotelDetail({
     const sabreHtml = normalizeHtml(rawSabre)
     const chosen = selectHtml || sabreHtml
 
+    // <ol> 태그 처리: dot 블릿으로 표시하기 위해 data-list="bullet" 속성 추가
+    const processedHtml = processOlTags(chosen)
+
     console.log('🧩 호텔 소개 선택 값 (select_hotels 우선):', {
       selectType: typeof rawSelect,
       sabreType: typeof rawSabre,
       selectLen: selectHtml?.length || 0,
       sabreLen: sabreHtml?.length || 0,
-      picked: selectHtml ? 'select_hotels' : (sabreHtml ? 'sabre_hotels' : 'none')
+      picked: selectHtml ? 'select_hotels' : (sabreHtml ? 'sabre_hotels' : 'none'),
+      processed: processedHtml !== chosen
     })
-    return chosen || null
+    return processedHtml || null
   }, [hotel?.property_details, sabreHotelDetails])
 
   // 호텔 위치 정보 HTML 결정 (property_location 우선)
@@ -1294,14 +1319,18 @@ export function HotelDetail({
       return null
     }
 
-    const locationHtml = normalizeHtml(rawLocation)
+    const rawLocationHtml = normalizeHtml(rawLocation)
+
+    // <ol> 태그 처리: dot 블릿으로 표시하기 위해 data-list="bullet" 속성 추가
+    const processedLocationHtml = processOlTags(rawLocationHtml)
 
     console.log('📍 호텔 위치 정보:', {
       locationType: typeof rawLocation,
-      locationLen: locationHtml?.length || 0,
-      hasLocation: !!locationHtml
+      locationLen: rawLocationHtml?.length || 0,
+      hasLocation: !!rawLocationHtml,
+      processed: processedLocationHtml !== rawLocationHtml
     })
-    return locationHtml || null
+    return processedLocationHtml || null
   }, [hotel?.property_location])
   
   // 호텔 프로모션 데이터 조회 (서버 데이터가 없을 때만)
