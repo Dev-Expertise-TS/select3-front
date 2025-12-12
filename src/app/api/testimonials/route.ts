@@ -51,17 +51,17 @@ export async function GET() {
     // slug가 있는 데이터만 필터링하고 랜덤 순서로 섞기
     const validData = shuffleArray(
       (data || [])
-        .filter((item: any) => item.select_hotels?.slug)
-        .map((item: any) => ({
-          id: item.id,
-          review_text: item.review_text,
-          property_name_kr: item.property_name_kr,
-          booking_number: item.booking_number,
-          sabre_id: item.sabre_id,
-          sort: item.sort,
-          created_at: item.created_at,
-          slug: item.select_hotels.slug,
-        }))
+      .filter((item: any) => item.select_hotels?.slug)
+      .map((item: any) => ({
+        id: item.id,
+        review_text: item.review_text,
+        property_name_kr: item.property_name_kr,
+        booking_number: item.booking_number,
+        sabre_id: item.sabre_id,
+        sort: item.sort,
+        created_at: item.created_at,
+        slug: item.select_hotels.slug,
+      }))
     )
 
     return NextResponse.json(

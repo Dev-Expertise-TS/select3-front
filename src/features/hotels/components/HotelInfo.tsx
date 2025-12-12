@@ -38,7 +38,7 @@ interface HotelInfoProps {
 
 export function HotelInfo({ 
   hotel, 
-  images,
+  images, 
   totalImagesCount,
   selectedImage, 
   onImageSelect, 

@@ -457,34 +457,34 @@ function extractRatePlansFromSabreData(sabreData: any): any[] {
                          ''
       
       return {
-        RateKey: rateInfo?.RateKey || '',
-        RoomType: '', // ConvertedRateInfo에는 객실 상세 정보가 없을 수 있음
-        RoomName: '',
-        Description: '',
-        RoomViewDescription: null,
-        RoomView: null,
-        Currency: rateInfo?.CurrencyCode || 'KRW',
-        AmountAfterTax: rateInfo?.AmountAfterTax || 0,
-        AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
-        AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
-        StartDate: rateInfo?.StartDate || '',
-        EndDate: rateInfo?.EndDate || '',
-        RoomTypeCode: '',
-        BookingCode: '',
+      RateKey: rateInfo?.RateKey || '',
+      RoomType: '', // ConvertedRateInfo에는 객실 상세 정보가 없을 수 있음
+      RoomName: '',
+      Description: '',
+      RoomViewDescription: null,
+      RoomView: null,
+      Currency: rateInfo?.CurrencyCode || 'KRW',
+      AmountAfterTax: rateInfo?.AmountAfterTax || 0,
+      AmountBeforeTax: rateInfo?.AmountBeforeTax || 0,
+      AverageNightlyRate: rateInfo?.AverageNightlyRate || 0,
+      StartDate: rateInfo?.StartDate || '',
+      EndDate: rateInfo?.EndDate || '',
+      RoomTypeCode: '',
+      BookingCode: '',
         ProductCode: typeof productCode === 'string' ? productCode : (typeof productCode === 'number' ? String(productCode) : ''),
-        RatePlanDescription: '',
-        RatePlanType: '',
-        RateDescription: '',
-        PlanDescription: '',
-        RateInfo: '',
-        PlanInfo: '',
-        RateCategory: '',
-        RoomCategory: '',
-        MealPlan: '',
-        CancellationPolicy: '',
-        DepositRequired: '',
-        Prepaid: '',
-        _original: rateInfo
+      RatePlanDescription: '',
+      RatePlanType: '',
+      RateDescription: '',
+      PlanDescription: '',
+      RateInfo: '',
+      PlanInfo: '',
+      RateCategory: '',
+      RoomCategory: '',
+      MealPlan: '',
+      CancellationPolicy: '',
+      DepositRequired: '',
+      Prepaid: '',
+      _original: rateInfo
       }
     })
     console.log('✅ 7차 경로 결과:', result)
@@ -711,7 +711,7 @@ export function HotelDetail({
     return imageLoadingStates.get(decodedSrc) === 'error';
   }
 
-  
+
   // 호텔 데이터 조회: 초기 데이터 우선, 없으면 클라이언트에서 조회
   const { data: hotelBySlug, isLoading, error } = useHotelBySlug(hotelSlug)
   const hotel = initialHotel || hotelBySlug
@@ -736,8 +736,8 @@ export function HotelDetail({
       if (initialSearchDates?.checkIn && initialSearchDates?.checkOut) {
         // URL에서 날짜가 전달된 경우 즉시 검색 실행
         if (!hasSearched) {
-          setHasSearched(true)
-        }
+      setHasSearched(true)
+    }
       } else if (!hasSearched) {
         // 날짜가 없으면 기본 동작 (자동 검색 실행)
         setHasSearched(true)
@@ -1214,7 +1214,7 @@ export function HotelDetail({
       return `<ol${olAttributes}>${processedContent}</ol>`
     })
   }
-
+  
   // 호텔 소개 HTML 결정 (select_hotels > sabre_hotels 순서로 변경, select_hotels 우선)
   const introHtml = useMemo(() => {
     const rawSelect = hotel?.property_details as unknown
@@ -1873,7 +1873,7 @@ export function HotelDetail({
                       }}
                       rooms={searchGuests.rooms}
                       hotelId={hotel?.sabre_id}
-                    hotelName={hotel?.property_name_ko || hotel?.property_name_en}
+                      hotelName={hotel?.property_name_ko || hotel?.property_name_en}
                     highlightedRateKey={undefined}
                     highlightedProductCode={initialProductCode}
                     />

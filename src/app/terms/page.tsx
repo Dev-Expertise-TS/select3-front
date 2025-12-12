@@ -6,10 +6,19 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr
 
 export const metadata: Metadata = {
   title: "서비스 이용약관 | 투어비스 셀렉트",
-  description: "투어비스 셀렉트 서비스 이용약관. 본 약관은 투어비스 셀렉트 서비스 이용과 관련된 권리, 의무 및 책임사항을 규정합니다.",
+  description: "투어비스 셀렉트 서비스 이용약관. 본 약관은 투어비스 셀렉트 서비스 이용과 관련된 권리, 의무 및 책임사항을 규정합니다. 호텔 예약, 결제, 환불, 개인정보보호 등 서비스 이용에 관한 모든 내용을 확인하세요.",
+  keywords: [
+    '서비스 이용약관',
+    '투어비스 셀렉트 약관',
+    '호텔 예약 약관',
+    '이용약관',
+    '서비스 약관',
+    '개인정보보호',
+    '환불 정책'
+  ],
   openGraph: {
     title: "서비스 이용약관 | 투어비스 셀렉트",
-    description: "투어비스 셀렉트 서비스 이용약관",
+    description: "투어비스 셀렉트 서비스 이용약관. 본 약관은 투어비스 셀렉트 서비스 이용과 관련된 권리, 의무 및 책임사항을 규정합니다.",
     url: `${baseUrl}/terms`,
     siteName: '투어비스 셀렉트',
     locale: 'ko_KR',
@@ -26,7 +35,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "서비스 이용약관 | 투어비스 셀렉트",
-    description: "투어비스 셀렉트 서비스 이용약관",
+    description: "투어비스 셀렉트 서비스 이용약관. 본 약관은 투어비스 셀렉트 서비스 이용과 관련된 권리, 의무 및 책임사항을 규정합니다.",
     images: [`${baseUrl}/select_logo.avif`]
   },
   alternates: {
@@ -45,8 +54,47 @@ export const metadata: Metadata = {
 }
 
 export default function TermsPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  
+  // WebPage Structured Data for Terms
+  const termsPageData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: '서비스 이용약관',
+    description: '투어비스 셀렉트 서비스 이용약관',
+    url: `${baseUrl}/terms`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: '서비스 이용약관',
+          item: `${baseUrl}/terms`
+        }
+      ]
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '투어비스 셀렉트',
+      url: baseUrl,
+      logo: `${baseUrl}/select_logo.avif`
+    }
+  }
+  
   return (
     <div className="min-h-screen bg-white">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(termsPageData) }}
+      />
       <Header />
       <main>
         <section className="bg-white border-b">
