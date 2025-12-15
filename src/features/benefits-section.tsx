@@ -6,7 +6,7 @@ const benefits = [
     icon: Coffee,
     title: "2인 조식 무료 제공",
     // subtitle: "무료 제공",
-    description: "매일 아침 2인 조식을 무료로 제공합니다",
+    description: "",
   },
   {
     icon: DollarSign,
@@ -52,7 +52,7 @@ export function BenefitsSection() {
       <SectionContainer className="px-3 sm:px-4">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">
-            럭셔리 호텔 & 리조트, <span className="text-amex-blue">특별한 혜택과 함께</span>
+            대한민국 No1. 프리미엄 호텔 전문 예약 컨시어지 서비스
           </h2>
           <p className="text-sm sm:text-base text-gray-600 leading-tight">
             지금 바로 전화 또는 카카오톡 채팅을 통해 예약하고 <br className="sm:hidden" />
@@ -79,12 +79,14 @@ export function BenefitsSection() {
                     style={{ borderColor: '#E6CDB5' }}>
                     <IconComponent className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-xs sm:text-xs mb-0.5 sm:mb-0.5 leading-tight">
+                  <h3 className="font-bold text-gray-900 text-base sm:text-base mb-0.5 sm:mb-0.5 leading-tight">
                     {benefit.title}
                   </h3>
+                  {benefit.description && (
                   <p className="text-gray-600 text-xs sm:text-xs leading-snug line-clamp-2">
                     {benefit.description}
                   </p>
+                  )}
                 </div>
               </div>
             )
