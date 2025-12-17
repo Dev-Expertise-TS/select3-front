@@ -124,13 +124,30 @@ export async function GET(
       /\.(avif|webp|jpg|jpeg|png)$/i.test(f.name)
     );
 
-    // 파일명에서 seq 숫자 추출하여 정렬 (예: conrad-osaka_312869_13.jpg -> 13)
+    // 파일명에서 seq 숫자 추출하여 정렬 (sabre id 다음의 seq 숫자 기준)
+    // 예: mandarin-oriental-singapore_2323_01.jpg -> 01
+    // 예: mandarin-oriental-singapore_2323_02_1600w.avif -> 02
     const sortedImageFiles = imageFiles.sort((a, b) => {
-      // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
-      const getSeqNumber = (name: string) => {
-        // 패턴: _숫자.확장자 (예: _13.jpg, _01.avif)
-        const match = name.match(/_(\d+)\.[^.]+$/);
-        return match ? parseInt(match[1], 10) : 0;
+      const getSeqNumber = (name: string): number => {
+        // sabre id 다음의 seq 숫자 추출
+        if (sabreId) {
+          const sabreIdPattern = new RegExp(`_${sabreId}_(\\d+)(?:_|\\.)`);
+          const m = name.match(sabreIdPattern);
+          if (m && m[1]) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > 0) return num;
+          }
+        }
+        
+        // fallback: 파일명 끝의 seq 번호 추출 (확장자 직전, _suffix 허용)
+        const m = name.match(/_(\d+)(?:_[^.]*)?\.[^.]+$/);
+        if (m && m[1]) {
+          const num = parseInt(m[1], 10);
+          if (!isNaN(num) && num > 0) return num;
+        }
+        
+        // 파싱 실패는 뒤로
+        return Number.MAX_SAFE_INTEGER;
       };
       return getSeqNumber(a.name) - getSeqNumber(b.name);
     });
@@ -144,14 +161,27 @@ export async function GET(
       firstFiveImages: sortedImageFiles.slice(0, 5).map(f => f.name)
     });
 
-    // seq 번호 추출 함수
-    const getSeqNumber = (name: string): number => {
-      const match = name.match(/_(\d+)\.[^.]+$/);
-      return match ? parseInt(match[1], 10) : 0;
-    };
-
-    // 이미지 메타데이터 생성 (정렬 후 연속된 sequence 할당)
+    // 이미지 메타데이터 생성 (정렬된 순서 유지, 실제 seq 번호 사용)
     const images = sortedImageFiles.map((file, idx) => {
+      // 실제 파일명에서 추출한 seq 번호 사용
+      const getSeqFromFilename = (name: string): number => {
+        if (sabreId) {
+          const sabreIdPattern = new RegExp(`_${sabreId}_(\\d+)(?:_|\\.)`);
+          const m = name.match(sabreIdPattern);
+          if (m && m[1]) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > 0) return num;
+          }
+        }
+        const m = name.match(/_(\d+)(?:_[^.]*)?\.[^.]+$/);
+        if (m && m[1]) {
+          const num = parseInt(m[1], 10);
+          if (!isNaN(num) && num > 0) return num;
+        }
+        return idx + 1; // fallback
+      };
+      
+      const actualSeq = getSeqFromFilename(file.name);
       // successPath를 사용하여 올바른 URL 생성
       const base = `https://bnnuekzyfuvgeefmhmnp.supabase.co/storage/v1/object/public/hotel-media/${successPath}/${file.name}`;
       // 캐시 무효화를 위해 파일 수정시각 기반 버전 파라미터 부여
@@ -160,10 +190,10 @@ export async function GET(
       return {
         id: `storage-${idx + 1}`,
         filename: file.name,
-        sequence: idx + 1, // 정렬 후 연속된 순서 (1, 2, 3, 4, 5...)
+        sequence: actualSeq, // 파일명에서 추출한 실제 seq 번호 사용
         media_path: url,
         url,
-        alt: `${hotel.property_name_ko} 이미지 ${idx + 1}`,
+        alt: `${hotel.property_name_ko} 이미지 ${actualSeq}`,
         isMain: idx === 0, // 첫 번째 파일이 메인
         size: file.metadata?.size ?? 0,
         lastModified: file.updated_at ?? new Date().toISOString(),

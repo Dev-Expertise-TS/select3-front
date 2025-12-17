@@ -57,14 +57,86 @@ export function ImageGallery({
 
   const sourceImages = remoteImages ?? images
 
+  // 파일명 기반 seq 추출 (호텔 상세 썸네일/그리드와 동일 로직)
+  // - mandarin-oriental-singapore_2323_01.jpg -> 01
+  // - mandarin-oriental-singapore_2323_02_1600w.avif -> 02
+  const getSeq = (it: any, sid?: number): number => {
+    if (typeof it?.sequence === 'number' && it.sequence > 0) return it.sequence
+    
+    // filename이 있으면 사용, 없으면 media_path에서 파일명 추출
+    let name: string = it?.filename || ''
+    if (!name && it?.media_path) {
+      // URL에서 파일명만 추출 (마지막 / 이후 부분)
+      const pathParts = it.media_path.split('/')
+      name = pathParts[pathParts.length - 1] || ''
+      // 쿼리 파라미터 제거
+      if (name.includes('?')) {
+        name = name.split('?')[0]
+      }
+    }
+    
+    if (!name) return Number.MAX_SAFE_INTEGER
+
+    // sabre id가 제공된 경우: sabre id 다음의 seq 숫자 추출
+    if (sid) {
+      const sabreIdPattern = new RegExp(`_${sid}_(\\d+)(?:_|\\.)`)
+      const m = name.match(sabreIdPattern)
+      if (m && m[1]) {
+        const num = Number(m[1])
+        if (!isNaN(num) && num > 0) return num
+      }
+    }
+
+    // fallback: 파일명 끝의 seq 번호 추출
+    const m = name.match(/_(\d+)(?:_[^.]*)?\.[^.]+$/)
+    if (m && m[1]) {
+      const num = Number(m[1])
+      if (!isNaN(num) && num > 0) return num
+    }
+
+    return Number.MAX_SAFE_INTEGER
+  }
+
+  const hasFilenameList = useMemo(() => {
+    return sourceImages.some((img: any) => typeof img?.filename === 'string' && img.filename.length > 0)
+  }, [sourceImages])
+
   // 실제 존재하는 이미지들만 필터링
   const validImages = useMemo(() => {
+    // 서버에서 스토리지 목록(실존 파일)으로 전달된 경우(filename 존재)에는 필터링 스킵
+    // (이전 imageExistsMap에 false가 남아있으면 정상 파일도 누락될 수 있음)
+    if (hasFilenameList) return sourceImages
+
     // 존재 여부를 아직 모르면 일단 표시하고, 명시적으로 false인 것만 제외
     return sourceImages.filter((image) => {
       const exists = imageExistsMap.get(image.media_path)
       return exists !== false
     })
-  }, [sourceImages, imageExistsMap])
+  }, [sourceImages, imageExistsMap, hasFilenameList])
+
+  // 모달 내 렌더링/네비게이션 기준 정렬된 이미지 목록
+  const orderedImages = useMemo(() => {
+    const sorted = [...validImages].sort((a: any, b: any) => {
+      const seqA = getSeq(a, sabreId)
+      const seqB = getSeq(b, sabreId)
+      return seqA - seqB
+    })
+    
+    // 디버깅: 정렬 결과 확인
+    if (sorted.length > 0 && sabreId) {
+      console.log('🖼️ ImageGallery 정렬 결과:', {
+        sabreId,
+        totalImages: sorted.length,
+        first5: sorted.slice(0, 5).map((img: any) => ({
+          filename: img.filename || img.media_path?.split('/').pop(),
+          seq: getSeq(img, sabreId),
+          media_path: img.media_path
+        }))
+      })
+    }
+    
+    return sorted
+  }, [validImages, sabreId])
 
   // 이미지 존재 여부 확인 (이미지가 실제로 변경될 때만)
   useEffect(() => {
@@ -119,17 +191,36 @@ export function ImageGallery({
             sequence: img.sequence,
             filename: img.filename,
           }))
-          const getSeq = (it: any) => {
-            if (typeof it.sequence === 'number') return it.sequence
-            const name = it.filename || it.media_path || ''
-            // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
-            // 예: conrad-osaka_312869_13.jpg -> 13
-            const m = name.match(/_(\d+)\.[^.]+$/)
-            if (m) return Number(m[1]) || 0
-            return 0
-          }
-          const sorted = mapped.sort((a,b) => getSeq(a) - getSeq(b))
+          const sorted = [...mapped].sort((a, b) => {
+            const seqA = getSeq(a, sabreId)
+            const seqB = getSeq(b, sabreId)
+            return seqA - seqB
+          })
+          
+          // 디버깅: 원격 이미지 정렬 결과 확인
+          console.log('🖼️ ImageGallery 원격 이미지 정렬 결과:', {
+            sabreId,
+            totalImages: sorted.length,
+            first5: sorted.slice(0, 5).map((img: any) => ({
+              filename: img.filename,
+              seq: getSeq(img, sabreId),
+              media_path: img.media_path
+            }))
+          })
+          
+          // 원격 스토리지 목록은 실존 파일이므로, 과거 false 캐시가 남아있지 않도록 리셋
+          setImageExistsMap(new Map())
           setRemoteImages(sorted)
+
+          // 기존 선택 이미지(media_path 기준)가 있으면 새 정렬 인덱스로 보정
+          const currentSrc = (remoteImages ?? images)[selectedImage]?.media_path
+          if (currentSrc) {
+            const nextIdx = sorted.findIndex((x) => x.media_path === currentSrc)
+            if (nextIdx >= 0) {
+              setCurrentImageIndex(nextIdx)
+              onImageSelect(nextIdx)
+            }
+          }
         }
       } catch {}
     })()
@@ -137,11 +228,11 @@ export function ImageGallery({
 
   // 현재 선택 인덱스 주변 이미지 프리로드 (즉시 반응성 향상)
   useEffect(() => {
-    if (!isOpen || validImages.length === 0) return
+    if (!isOpen || orderedImages.length === 0) return
     const neighbors = [currentImageIndex, currentImageIndex + 1, currentImageIndex + 2]
-      .map(i => (i + validImages.length) % validImages.length)
-    neighbors.forEach(i => preloadImage(validImages[i]?.media_path))
-  }, [isOpen, currentImageIndex, validImages])
+      .map(i => (i + orderedImages.length) % orderedImages.length)
+    neighbors.forEach(i => preloadImage(orderedImages[i]?.media_path))
+  }, [isOpen, currentImageIndex, orderedImages])
 
   // 썸네일 가시성 기반 프리로드 (뷰포트 근처 이미지 선로딩)
   useEffect(() => {
@@ -152,7 +243,7 @@ export function ImageGallery({
         if (entry.isIntersecting) {
           const idxAttr = (entry.target as HTMLElement).getAttribute('data-index')
           const idx = idxAttr ? parseInt(idxAttr, 10) : NaN
-          const src = isNaN(idx) ? undefined : validImages[idx]?.media_path
+          const src = isNaN(idx) ? undefined : orderedImages[idx]?.media_path
           if (src) preloadImage(src)
         }
       })
@@ -162,7 +253,7 @@ export function ImageGallery({
     items.forEach(el => io.observe(el))
 
     return () => io.disconnect()
-  }, [isOpen, validImages.length])
+  }, [isOpen, orderedImages.length])
 
   // selectedImage prop이 변경될 때 currentImageIndex 업데이트
   useEffect(() => {
@@ -171,10 +262,10 @@ export function ImageGallery({
 
   // validImages가 변경될 때 currentImageIndex가 범위를 벗어나지 않도록 보정
   useEffect(() => {
-    if (validImages.length > 0 && currentImageIndex >= validImages.length) {
+    if (orderedImages.length > 0 && currentImageIndex >= orderedImages.length) {
       setCurrentImageIndex(0)
     }
-  }, [validImages.length, currentImageIndex])
+  }, [orderedImages.length, currentImageIndex])
 
   // 키보드 이벤트 처리
   useEffect(() => {
@@ -203,13 +294,13 @@ export function ImageGallery({
   }, [isOpen, showDetailView, onClose])
 
   const goToPrevious = () => {
-    const newIndex = currentImageIndex === 0 ? validImages.length - 1 : currentImageIndex - 1
+    const newIndex = currentImageIndex === 0 ? orderedImages.length - 1 : currentImageIndex - 1
     setCurrentImageIndex(newIndex)
     onImageSelect(newIndex)
   }
 
   const goToNext = () => {
-    const newIndex = currentImageIndex === validImages.length - 1 ? 0 : currentImageIndex + 1
+    const newIndex = currentImageIndex === orderedImages.length - 1 ? 0 : currentImageIndex + 1
     setCurrentImageIndex(newIndex)
     onImageSelect(newIndex)
   }
@@ -236,7 +327,7 @@ export function ImageGallery({
                 {hotelName}
               </h2>
               <div className="text-sm text-gray-600">
-                {validImages.length}장의 이미지
+                {orderedImages.length}장의 이미지
               </div>
             </div>
           <button
@@ -274,7 +365,7 @@ export function ImageGallery({
               )}
 
               {/* No Images */}
-              {!loading && !error && validImages.length === 0 && (
+              {!loading && !error && orderedImages.length === 0 && (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
                     <div className="text-gray-400 text-4xl mb-4">📷</div>
@@ -285,9 +376,9 @@ export function ImageGallery({
               )}
 
               {/* Image Grid */}
-              {!loading && !error && validImages.length > 0 && (
+              {!loading && !error && orderedImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {validImages.map((image, index) => (
+                  {orderedImages.map((image, index) => (
                     <div
                       key={image.id}
                       className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer bg-gray-100"
@@ -324,17 +415,17 @@ export function ImageGallery({
                   <span>갤러리로 돌아가기</span>
                 </button>
                 <div className="text-sm text-gray-500">
-                  {currentImageIndex + 1} / {validImages.length}
+                  {currentImageIndex + 1} / {orderedImages.length}
                 </div>
               </div>
 
               {/* Main Image (현재 선택된 한 장만 렌더링) */}
               <div className="flex-1 relative bg-gray-100 min-h-0">
-                {validImages[currentImageIndex] && (
+                {orderedImages[currentImageIndex] && (
                     <NextImage
-                    key={validImages[currentImageIndex].id}
-                    src={optimizeGalleryDetail(validImages[currentImageIndex].media_path)}
-                    alt={validImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
+                    key={orderedImages[currentImageIndex].id}
+                    src={optimizeGalleryDetail(orderedImages[currentImageIndex].media_path)}
+                    alt={orderedImages[currentImageIndex].alt || `Detail ${currentImageIndex + 1}`}
                     fill
                     className="object-contain"
                     quality={90}
@@ -351,7 +442,7 @@ export function ImageGallery({
               </div>
 
               {/* Navigation Controls */}
-              {validImages.length > 1 && (
+              {orderedImages.length > 1 && (
                 <div className="flex items-center justify-between p-4 border-t border-gray-200 flex-shrink-0">
                   <Button
                     variant="outline"
@@ -373,10 +464,10 @@ export function ImageGallery({
               )}
 
               {/* Thumbnail Navigation */}
-              {validImages.length > 1 && (
+              {orderedImages.length > 1 && (
                 <div className="p-4 border-t border-gray-200 flex-shrink-0">
                   <div ref={thumbnailListRef} className="flex gap-2 overflow-x-auto pb-2">
-                    {validImages.map((image, index) => (
+                    {orderedImages.map((image, index) => (
                       <div
                         key={image.id}
                         className={cn(

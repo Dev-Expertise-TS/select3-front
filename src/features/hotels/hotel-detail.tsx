@@ -1534,12 +1534,28 @@ export function HotelDetail({
           }
         })
 
-        const response = await fetch('/api/hotel-details', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(15000)
-        })
+        let response: Response
+        try {
+          response = await fetch('/api/hotel-details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+            signal: AbortSignal.timeout(15000)
+          })
+        } catch (fetchError) {
+          // 네트워크 에러 또는 타임아웃 에러 처리
+          console.error('❌ Hotel Details API 네트워크 오류:', fetchError)
+          
+          if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+            throw new Error('호텔 정보 서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 잠시 후 다시 시도해주세요.')
+          }
+          
+          if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
+            throw new Error('요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.')
+          }
+          
+          throw new Error('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+        }
         
         console.log('📥 Hotel Details API 응답 상태:', {
           status: response.status,
