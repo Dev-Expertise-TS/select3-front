@@ -129,30 +129,35 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const countryName = hotel.country_ko || hotel.country_en || ''
   const locationText = cityName ? (countryName ? `${cityName}, ${countryName}` : cityName) : ''
   
-  // SEO 최적화된 제목: 호텔명 + 위치 + 후기/가성비 키워드
-  const title = reviews.count > 0
+  // SEO Title: DB 값이 있으면 우선 사용, 없으면 동적 생성
+  const title = hotel.seo_title || (reviews.count > 0
     ? `${hotelName}${locationText ? ` (${locationText})` : ''} 후기 및 가격 비교 | 투어비스 셀렉트`
-    : `${hotelName}${locationText ? ` (${locationText})` : ''} 상세 정보 및 가격 | 투어비스 셀렉트`
+    : `${hotelName}${locationText ? ` (${locationText})` : ''} 상세 정보 및 가격 | 투어비스 셀렉트`)
   
   // Long-tail 키워드가 포함된 디스크립션 생성
   const rawDescription = hotel.property_details || hotel.property_location || ''
   const cleanDescription = rawDescription ? stripHtmlTags(rawDescription) : ''
   
-  // 후기 개수와 위치 정보를 활용한 SEO 최적화 디스크립션
-  let description = ''
-  if (reviews.count > 0) {
-    description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 실제 고객 후기 ${reviews.count}개와 객실 가격을 비교해보세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
-  } else {
-    description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 상세 정보, 위치, 시설을 확인하고 최적의 가격으로 예약하세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
-  }
-  
-  // 디스크립션 길이 제한 (160자 권장)
-  if (description.length > 160) {
-    description = description.substring(0, 157) + '...'
+  // SEO Description: DB 값이 있으면 우선 사용, 없으면 동적 생성
+  let description = hotel.seo_description || ''
+  if (!description) {
+    // 후기 개수와 위치 정보를 활용한 SEO 최적화 디스크립션
+    if (reviews.count > 0) {
+      description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 실제 고객 후기 ${reviews.count}개와 객실 가격을 비교해보세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
+    } else {
+      description = `${hotelName}${locationText ? ` (${locationText})` : ''}의 상세 정보, 위치, 시설을 확인하고 최적의 가격으로 예약하세요. ${cleanDescription ? cleanDescription.substring(0, 80) : '프리미엄 호텔 컨시어지 투어비스 셀렉트에서 특별한 혜택과 함께 예약하세요.'}`
+    }
+    
+    // 디스크립션 길이 제한 (160자 권장)
+    if (description.length > 160) {
+      description = description.substring(0, 157) + '...'
+    }
   }
   
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
-  const url = `${baseUrl}/hotel/${decodedSlug}`
+  // Canonical URL: DB 값이 있으면 우선 사용, 없으면 기본 URL
+  const canonicalUrl = hotel.canonical_url || `${baseUrl}/hotel/${decodedSlug}`
+  const url = canonicalUrl
   
   // 이미 조회한 이미지 데이터 중 첫 번째 이미지만 사용 (OG 이미지용)
   const firstImage = detailData.images.length > 0 
@@ -195,7 +200,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       creator: '@selecthotels',
     },
     alternates: {
-      canonical: url,
+      canonical: canonicalUrl,
     },
     robots: {
       index: hotel.publish !== false,
@@ -211,6 +216,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       'fb:app_id': process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '',
       // LCP 이미지 preload (Next.js 15에서는 other에 직접 추가할 수 없으므로 클라이언트에서 처리)
       'lcp-image': firstImage || '',
+      ...(hotel.seo_keywords ? { 'keywords': hotel.seo_keywords } : {}),
     },
   }
 }
