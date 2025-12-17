@@ -934,17 +934,33 @@ export function HotelDetail({
         return `${url}${sep}v=${Math.floor(Date.now() / (30 * 60 * 1000))}`
       }
     }
-    const getSeq = (item: any): number => {
-      if (typeof item?.sequence === 'number') return item.sequence
+    const getSeq = (item: any, sabreId?: number): number => {
+      if (typeof item?.sequence === 'number' && item.sequence > 0) return item.sequence
       const name: string = item?.filename || item?.media_path || ''
-      // 파일명 끝의 seq 번호 추출 (파일 확장자 직전의 숫자)
-      // 예: conrad-osaka_312869_13.jpg -> 13
-      const m = name.match(/_(\d+)\.[^.]+$/)
-      if (m) {
-        const num = Number(m[1])
-        return isNaN(num) ? 0 : num
+
+      // 1) sabre id가 제공된 경우: sabre id 다음의 seq 숫자 추출
+      // - mandarin-oriental-singapore_2323_01.jpg -> 01
+      // - mandarin-oriental-singapore_2323_02_1600w.avif -> 02
+      if (sabreId) {
+        const sabreIdPattern = new RegExp(`_${sabreId}_(\\d+)(?:_|\\.)`)
+        const m = name.match(sabreIdPattern)
+        if (m && m[1]) {
+          const num = Number(m[1])
+          if (!isNaN(num) && num > 0) return num
+        }
       }
-      return 0
+
+      // 2) fallback: 확장자 직전 숫자(뒤에 _suffix가 있어도 허용)
+      // - ..._13.jpg -> 13
+      // - ..._02_1600w.avif -> 02
+      const m = name.match(/_(\d+)(?:_[^.]*)?\.[^.]+$/)
+      if (m && m[1]) {
+        const num = Number(m[1])
+        if (!isNaN(num) && num > 0) return num
+      }
+
+      // 파싱 실패는 정렬에서 항상 뒤로 보내기 위해 큰 값 반환
+      return Number.MAX_SAFE_INTEGER
     }
     console.log('🔄 displayImages 계산 시작... (호텔 카드와 동일 방식)', {
       hotelMediaLength: hotelMedia?.length || 0,
@@ -967,29 +983,29 @@ export function HotelDetail({
         return appendVersion(base + path.replace(/^\/?/, ''))
       }
       
-      // 먼저 파일명의 실제 seq 번호로 정렬
+      // 먼저 파일명의 실제 seq 번호로 정렬 (sabre id 다음의 seq 숫자 기준)
       const sortedMedia = [...hotelMedia].sort((a: any, b: any) => {
-        const seqA = getSeq({ filename: a.file_name, sequence: a.image_seq })
-        const seqB = getSeq({ filename: b.file_name, sequence: b.image_seq })
+        const seqA = getSeq({ filename: a.file_name, sequence: a.image_seq }, hotel?.sabre_id)
+        const seqB = getSeq({ filename: b.file_name, sequence: b.image_seq }, hotel?.sabre_id)
         return seqA - seqB
       })
       
-      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
       const convertedImages = sortedMedia.map((media: any, index: number) => ({
         id: media.id || `media-${index}`,
         media_path: toAbsolute(media.public_url) || toAbsolute(media.storage_path) || '/placeholder.svg',
         alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
         isMain: index === 0,
-        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
+        sequence: getSeq({ filename: media.file_name, sequence: media.image_seq }, hotel?.sabre_id),
         filename: media.file_name
       }))
       
-      console.log('📋 select_hotel_media 이미지들(seq 재할당):', {
+      console.log('📋 select_hotel_media 이미지들(seq):', {
         count: convertedImages.length,
+        sabreId: hotel?.sabre_id,
         images: convertedImages.slice(0, 10).map((img: any) => ({ 
           filename: img.filename, 
-          원본seq: getSeq(img),
-          재할당seq: img.sequence 
+          추출seq: getSeq(img, hotel?.sabre_id),
+          sequence: img.sequence
         }))
       })
       return convertedImages
@@ -1000,25 +1016,25 @@ export function HotelDetail({
     if (!loadingAllImages && !allImagesError && allStorageImagesData?.images && allStorageImagesData.images.length > 0) {
       console.log('✅ Supabase Storage API 사용 (우선순위 2 - fallback)');
       
-      // 먼저 파일명의 실제 seq 번호로 정렬
-      const sorted = [...allStorageImagesData.images].sort((a, b) => getSeq(a) - getSeq(b))
+      // 먼저 파일명의 실제 seq 번호로 정렬 (sabre id 다음의 seq 숫자 기준)
+      const sorted = [...allStorageImagesData.images].sort((a, b) => getSeq(a, hotel?.sabre_id) - getSeq(b, hotel?.sabre_id))
       
-      // 정렬된 순서대로 연속된 sequence 할당 (1, 2, 3, 4, 5...)
       const convertedImages = sorted.map((img, index) => ({
         id: img.id,
         media_path: appendVersion(img.media_path || img.url),
         alt: `${hotel?.property_name_ko || hotel?.property_name_en || '호텔'} 이미지 ${index + 1}`,
         isMain: index === 0,
-        sequence: index + 1, // 정렬 후 연속된 순서로 재할당
+        sequence: getSeq(img, hotel?.sabre_id),
         filename: img.filename
       }))
       
-      console.log('📋 Storage API fallback 이미지들(seq 재할당):', { 
+      console.log('📋 Storage API fallback 이미지들(seq):', { 
         count: convertedImages.length,
+        sabreId: hotel?.sabre_id,
         images: convertedImages.slice(0, 10).map((img: any) => ({ 
           filename: img.filename,
-          원본seq: getSeq(img),
-          재할당seq: img.sequence 
+          추출seq: getSeq(img, hotel?.sabre_id),
+          sequence: img.sequence
         }))
       });
       return convertedImages;
@@ -1032,7 +1048,7 @@ export function HotelDetail({
           ...img,
           media_path: appendVersion(img.media_path || img.url || img.src)
         }))
-        .sort((a: any,b: any) => getSeq(a) - getSeq(b));
+        .sort((a: any,b: any) => getSeq(a, hotel?.sabre_id) - getSeq(b, hotel?.sabre_id));
     }
     
     // 5순위: placeholder
@@ -1087,14 +1103,27 @@ export function HotelDetail({
   // 그리드용 이미지 (seq 1~5만 표시)
   const gridImages = useMemo(() => {
     const getSeqFromImage = (img: any): number => {
-      if (typeof img?.sequence === 'number') return img.sequence
+      if (typeof img?.sequence === 'number' && img.sequence > 0) return img.sequence
       const name: string = img?.filename || img?.media_path || ''
-      const m = name.match(/_(\d+)\.[^.]+$/)
-      if (m) {
-        const num = Number(m[1])
-        return isNaN(num) ? 0 : num
+      
+      // sabre id가 제공된 경우: sabre id 다음의 seq 숫자 추출
+      // 예: mandarin-oriental-singapore_2323_01.jpg -> 01 (sabre id: 2323)
+      if (hotel?.sabre_id) {
+        const sabreIdPattern = new RegExp(`_${hotel.sabre_id}_(\\d+)(?:_|\\.)`)
+        const m = name.match(sabreIdPattern)
+        if (m && m[1]) {
+          const num = Number(m[1])
+          if (!isNaN(num) && num > 0) return num
+        }
       }
-      return 0
+      
+      // sabre id가 없거나 매칭되지 않은 경우: 파일명 끝의 seq 번호 추출 (fallback)
+      const m = name.match(/_(\d+)(?:_[^.]*)?\.[^.]+$/)
+      if (m && m[1]) {
+        const num = Number(m[1])
+        if (!isNaN(num) && num > 0) return num
+      }
+      return Number.MAX_SAFE_INTEGER
     }
     
     // seq 1~5인 이미지만 필터링하여 그리드에 표시
@@ -1102,11 +1131,14 @@ export function HotelDetail({
       const seq = getSeqFromImage(img)
       return seq >= 1 && seq <= 5
     })
+    // 안전하게 seq 기준 정렬
+    const sortedFiltered = [...filtered].sort((a: any, b: any) => getSeqFromImage(a) - getSeqFromImage(b))
     
     console.log('🎯 그리드 이미지 필터링:', {
       전체이미지: validatedImages.length,
-      그리드이미지: filtered.length,
-      이미지정보: filtered.map((img: any) => ({
+      그리드이미지: sortedFiltered.length,
+      sabreId: hotel?.sabre_id,
+      이미지정보: sortedFiltered.map((img: any) => ({
         seq: getSeqFromImage(img),
         filename: img.filename
       }))
@@ -1114,12 +1146,12 @@ export function HotelDetail({
     
     // 그리드에 표시될 이미지 상세 정보 출력
     console.log('🖼️ 그리드에 표시될 이미지 (seq 1~5):');
-    filtered.forEach((img: any, idx: number) => {
+    sortedFiltered.forEach((img: any, idx: number) => {
       console.log(`  그리드 ${idx + 1}위: ${img.filename} - seq: ${getSeqFromImage(img)}`);
     });
     
-    return filtered
-  }, [validatedImages])
+    return sortedFiltered
+  }, [validatedImages, hotel?.sabre_id])
   
   // 이미지 preloading useEffect (최적화된 버전)
   useEffect(() => {
