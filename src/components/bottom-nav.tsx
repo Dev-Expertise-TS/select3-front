@@ -36,7 +36,7 @@ export function BottomNav() {
     <>
       <nav 
         data-bottom-nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg overflow-visible"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white overflow-visible"
         style={{
           transform: 'translate3d(0, 0, 0)',
           willChange: 'transform',
@@ -53,7 +53,7 @@ export function BottomNav() {
             }}
           />
         )}
-        <div className="flex items-center justify-between h-20 px-1 relative">
+        <div className="flex items-center justify-between h-[72px] px-1 relative">
           {/* 기존 네비게이션 아이템들 */}
           {mobileNavItems.map((item) => {
             const Icon = item.icon!
@@ -100,7 +100,7 @@ export function BottomNav() {
                   )} />
                 )}
                 <span className={cn(
-                  "text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap",
+                  "text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap mb-0.5",
                   isActive && !isKakaoMenu && "font-semibold",
                   isKakaoMenu && "font-medium"
                 )}>
@@ -116,7 +116,7 @@ export function BottomNav() {
             className="group flex flex-col items-center justify-center h-full transition-colors flex-1 active:opacity-80 text-gray-600 hover:text-gray-900"
           >
             <Menu className="w-5 h-5 mb-1 transition-transform group-active:scale-90" />
-            <span className="text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap">
+            <span className="text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap mb-0.5">
               전체메뉴
             </span>
           </button>
