@@ -73,9 +73,9 @@ export function BottomNav() {
               >
                 {isKakaoMenu ? (
                   // 카카오톡 아이콘: 노란색 배경에 검은색 아이콘
-                  <div className="mb-1 flex items-center justify-center">
-                    <div className="bg-[#FEE500] rounded-full p-1.5 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-[#3C1E1E] transition-transform group-active:scale-90" />
+                  <div className="mb-0.5 flex items-center justify-center">
+                    <div className="bg-[#FEE500] rounded-full p-1 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#3C1E1E] transition-transform group-active:scale-90" />
                     </div>
                   </div>
                 ) : (
@@ -85,7 +85,7 @@ export function BottomNav() {
                   )} />
                 )}
                 <span className={cn(
-                  "text-[10px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80",
+                  "text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap",
                   isActive && !isKakaoMenu && "font-semibold",
                   isKakaoMenu && "font-medium"
                 )}>
@@ -101,7 +101,7 @@ export function BottomNav() {
             className="group flex flex-col items-center justify-center h-full transition-colors flex-1 active:opacity-80 text-gray-600 hover:text-gray-900"
           >
             <Menu className="w-5 h-5 mb-1 transition-transform group-active:scale-90" />
-            <span className="text-[10px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80">
+            <span className="text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap">
               전체메뉴
             </span>
           </button>
