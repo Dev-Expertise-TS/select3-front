@@ -45,15 +45,18 @@ export function BottomNav() {
             const isActive = pathname === item.href || 
                             (item.href !== "/" && pathname.startsWith(item.href))
             
+            // 카카오톡 상담 메뉴인지 확인
+            const isKakaoMenu = item.href === "https://pf.kakao.com/_cxmxgNG/chat"
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "group flex flex-col items-center justify-center h-full transition-colors flex-1 active:opacity-80",
-                  isActive 
+                  isActive && !isKakaoMenu
                     ? "text-blue-600" 
-                    : "text-gray-600 hover:text-gray-900"
+                    : !isKakaoMenu && "text-gray-600 hover:text-gray-900"
                 )}
                 onClick={() => {
                   if (typeof window !== 'undefined' && (window as any).dataLayer) {
@@ -68,13 +71,23 @@ export function BottomNav() {
                   }
                 }}
               >
-                <Icon className={cn(
-                  "w-5 h-5 mb-1 transition-transform group-active:scale-90",
-                  isActive && "stroke-[2.5]"
-                )} />
+                {isKakaoMenu ? (
+                  // 카카오톡 아이콘: 노란색 배경에 검은색 아이콘
+                  <div className="mb-1 flex items-center justify-center">
+                    <div className="bg-[#FEE500] rounded-full p-1.5 flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-[#3C1E1E] transition-transform group-active:scale-90" />
+                    </div>
+                  </div>
+                ) : (
+                  <Icon className={cn(
+                    "w-5 h-5 mb-1 transition-transform group-active:scale-90",
+                    isActive && "stroke-[2.5]"
+                  )} />
+                )}
                 <span className={cn(
-                  "text-[10px] leading-tight text-center px-0.5 transition-opacity group-active:opacity-80",
-                  isActive && "font-semibold"
+                  "text-[10px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80",
+                  isActive && !isKakaoMenu && "font-semibold",
+                  isKakaoMenu && "font-medium"
                 )}>
                   {item.mobileLabel || item.label}
                 </span>
@@ -88,7 +101,7 @@ export function BottomNav() {
             className="group flex flex-col items-center justify-center h-full transition-colors flex-1 active:opacity-80 text-gray-600 hover:text-gray-900"
           >
             <Menu className="w-5 h-5 mb-1 transition-transform group-active:scale-90" />
-            <span className="text-[10px] leading-tight text-center px-0.5 transition-opacity group-active:opacity-80">
+            <span className="text-[10px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80">
               전체메뉴
             </span>
           </button>

@@ -1,5 +1,6 @@
 import { Home, Tag, Building2, FileText, Hotel, LucideIcon, MessageCircle, MapPin, Star, Sparkles } from "lucide-react"
 import { TourvisIcon } from "@/components/shared/icons/TourvisIcon"
+import { KakaoIconAsLucide } from "@/components/shared/icons/KakaoIcon"
 
 export interface NavigationSubItem {
   href: string
@@ -56,7 +57,7 @@ export const mobileNavItems: NavigationItem[] = [
   { href: "/hotel", label: "전체 호텔", mobileLabel: "전체검색", icon: Hotel },
   // 호텔 추천 메뉴 - 임시 숨김
   // { href: "/hotel-recommendations", label: "호텔 추천", mobileLabel: "추천", icon: Sparkles },
-  { href: "https://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "상담", icon: MessageCircle, mobileOnly: true },
+  { href: "https://pf.kakao.com/_cxmxgNG/chat", label: "예약상담", mobileLabel: "상담 및 예약", icon: KakaoIconAsLucide, mobileOnly: true },
   { href: "/blog", label: "아티클", mobileLabel: "아티클", icon: FileText },
   { href: "/testimonials", label: "고객 후기", mobileLabel: "고객후기", icon: Star },
 ]
