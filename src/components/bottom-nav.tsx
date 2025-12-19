@@ -22,6 +22,12 @@ export function BottomNav() {
   // 전체 메뉴 아이템 (모바일 전용 제외)
   const allMenuItems = navigationItems.filter(item => !item.mobileOnly)
 
+  // 카카오톡 메뉴의 인덱스 찾기 (상단 둥근 부분 위치 계산용)
+  const kakaoMenuIndex = mobileNavItems.findIndex(
+    item => item.href === "https://pf.kakao.com/_cxmxgNG/chat"
+  )
+  const totalItems = mobileNavItems.length + 1 // mobileNavItems + 전체메뉴 버튼
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
@@ -30,7 +36,7 @@ export function BottomNav() {
     <>
       <nav 
         data-bottom-nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg overflow-visible"
         style={{
           transform: 'translate3d(0, 0, 0)',
           willChange: 'transform',
@@ -38,7 +44,16 @@ export function BottomNav() {
           perspective: '1000px'
         }}
       >
-        <div className="flex items-center justify-between h-20 px-1">
+        {/* 카카오톡 아이콘 위치에 맞춘 상단 둥근 부분 */}
+        {kakaoMenuIndex !== -1 && (
+          <div 
+            className="absolute top-0 w-14 h-7 bg-white rounded-t-full pointer-events-none"
+            style={{
+              left: `calc(${kakaoMenuIndex} * (100% / ${totalItems}) + (100% / ${totalItems * 2}) - 28px)`, // 카카오톡 메뉴 중앙 위치
+            }}
+          />
+        )}
+        <div className="flex items-center justify-between h-20 px-1 relative">
           {/* 기존 네비게이션 아이템들 */}
           {mobileNavItems.map((item) => {
             const Icon = item.icon!
@@ -72,10 +87,10 @@ export function BottomNav() {
                 }}
               >
                 {isKakaoMenu ? (
-                  // 카카오톡 아이콘: 노란색 배경에 검은색 아이콘
-                  <div className="mb-0.5 flex items-center justify-center">
-                    <div className="bg-[#FEE500] rounded-full p-1 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-[#3C1E1E] transition-transform group-active:scale-90" />
+                  // 카카오톡 아이콘: 노란색 배경에 검은색 아이콘 (네비게이션 바 위로 올라가도록)
+                  <div className="mb-1.5 -mt-4 flex items-center justify-center relative z-10">
+                    <div className="bg-[#FEE500] rounded-full p-1.5 flex items-center justify-center shadow-md">
+                      <Icon className="w-[22px] h-[22px] text-[#3C1E1E] transition-transform group-active:scale-90" />
                     </div>
                   </div>
                 ) : (
