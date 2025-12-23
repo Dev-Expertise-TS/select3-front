@@ -31,6 +31,7 @@ export interface HotelCardAllViewData {
   country_ko?: string
   country_en?: string
   chain?: string
+  hotel_area?: string
   benefit_1?: string
   benefit_2?: string
   benefit_3?: string
@@ -169,6 +170,11 @@ function HotelInfoSection({ hotel, contentClassName }: HotelInfoSectionProps) {
             <p className="line-clamp-1 font-medium">
               {hotel.city_ko || hotel.city}
               {hotel.country_ko && `, ${hotel.country_ko}`}
+              {hotel.hotel_area && (
+                <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold rounded-md text-xs">
+                  {hotel.hotel_area}
+                </span>
+              )}
             </p>
             {/* 주소 영역을 항상 2행으로 유지 */}
             <div className="h-8 flex items-center"> {/* 고정 높이 2행 (text-xs * 2 + line-height) */}

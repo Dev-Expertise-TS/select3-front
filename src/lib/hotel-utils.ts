@@ -145,6 +145,7 @@ export interface HotelCardAllViewData {
   country_ko?: string
   country_en?: string
   chain?: string
+  hotel_area?: string
   benefit_1?: string
   benefit_2?: string
   benefit_3?: string
@@ -190,6 +191,7 @@ export function transformHotelToAllViewCardData(
     country_ko: hotel.country_ko || undefined,
     country_en: hotel.country_en || undefined,
     chain: hotel.chain_ko || hotel.chain_en || undefined,
+    hotel_area: hotel.hotel_area || undefined,
     benefit_1: hotel.benefit_1 || undefined,
     benefit_2: hotel.benefit_2 || undefined,
     benefit_3: hotel.benefit_3 || undefined,
