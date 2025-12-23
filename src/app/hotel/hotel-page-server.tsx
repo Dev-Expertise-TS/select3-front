@@ -7,7 +7,7 @@ import { getBannerHotel } from '@/lib/banner-hotel-server'
  * 서버에서 호텔 목록 페이지 데이터 조회
  * UI는 유지하고 데이터 페칭만 서버로 이동
  */
-export async function getHotelPageData() {
+export async function getHotelPageData(opts?: { region?: string }) {
   const supabase = await createClient()
   
   console.log('🔍 [HotelPage] 서버 데이터 조회 시작')
@@ -15,12 +15,56 @@ export async function getHotelPageData() {
   // 0. 배너 호텔 조회 (병렬 처리를 위해 먼저 시작)
   const bannerHotelPromise = getBannerHotel()
 
-  // 1. 전체 호텔 조회
-  const { data: hotels, error: hotelsError } = await supabase
-    .from('select_hotels')
-    .select('*')
-    .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
-    .order('property_name_en')
+  // 1. 호텔 조회 (전체 또는 region 필터)
+  const region = opts?.region?.trim()
+  let hotels: any[] = []
+  let hotelsError: any = null
+
+  if (region) {
+    // region(도시/지역 한/영) 정확 일치로 필터
+    const fields = ['city_ko', 'city_en', 'area_ko', 'area_en'] as const
+    const results = await Promise.all(
+      fields.map((field) =>
+        supabase
+          .from('select_hotels')
+          .select('*')
+          .eq(field, region)
+          .or('publish.is.null,publish.eq.true')
+          .order('property_name_en')
+      )
+    )
+
+    const merged: any[] = []
+    const errors: any[] = []
+    for (const r of results) {
+      if (r.error) {
+        console.error(`❌ [HotelPage] region 필터 호텔 조회 실패 (${String(r.error?.message || '')})`)
+        errors.push(r.error)
+        continue
+      }
+      if (r.data) merged.push(...r.data)
+    }
+
+    // sabre_id 기준 중복 제거
+    hotels = merged.filter((h, idx, self) => idx === self.findIndex(x => String(x.sabre_id) === String(h.sabre_id)))
+
+    // 일부 컬럼이 없어서 실패하더라도, 다른 컬럼 조회가 성공했다면 결과를 살린다
+    if (hotels.length === 0 && errors.length > 0) {
+      hotelsError = errors[0]
+    } else {
+      hotelsError = null
+    }
+  } else {
+    // 전체 호텔 조회
+    const result = await supabase
+      .from('select_hotels')
+      .select('*')
+      .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
+      .order('property_name_en')
+
+    hotels = result.data || []
+    hotelsError = result.error
+  }
   
   if (hotelsError) {
     console.error('❌ [HotelPage] 호텔 조회 실패:', hotelsError)

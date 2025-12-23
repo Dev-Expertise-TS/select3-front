@@ -83,11 +83,20 @@ export function CommonSearchBar({
     property_name_en: string | null
     city?: string | null
   }>>([])
+  const [regionSuggestions, setRegionSuggestions] = useState<Array<{
+    kind: 'city' | 'area'
+    value: string
+    secondary?: string
+  }>>([])
   const [highlightIndex, setHighlightIndex] = useState<number>(-1)
   const [selectedHotel, setSelectedHotel] = useState<{
     slug?: string | null
     sabre_id: number
     name: string
+  } | null>(null)
+  const [selectedRegion, setSelectedRegion] = useState<{
+    kind: 'city' | 'area'
+    value: string
   } | null>(null)
   const [suggestionError, setSuggestionError] = useState<string | null>(null)
 
@@ -237,6 +246,7 @@ export function CommonSearchBar({
     const q = searchQuery.trim()
     if (!q) {
       setHotelSuggestions([])
+      setRegionSuggestions([])
       setSuggestionError(null)
       return
     }
@@ -246,8 +256,8 @@ export function CommonSearchBar({
         setIsSuggesting(true)
         setSuggestionError(null)
         
-        // 쿼리 최적화: 개별 쿼리로 분리하여 or() 문제 해결
-        const queries = [
+        // 1) 호텔 자동완성: 개별 쿼리로 분리하여 or() 문제 해결
+        const hotelQueries = [
           supabase
             .from('select_hotels')
             .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
@@ -262,7 +272,29 @@ export function CommonSearchBar({
             .ilike('city', `%${q}%`)
         ]
         
-        const results = await Promise.all(queries)
+        // 2) 지역 자동완성: select_regions(도시) + select_hotels(city/area 한/영)
+        const regionCityPromise = supabase
+          .from('select_regions')
+          .select('city_ko, city_en, country_ko, country_en, city_code')
+          .eq('status', 'active')
+          .eq('region_type', 'city')
+          .or(`city_ko.ilike.%${q}%,city_en.ilike.%${q}%,country_ko.ilike.%${q}%,country_en.ilike.%${q}%`)
+          .order('city_code', { ascending: true })
+          .limit(10)
+
+        const regionFieldQueries = [
+          supabase.from('select_hotels').select('city_ko, publish').ilike('city_ko', `%${q}%`).limit(20),
+          supabase.from('select_hotels').select('city_en, publish').ilike('city_en', `%${q}%`).limit(20),
+          supabase.from('select_hotels').select('area_ko, publish').ilike('area_ko', `%${q}%`).limit(20),
+          supabase.from('select_hotels').select('area_en, publish').ilike('area_en', `%${q}%`).limit(20),
+        ]
+
+        const [hotelResults, regionCityResult, ...regionFieldResults] = await Promise.all([
+          Promise.all(hotelQueries),
+          regionCityPromise,
+          ...regionFieldQueries,
+        ])
+
         const allHotels: Array<{
           slug: string
           sabre_id: number
@@ -273,7 +305,7 @@ export function CommonSearchBar({
         }> = []
         
         // 결과 병합 및 중복 제거
-        results.forEach((result, index) => {
+        hotelResults.forEach((result, index) => {
           if (result.error) {
             console.error(`쿼리 ${index + 1} 오류:`, result.error)
             return
@@ -297,6 +329,54 @@ export function CommonSearchBar({
         if (!cancelled) {
           setHotelSuggestions(sortedHotels)
         }
+
+        // 지역 제안 구성 (도시/지역 - 한/영)
+        const regionItems: Array<{ kind: 'city' | 'area'; value: string; secondary?: string }> = []
+        const seen = new Set<string>()
+
+        // select_regions 도시
+        if (!regionCityResult.error && regionCityResult.data) {
+          for (const r of regionCityResult.data as any[]) {
+            const cityKo = (r.city_ko ?? '').trim()
+            const cityEn = (r.city_en ?? '').trim()
+            const country = (r.country_ko ?? r.country_en ?? '').toString().trim()
+
+            if (cityKo && !seen.has(`city:${cityKo}`)) {
+              seen.add(`city:${cityKo}`)
+              regionItems.push({ kind: 'city', value: cityKo, secondary: country ? `도시 · ${country}` : '도시' })
+            }
+            if (cityEn && !seen.has(`city:${cityEn}`)) {
+              seen.add(`city:${cityEn}`)
+              regionItems.push({ kind: 'city', value: cityEn, secondary: country ? `City · ${country}` : 'City' })
+            }
+          }
+        }
+
+        // select_hotels에서 city/area 한/영
+        const addValues = (kind: 'city' | 'area', values: Array<string | null | undefined>, secondary?: string) => {
+          for (const v of values) {
+            const value = (v ?? '').toString().trim()
+            if (!value) continue
+            const key = `${kind}:${value}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            regionItems.push({ kind, value, secondary })
+          }
+        }
+
+        const cityKoRows = (regionFieldResults[0].data || []) as any[]
+        const cityEnRows = (regionFieldResults[1].data || []) as any[]
+        const areaKoRows = (regionFieldResults[2].data || []) as any[]
+        const areaEnRows = (regionFieldResults[3].data || []) as any[]
+
+        addValues('city', cityKoRows.map(r => r.city_ko), '도시')
+        addValues('city', cityEnRows.map(r => r.city_en), 'City')
+        addValues('area', areaKoRows.map(r => r.area_ko), '지역')
+        addValues('area', areaEnRows.map(r => r.area_en), 'Area')
+
+        if (!cancelled) {
+          setRegionSuggestions(regionItems.slice(0, 12))
+        }
       } catch (e) {
         // 상세한 오류 정보 로깅
         console.error('자동완성 조회 오류 상세:', {
@@ -309,6 +389,7 @@ export function CommonSearchBar({
         
         if (!cancelled) {
           setHotelSuggestions([])
+          setRegionSuggestions([])
           setSuggestionError('자동완성 기능에 일시적인 문제가 발생했습니다.')
         }
       } finally {
@@ -378,7 +459,7 @@ export function CommonSearchBar({
     try {
       // 입력값 유효성: 호텔명/목적지가 비어있으면 경고 후 중단
       const trimmed = searchQuery.trim()
-      if (!trimmed && !selectedHotel) {
+      if (!trimmed && !selectedHotel && !selectedRegion) {
         setIsSearching(false)
         // 간단한 알림. 추후 toast로 교체 가능
         alert('목적지 또는 호텔명을 입력해주세요.')
@@ -408,7 +489,11 @@ export function CommonSearchBar({
       }
       
       // 선택된 호텔이 있으면 상세 페이지로 이동, 없으면 검색 결과로
-      if (selectedHotel) {
+      if (selectedRegion) {
+        const params = new URLSearchParams()
+        params.set('region', selectedRegion.value)
+        router.push(`/hotel?${params.toString()}`)
+      } else if (selectedHotel) {
         const slug = selectedHotel.slug || generateSlug(selectedHotel.name)
         const params = new URLSearchParams()
         if (localCheckIn) params.set('checkIn', localCheckIn)
@@ -456,6 +541,7 @@ export function CommonSearchBar({
                 const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
+                setSelectedRegion(null)
                 setShowSuggestions(value.length > 0)
                 
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
@@ -483,6 +569,7 @@ export function CommonSearchBar({
                   setSearchQuery("")
                   setDisplayQuery("")
                   setSelectedHotel(null)
+                  setSelectedRegion(null)
                   setShowSuggestions(false)
                   if (onSearch) {
                     onSearch("", { checkIn: localCheckIn, checkOut: localCheckOut })
@@ -494,13 +581,13 @@ export function CommonSearchBar({
               </button>
             )}
             
-            {/* 자동완성 제안 목록 (호텔) */}
+            {/* 자동완성 제안 목록 (호텔/지역) */}
             {showSuggestions && !isMobileSearchOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-72 overflow-y-auto" style={{ zIndex: 999999, marginTop: '60px' }}>
-                {isSuggesting && hotelSuggestions.length === 0 && (
+                {isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && (
                   <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
                 )}
-                {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+                {!isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && !suggestionError && (
                   <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
                 )}
                 {suggestionError && (
@@ -523,6 +610,26 @@ export function CommonSearchBar({
                     </div>
                   </div>
                 )}
+                {regionSuggestions.map((r) => (
+                  <div
+                    key={`r-m-${r.kind}-${r.value}`}
+                    className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => {
+                      setSearchQuery(r.value)
+                      setDisplayQuery(r.value.length > 25 ? r.value.substring(0, 25) + '...' : r.value)
+                      setSelectedHotel(null)
+                      setSelectedRegion({ kind: r.kind, value: r.value })
+                      setShowSuggestions(false)
+                      setHighlightIndex(-1)
+                    }}
+                  >
+                    <span className="text-lg">📍</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{highlightText(r.value, searchQuery)}</div>
+                      {!!r.secondary && <div className="text-sm text-gray-500 truncate">{r.secondary}</div>}
+                    </div>
+                  </div>
+                ))}
                 {hotelSuggestions.map((h, idx) => {
                   const primary = h.property_name_ko || h.property_name_en || '-'
                   const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''
@@ -538,6 +645,7 @@ export function CommonSearchBar({
                         // 선택된 호텔명 필드는 25자로 제한
                         setDisplayQuery(primary.length > 25 ? primary.substring(0, 25) + '...' : primary)
                         setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                        setSelectedRegion(null)
                         setShowSuggestions(false)
                         setHighlightIndex(-1)
                       }}
@@ -573,6 +681,7 @@ export function CommonSearchBar({
                 const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
                 setDisplayQuery(displayValue)
                 setSelectedHotel(null)
+                setSelectedRegion(null)
                 setShowSuggestions(value.length > 0)
                 
                 // 입력값이 변경될 때는 검색하지 않고 제안 목록만 표시
@@ -602,6 +711,7 @@ export function CommonSearchBar({
                 setSearchQuery("")
                 setDisplayQuery("")
                 setSelectedHotel(null)
+                setSelectedRegion(null)
                 setShowSuggestions(false)
                 if (onSearch) {
                   onSearch("", { checkIn: localCheckIn, checkOut: localCheckOut })
@@ -613,13 +723,13 @@ export function CommonSearchBar({
             </button>
           )}
           
-          {/* 자동완성 제안 목록 (호텔) - 데스크톱용 */}
+          {/* 자동완성 제안 목록 (호텔/지역) - 데스크톱용 */}
           {showSuggestions && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
-              {isSuggesting && hotelSuggestions.length === 0 && (
+              {isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && (
                 <div className="p-3 text-sm text-gray-500">불러오는 중...</div>
               )}
-              {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+              {!isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && !suggestionError && (
                 <div className="p-3 text-sm text-gray-500">검색 결과가 없습니다</div>
               )}
               {suggestionError && (
@@ -642,6 +752,26 @@ export function CommonSearchBar({
                   </div>
                 </div>
               )}
+              {regionSuggestions.map((r) => (
+                <div
+                  key={`r-d-${r.kind}-${r.value}`}
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  onClick={() => {
+                    setSearchQuery(r.value)
+                    setDisplayQuery(r.value.length > getDisplayLimit() ? r.value.substring(0, getDisplayLimit()) + '...' : r.value)
+                    setSelectedHotel(null)
+                    setSelectedRegion({ kind: r.kind, value: r.value })
+                    setShowSuggestions(false)
+                    setHighlightIndex(-1)
+                  }}
+                >
+                  <span className="text-lg">📍</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{highlightText(r.value, searchQuery)}</div>
+                    {!!r.secondary && <div className="text-sm text-gray-500 truncate">{r.secondary}</div>}
+                  </div>
+                </div>
+              ))}
               {hotelSuggestions.map((h, idx) => {
                 const primary = h.property_name_ko || h.property_name_en || '-'
                 const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''
@@ -657,6 +787,7 @@ export function CommonSearchBar({
                       // 선택된 호텔명 필드는 30자로 제한
                       setDisplayQuery(primary.length > getDisplayLimit() ? primary.substring(0, getDisplayLimit()) + '...' : primary)
                       setSelectedHotel({ slug: h.slug, sabre_id: h.sabre_id, name: primary })
+                      setSelectedRegion(null)
                       setShowSuggestions(false)
                       setHighlightIndex(-1)
                     }}
@@ -869,6 +1000,7 @@ export function CommonSearchBar({
                   const displayValue = value.length > getDisplayLimit() ? value.substring(0, getDisplayLimit()) + '...' : value
                   setDisplayQuery(displayValue)
                   setSelectedHotel(null)
+                  setSelectedRegion(null)
                   setShowSuggestions(value.length > 0)
                 }}
                 className="border-0 bg-transparent p-0 text-gray-900 font-medium text-base placeholder:text-gray-400 focus:ring-0 focus:outline-none shadow-none flex-1"
@@ -876,7 +1008,7 @@ export function CommonSearchBar({
               />
               {searchQuery && (
                 <button
-                  onClick={() => { setSearchQuery(""); setSelectedHotel(null); setShowSuggestions(false) }}
+                  onClick={() => { setSearchQuery(""); setSelectedHotel(null); setSelectedRegion(null); setShowSuggestions(false) }}
                   className="text-gray-400 hover:text-gray-600"
                   aria-label="지우기"
                 >
@@ -886,10 +1018,10 @@ export function CommonSearchBar({
             </div>
           </div>
           <div className="overflow-y-auto" style={{ height: 'calc(100vh - 56px)' }}>
-            {isSuggesting && hotelSuggestions.length === 0 && (
+            {isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && (
               <div className="p-4 text-sm text-gray-500">불러오는 중...</div>
             )}
-            {!isSuggesting && hotelSuggestions.length === 0 && !suggestionError && (
+            {!isSuggesting && hotelSuggestions.length === 0 && regionSuggestions.length === 0 && !suggestionError && (
               <div className="p-4 text-sm text-gray-500">검색 결과가 없습니다</div>
             )}
             {suggestionError && (
@@ -905,6 +1037,27 @@ export function CommonSearchBar({
                 </div>
               </div>
             )}
+            {regionSuggestions.map((r) => (
+              <div
+                key={`r-fs-${r.kind}-${r.value}`}
+                className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                onClick={() => {
+                  setSearchQuery(r.value)
+                  setDisplayQuery(r.value.length > getDisplayLimit() ? r.value.substring(0, getDisplayLimit()) + '...' : r.value)
+                  setSelectedHotel(null)
+                  setSelectedRegion({ kind: r.kind, value: r.value })
+                  setShowSuggestions(false)
+                  setHighlightIndex(-1)
+                  setIsMobileSearchOpen(false)
+                }}
+              >
+                <span className="text-lg">📍</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate">{highlightText(r.value, searchQuery)}</div>
+                  {!!r.secondary && <div className="text-sm text-gray-500 truncate">{r.secondary}</div>}
+                </div>
+              </div>
+            ))}
             {hotelSuggestions.map((h, idx) => {
               const primary = h.property_name_ko || h.property_name_en || '-'
               const secondary = h.property_name_ko && h.property_name_en ? (primary === h.property_name_ko ? h.property_name_en : h.property_name_ko) : h.city || ''

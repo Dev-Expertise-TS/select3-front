@@ -63,11 +63,19 @@ export default async function AllHotelResortPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  // 서버에서 초기 데이터 조회
-  const { allHotels, filterOptions, bannerHotel } = await getHotelPageData()
-  
   // 쿼리 파라미터에서 필터 읽기
   const params = await searchParams
+  const regionParamRaw = params.region
+  const regionParam =
+    typeof regionParamRaw === 'string'
+      ? regionParamRaw
+      : Array.isArray(regionParamRaw)
+        ? regionParamRaw[0]
+        : undefined
+
+  // 서버에서 초기 데이터 조회 (region 필터 지원)
+  const { allHotels, filterOptions, bannerHotel } = await getHotelPageData({ region: regionParam })
+
   const brandIdParam = params.brand_id as string | undefined
   const brandNameParam = params.brand as string | undefined
   
