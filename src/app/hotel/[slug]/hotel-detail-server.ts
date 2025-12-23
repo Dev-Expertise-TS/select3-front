@@ -26,6 +26,16 @@ export async function getHotelDetailData(slug: string) {
   if (hotel.publish === false) {
     return null
   }
+
+  // 지역 뱃지: DB 컬럼 `area_ko`를 우선 사용하고, 기존 `hotel_area`는 fallback
+  const areaKo =
+    typeof (hotel as { area_ko?: unknown }).area_ko === 'string'
+      ? (hotel as { area_ko?: string }).area_ko
+      : undefined
+  const normalizedHotel = {
+    ...hotel,
+    hotel_area: areaKo || (hotel as { hotel_area?: unknown }).hotel_area || undefined,
+  }
   
   const sabreId = String(hotel.sabre_id)
   
@@ -146,7 +156,7 @@ export async function getHotelDetailData(slug: string) {
   const averageRating = reviewCount > 0 ? 5 : 0
   
   return {
-    hotel,
+    hotel: normalizedHotel,
     images,
     benefits,
     promotions,

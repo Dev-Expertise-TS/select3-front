@@ -162,6 +162,12 @@ export function transformHotelToAllViewCardData(
 ): HotelCardAllViewData {
   const slug = hotel.slug || undefined
   
+  // 지역 뱃지: DB 컬럼 `area_ko` 우선 사용 (없으면 기존 `hotel_area` fallback)
+  const areaKo =
+    typeof (hotel as { area_ko?: unknown }).area_ko === 'string'
+      ? (hotel as { area_ko?: string }).area_ko
+      : undefined
+
   return {
     sabre_id: hotel.sabre_id,
     property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,
@@ -191,7 +197,7 @@ export function transformHotelToAllViewCardData(
     country_ko: hotel.country_ko || undefined,
     country_en: hotel.country_en || undefined,
     chain: hotel.chain_ko || hotel.chain_en || undefined,
-    hotel_area: hotel.hotel_area || undefined,
+    hotel_area: areaKo || hotel.hotel_area || undefined,
     benefit_1: hotel.benefit_1 || undefined,
     benefit_2: hotel.benefit_2 || undefined,
     benefit_3: hotel.benefit_3 || undefined,
