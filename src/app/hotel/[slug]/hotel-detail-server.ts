@@ -26,7 +26,7 @@ export async function getHotelDetailData(slug: string) {
   if (hotel.publish === false) {
     return null
   }
-
+  
   // 지역 뱃지: DB 컬럼 `area_ko`를 우선 사용하고, 기존 `hotel_area`는 fallback
   const areaKo =
     typeof (hotel as { area_ko?: unknown }).area_ko === 'string'

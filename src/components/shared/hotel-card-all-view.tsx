@@ -176,7 +176,7 @@ function HotelInfoSection({ hotel, contentClassName }: HotelInfoSectionProps) {
               <p className="min-w-0 line-clamp-1 font-medium">
                 {hotel.city_ko || hotel.city}
                 {hotel.country_ko && `, ${hotel.country_ko}`}
-              </p>
+            </p>
             </div>
             {/* 주소 영역을 항상 2행으로 유지 */}
             <div className="h-8 flex items-center"> {/* 고정 높이 2행 (text-xs * 2 + line-height) */}
