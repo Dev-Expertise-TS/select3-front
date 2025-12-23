@@ -149,7 +149,7 @@ interface HotelInfoSectionProps {
 
 function HotelInfoSection({ hotel, contentClassName }: HotelInfoSectionProps) {
   return (
-    <CardContent className={cn("px-2 pt-0 pb-4 flex flex-col flex-1 !border-0 !shadow-none", contentClassName)}>
+    <CardContent className={cn("px-2 pt-0 pb-4 flex flex-col flex-1 border-0! shadow-none!", contentClassName)}>
       <div className="flex-1 space-y-2">
         {/* 호텔명 */}
         <div>
@@ -165,17 +165,19 @@ function HotelInfoSection({ hotel, contentClassName }: HotelInfoSectionProps) {
 
         {/* 위치 정보 */}
         <div className="flex items-start gap-2 text-sm text-gray-600">
-          <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+          <MapPin className="h-4 w-4 shrink-0 text-gray-400 mt-0.5" />
           <div className="space-y-1 flex-1">
-            <p className="line-clamp-1 font-medium">
-              {hotel.city_ko || hotel.city}
-              {hotel.country_ko && `, ${hotel.country_ko}`}
+            <div className="flex min-w-0 items-center gap-2">
               {hotel.hotel_area && (
-                <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold rounded-md text-xs">
+                <span className="shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
                   {hotel.hotel_area}
                 </span>
               )}
-            </p>
+              <p className="min-w-0 line-clamp-1 font-medium">
+                {hotel.city_ko || hotel.city}
+                {hotel.country_ko && `, ${hotel.country_ko}`}
+              </p>
+            </div>
             {/* 주소 영역을 항상 2행으로 유지 */}
             <div className="h-8 flex items-center"> {/* 고정 높이 2행 (text-xs * 2 + line-height) */}
               {hotel.property_address && hotel.property_address !== '주소 정보 없음' ? (
@@ -233,7 +235,7 @@ export function HotelCardAllView({
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card 
         className={cn(
-          "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col !border-0 !shadow-none", // 테두리와 그림자 강제 제거
+          "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col border-0! shadow-none!", // 테두리와 그림자 강제 제거
           `h-[${HOTEL_CARD_CONFIG.HEIGHT.DEFAULT}px]`, // 전체보기용 높이
           variantClasses[variant],
           className

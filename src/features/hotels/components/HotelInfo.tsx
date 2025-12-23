@@ -17,6 +17,7 @@ interface HotelInfoProps {
     property_name_ko?: string
     property_name_en?: string
     property_address?: string
+    hotel_area?: string
     rating?: number
     city_ko?: string
     city_eng?: string
@@ -247,7 +248,16 @@ export function HotelInfo({
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs sm:text-sm">{hotel.property_address || '주소 정보 없음'}</span>
+                <div className="flex min-w-0 items-center gap-2">
+                  {hotel.hotel_area && (
+                    <span className="flex-shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 sm:text-xs">
+                      {hotel.hotel_area}
+                    </span>
+                  )}
+                  <span className="min-w-0 truncate text-xs sm:text-sm">
+                    {hotel.property_address || '주소 정보 없음'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
