@@ -4,7 +4,7 @@ import { PromotionBanner } from "@/components/promotion-banner"
 import { Footer } from "@/components/footer"
 import Image from "next/image"
 import Link from "next/link"
-import { Crown, Award, Calendar, ArrowRight, Building2, Users, Shield, TrendingUp } from "lucide-react"
+import { Crown, Award, Calendar, ArrowRight, Building2, Users, Shield, TrendingUp, ExternalLink } from "lucide-react"
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
 
@@ -289,11 +289,19 @@ export default function AboutPage() {
               </div>
               <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-6 sm:p-8 border border-blue-100">
                 <div className="flex items-center gap-3 mb-4">
-                  <Award className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900">브랜드 신뢰도</h3>
+                  <Award className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 whitespace-nowrap">조선일보 브랜드 신뢰도 대상</h3>
                 </div>
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                  2025 소비자가 뽑은 가장 신뢰하는 브랜드대상 수상
+                  <Link 
+                    href="https://www.dizzotv.com/site/data/html_dir/2025/01/20/2025012080129.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    2025 소비자가 뽑은 가장 신뢰하는 브랜드대상 수상
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </Link>
                 </p>
               </div>
 
@@ -327,9 +335,10 @@ export default function AboutPage() {
                     href="https://www.dizzotv.com/site/data/html_dir/2025/11/12/2025111280133.html"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    조선일보 앱 어워드 코리아 2025 수상
+                    앱 어워드 코리아 2025 수상
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Link>
                 </p>
               </div>
@@ -355,7 +364,7 @@ export default function AboutPage() {
                 투어비스 서비스 연혁
               </h2>
               <p className="text-xs sm:text-sm md:text-base text-gray-700 max-w-3xl mx-auto px-4 leading-relaxed">
-                2009년 설립 이후 지속적인 성장과 혁신을 통해
+                2000년 설립 이후 지속적인 성장과 혁신을 통해
                 <br className="hidden sm:block" />
                 국내 여행 업계를 선도하는 기업으로 발전해왔습니다
               </p>
