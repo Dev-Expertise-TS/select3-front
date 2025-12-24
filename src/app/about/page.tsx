@@ -66,7 +66,7 @@ interface HistoryItem {
 
 const historyData: HistoryItem[] = [
   // 2025
-  { year: 2025, month: '01', content: '투어비스, 2025 소비자가 뽑은 가장 신뢰하는 브랜드대상 수상' },
+  { year: 2025, month: '01', content: '투어비스, 2025 소비자가 뽑은 가장 신뢰하는 브랜드 대상 수상' },
   { year: 2025, month: '11', content: '투어비스, 앱 어워드 코리아 2025 수상' },
   { year: 2025, month: '11', content: '글로벌 여행 기술&마케팅 콘퍼런스 \'WiT Seoul 2025\' 개최' },
   // 2024
@@ -210,7 +210,7 @@ export default function AboutPage() {
       description: '프리미엄 호텔 & 리조트 전문 컨시어지 서비스',
       foundingDate: '2009-11',
       award: [
-        '2025 소비자가 뽑은 가장 신뢰하는 브랜드대상',
+        '2025 소비자가 뽑은 가장 신뢰하는 브랜드 대상',
         '앱 어워드 코리아 2025',
         '7년 연속 대한항공/아시아나항공 선정 우수 여행사',
         '2016년 고용노동부 선정 강소기업'
@@ -299,8 +299,8 @@ export default function AboutPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    2025 소비자가 뽑은 가장 신뢰하는 브랜드대상 수상
-                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                    2025 소비자가 뽑은 가장 신뢰하는 브랜드 대상 수상
+                    <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6" />
                   </Link>
                 </p>
               </div>
