@@ -4,12 +4,18 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getSafeImageUrl, handleImageError, handleImageLoad } from "@/lib/image-utils"
+import { getSafeImageUrl } from "@/lib/image-utils"
 import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 import { OptimizedImage } from "@/components/ui/optimized-image"
-import { generateHotelImageUrl } from "@/lib/supabase-image-loader"
 import { optimizeHotelCardImage } from "@/lib/image-optimization"
+
+interface HotelPromotion {
+  promotion_id: number
+  promotion: string
+  booking_date: string | null
+  check_in_date: string | null
+}
 
 // 전체보기용 호텔 데이터 타입 정의
 export interface HotelCardAllViewData {
@@ -66,7 +72,7 @@ interface HotelImageSectionProps {
   variant: CardVariant
   showBadge: boolean
   showPromotionBadge: boolean
-  promotion: any
+  promotion: HotelPromotion | null | undefined
   imageClassName?: string
 }
 
@@ -86,7 +92,6 @@ function HotelImageSection({
       )}
       style={{ 
         width: '100%',
-        backgroundColor: '#f0f0f0', // 디버깅용 배경색
         borderRadius: '8px' // CSS로 라운딩 강제 적용
       }}
     >
@@ -95,23 +100,15 @@ function HotelImageSection({
         src={optimizeHotelCardImage(getSafeImageUrl(hotel.image))}
         alt={`${hotel.property_name_ko} - ${hotel.city}`}
         fill
-        className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-        style={{
-          borderRadius: '8px' // 이미지에도 CSS로 라운딩 강제 적용
-        }}
+        className="object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-lg"
         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
         priority={variant === 'featured' || variant === 'promotion'}
         quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
         format="webp"
         placeholder="blur"
         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-        onError={(e) => {
-          console.warn(`🖼️ [HotelCardAllView] 이미지 로딩 실패:`, {
-            sabre_id: hotel.sabre_id,
-            hotel_name: hotel.property_name_ko,
-            image_url: hotel.image,
-            optimized_url: optimizeHotelCardImage(getSafeImageUrl(hotel.image))
-          })
+        onError={() => {
+          // 이미지 로딩 실패 시 자동으로 placeholder 표시됨
         }}
       />
       
@@ -149,7 +146,7 @@ interface HotelInfoSectionProps {
 
 function HotelInfoSection({ hotel, contentClassName }: HotelInfoSectionProps) {
   return (
-    <CardContent className={cn("px-2 pt-0 pb-4 flex flex-col flex-1 border-0! shadow-none!", contentClassName)}>
+    <CardContent className={cn("px-2 pt-0 pb-4 flex flex-col flex-1 border-0 shadow-none", contentClassName)}>
       <div className="flex-1 space-y-2">
         {/* 호텔명 */}
         <div>
@@ -211,17 +208,9 @@ export function HotelCardAllView({
   contentClassName,
   isThreeGrid = false
 }: HotelCardAllViewProps) {
-  console.log('HotelCardAllView 렌더링:', {
-    hotelName: hotel.property_name_ko,
-    sabre_id: hotel.sabre_id,
-    isThreeGrid,
-    variant,
-    component: 'HotelCardAllView',
-    'data-component': 'HotelCardAllView'
-  })
-  
   const promotionQuery = useHotelPromotion(hotel.sabre_id)
-  const promotion = promotionQuery.data as any
+  const promotions: HotelPromotion[] = Array.isArray(promotionQuery.data) ? promotionQuery.data : []
+  const promotion = promotions.length > 0 ? promotions[0] : null
   
   // 전체보기용 카드 스타일 클래스 (테두리와 그림자 제거)
   const variantClasses = {
@@ -235,7 +224,7 @@ export function HotelCardAllView({
     <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
       <Card 
         className={cn(
-          "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col border-0! shadow-none!", // 테두리와 그림자 강제 제거
+          "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col border-0 shadow-none", // 테두리와 그림자 강제 제거
           `h-[${HOTEL_CARD_CONFIG.HEIGHT.DEFAULT}px]`, // 전체보기용 높이
           variantClasses[variant],
           className

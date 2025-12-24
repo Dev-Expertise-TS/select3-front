@@ -152,6 +152,11 @@ export interface HotelCardAllViewData {
   benefit_4?: string
   benefit_5?: string
   benefit_6?: string
+  // 브랜드와 체인 정보
+  brand_id?: number
+  chain_id?: number
+  brand_name_en?: string
+  chain_name_en?: string
 }
 
 // 전체보기용 호텔 데이터 변환 함수
@@ -163,10 +168,7 @@ export function transformHotelToAllViewCardData(
   const slug = hotel.slug || undefined
   
   // 지역 뱃지: DB 컬럼 `area_ko` 우선 사용 (없으면 기존 `hotel_area` fallback)
-  const areaKo =
-    typeof (hotel as { area_ko?: unknown }).area_ko === 'string'
-      ? (hotel as { area_ko?: string }).area_ko
-      : undefined
+  const areaKo = typeof hotel.area_ko === 'string' ? hotel.area_ko : undefined
 
   return {
     sabre_id: hotel.sabre_id,
