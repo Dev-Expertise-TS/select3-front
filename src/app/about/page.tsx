@@ -112,7 +112,6 @@ const historyData: HistoryItem[] = [
   // 2017
   { year: 2017, month: '03', content: '일본항공 국제선 우수판매여행사상 수상' },
   { year: 2017, month: '04', content: '여행 기술 마케팅 커뮤니티 국내 공식 파트너' },
-  { year: 2017, month: '07', content: '상용출장전문여행사 <투어비스> 인수' },
   // 2016
   { year: 2016, month: '04', content: '2016년 고용노동부 선정 강소기업' },
   { year: 2016, month: '06', content: 'ISLAND + CITY MARKETING 서비스 시작' },
@@ -271,10 +270,10 @@ export default function AboutPage() {
               <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-6 sm:p-8 border border-blue-100">
                 <div className="flex items-center gap-3 mb-4">
                   <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900">16+ 년 경험</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900">25+ 년 경험</h3>
                 </div>
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                  여행 업계 16년 이상의 경험과 노하우
+                  여행 업계 25년 이상의 경험과 노하우
                 </p>
               </div>
 

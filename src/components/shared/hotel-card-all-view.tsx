@@ -10,6 +10,7 @@ import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 import { OptimizedImage } from "@/components/ui/optimized-image"
 import { optimizeHotelCardImage } from "@/lib/image-optimization"
 
+// 프로모션 타입 정의
 interface HotelPromotion {
   promotion_id: number
   promotion: string
@@ -87,20 +88,16 @@ function HotelImageSection({
   return (
     <div 
       className={cn(
-        "relative overflow-hidden rounded-lg aspect-square", // 정사각형 비율로 설정
+        "relative overflow-hidden rounded-lg aspect-square w-full",
         imageClassName
       )}
-      style={{ 
-        width: '100%',
-        borderRadius: '8px' // CSS로 라운딩 강제 적용
-      }}
     >
       {/* select_hotel_media 테이블의 이미지 사용 (호텔 카드와 동일한 최적화 적용) */}
       <OptimizedImage
         src={optimizeHotelCardImage(getSafeImageUrl(hotel.image))}
         alt={`${hotel.property_name_ko} - ${hotel.city}`}
         fill
-        className="object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-lg"
+        className="object-cover object-center group-hover:scale-105 transition-transform duration-300 rounded-lg w-full h-full"
         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
         priority={variant === 'featured' || variant === 'promotion'}
         quality={variant === 'featured' || variant === 'promotion' ? 85 : 75}
