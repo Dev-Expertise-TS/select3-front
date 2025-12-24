@@ -57,10 +57,10 @@ export async function getHotelPageData(opts?: { region?: string }) {
   } else {
     // 전체 호텔 조회
     const result = await supabase
-      .from('select_hotels')
-      .select('*')
-      .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
-      .order('property_name_en')
+    .from('select_hotels')
+    .select('*')
+    .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
+    .order('property_name_en')
 
     hotels = result.data || []
     hotelsError = result.error

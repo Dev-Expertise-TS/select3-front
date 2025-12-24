@@ -23,8 +23,21 @@ export type SelectHotelMarker = {
   sabre_id: number | string
   slug?: string | null
   name: string
+  property_name_ko?: string | null
+  property_name_en?: string | null
   property_address: string
   location: LatLng
+  benefits?: string[]
+  badges?: string[]
+  star_rating?: number | null
+  image?: string | null
+  area_ko?: string | null
+  area_en?: string | null
+  city_ko?: string | null
+  city_en?: string | null
+  country_ko?: string | null
+  country_en?: string | null
+  promotions?: Array<{ title: string; description?: string }>
 }
 
 export type HotelMapMarkersResponse = {
@@ -38,6 +51,7 @@ export type HotelMapMarkersResponse = {
   count: number
   requested: number
   markers: SelectHotelMarker[]
+  areas?: Array<{ id: string; area_ko: string | null; area_en: string | null }>
 }
 
 

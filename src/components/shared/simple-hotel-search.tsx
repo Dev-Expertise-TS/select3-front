@@ -115,7 +115,7 @@ export function SimpleHotelSearch({
       try {
         setIsSuggesting(true)
         setSuggestionError(null)
-
+        
         // ✅ 콤마 입력 등에서 or(...) 이슈를 피하기 위해 개별 쿼리로 분리
         const selectFields =
           'slug,sabre_id,property_name_ko,property_name_en,city,city_ko,city_en,country_ko,country_en,publish'
@@ -168,7 +168,7 @@ export function SimpleHotelSearch({
         // 지역 제안 구성
         const regionItems: Array<{ kind: 'city' | 'area'; value: string; secondary?: string }> = []
         const seen = new Set<string>()
-
+        
         if (!regionCityResult.error && regionCityResult.data) {
           for (const r of regionCityResult.data as any[]) {
             const cityKo = (r.city_ko ?? '').toString().trim()
@@ -206,7 +206,7 @@ export function SimpleHotelSearch({
         addValues('city', cityEnRows.map(r => r.city_en), 'City')
         addValues('area', areaKoRows.map(r => r.area_ko), '지역')
         addValues('area', areaEnRows.map(r => r.area_en), 'Area')
-
+        
         if (!cancelled) {
           setHotelSuggestions(uniqueHotels as any)
           setRegionSuggestions(regionItems.slice(0, 12))

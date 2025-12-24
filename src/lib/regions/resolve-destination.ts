@@ -61,7 +61,31 @@ export async function resolveDestination(destinationRaw: string): Promise<Resolv
   const decoded = decodeURIComponent(destinationRaw).trim()
   const destination = decoded
 
-  // 1) city_slug (도시)
+  // 1-1) city_code (도시 코드) - 대문자로 변환하여 시도
+  const byCityCode = await safeMaybeSingle(destination, (supabase) =>
+    supabase
+      .from('select_regions')
+      .select('*')
+      .eq('city_code', destination.toUpperCase())
+      .eq('region_type', 'city')
+      .eq('status', 'active')
+      .maybeSingle()
+  )
+  if (byCityCode) {
+    const cityLabel = pickFirstString(byCityCode, ['city_ko', 'city_en', 'city', 'city_name']) ?? destination
+    const countryLabel = pickFirstString(byCityCode, ['country_ko', 'country_en', 'country', 'country_name'])
+    const queryText = [cityLabel, countryLabel].filter(Boolean).join(', ')
+    return {
+      kind: 'city',
+      label: cityLabel,
+      queryText: queryText || cityLabel,
+      city_code: (byCityCode['city_code'] as string | null | undefined) ?? null,
+      country_code: (byCityCode['country_code'] as string | null | undefined) ?? null,
+      country_label: countryLabel ?? null,
+    }
+  }
+
+  // 1-2) city_slug (도시 슬러그)
   const byCitySlug = await safeMaybeSingle(destination, (supabase) =>
     supabase
       .from('select_regions')
