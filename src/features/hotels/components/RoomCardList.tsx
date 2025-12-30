@@ -610,7 +610,7 @@ export function RoomCardList({
                           deadlineObject: deadline
                         })
                         
-                        // 체크인 날짜 기준으로 취소 마감일 계산
+                        // 체크인 날짜 기준으로 취소 마감일 계산 (하루 더 당겨서 표시)
                         if (checkIn && offsetMultiplier > 0) {
                           try {
                             const checkInDate = new Date(checkIn)
@@ -619,13 +619,13 @@ export function RoomCardList({
                               
                               if (offsetUnit === 'Day') {
                                 deadlineDate = new Date(checkInDate)
-                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier)
+                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier - 1) // 하루 더 당김
                               } else if (offsetUnit === 'Hour') {
                                 deadlineDate = new Date(checkInDate)
-                                deadlineDate.setHours(deadlineDate.getHours() - offsetMultiplier)
+                                deadlineDate.setHours(deadlineDate.getHours() - offsetMultiplier - 24) // 24시간 더 당김
                               } else {
                                 deadlineDate = new Date(checkInDate)
-                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier)
+                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier - 1) // 하루 더 당김
                               }
                               
                               const year = deadlineDate.getFullYear()
@@ -635,10 +635,11 @@ export function RoomCardList({
                               
                               console.log('✅ [취소 정보 추출] Deadline에서 계산된 날짜:', cancellationDeadline)
                               
-                              // 조건 텍스트 생성 (날짜는 나중에 삽입)
+                              // 조건 텍스트 생성 (날짜는 나중에 삽입, +1일 표시)
+                              const displayDays = offsetMultiplier + 1 // 하루 더 당겨서 표시
                               const conditionText = offsetDropTime === 'BeforeArrival' 
-                                ? `체크인 ${offsetMultiplier}일 전까지 무료 취소`
-                                : `체크인 ${offsetMultiplier}일 전까지 취소 가능`
+                                ? `체크인 ${displayDays}일 전까지 무료 취소`
+                                : `체크인 ${displayDays}일 전까지 취소 가능`
                               
                               if (!cancellationCondition) {
                                 cancellationCondition = conditionText
