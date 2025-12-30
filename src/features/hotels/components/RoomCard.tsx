@@ -312,76 +312,77 @@ export function RoomCard({
 
         {/* 가격 정보 */}
         <div className="border-t border-gray-100 pt-3 sm:pt-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm text-gray-600">
-                {calculateNights(checkIn, checkOut)}박 세금 포함
-              </span>
-              {/* 취소 정보 표시 */}
-              {(isCancellable !== undefined || cancellationDeadline || cancellationCondition) && (
-                <div className="flex flex-col gap-1 text-xs">
-                  {isCancellable === true ? (
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-green-600 font-medium">
-                        취소 가능
-                        {cancellationDeadline && (
-                          <span className="text-gray-600 ml-1">
-                            ({cancellationDeadline}까지)
-                          </span>
-                        )}
-                      </span>
-                      {cancellationCondition && (
-                        <span className="text-gray-500 text-[10px] leading-tight">
-                          {cancellationCondition}
-                        </span>
-                      )}
-                    </div>
-                  ) : isCancellable === false ? (
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-red-600 font-medium">취소 불가</span>
-                      {cancellationCondition && (
-                        <span className="text-gray-500 text-[10px] leading-tight">
-                          {cancellationCondition}
-                        </span>
-                      )}
-                    </div>
-                  ) : cancellationDeadline ? (
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-gray-600">
-                        취소 가능일: {cancellationDeadline}
-                      </span>
-                      {cancellationCondition && (
-                        <span className="text-gray-500 text-[10px] leading-tight">
-                          {cancellationCondition}
-                        </span>
-                      )}
-                    </div>
+          {/* 가격 정보 영역 - 오른쪽 정렬 */}
+          <div className="flex flex-col items-end gap-1 mb-3">
+            {/* 총 금액 */}
+            <div className="text-base sm:text-lg font-bold text-gray-900">
+              {formatAmount(Number(amount) * rooms, currency)}
+            </div>
+            {/* 1박 평균 금액 - 1박이 아닌 경우에만 표시 */}
+            {calculateNights(checkIn, checkOut) > 1 && (
+              <div className="text-xs text-gray-500">
+                {calculateAveragePerNight(Number(amount) * rooms, checkIn, checkOut, currency)} / 1박 평균가
+              </div>
+            )}
+            {/* 박수 정보 */}
+            <div className="text-xs text-gray-600">
+              {calculateNights(checkIn, checkOut)}박 세금 포함
+            </div>
+            {/* 룸 개수 표시 */}
+            {rooms > 1 && (
+              <div className="text-xs text-gray-500">
+                (1실 {formatAmount(amount, currency)} × {rooms}실)
+              </div>
+            )}
+          </div>
+          
+          {/* 취소 정보 표시 - 오른쪽 정렬 */}
+          {(isCancellable !== undefined || cancellationDeadline || cancellationCondition) && (
+            <div className="text-xs text-right mb-4">
+              {isCancellable === true ? (
+                <span className="text-green-600 font-medium">
+                  취소 가능
+                  {cancellationCondition && cancellationDeadline ? (
+                    <span className="text-gray-600 ml-1">
+                      ({cancellationCondition.replace(/(체크인 \d+일 전)까지/g, `$1(${cancellationDeadline}까지) 까지`)})
+                    </span>
                   ) : cancellationCondition ? (
+                    <span className="text-gray-600 ml-1">
+                      ({cancellationCondition})
+                    </span>
+                  ) : cancellationDeadline ? (
+                    <span className="text-gray-600 ml-1">
+                      ({cancellationDeadline}까지)
+                    </span>
+                  ) : null}
+                </span>
+              ) : isCancellable === false ? (
+                <div className="flex flex-col gap-0.5 items-end">
+                  <span className="text-red-600 font-medium">취소 불가</span>
+                  {cancellationCondition && (
                     <span className="text-gray-500 text-[10px] leading-tight">
                       {cancellationCondition}
                     </span>
-                  ) : null}
+                  )}
                 </div>
-              )}
+              ) : cancellationDeadline ? (
+                <div className="flex flex-col gap-0.5 items-end">
+                  <span className="text-gray-600">
+                    취소 가능일: {cancellationDeadline}
+                  </span>
+                  {cancellationCondition && (
+                    <span className="text-gray-500 text-[10px] leading-tight">
+                      {cancellationCondition}
+                    </span>
+                  )}
+                </div>
+              ) : cancellationCondition ? (
+                <span className="text-gray-500 text-[10px] leading-tight">
+                  {cancellationCondition}
+                </span>
+              ) : null}
             </div>
-            <div className="text-left sm:text-right">
-              <div className="text-base sm:text-lg font-bold text-gray-900">
-                {formatAmount(Number(amount) * rooms, currency)}
-              </div>
-              {/* 룸 개수 표시 */}
-              {rooms > 1 && (
-                <div className="text-xs text-gray-500 mt-0.5">
-                  (1실 {formatAmount(amount, currency)} × {rooms}실)
-                </div>
-              )}
-              {/* 1박 평균 금액 - 1박이 아닌 경우에만 표시 */}
-              {calculateNights(checkIn, checkOut) > 1 && (
-                <div className="text-xs text-gray-500 mt-1">
-                  {calculateAveragePerNight(Number(amount) * rooms, checkIn, checkOut, currency)} / 1박 평균가
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* 예약 버튼 */}
           <a

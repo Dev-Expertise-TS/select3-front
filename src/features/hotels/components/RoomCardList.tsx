@@ -635,7 +635,7 @@ export function RoomCardList({
                               
                               console.log('✅ [취소 정보 추출] Deadline에서 계산된 날짜:', cancellationDeadline)
                               
-                              // 조건 텍스트 생성
+                              // 조건 텍스트 생성 (날짜는 나중에 삽입)
                               const conditionText = offsetDropTime === 'BeforeArrival' 
                                 ? `체크인 ${offsetMultiplier}일 전까지 무료 취소`
                                 : `체크인 ${offsetMultiplier}일 전까지 취소 가능`
