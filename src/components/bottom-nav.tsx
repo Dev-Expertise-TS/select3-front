@@ -94,10 +94,10 @@ export function BottomNav() {
                     </div>
                   </div>
                 ) : (
-                  <Icon className={cn(
-                    "w-5 h-5 mb-1 transition-transform group-active:scale-90",
-                    isActive && "stroke-[2.5]"
-                  )} />
+                <Icon className={cn(
+                  "w-5 h-5 mb-1 transition-transform group-active:scale-90",
+                  isActive && "stroke-[2.5]"
+                )} />
                 )}
                 <span className={cn(
                   "text-[9px] leading-[1.2] text-center px-0.5 transition-opacity group-active:opacity-80 whitespace-nowrap mb-0.5",

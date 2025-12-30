@@ -27,6 +27,10 @@ interface RoomCardProps {
   isHighlighted?: boolean
   productCode?: string
   roomCount?: string
+  cancellationPolicy?: string
+  isCancellable?: boolean
+  cancellationDeadline?: string
+  cancellationCondition?: string
 }
 
 export function RoomCard({
@@ -50,7 +54,11 @@ export function RoomCard({
   rooms = 1,
   isHighlighted = false,
   productCode,
-  roomCount
+  roomCount,
+  cancellationPolicy,
+  isCancellable,
+  cancellationDeadline,
+  cancellationCondition
 }: RoomCardProps) {
   const { trackEvent } = useAnalytics()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -305,9 +313,57 @@ export function RoomCard({
         {/* 가격 정보 */}
         <div className="border-t border-gray-100 pt-3 sm:pt-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-            <span className="text-sm text-gray-600">
-              {calculateNights(checkIn, checkOut)}박 세금 포함
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-gray-600">
+                {calculateNights(checkIn, checkOut)}박 세금 포함
+              </span>
+              {/* 취소 정보 표시 */}
+              {(isCancellable !== undefined || cancellationDeadline || cancellationCondition) && (
+                <div className="flex flex-col gap-1 text-xs">
+                  {isCancellable === true ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-green-600 font-medium">
+                        취소 가능
+                        {cancellationDeadline && (
+                          <span className="text-gray-600 ml-1">
+                            ({cancellationDeadline}까지)
+                          </span>
+                        )}
+                      </span>
+                      {cancellationCondition && (
+                        <span className="text-gray-500 text-[10px] leading-tight">
+                          {cancellationCondition}
+                        </span>
+                      )}
+                    </div>
+                  ) : isCancellable === false ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-red-600 font-medium">취소 불가</span>
+                      {cancellationCondition && (
+                        <span className="text-gray-500 text-[10px] leading-tight">
+                          {cancellationCondition}
+                        </span>
+                      )}
+                    </div>
+                  ) : cancellationDeadline ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-gray-600">
+                        취소 가능일: {cancellationDeadline}
+                      </span>
+                      {cancellationCondition && (
+                        <span className="text-gray-500 text-[10px] leading-tight">
+                          {cancellationCondition}
+                        </span>
+                      )}
+                    </div>
+                  ) : cancellationCondition ? (
+                    <span className="text-gray-500 text-[10px] leading-tight">
+                      {cancellationCondition}
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </div>
             <div className="text-left sm:text-right">
               <div className="text-base sm:text-lg font-bold text-gray-900">
                 {formatAmount(Number(amount) * rooms, currency)}

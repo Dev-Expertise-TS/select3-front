@@ -69,13 +69,13 @@ export function BenefitsSection() {
             return (
               <div
                 key={index}
-                className={`bg-gradient-to-br from-white via-gray-50/20 to-gray-100/40 rounded-xl p-2 sm:p-2 md:p-3 shadow-xl border-2 backdrop-blur-sm relative overflow-hidden ${
+                className={`bg-white rounded-xl p-2 sm:p-2 md:p-3 border relative overflow-hidden cursor-default ${
                   isLastCard && isOddTotal ? 'col-span-2 sm:col-span-1' : ''
                 }`}
                 style={{ borderColor: '#E6CDB5' }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-200/20 to-gray-300/40 rounded-full flex items-center justify-center mb-3 sm:mb-3 md:mb-4 shadow-lg border"
+                  <div className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gray-50 rounded-full flex items-center justify-center mb-3 sm:mb-3 md:mb-4 border"
                     style={{ borderColor: '#E6CDB5' }}>
                     <IconComponent className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" />
                   </div>

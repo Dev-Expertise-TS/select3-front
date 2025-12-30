@@ -169,7 +169,7 @@ export function transformHotelToAllViewCardData(
   
   // 지역 뱃지: DB 컬럼 `area_ko` 우선 사용 (없으면 기존 `hotel_area` fallback)
   const areaKo = typeof hotel.area_ko === 'string' ? hotel.area_ko : undefined
-
+  
   return {
     sabre_id: hotel.sabre_id,
     property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,

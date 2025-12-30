@@ -461,6 +461,324 @@ export function RoomCardList({
                 
                 // 할인 정보 제거
                 const discount = undefined
+
+                // 취소 정보 추출
+                const extractCancellationInfo = (ratePlan: any) => {
+                  const original = ratePlan._original || ratePlan
+                  
+                  // 디버깅: 원본 데이터 구조 확인 (깊은 경로까지)
+                  const checkNestedPath = (obj: any, path: string[]): any => {
+                    let current = obj
+                    for (const key of path) {
+                      if (current && typeof current === 'object' && key in current) {
+                        current = current[key]
+                      } else {
+                        return undefined
+                      }
+                    }
+                    return current
+                  }
+                  
+                  // 다양한 경로에서 CancelPenalties 찾기
+                  const possiblePaths = [
+                    ['CancelPenalties'],
+                    ['ConvertedRateInfo', 'CancelPenalties'],
+                    ['RateInfo', 'CancelPenalties'],
+                    ['RatePlanInclusions', 'CancelPenalties'],
+                    ['CancelPolicy'],
+                    ['CancellationPolicy']
+                  ]
+                  
+                  let foundCancelPenalties: any = undefined
+                  let foundPath: string[] = []
+                  
+                  for (const path of possiblePaths) {
+                    const result = checkNestedPath(original, path)
+                    if (result !== undefined) {
+                      foundCancelPenalties = result
+                      foundPath = path
+                      break
+                    }
+                  }
+                  
+                  console.log('🔍 [취소 정보 추출] RatePlan 원본 데이터:', {
+                    rateKey: ratePlan.RateKey || 'N/A',
+                    roomType: ratePlan.RoomType || 'N/A',
+                    hasOriginal: !!original,
+                    originalKeys: original ? Object.keys(original) : [],
+                    // 직접 경로 확인
+                    hasCancelPenalties: !!original?.CancelPenalties,
+                    cancelPenaltiesType: original?.CancelPenalties ? typeof original.CancelPenalties : 'N/A',
+                    cancelPenaltiesIsArray: Array.isArray(original?.CancelPenalties),
+                    cancelPenaltiesValue: original?.CancelPenalties,
+                    // 중첩 경로 확인
+                    foundCancelPenalties: foundCancelPenalties,
+                    foundPath: foundPath,
+                    // ConvertedRateInfo 확인
+                    hasConvertedRateInfo: !!original?.ConvertedRateInfo,
+                    convertedRateInfoKeys: original?.ConvertedRateInfo ? Object.keys(original.ConvertedRateInfo) : [],
+                    convertedRateInfoCancelPenalties: original?.ConvertedRateInfo?.CancelPenalties,
+                    // RatePlanInclusions 확인
+                    hasRatePlanInclusions: !!original?.RatePlanInclusions,
+                    ratePlanInclusionsKeys: original?.RatePlanInclusions ? Object.keys(original.RatePlanInclusions) : [],
+                    // 전체 원본 데이터 (제한된 깊이)
+                    originalDataSample: original ? JSON.stringify(original, null, 2).substring(0, 1000) : 'N/A'
+                  })
+                  
+                  // CancelPenalties 배열 추출
+                  // Sabre API 응답 구조에 따라 다양한 형태 가능:
+                  // 1. CancelPenalties: { CancelPenalty: [...] } (객체 내부 배열)
+                  // 2. CancelPenalties: [...] (직접 배열)
+                  // 3. CancelPenalties: { CancelPenalty: {...} } (단일 객체)
+                  // 4. ConvertedRateInfo.CancelPenalties
+                  // 5. RatePlanInclusions.CancelPenalties
+                  const cancelPenalties = foundCancelPenalties || original?.CancelPenalties || 
+                                         original?.ConvertedRateInfo?.CancelPenalties ||
+                                         original?.RatePlanInclusions?.CancelPenalties
+                  let isCancellable: boolean | undefined = undefined
+                  let cancellationDeadline: string | undefined = undefined
+                  let cancellationCondition: string | undefined = undefined
+                  
+                  // CancelPenalty 배열 추출
+                  let cancelPenaltyArray: any[] = []
+                  
+                  if (cancelPenalties) {
+                    // 구조 1: CancelPenalties.CancelPenalty (객체 내부에 CancelPenalty)
+                    if (cancelPenalties.CancelPenalty) {
+                      cancelPenaltyArray = Array.isArray(cancelPenalties.CancelPenalty)
+                        ? cancelPenalties.CancelPenalty
+                        : [cancelPenalties.CancelPenalty]
+                    }
+                    // 구조 2: CancelPenalties가 직접 배열
+                    else if (Array.isArray(cancelPenalties)) {
+                      cancelPenaltyArray = cancelPenalties
+                    }
+                    // 구조 3: CancelPenalties가 단일 객체
+                    else if (typeof cancelPenalties === 'object') {
+                      cancelPenaltyArray = [cancelPenalties]
+                    }
+                    
+                    console.log('🔍 [취소 정보 추출] CancelPenalty 배열:', {
+                      arrayLength: cancelPenaltyArray.length,
+                      arrayItems: cancelPenaltyArray.map((cp, idx) => ({
+                        index: idx,
+                        keys: Object.keys(cp || {}),
+                        refundable: cp?.Refundable,
+                        deadline: cp?.Deadline,
+                        deadlineDate: cp?.DeadlineDate,
+                        penaltyType: cp?.PenaltyType,
+                        description: cp?.Description,
+                        amount: cp?.Amount,
+                        percent: cp?.Percent,
+                        fullData: cp
+                      }))
+                    })
+                    
+                    // 배열의 첫 번째 항목을 기준으로 취소 가능 여부 판단
+                    if (cancelPenaltyArray.length > 0) {
+                      const firstPenalty = cancelPenaltyArray[0]
+                      
+                      console.log('🔍 [취소 정보 추출] 첫 번째 CancelPenalty 상세:', {
+                        refundable: firstPenalty?.Refundable,
+                        deadline: firstPenalty?.Deadline,
+                        deadlineDate: firstPenalty?.DeadlineDate,
+                        penaltyType: firstPenalty?.PenaltyType,
+                        description: firstPenalty?.Description,
+                        amount: firstPenalty?.Amount,
+                        percent: firstPenalty?.Percent,
+                        fullData: firstPenalty
+                      })
+                      
+                      // Refundable 필드로 취소 가능 여부 판단 (최우선)
+                      if (firstPenalty.Refundable !== undefined) {
+                        isCancellable = firstPenalty.Refundable === true
+                        console.log('✅ [취소 정보 추출] Refundable 필드로 판단:', isCancellable)
+                      }
+                      
+                      // Deadline 객체에서 날짜 계산
+                      if (firstPenalty.Deadline) {
+                        const deadline = firstPenalty.Deadline
+                        const offsetUnit = deadline.OffsetTimeUnit || 'Day'
+                        const offsetMultiplier = deadline.OffsetUnitMultiplier || 0
+                        const offsetDropTime = deadline.OffsetDropTime || 'BeforeArrival'
+                        
+                        console.log('🔍 [취소 정보 추출] Deadline 객체 파싱:', {
+                          offsetUnit,
+                          offsetMultiplier,
+                          offsetDropTime,
+                          checkIn: checkIn,
+                          deadlineObject: deadline
+                        })
+                        
+                        // 체크인 날짜 기준으로 취소 마감일 계산
+                        if (checkIn && offsetMultiplier > 0) {
+                          try {
+                            const checkInDate = new Date(checkIn)
+                            if (!isNaN(checkInDate.getTime())) {
+                              let deadlineDate: Date
+                              
+                              if (offsetUnit === 'Day') {
+                                deadlineDate = new Date(checkInDate)
+                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier)
+                              } else if (offsetUnit === 'Hour') {
+                                deadlineDate = new Date(checkInDate)
+                                deadlineDate.setHours(deadlineDate.getHours() - offsetMultiplier)
+                              } else {
+                                deadlineDate = new Date(checkInDate)
+                                deadlineDate.setDate(deadlineDate.getDate() - offsetMultiplier)
+                              }
+                              
+                              const year = deadlineDate.getFullYear()
+                              const month = deadlineDate.getMonth() + 1
+                              const day = deadlineDate.getDate()
+                              cancellationDeadline = `${year}년 ${month}월 ${day}일`
+                              
+                              console.log('✅ [취소 정보 추출] Deadline에서 계산된 날짜:', cancellationDeadline)
+                              
+                              // 조건 텍스트 생성
+                              const conditionText = offsetDropTime === 'BeforeArrival' 
+                                ? `체크인 ${offsetMultiplier}일 전까지 무료 취소`
+                                : `체크인 ${offsetMultiplier}일 전까지 취소 가능`
+                              
+                              if (!cancellationCondition) {
+                                cancellationCondition = conditionText
+                              }
+                            }
+                          } catch (e) {
+                            console.error('❌ [취소 정보 추출] 날짜 계산 오류:', e)
+                          }
+                        }
+                      }
+                      // DeadlineDate가 직접 있는 경우 (기존 로직 유지)
+                      else if (firstPenalty.DeadlineDate) {
+                        if (isCancellable === undefined) {
+                          isCancellable = true
+                        }
+                        const deadlineDate = firstPenalty.DeadlineDate
+                        if (typeof deadlineDate === 'string') {
+                          try {
+                            const dateStr = deadlineDate.split('T')[0]
+                            const [year, month, day] = dateStr.split('-')
+                            if (year && month && day) {
+                              const date = new Date(Number(year), Number(month) - 1, Number(day))
+                              if (!isNaN(date.getTime())) {
+                                cancellationDeadline = `${year}년 ${Number(month)}월 ${Number(day)}일`
+                              } else {
+                                cancellationDeadline = dateStr
+                              }
+                            } else {
+                              cancellationDeadline = deadlineDate
+                            }
+                          } catch (e) {
+                            cancellationDeadline = deadlineDate
+                          }
+                        } else if (deadlineDate instanceof Date) {
+                          const year = deadlineDate.getFullYear()
+                          const month = deadlineDate.getMonth() + 1
+                          const day = deadlineDate.getDate()
+                          cancellationDeadline = `${year}년 ${month}월 ${day}일`
+                        }
+                      }
+                      // PenaltyType으로 판단 (기존 로직 유지)
+                      else if (firstPenalty.PenaltyType === 'NON_REFUNDABLE' || 
+                               firstPenalty.PenaltyType === 'NON_REF') {
+                        isCancellable = false
+                      }
+                      
+                      // 취소 조건 정보 추출
+                      const conditionParts: string[] = []
+                      
+                      // Description이 있으면 사용
+                      if (firstPenalty.Description) {
+                        conditionParts.push(firstPenalty.Description)
+                      }
+                      
+                      // Amount나 Percent 정보가 있으면 추가
+                      if (firstPenalty.Amount) {
+                        conditionParts.push(`위약금: ${firstPenalty.Amount}`)
+                      }
+                      if (firstPenalty.Percent) {
+                        conditionParts.push(`위약금: ${firstPenalty.Percent}%`)
+                      }
+                      
+                      // 모든 CancelPenalty 항목의 조건을 수집
+                      if (cancelPenaltyArray.length > 1) {
+                        const additionalConditions = cancelPenaltyArray.slice(1).map((cp, idx) => {
+                          const parts: string[] = []
+                          if (cp.Deadline) {
+                            const offsetUnit = cp.Deadline.OffsetTimeUnit || 'Day'
+                            const offsetMultiplier = cp.Deadline.OffsetUnitMultiplier || 0
+                            if (offsetMultiplier > 0) {
+                              parts.push(`체크인 ${offsetMultiplier}일 전까지`)
+                            }
+                          }
+                          if (cp.DeadlineDate) {
+                            const dateStr = typeof cp.DeadlineDate === 'string' 
+                              ? cp.DeadlineDate.split('T')[0] 
+                              : cp.DeadlineDate
+                            parts.push(`${dateStr} 이후`)
+                          }
+                          if (cp.Description) {
+                            parts.push(cp.Description)
+                          }
+                          if (cp.Amount) {
+                            parts.push(`위약금: ${cp.Amount}`)
+                          }
+                          if (cp.Percent) {
+                            parts.push(`위약금: ${cp.Percent}%`)
+                          }
+                          return parts.join(', ')
+                        }).filter(Boolean)
+                        
+                        if (additionalConditions.length > 0) {
+                          conditionParts.push(...additionalConditions)
+                        }
+                      }
+                      
+                      if (conditionParts.length > 0 && !cancellationCondition) {
+                        cancellationCondition = conditionParts.join(' / ')
+                      }
+                    }
+                  }
+                  
+                  // CancellationPolicy 텍스트에서도 확인
+                  const cancellationPolicy = ratePlan.CancellationPolicy || original?.CancellationPolicy || ''
+                  if (cancellationPolicy && isCancellable === undefined) {
+                    const policyLower = cancellationPolicy.toLowerCase()
+                    if (policyLower.includes('non-refundable') ||
+                        policyLower.includes('취소불가') ||
+                        policyLower.includes('환불불가') ||
+                        policyLower.includes('no cancellation')) {
+                      isCancellable = false
+                    } else if (policyLower.includes('free cancellation') ||
+                               policyLower.includes('무료 취소') ||
+                               policyLower.includes('취소 가능') ||
+                               policyLower.includes('cancellable')) {
+                      isCancellable = true
+                    }
+                    
+                    // CancellationPolicy가 있고 조건이 없으면 정책 텍스트를 조건으로 사용
+                    if (!cancellationCondition && cancellationPolicy) {
+                      cancellationCondition = cancellationPolicy
+                    }
+                  }
+                  
+                  const result = {
+                    isCancellable,
+                    cancellationDeadline,
+                    cancellationCondition,
+                    cancellationPolicy: cancellationPolicy || undefined
+                  }
+                  
+                  console.log('🔍 [취소 정보 추출] 최종 결과:', {
+                    ...result,
+                    cancelPenaltyArrayLength: cancelPenaltyArray.length
+                  })
+                  
+                  return result
+                }
+                
+                const cancellationInfo = extractCancellationInfo(rp)
                 
                 // AI 처리 중인지 확인 - 더 정확한 조건 (원본 인덱스 사용)
                 const isGenerating = isGeneratingIntroductions && 
@@ -492,6 +810,10 @@ export function RoomCardList({
                         onRequestIntro={onRequestIntro ? () => onRequestIntro(originalIdx) : undefined}
                 rooms={rooms}
                 isHighlighted={isHighlighted}
+                        cancellationPolicy={cancellationInfo.cancellationPolicy}
+                        isCancellable={cancellationInfo.isCancellable}
+                        cancellationDeadline={cancellationInfo.cancellationDeadline}
+                        cancellationCondition={cancellationInfo.cancellationCondition}
                 productCode={productCode}
                 roomCount={roomCount}
                       />
