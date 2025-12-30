@@ -344,7 +344,7 @@ export function RoomCard({
                   취소 가능
                   {cancellationCondition && cancellationDeadline ? (
                     <span className="text-gray-600 ml-1">
-                      ({cancellationCondition.replace(/(체크인 \d+일 전)까지/g, `$1(${cancellationDeadline}) 까지`)})
+                      ({cancellationCondition.replace(/(체크인 \d+일 전)까지/g, `$1 (${cancellationDeadline})까지`)})
                     </span>
                   ) : cancellationCondition ? (
                     <span className="text-gray-600 ml-1">
