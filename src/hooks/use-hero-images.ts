@@ -12,6 +12,9 @@ export interface HeroImageData {
   slug: string
   media_path: string
   city: string
+  country?: string
+  country_ko?: string
+  country_en?: string
   chain_name_en: string
   brand_name_en: string
 }
@@ -159,6 +162,9 @@ export function useHeroImages() {
           // city_ko를 우선으로 사용
           const cityName = hotel.city_ko || hotel.city_en || hotel.city || 'Unknown'
           
+          // country 정보 추출
+          const countryName = hotel.country_ko || hotel.country_en || hotel.country || undefined
+          
           // 미디어가 없으면 도시별 fallback 이미지 사용 (cityName 기준으로 체크)
           if (mediaPath === '/placeholder.svg') {
             const cityFallbacks: Record<string, string> = {
@@ -191,6 +197,9 @@ export function useHeroImages() {
             slug: hotel.slug || '',
             media_path: mediaPath,
             city: cityName,
+            country: countryName,
+            country_ko: hotel.country_ko || undefined,
+            country_en: hotel.country_en || undefined,
             chain_name_en: chain?.chain_name_en || 'LUXURY',
             brand_name_en: getBrandDisplayName(),
           }

@@ -20,6 +20,7 @@ interface CarouselSlide {
   category: string
   date: string
   city: string
+  country?: string
   chain_name_en: string
   brand_name_en: string
 }
@@ -77,7 +78,8 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
         hotelId: image.slug || `hotel-${image.sabre_id}`,
         category: "LUXURY",
         date: "DECEMBER 15, 2024",
-        city: image.city,
+        city: image.city === 'Unknown' ? (image.country_ko || image.country_en || image.country || 'Unknown') : image.city,
+        country: image.country_ko || image.country_en || image.country || undefined,
         chain_name_en: image.chain_name_en,
         brand_name_en: image.brand_name_en,
       }))
@@ -165,10 +167,14 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
                         <div className="relative text-white p-4">
-                          <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                          <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-1">
                             {carouselSlides[currentSlide].hotelName}({carouselSlides[currentSlide].location})
                           </h2>
-                          <p className="text-xs opacity-90">{carouselSlides[currentSlide].city}</p>
+                          <p className="text-xs opacity-90">
+                            {carouselSlides[currentSlide].city === 'Unknown' 
+                              ? (carouselSlides[currentSlide].country || 'Unknown')
+                              : carouselSlides[currentSlide].city}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -263,10 +269,12 @@ export function HeroCarousel3Client({ heroImages }: HeroCarousel3ClientProps) {
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
                         <div className="relative text-white p-4">
-                          <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-2">
+                          <h2 className="text-sm font-bold mb-2 leading-tight line-clamp-1">
                             {slide.hotelName}({slide.location})
                           </h2>
-                          <p className="text-xs opacity-90">{slide.city}</p>
+                          <p className="text-xs opacity-90">
+                            {slide.city === 'Unknown' ? (slide.country || 'Unknown') : slide.city}
+                          </p>
                         </div>
                       </div>
                     </div>
