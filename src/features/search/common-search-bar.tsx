@@ -516,7 +516,7 @@ export function CommonSearchBar({
 
   return (
     <>
-      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2 ${variant === 'hotel-detail' ? 'sm:bg-transparent sm:shadow-none sm:border-0' : ''}`}
+      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
       style={{ borderColor: '#C7D2FE' }}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}

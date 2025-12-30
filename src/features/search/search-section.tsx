@@ -73,7 +73,7 @@ export function SearchSection() {
   }, [])
 
   return (
-    <section className="bg-white sm:bg-gray-50 pt-0 pb-0 sm:py-6">
+    <section className="bg-white pt-0 pb-0 sm:py-6">
       <div className="container mx-auto max-w-[1440px] px-2 sm:px-4 relative z-auto">
         <CommonSearchBar 
           variant="landing" 
