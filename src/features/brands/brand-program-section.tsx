@@ -36,6 +36,18 @@ async function getHotelChains() {
 export async function BrandProgramSection() {
   const chains = await getHotelChains()
   
+  // 특정 브랜드 숨기기: marriott, platinum
+  const filteredChains = chains.filter(
+    chain => chain.slug !== 'marriott' && chain.slug !== 'platinum'
+  )
+  
+  // 아만 리조트 인터네셔널을 첫번째로 정렬
+  const sortedChains = [...filteredChains].sort((a, b) => {
+    if (a.slug === 'aman') return -1
+    if (b.slug === 'aman') return 1
+    return 0
+  })
+  
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4 max-w-[1440px]">
@@ -45,7 +57,7 @@ export async function BrandProgramSection() {
         </div>
 
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-6">
-          {chains.map((chain) => (
+          {sortedChains.map((chain) => (
             <BrandCard
               key={chain.chain_id}
               chainId={chain.chain_id}
