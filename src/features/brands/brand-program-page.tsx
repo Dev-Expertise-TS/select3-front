@@ -74,6 +74,11 @@ async function getHotelChains() {
 export async function BrandProgramPage() {
   const chains = await getHotelChains()
   
+  // 특정 브랜드 숨기기: marriott, platinum
+  const filteredChains = chains.filter(
+    chain => chain.chain_slug !== 'marriott' && chain.chain_slug !== 'platinum'
+  )
+  
   return (
     <>
       {/* Main Content */}
@@ -91,7 +96,7 @@ export async function BrandProgramPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {chains.map((chain) => (
+            {filteredChains.map((chain) => (
               <Link key={chain.chain_id} href={`/brand/${chain.chain_slug}`}>
                 <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer overflow-hidden aspect-[4/3] relative border border-gray-100">
                   <Image
