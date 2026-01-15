@@ -36,6 +36,22 @@ export async function getHotelDetailData(slug: string) {
     ...hotel,
     hotel_area: areaKo || (hotel as { hotel_area?: unknown }).hotel_area || undefined,
   }
+
+  const brandIds = [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3]
+    .filter((id) => id !== null && id !== undefined && id !== '')
+    .map((id) => Number(id))
+    .filter((id) => !Number.isNaN(id))
+  let brandNamesEn: string[] = []
+  if (brandIds.length > 0) {
+    const { data: brandData } = await supabase
+      .from('hotel_brands')
+      .select('brand_id, brand_name_en, brand_name_ko')
+      .in('brand_id', brandIds)
+    const mappedNames = (brandData || [])
+      .map((brand) => brand.brand_name_en || brand.brand_name_ko)
+      .filter(Boolean) as string[]
+    brandNamesEn = Array.from(new Set(mappedNames))
+  }
   
   const sabreId = String(hotel.sabre_id)
   
@@ -156,7 +172,11 @@ export async function getHotelDetailData(slug: string) {
   const averageRating = reviewCount > 0 ? 5 : 0
   
   return {
-    hotel: normalizedHotel,
+    hotel: {
+      ...normalizedHotel,
+      brand_name_en: brandNamesEn[0],
+      brand_names_en: brandNamesEn.length > 0 ? brandNamesEn : undefined
+    },
     images,
     benefits,
     promotions,

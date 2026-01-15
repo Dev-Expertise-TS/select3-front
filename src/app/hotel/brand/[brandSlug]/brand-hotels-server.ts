@@ -1,7 +1,7 @@
 import { getBrandBySlug, getHotelsByBrandId } from '@/lib/brand-data-server'
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
-import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 
 /**
  * 브랜드별 호텔 페이지 데이터 조회
@@ -30,7 +30,7 @@ export async function getBrandHotelsData(brandSlug: string) {
   // 2-1. 전체 호텔 목록 조회 (필터 옵션용)
   const { data: allHotelsForFilter } = await supabase
     .from('select_hotels')
-    .select('city_code, city_ko, country_code, country_ko, brand_name_en, chain_id')
+    .select('city_code, city_ko, country_code, country_ko, brand_id, brand_id_2, brand_id_3, chain_id')
     .or('publish.is.null,publish.eq.true')
   
   // 2-2. 체인 정보 조회 (필터 옵션용)
@@ -65,7 +65,11 @@ export async function getBrandHotelsData(brandSlug: string) {
     })) || []
   
   // 4. 브랜드 정보 조회
-  const brandIds = hotels.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+  const brandIds = Array.from(
+    new Set(
+      hotels.flatMap((hotel: any) => getHotelBrandIds(hotel))
+    )
+  )
   let brandData = []
   
   if (brandIds.length > 0) {
@@ -87,6 +91,18 @@ export async function getBrandHotelsData(brandSlug: string) {
   
   // 전체 호텔에서 필터 옵션 생성
   if (allHotelsForFilter && allHotelsForFilter.length > 0) {
+    const filterBrandIds = Array.from(
+      new Set(allHotelsForFilter.flatMap((hotel: any) => getHotelBrandIds(hotel)))
+    )
+    let filterBrandData: Array<{ brand_id: number; brand_name_en?: string; brand_name_ko?: string }> = []
+    if (filterBrandIds.length > 0) {
+      const { data } = await supabase
+        .from('hotel_brands')
+        .select('brand_id, brand_name_en, brand_name_ko')
+        .in('brand_id', filterBrandIds)
+      filterBrandData = data || []
+    }
+
     allHotelsForFilter.forEach((hotel: any) => {
       // 국가
       if (hotel.country_code && hotel.country_ko) {
@@ -111,16 +127,21 @@ export async function getBrandHotelsData(brandSlug: string) {
         cities.set(hotel.city_code, existing)
       }
       
-      // 브랜드
-      if (hotel.brand_name_en) {
-        const existing = brands.get(hotel.brand_name_en) || { 
-          id: hotel.brand_name_en, 
-          label: hotel.brand_name_en, 
-          count: 0 
+      // 브랜드 (brand_id, brand_id_2, brand_id_3)
+      const hotelBrandIds = getHotelBrandIds(hotel)
+      hotelBrandIds.forEach((brandId) => {
+        const brandInfo = filterBrandData.find((b) => String(b.brand_id) === String(brandId))
+        const brandLabel = brandInfo?.brand_name_en || brandInfo?.brand_name_ko
+        if (!brandLabel) return
+        const key = String(brandId)
+        const existing = brands.get(key) || {
+          id: key,
+          label: brandLabel,
+          count: 0
         }
         existing.count++
-        brands.set(hotel.brand_name_en, existing)
-      }
+        brands.set(key, existing)
+      })
       
       // 체인 (chainDataForFilter에서 체인명 조회)
       if (hotel.chain_id) {

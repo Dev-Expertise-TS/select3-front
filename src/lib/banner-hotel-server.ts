@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 
+const getHotelBrandIds = (hotel: any) =>
+  [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
+    (id) => id !== null && id !== undefined && id !== ''
+  )
+
 /**
  * 배너용 호텔 데이터 조회 (서버 사이드)
  * select_feature_slots 테이블에서 '상단베너' surface의 활성 호텔 조회
@@ -121,7 +126,9 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
     })
     
     // 브랜드 및 체인 정보 조회
-    const brandIds = filteredHotels.map((hotel: any) => hotel.brand_id).filter(Boolean)
+    const brandIds = Array.from(
+      new Set(filteredHotels.flatMap(getHotelBrandIds).map((id) => Number(id)).filter((id) => !Number.isNaN(id)))
+    )
     let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
     if (brandIds.length > 0) {
       const { data, error: brandsError } = await supabase
@@ -152,7 +159,8 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
     }
     
     // 브랜드 정보 매핑
-    const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
+    const primaryBrandId = getHotelBrandIds(randomHotel)[0]
+    const hotelBrand = brandsData?.find((brand: any) => String(brand.brand_id) === String(primaryBrandId))
     const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
     
     console.log(`✅ [Server] ${surface}${chainSlug ? ` (${chainSlug})` : ''} 배너 호텔 조회 성공:`, randomHotel.property_name_ko)

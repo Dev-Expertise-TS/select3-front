@@ -8,6 +8,8 @@ import { useState, useRef, useEffect } from "react"
 import { OptimizedImage } from "@/components/ui/optimized-image"
 import { optimizeHotelCardImage } from "@/lib/image-optimization"
 import { getSafeImageUrl } from "@/lib/image-utils"
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
 
 export interface BrandHotelCardProps {
   href: string
@@ -17,6 +19,11 @@ export interface BrandHotelCardProps {
   city: string
   address: string
   brandLabel?: string
+  brandLabels?: string[]
+  // 브랜드 ID를 받아서 동적으로 조회할 수 있도록 추가
+  brandId?: number
+  brandId2?: number
+  brandId3?: number
   className?: string
   priority?: boolean
 }
@@ -29,13 +36,99 @@ export function BrandHotelCard({
   city,
   address,
   brandLabel,
+  brandLabels,
+  brandId,
+  brandId2,
+  brandId3,
   className,
   priority = false,
 }: BrandHotelCardProps) {
+  const supabase = createClient()
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [isInView, setIsInView] = useState(priority) // priority 이미지는 즉시 로드
   const cardRef = useRef<HTMLDivElement>(null)
+  
+  // brand_id, brand_id_2, brand_id_3를 순서대로 수집
+  const allBrandIds = [
+    brandId,
+    brandId2,
+    brandId3
+  ].filter((id) => id !== null && id !== undefined && id !== '')
+  
+  // 기존 브랜드명 정보
+  const existingBrandNames = (brandLabels || []).filter(Boolean)
+  const hasAllBrandNames = existingBrandNames.length > 0 && existingBrandNames.length === allBrandIds.length
+  
+  // 누락된 브랜드 ID 찾기 (brandLabels 배열이 없거나 개수가 맞지 않으면 모든 ID 조회)
+  const missingBrandIds = hasAllBrandNames ? [] : allBrandIds
+  
+  // 누락된 브랜드 정보 조회
+  const { data: missingBrandData } = useQuery({
+    queryKey: ['brand-names-card', missingBrandIds.sort().join(',')],
+    queryFn: async () => {
+      if (missingBrandIds.length === 0) return []
+      
+      const { data, error } = await supabase
+        .from('hotel_brands')
+        .select('brand_id, brand_name_en')
+        .in('brand_id', missingBrandIds)
+      
+      if (error) {
+        console.error('❌ 브랜드 정보 조회 오류:', error)
+        return []
+      }
+      
+      return data || []
+    },
+    enabled: missingBrandIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+  })
+  
+  // 브랜드 라벨 생성
+  const finalBrandLabels = (() => {
+    // 1순위: brandLabels 배열이 있고 개수가 맞으면 사용
+    if (hasAllBrandNames) {
+      return existingBrandNames
+    }
+
+    // 2순위: brandLabels + 조회한 누락 브랜드 정보 조합
+    const labels: string[] = []
+    const brandMap = new Map<string, string>()
+    
+    // 기존 brandLabels 매핑 (순서대로)
+    if (existingBrandNames.length > 0) {
+      existingBrandNames.forEach((name, index) => {
+        if (allBrandIds[index]) {
+          brandMap.set(String(allBrandIds[index]), name)
+        }
+      })
+    }
+    
+    // 조회한 누락 브랜드 정보 매핑
+    if (missingBrandData && missingBrandData.length > 0) {
+      missingBrandData.forEach((brand: any) => {
+        if (brand.brand_name_en) {
+          brandMap.set(String(brand.brand_id), brand.brand_name_en)
+        }
+      })
+    }
+    
+    // allBrandIds 순서대로 라벨 생성
+    allBrandIds.forEach((id) => {
+      const brandName = brandMap.get(String(id))
+      if (brandName) {
+        labels.push(brandName)
+      }
+    })
+
+    // brandLabels가 있고 누락된 것이 없으면 그대로 사용
+    if (labels.length === 0 && existingBrandNames.length > 0) {
+      return existingBrandNames
+    }
+
+    return labels.length > 0 ? labels : (brandLabels || [])
+  })()
 
   // Intersection Observer로 뷰포트 진입 감지
   useEffect(() => {
@@ -119,10 +212,17 @@ export function BrandHotelCard({
             />
           )}
 
-          {brandLabel && (
-            <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-900">
-              {brandLabel}
-            </span>
+          {(finalBrandLabels?.length || brandLabel) && (
+            <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
+              {(finalBrandLabels?.length ? finalBrandLabels : brandLabel ? [brandLabel] : []).map((label, index) => (
+                <span
+                  key={`${label}-${index}`}
+                  className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-900 w-fit"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 

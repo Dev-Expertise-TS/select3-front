@@ -9,6 +9,8 @@ import { useHotelPromotion } from "@/hooks/use-hotel-promotion"
 import { HOTEL_CARD_CONFIG, type CardVariant } from "@/config/layout"
 import { OptimizedImage } from "@/components/ui/optimized-image"
 import { optimizeHotelCardImage } from "@/lib/image-optimization"
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
 
 // 프로모션 타입 정의
 interface HotelPromotion {
@@ -47,8 +49,11 @@ export interface HotelCardAllViewData {
   benefit_6?: string
   // 브랜드와 체인 정보
   brand_id?: number
+  brand_id_2?: number
+  brand_id_3?: number
   chain_id?: number
   brand_name_en?: string
+  brand_names_en?: string[]
   chain_name_en?: string
 }
 
@@ -85,6 +90,92 @@ function HotelImageSection({
   promotion,
   imageClassName
 }: HotelImageSectionProps) {
+  const supabase = createClient()
+  
+  // brand_id, brand_id_2, brand_id_3를 순서대로 수집
+  const allBrandIds = [
+    hotel.brand_id,
+    hotel.brand_id_2,
+    hotel.brand_id_3
+  ].filter((id) => id !== null && id !== undefined && id !== '')
+  
+  // 기존 브랜드명 정보
+  const existingBrandNames = (hotel.brand_names_en || []).filter(Boolean)
+  const hasAllBrandNames = existingBrandNames.length > 0 && existingBrandNames.length === allBrandIds.length
+  
+  // 누락된 브랜드 ID 찾기 (brand_names_en 배열이 없거나 개수가 맞지 않으면 모든 ID 조회)
+  const missingBrandIds = hasAllBrandNames ? [] : allBrandIds
+  
+  // 누락된 브랜드 정보 조회
+  const { data: missingBrandData } = useQuery({
+    queryKey: ['brand-names', missingBrandIds.sort().join(',')],
+    queryFn: async () => {
+      if (missingBrandIds.length === 0) return []
+      
+      const { data, error } = await supabase
+        .from('hotel_brands')
+        .select('brand_id, brand_name_en')
+        .in('brand_id', missingBrandIds)
+      
+      if (error) {
+        console.error('❌ 브랜드 정보 조회 오류:', error)
+        return []
+      }
+      
+      return data || []
+    },
+    enabled: missingBrandIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+  })
+  
+  // 브랜드 라벨 생성
+  const brandLabels = (() => {
+    // 1순위: brand_names_en 배열이 있고 개수가 맞으면 사용
+    if (hasAllBrandNames) {
+      return existingBrandNames
+    }
+
+    // 2순위: brand_names_en + 조회한 누락 브랜드 정보 조합
+    const labels: string[] = []
+    const brandMap = new Map<string, string>()
+    
+    // 기존 brand_names_en 매핑 (순서대로)
+    if (existingBrandNames.length > 0) {
+      existingBrandNames.forEach((name, index) => {
+        if (allBrandIds[index]) {
+          brandMap.set(String(allBrandIds[index]), name)
+        }
+      })
+    }
+    
+    // hotel.brand_name_en이 있으면 brand_id에 매핑
+    if (hotel.brand_name_en && hotel.brand_id) {
+      brandMap.set(String(hotel.brand_id), hotel.brand_name_en)
+    }
+    
+    // 조회한 누락 브랜드 정보 매핑
+    if (missingBrandData && missingBrandData.length > 0) {
+      missingBrandData.forEach((brand: any) => {
+        if (brand.brand_name_en) {
+          brandMap.set(String(brand.brand_id), brand.brand_name_en)
+        }
+      })
+    }
+    
+    // allBrandIds 순서대로 라벨 생성
+    allBrandIds.forEach((id) => {
+      const brandName = brandMap.get(String(id))
+      if (brandName) {
+        labels.push(brandName)
+      } else {
+        // 브랜드 정보를 찾을 수 없으면 ID로 표시
+        labels.push(`Brand ${id}`)
+      }
+    })
+
+    return labels
+  })()
+
   return (
     <div 
       className={cn(
@@ -110,22 +201,29 @@ function HotelImageSection({
       />
       
       {/* 배지들 */}
-      <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-        {/* 브랜드 배지 (brand_name_en만 표시) */}
-        {hotel.brand_name_en && (
-          <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-md text-sm font-medium shadow-sm">
-            {hotel.brand_name_en}
+      <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
+        {/* 브랜드 배지 (여러 브랜드 지원) */}
+        {brandLabels.length > 0 && (
+          <div className="flex flex-col gap-0.5">
+            {brandLabels.map((label, index) => (
+              <div
+                key={`${label}-${index}`}
+                className="bg-white/90 backdrop-blur-sm text-gray-800 px-2 py-0.5 rounded text-xs font-medium shadow-sm w-fit"
+              >
+                {label}
+              </div>
+            ))}
           </div>
         )}
         {/* 기타 배지들 */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {showBadge && hotel.badge && (
-            <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-2 py-1 rounded-md text-xs font-medium">
+            <div className="bg-white/90 backdrop-blur-sm text-gray-800 px-1.5 py-0.5 rounded text-[10px] font-medium w-fit">
               {hotel.badge}
             </div>
           )}
           {showPromotionBadge && promotion && (
-            <div className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+            <div className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-medium w-fit">
               {promotion.promotion}
             </div>
           )}

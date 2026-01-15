@@ -15,6 +15,11 @@ export interface HeroImageData {
   brand_name_en: string
 }
 
+const getHotelBrandIds = (hotel: any) =>
+  [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
+    (id) => id !== null && id !== undefined && id !== ''
+  )
+
 /**
  * 히어로 이미지 데이터 조회 (서버 사이드)
  * - 성능 최적화: 클라이언트 API 호출 제거
@@ -80,7 +85,9 @@ export async function getHeroImages(): Promise<HeroImageData[]> {
     const mediaData = getFirstImagePerHotel(rawMediaData || [])
     
     // 4. 브랜드/체인 정보 조회
-    const brandIds = filteredHotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
+    const brandIds = Array.from(
+      new Set(filteredHotels.flatMap(getHotelBrandIds).map((id) => Number(id)).filter((id) => !Number.isNaN(id)))
+    )
     let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
     
     if (brandIds.length > 0) {
@@ -104,7 +111,8 @@ export async function getHeroImages(): Promise<HeroImageData[]> {
 
     // 5. 데이터 조합
     const heroImages: HeroImageData[] = filteredHotels.map(hotel => {
-      const brand = brandsData?.find(b => b.brand_id === hotel.brand_id)
+      const primaryBrandId = getHotelBrandIds(hotel)[0]
+      const brand = brandsData?.find(b => String(b.brand_id) === String(primaryBrandId))
       const chain = chainsData?.find(c => c.chain_id === brand?.chain_id)
       
       const getBrandDisplayName = () => {

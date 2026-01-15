@@ -128,7 +128,7 @@ async function getChainHotels(chainSlug: string) {
     const { data: hotelData, error: hotelsError } = await supabase
       .from('select_hotels')
       .select('*')
-      .in('brand_id', brandIds)
+      .or(`brand_id.in.(${brandIds.join(',')}),brand_id_2.in.(${brandIds.join(',')}),brand_id_3.in.(${brandIds.join(',')})`)
       .or('publish.is.null,publish.eq.true') // 비공개 호텔 제외
     
     console.log(`[ Server ] select_hotels 조회 결과:`, { 

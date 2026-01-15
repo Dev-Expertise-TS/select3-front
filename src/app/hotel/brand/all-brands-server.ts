@@ -40,7 +40,7 @@ export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
       const { count, error: countError } = await supabase
         .from('select_hotels')
         .select('*', { count: 'exact', head: true })
-        .eq('brand_id', brand.brand_id)
+        .or(`brand_id.eq.${brand.brand_id},brand_id_2.eq.${brand.brand_id},brand_id_3.eq.${brand.brand_id}`)
         .or('publish.is.null,publish.eq.true')
       
       if (countError) {
@@ -56,7 +56,7 @@ export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
       const { data: hotels, error: hotelsError } = await supabase
         .from('select_hotels')
         .select('image, property_name_ko, property_name_en')
-        .eq('brand_id', brand.brand_id)
+        .or(`brand_id.eq.${brand.brand_id},brand_id_2.eq.${brand.brand_id},brand_id_3.eq.${brand.brand_id}`)
         .or('publish.is.null,publish.eq.true')
         .not('image', 'is', null)
         .limit(30)

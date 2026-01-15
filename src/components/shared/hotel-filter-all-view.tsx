@@ -47,12 +47,20 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         // 호텔 데이터 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
-          .select('city, city_ko, city_en, country_ko, country_en, brand_id, chain_ko, chain_en')
+          .select('city, city_ko, city_en, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en')
         
         if (hotelsError) throw hotelsError
         
         // 브랜드 데이터 조회
-        const brandIds = hotels?.filter((h: any) => h.brand_id).map((h: any) => h.brand_id) || []
+        const brandIds = Array.from(
+          new Set(
+            (hotels || []).flatMap((hotel: any) =>
+              [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3].filter(
+                (id: any) => id !== null && id !== undefined && id !== ''
+              )
+            )
+          )
+        )
         let brands = []
         if (brandIds.length > 0) {
           const { data: brandData } = await supabase
@@ -91,13 +99,16 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         // 브랜드 옵션 생성
         const brandMap = new Map()
         hotels?.forEach((hotel: any) => {
-          if (hotel.brand_id) {
-            const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
+          const hotelBrandIds = [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3].filter(
+            (id: any) => id !== null && id !== undefined && id !== ''
+          )
+          hotelBrandIds.forEach((brandId: any) => {
+            const brand = brands.find((b: any) => String(b.brand_id) === String(brandId))
             if (brand) {
               const brandName = brand.brand_name_en
               brandMap.set(brandName, (brandMap.get(brandName) || 0) + 1)
             }
-          }
+          })
         })
         const brandOptions = Array.from(brandMap.entries()).map(([label, count]) => ({
           id: label,

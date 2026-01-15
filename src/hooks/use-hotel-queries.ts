@@ -7,6 +7,17 @@ import { getFirstImagePerHotel } from '@/lib/media-utils'
 
 const supabase = createClient()
 
+function getHotelBrandIds(hotel: any): Array<number | string> {
+  return [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
+    (id) => id !== null && id !== undefined && id !== ''
+  )
+}
+
+function getUniqueBrandIds(hotels: any[]): number[] {
+  const ids = hotels.flatMap(getHotelBrandIds).map((id) => Number(id)).filter((id) => !Number.isNaN(id))
+  return Array.from(new Set(ids))
+}
+
 /**
  * 검색 결과 조회 훅
  * @param query 검색어
@@ -39,7 +50,7 @@ export function useSearchResults(query: string, tick: number) {
       const firstImages = getFirstImagePerHotel(mediaData || [])
       
       // 브랜드 정보 조회
-      const brandIds = data.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+      const brandIds = getUniqueBrandIds(data)
       let brandData = []
       if (brandIds.length > 0) {
         const { data: brandResult, error: brandError } = await supabase
@@ -138,7 +149,7 @@ export function useAllHotels(options?: { enabled?: boolean }) {
         const firstImages = getFirstImagePerHotel(mediaData || [])
         
         // 브랜드 정보 조회
-        const brandIds = data.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+      const brandIds = getUniqueBrandIds(data)
         let brandData = []
         if (brandIds.length > 0) {
           const { data: brandResult, error: brandError } = await supabase
@@ -217,7 +228,7 @@ export function useBannerHotel(options?: { enabled?: boolean }) {
         if (filteredHotels.length === 0) return null
         
         // 브랜드 및 체인 정보 조회
-        const brandIds = filteredHotels.map((hotel: any) => hotel.brand_id).filter(Boolean)
+        const brandIds = getUniqueBrandIds(filteredHotels)
         let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
         if (brandIds.length > 0) {
           const { data, error: brandsError } = await supabase
@@ -239,7 +250,8 @@ export function useBannerHotel(options?: { enabled?: boolean }) {
         
         // 랜덤 호텔 선택 및 브랜드 정보 매핑
         const randomHotel = filteredHotels[Math.floor(Math.random() * filteredHotels.length)]
-        const hotelBrand = brandsData?.find((brand: any) => brand.brand_id === randomHotel.brand_id)
+        const primaryBrandId = getHotelBrandIds(randomHotel)[0]
+        const hotelBrand = brandsData?.find((brand: any) => String(brand.brand_id) === String(primaryBrandId))
         const hotelChain = chainsData?.find((chain: any) => chain.chain_id === hotelBrand?.chain_id)
         
         return {
@@ -278,12 +290,13 @@ export function useChainBrandHotels(selectedChainId: string | null) {
         if (!brands || brands.length === 0) return []
         
         const brandIds = brands.map((b: any) => b.brand_id)
+        const brandIdList = brandIds.join(',')
         
         // select_hotels에서 해당 brand_id를 가진 호텔들 조회
         const { data: hotels, error: hotelsError } = await supabase
           .from('select_hotels')
           .select('*')
-          .in('brand_id', brandIds)
+          .or(`brand_id.in.(${brandIdList}),brand_id_2.in.(${brandIdList}),brand_id_3.in.(${brandIdList})`)
           .or('publish.is.null,publish.eq.true')
         
         if (hotelsError) throw hotelsError
@@ -299,7 +312,17 @@ export function useChainBrandHotels(selectedChainId: string | null) {
         
         const firstImages = getFirstImagePerHotel(mediaData || [])
         
-        return transformHotelsToAllViewCardData(hotels, firstImages, brands)
+        const hotelBrandIds = getUniqueBrandIds(hotels)
+        let brandData = brands
+        if (hotelBrandIds.length > 0) {
+          const { data: brandResult } = await supabase
+            .from('hotel_brands')
+            .select('brand_id, brand_name_en')
+            .in('brand_id', hotelBrandIds)
+          brandData = brandResult || []
+        }
+        
+        return transformHotelsToAllViewCardData(hotels, firstImages, brandData)
       } catch (error) {
         console.error('체인 브랜드 호텔 조회 오류:', error)
         return []
@@ -324,7 +347,7 @@ export function useBrandHotels(brandId: string | null) {
         const { data: hotels, error } = await supabase
           .from('select_hotels')
           .select('*')
-          .eq('brand_id', parseInt(brandId))
+          .or(`brand_id.eq.${brandId},brand_id_2.eq.${brandId},brand_id_3.eq.${brandId}`)
           .or('publish.is.null,publish.eq.true')
           .order('property_name_ko')
         
@@ -341,13 +364,18 @@ export function useBrandHotels(brandId: string | null) {
         
         const firstImages = getFirstImagePerHotel(mediaData || [])
         
-        // 브랜드 정보 조회
-        const { data: brandData } = await supabase
-          .from('hotel_brands')
-          .select('brand_id, brand_name_en')
-          .eq('brand_id', parseInt(brandId))
+        // 브랜드 정보 조회 (호텔에 연결된 모든 브랜드)
+        const hotelBrandIds = getUniqueBrandIds(hotels)
+        let brandData: any[] = []
+        if (hotelBrandIds.length > 0) {
+          const { data: brandResult } = await supabase
+            .from('hotel_brands')
+            .select('brand_id, brand_name_en')
+            .in('brand_id', hotelBrandIds)
+          brandData = brandResult || []
+        }
         
-        return transformHotelsToAllViewCardData(hotels, firstImages, brandData || [])
+        return transformHotelsToAllViewCardData(hotels, firstImages, brandData)
       } catch (error) {
         console.error('브랜드 호텔 조회 오류:', error)
         throw error

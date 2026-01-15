@@ -4,6 +4,11 @@ import { getFirstImagePerHotel } from '@/lib/media-utils'
 
 const supabase = createClient()
 
+const getHotelBrandIds = (hotel: any) =>
+  [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
+    (id) => id !== null && id !== undefined && id !== ''
+  )
+
 // 히어로 이미지 데이터 타입
 export interface HeroImageData {
   sabre_id: number
@@ -102,7 +107,9 @@ export function useHeroImages() {
         }
         
         // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)
-        const brandIds = filteredHotels.map(hotel => hotel.brand_id).filter(id => id !== null && id !== undefined)
+        const brandIds = Array.from(
+          new Set(filteredHotels.flatMap(getHotelBrandIds).map((id) => Number(id)).filter((id) => !Number.isNaN(id)))
+        )
         let brandsData: Array<{brand_id: string, brand_name_en: string, chain_id: string}> = []
         if (brandIds.length > 0) {
           const { data, error: brandsError } = await supabase
@@ -137,7 +144,8 @@ export function useHeroImages() {
         const heroImages: HeroImageData[] = filteredHotels.map(hotel => {
           
           // 브랜드 정보 찾기
-          const brand = brandsData?.find(b => b.brand_id === hotel.brand_id)
+          const primaryBrandId = getHotelBrandIds(hotel)[0]
+          const brand = brandsData?.find(b => String(b.brand_id) === String(primaryBrandId))
           
           // 체인 정보 찾기
           const chain = chainsData?.find(c => c.chain_id === brand?.chain_id)

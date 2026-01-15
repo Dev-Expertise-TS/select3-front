@@ -31,7 +31,7 @@ export async function getHotelsByBrandId(brandId: string | number) {
   const { data: hotels, error: hotelsError } = await supabase
     .from('select_hotels')
     .select('*')
-    .eq('brand_id', brandId)
+    .or(`brand_id.eq.${brandId},brand_id_2.eq.${brandId},brand_id_3.eq.${brandId}`)
     .or('publish.is.null,publish.eq.true')
     .order('property_name_en')
   

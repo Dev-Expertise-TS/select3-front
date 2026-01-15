@@ -10,7 +10,7 @@ export async function GET() {
     // 호텔 데이터 조회 (필터 옵션 생성을 위해 모든 호텔 조회)
     const { data: hotels, error: hotelsError } = await supabase
       .from('select_hotels')
-      .select('city_code, city_ko, city_en, country_code, country_ko, country_en, brand_id, chain_ko, chain_en, publish')
+      .select('city_code, city_ko, city_en, country_code, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en, publish')
     
     console.log('📊 호텔 데이터 조회 결과:', {
       총호텔수: hotels?.length || 0,
@@ -33,7 +33,15 @@ export async function GET() {
     const filteredHotels = hotels || []
     
     // 브랜드 데이터 조회
-    const brandIds = [...new Set(filteredHotels.filter((h: any) => h.brand_id).map((h: any) => h.brand_id))]
+    const brandIds = Array.from(
+      new Set(
+        filteredHotels.flatMap((hotel: any) =>
+          [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3].filter(
+            (id: any) => id !== null && id !== undefined && id !== ''
+          )
+        )
+      )
+    )
     console.log('🔍 [브랜드] 호텔에서 추출한 고유 brand_id:', brandIds.length, brandIds.slice(0, 10))
     
     let brands: any[] = []
@@ -232,8 +240,11 @@ export async function GET() {
       sort_order: number 
     }>()
     filteredHotels.forEach((hotel: any) => {
-      if (hotel.brand_id) {
-        const brand = brands.find((b: any) => b.brand_id === hotel.brand_id)
+      const hotelBrandIds = [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3].filter(
+        (id: any) => id !== null && id !== undefined && id !== ''
+      )
+      hotelBrandIds.forEach((brandId: any) => {
+        const brand = brands.find((b: any) => String(b.brand_id) === String(brandId))
         if (brand) {
           const chain = brand.chain_id 
             ? hotelChains.find((c: any) => c.chain_id === brand.chain_id)
@@ -243,8 +254,8 @@ export async function GET() {
           const chainNameEn = chain?.chain_name_en || ''
           const chainNameKo = chain?.chain_name_ko || ''
           
-          brandMap.set(String(hotel.brand_id), {
-            id: hotel.brand_id,
+          brandMap.set(String(brandId), {
+            id: brandId,
             brand_name: brand.brand_name_ko || brand.brand_name_en || '',
             brand_en: brandNameEn,
             chain_id: brand.chain_id || null,
@@ -253,7 +264,7 @@ export async function GET() {
             sort_order: brand.brand_sort_order || 9999 // sort_order가 없으면 뒤로
           })
         }
-      }
+      })
     })
     
     const brandOptions = Array.from(brandMap.values())

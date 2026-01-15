@@ -21,6 +21,8 @@ export interface Hotel {
   longitude: number | null
   star_rating: number | null
   brand_id: number | null
+  brand_id_2?: number | null
+  brand_id_3?: number | null
   chain_id: number | null
   slug: string
   is_active: boolean

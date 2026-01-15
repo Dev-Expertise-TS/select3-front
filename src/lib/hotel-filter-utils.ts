@@ -22,6 +22,12 @@ export interface FilterOptions {
   chains?: Array<{ id: string; label: string }>
 }
 
+function getHotelBrandIdStrings(hotel: any): string[] {
+  return [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3]
+    .filter((id) => id !== null && id !== undefined && id !== '')
+    .map((id) => String(id))
+}
+
 /**
  * 체인 필터를 위한 브랜드 ID 목록 생성
  * @param chainId 체인 ID
@@ -89,13 +95,13 @@ export function filterHotel(hotel: any, filters: HotelFilters, chainBrandIds: st
       return false
     }
     
-    const hotelBrandId = String(hotel.brand_id)
-    const isMatch = chainBrandIds.includes(hotelBrandId)
+    const hotelBrandIds = getHotelBrandIdStrings(hotel)
+    const isMatch = hotelBrandIds.some((id) => chainBrandIds.includes(id))
     
     if (!isMatch && process.env.NODE_ENV === 'development') {
       console.log('🔍 [체인 필터 불일치]', {
         호텔명: hotel.property_name_ko,
-        호텔brand_id: hotelBrandId,
+        호텔brand_ids: hotelBrandIds,
         체인필터: filters.chain,
         허용된brand_ids: chainBrandIds.slice(0, 5),
         매칭여부: isMatch
@@ -109,7 +115,8 @@ export function filterHotel(hotel: any, filters: HotelFilters, chainBrandIds: st
   
   // 브랜드 필터
   if (filters.brand) {
-    if (String(hotel.brand_id) !== filters.brand) {
+    const hotelBrandIds = getHotelBrandIdStrings(hotel)
+    if (!hotelBrandIds.includes(filters.brand)) {
       return false
     }
   }
@@ -193,11 +200,12 @@ export function filterInitialHotels(
     const passed = filterHotel(hotel, filters, chainBrandIds)
     
     if (!passed && filters.brand) {
+      const hotelBrandIds = getHotelBrandIdStrings(hotel)
       console.log('🔍 브랜드 필터 체크:', {
         호텔: hotel.property_name_ko,
-        호텔brand_id: String(hotel.brand_id),
+        호텔brand_ids: hotelBrandIds,
         필터brand: filters.brand,
-        매칭여부: String(hotel.brand_id) === filters.brand
+        매칭여부: hotelBrandIds.includes(filters.brand)
       })
     }
     

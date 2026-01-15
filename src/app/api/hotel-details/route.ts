@@ -218,7 +218,9 @@ export async function POST(request: NextRequest) {
     // 기존 hotel-details API 호출 (avail 사용 중이어도 호환성 위해 병행 호출)
     let response: Response
     try {
-      response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+      // response = await fetch('https://sabre-nodejs-9tia3.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+      // response = await fetch('https://sabre-nodejs-test-j58vk.ondigitalocean.app/public/hotel/sabre/hotel-details', {
+        response = await fetch('http://localhost:3000/public/hotel/sabre/hotel-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),

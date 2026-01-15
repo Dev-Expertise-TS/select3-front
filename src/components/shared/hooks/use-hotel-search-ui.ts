@@ -92,8 +92,13 @@ export function useHotelSearchUI() {
       }
       
       // 브랜드 필터
-      if (filters.brand && hotel.brand_id?.toString() !== filters.brand) {
-        return false
+      if (filters.brand) {
+        const hotelBrandIds = [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3]
+          .filter((id: any) => id !== null && id !== undefined && id !== '')
+          .map((id: any) => String(id))
+        if (!hotelBrandIds.includes(filters.brand)) {
+          return false
+        }
       }
       
       // 체인 필터

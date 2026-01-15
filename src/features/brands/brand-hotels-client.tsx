@@ -18,6 +18,7 @@ interface Hotel {
   rating: number
   price: string
   brand?: string
+  brands?: string[]
   chain?: string
   slug?: string // slug 정보 추가
   benefits: Array<{
@@ -79,7 +80,12 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
     }
 
     if (selectedBrand !== "all") {
-      filtered = filtered.filter((hotel) => hotel.brand === selectedBrand)
+      filtered = filtered.filter((hotel) => {
+        if (hotel.brands && hotel.brands.length > 0) {
+          return hotel.brands.includes(selectedBrand)
+        }
+        return hotel.brand === selectedBrand
+      })
     }
 
     return filtered
@@ -232,7 +238,12 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
                         전체 ({hotels.length})
                       </button>
                       {availableBrands.map((brand) => {
-                        const brandCount = hotels.filter((hotel) => hotel.brand === brand).length
+                        const brandCount = hotels.filter((hotel) => {
+                          if (hotel.brands && hotel.brands.length > 0) {
+                            return hotel.brands.includes(brand)
+                          }
+                          return hotel.brand === brand
+                        }).length
                         return (
                           <button
                             key={brand}
@@ -268,7 +279,8 @@ export function BrandHotelsClient({ hotels, displayName, allChains, selectedChai
                       nameKo={hotel.nameKo}
                       city={hotel.location}
                       address={hotel.address}
-                      brandLabel={hotel.brand || hotel.promotion?.title || undefined}
+                      brandLabels={hotel.brands?.length ? hotel.brands : hotel.brand ? [hotel.brand] : undefined}
+                      brandLabel={hotel.promotion?.title || undefined}
                       priority={index < 6} // 첫 6개 이미지는 우선 로딩
                     />
                   ))}

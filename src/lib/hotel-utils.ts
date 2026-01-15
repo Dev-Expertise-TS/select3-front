@@ -1,5 +1,13 @@
 import { HotelCardData } from "@/components/shared/hotel-card"
 
+export function getHotelBrandIds(hotel: any): Array<number | string> {
+  const rawIds = [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
+    (id) => id !== null && id !== undefined && id !== ''
+  )
+  const unique = new Set(rawIds.map((id) => String(id)))
+  return Array.from(unique)
+}
+
 // property_name_kor을 기반으로 slug 생성
 export function generateSlug(propertyName: string): string {
   return propertyName
@@ -154,8 +162,11 @@ export interface HotelCardAllViewData {
   benefit_6?: string
   // 브랜드와 체인 정보
   brand_id?: number
+  brand_id_2?: number
+  brand_id_3?: number
   chain_id?: number
   brand_name_en?: string
+  brand_names_en?: string[]
   chain_name_en?: string
 }
 
@@ -163,12 +174,13 @@ export interface HotelCardAllViewData {
 export function transformHotelToAllViewCardData(
   hotel: any,
   imageUrl?: string,
-  brandNameEn?: string
+  brandNamesEn?: string[]
 ): HotelCardAllViewData {
   const slug = hotel.slug || undefined
   
   // 지역 뱃지: DB 컬럼 `area_ko` 우선 사용 (없으면 기존 `hotel_area` fallback)
   const areaKo = typeof hotel.area_ko === 'string' ? hotel.area_ko : undefined
+  const normalizedBrandNames = (brandNamesEn || []).filter(Boolean)
   
   return {
     sabre_id: hotel.sabre_id,
@@ -208,8 +220,11 @@ export function transformHotelToAllViewCardData(
     benefit_6: hotel.benefit_6 || undefined,
     // 브랜드와 체인 정보
     brand_id: hotel.brand_id || undefined,
+    brand_id_2: hotel.brand_id_2 || undefined,
+    brand_id_3: hotel.brand_id_3 || undefined,
     chain_id: undefined, // chain_id는 없으므로 undefined
-    brand_name_en: brandNameEn || undefined, // hotel_brands에서 조회한 브랜드명
+    brand_name_en: normalizedBrandNames[0] || undefined, // 호환용 대표 브랜드명
+    brand_names_en: normalizedBrandNames.length > 0 ? normalizedBrandNames : undefined,
     chain_name_en: undefined   // chain_name_en 사용하지 않음
   }
 }
@@ -248,11 +263,25 @@ export function transformHotelsToAllViewCardData(
       imageUrl = '/placeholder.svg'
     }
     
-    // 브랜드 정보 찾기
-    const brand = brandData?.find(b => b.brand_id === hotel.brand_id)
-    const brandNameEn = brand?.brand_name_en
+    // 브랜드 정보 찾기 (brand_id, brand_id_2, brand_id_3)
+    // 모든 brand_id를 순서대로 가져와서 매핑 (순서 보장)
+    const allBrandIds = [
+      hotel.brand_id,
+      hotel.brand_id_2,
+      hotel.brand_id_3
+    ].filter((id) => id !== null && id !== undefined && id !== '')
     
-    return transformHotelToAllViewCardData(hotel, imageUrl, brandNameEn)
+    const brandNamesEn = allBrandIds
+      .map((id) => {
+        const brand = brandData?.find((b) => String(b.brand_id) === String(id))
+        return brand?.brand_name_en
+      })
+      .filter(Boolean) as string[]
+    
+    // 중복 제거하되 순서는 유지
+    const uniqueBrandNamesEn = Array.from(new Set(brandNamesEn))
+    
+    return transformHotelToAllViewCardData(hotel, imageUrl, uniqueBrandNamesEn)
   })
 }
 

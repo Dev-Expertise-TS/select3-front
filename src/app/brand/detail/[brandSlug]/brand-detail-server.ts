@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBrandBySlug, getHotelsByBrandName } from '@/lib/brand-data-server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
-import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 
 /**
  * 브랜드 상세 페이지 데이터 조회
@@ -33,7 +33,7 @@ export async function getBrandDetailData(brandSlug: string) {
   }
   
   // 4. 브랜드 정보 (체인 포함) 재조회
-  const brandIds = hotels.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+  const brandIds = Array.from(new Set(hotels.flatMap((hotel: any) => getHotelBrandIds(hotel))))
   let brandData = []
   
   if (brandIds.length > 0) {

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
-import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 import { getBannerHotel } from '@/lib/banner-hotel-server'
 
 /**
@@ -89,7 +89,7 @@ export async function getHotelPageData(opts?: { region?: string }) {
   console.log('✅ [HotelPage] 이미지 조회 완료:', firstImages?.length || 0, '개')
 
   // 3. 브랜드 정보 조회
-  const brandIds = hotels.filter((hotel: any) => hotel.brand_id).map((hotel: any) => hotel.brand_id)
+  const brandIds = Array.from(new Set(hotels.flatMap((hotel: any) => getHotelBrandIds(hotel))))
   let brandData: Array<{ brand_id: number; brand_name_en: string }> = []
   if (brandIds.length > 0) {
     const { data: brandResult, error: brandError } = await supabase
@@ -188,10 +188,10 @@ export async function getHotelPageData(opts?: { region?: string }) {
   })
   
   // 5-1. 브랜드 필터 옵션 생성 (모든 브랜드 조회 - /api/filter-options와 동일)
-  const allBrandIds = [...new Set(hotels.filter((h: any) => h.brand_id).map((h: any) => h.brand_id))]
+  const allBrandIds = Array.from(new Set(hotels.flatMap((hotel: any) => getHotelBrandIds(hotel))))
   console.log('🔍 [HotelPage] 브랜드 필터 옵션 생성 시작:', {
     총호텔수: hotels.length,
-    brand_id있는호텔: hotels.filter((h: any) => h.brand_id).length,
+    brand_id있는호텔: hotels.filter((h: any) => getHotelBrandIds(h).length > 0).length,
     고유brand_id개수: allBrandIds.length,
     brand_id샘플: allBrandIds.slice(0, 10)
   })

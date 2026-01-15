@@ -23,6 +23,8 @@ interface HotelInfoProps {
     city_eng?: string
     description_ko?: string
     description_en?: string
+    brand_name_en?: string
+    brand_names_en?: string[]
   }
   images: ImageItem[]
   totalImagesCount?: number // 전체 이미지 개수 (이미지 더 보기 오버레이용)
@@ -51,6 +53,12 @@ export function HotelInfo({
   isImageError,
   shareUrl
 }: HotelInfoProps) {
+  const brandLabels = hotel.brand_names_en?.length
+    ? hotel.brand_names_en
+    : hotel.brand_name_en
+      ? [hotel.brand_name_en]
+      : []
+  
   return (
     <div className="bg-white sm:bg-gray-100 py-0 sm:py-0.5 mt-1 sm:mt-0">
       <div className="container mx-auto max-w-[1440px] px-0 sm:px-4">
@@ -246,7 +254,14 @@ export function HotelInfo({
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
+              {brandLabels.length > 0 && (
+                <div className="flex flex-wrap gap-2 text-sm text-gray-500">
+                  {brandLabels.map((label, index) => (
+                    <span key={`${label}-${index}`}>{label}</span>
+                  ))}
+                </div>
+              )}
+              <div className={`flex items-center gap-2 text-gray-600 ${brandLabels.length > 0 ? "mt-2" : ""}`}>
                 <MapPin className="h-4 w-4 flex-shrink-0" />
                 <div className="flex min-w-0 items-center gap-2">
                   {hotel.hotel_area && (
