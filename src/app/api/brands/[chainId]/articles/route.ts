@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getCompanyFromSearchParams } from "@/lib/company-filter"
 
 /**
  * brand_id_connect 컬럼 파싱 함수
@@ -47,6 +48,8 @@ export async function GET(
   try {
     const supabase = await createClient()
     const { chainId } = await params
+    const searchParams = Object.fromEntries(request.nextUrl.searchParams)
+    const company = getCompanyFromSearchParams(searchParams)
     
     console.log(`[ API ] 체인 ${chainId}의 아티클 조회 시작 (brand_id_connect 기반)`)
     
@@ -82,7 +85,7 @@ export async function GET(
     const chainBrandIds = brands.map(brand => brand.brand_id)
     console.log(`[ API ] 체인 ${chainId}의 브랜드 ID들:`, chainBrandIds)
     
-    // 2. select_hotel_blogs 테이블에서 모든 블로그 조회 (brand_id_connect 컬럼 포함)
+    // 2. select_hotel_blogs 테이블에서 모든 블로그 조회 (brand_id_connect 컬럼 및 sN_sabre_id 포함)
     const { data: allBlogs, error: blogsError } = await supabase
       .from('select_hotel_blogs')
       .select(`
@@ -93,7 +96,10 @@ export async function GET(
         created_at,
         updated_at,
         brand_id_connect,
-        publish
+        publish,
+        s1_sabre_id, s2_sabre_id, s3_sabre_id, s4_sabre_id, 
+        s5_sabre_id, s6_sabre_id, s7_sabre_id, s8_sabre_id, 
+        s9_sabre_id, s10_sabre_id, s11_sabre_id, s12_sabre_id
       `)
       .eq('publish', true)
       .not('brand_id_connect', 'is', null)
@@ -121,20 +127,44 @@ export async function GET(
     }
     
     // 3. 클라이언트에서 brand_id_connect 필터링
-    const matchedBlogs = allBlogs.filter(blog => {
+    let matchedBlogs = allBlogs.filter(blog => {
       const blogBrandIds = parseBrandIdConnect(blog.brand_id_connect)
       const hasMatch = hasBrandMatch(blogBrandIds, chainBrandIds)
       
-      if (hasMatch) {
-        console.log(`[ API ] ✅ 블로그 "${blog.main_title}" 매칭:`, {
-          blogBrandIds,
-          chainBrandIds,
-          matched: blogBrandIds.filter(id => chainBrandIds.includes(id))
-        })
-      }
-      
       return hasMatch
     })
+
+    // 4. company=sk일 때 vcc=true 필터 적용
+    if (company === 'sk' && matchedBlogs.length > 0) {
+      const sabreIds = new Set<number>()
+      matchedBlogs.forEach((blog: any) => {
+        for (let i = 1; i <= 12; i++) {
+          const id = blog[`s${i}_sabre_id`]
+          if (id) sabreIds.add(id)
+        }
+      })
+
+      if (sabreIds.size > 0) {
+        const { data: vccData, error: vccError } = await supabase
+          .from('select_hotels')
+          .select('sabre_id, vcc')
+          .in('sabre_id', Array.from(sabreIds))
+
+        if (!vccError && vccData) {
+          const vccMap = new Map(vccData.map((h: any) => [h.sabre_id, h.vcc]))
+          
+          matchedBlogs = matchedBlogs.filter((blog: any) => {
+            for (let i = 1; i <= 12; i++) {
+              const id = blog[`s${i}_sabre_id`]
+              if (id && vccMap.get(id) !== true) {
+                return false
+              }
+            }
+            return true
+          })
+        }
+      }
+    }
     
     // 최신순 정렬 및 최대 12개 제한
     const sortedBlogs = matchedBlogs
@@ -145,19 +175,25 @@ export async function GET(
       })
       .slice(0, 12)
     
-    // brand_id_connect 필드 제거 (클라이언트에 노출하지 않음)
-    const blogsWithoutConnect = sortedBlogs.map(blog => {
-      const { brand_id_connect, publish, ...rest } = blog
+    // 불필요한 필드 제거 (sabre_id, brand_id_connect 등)
+    const resultBlogs = sortedBlogs.map(blog => {
+      const { 
+        brand_id_connect, publish, 
+        s1_sabre_id, s2_sabre_id, s3_sabre_id, s4_sabre_id, 
+        s5_sabre_id, s6_sabre_id, s7_sabre_id, s8_sabre_id, 
+        s9_sabre_id, s10_sabre_id, s11_sabre_id, s12_sabre_id,
+        ...rest 
+      } = blog
       return rest
     })
     
-    console.log(`[ API ] 체인 ${chainId}의 아티클 ${blogsWithoutConnect.length}개 조회 완료 (brand_id_connect 기반)`)
+    console.log(`[ API ] 체인 ${chainId}의 아티클 ${resultBlogs.length}개 조회 완료 (brand_id_connect 기반${company === 'sk' ? ', vcc=TRUE 필터 적용' : ''})`)
     
     return NextResponse.json({
       success: true,
-      data: blogsWithoutConnect,
+      data: resultBlogs,
       meta: {
-        count: blogsWithoutConnect.length,
+        count: resultBlogs.length,
         chainId: parseInt(chainId),
         brands: brands,
         totalBlogsChecked: allBlogs.length,

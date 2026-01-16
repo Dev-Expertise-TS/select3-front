@@ -53,15 +53,20 @@ export async function getHotelsByBrandId(brandId: string | number, company?: str
 /**
  * brand_name_en으로 해당 브랜드의 호텔 목록 조회
  */
-export async function getHotelsByBrandName(brandName: string) {
+export async function getHotelsByBrandName(brandName: string, company?: string | null) {
   const supabase = await createClient()
   
-  const { data: hotels, error: hotelsError } = await supabase
+  let hotelQuery = supabase
     .from('select_hotels')
     .select('*')
     .eq('brand_name_en', brandName)
     .or('publish.is.null,publish.eq.true')
     .order('property_name_en')
+
+  // company=sk일 때 vcc=TRUE 필터 적용
+  hotelQuery = applyVccFilter(hotelQuery, company || null)
+  
+  const { data: hotels, error: hotelsError } = await hotelQuery
   
   if (hotelsError) {
     console.error('❌ 브랜드별 호텔 조회 오류:', hotelsError instanceof Error ? hotelsError.message : String(hotelsError))

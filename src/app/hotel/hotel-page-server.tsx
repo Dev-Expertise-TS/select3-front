@@ -137,7 +137,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
   if (chainIds.length > 0) {
     let chainQuery = supabase
       .from('hotel_chains')
-      .select('chain_id, chain_name_en, chain_name_ko')
+      .select('chain_id, chain_name_en, chain_name_ko, chain_sort_order')
       .in('chain_id', chainIds)
     
     // company=sk일 때 vcc=TRUE인 체인만 필터링
@@ -169,7 +169,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
   // 5. 필터 옵션 가공
   const countries = new Map<string, { id: string; label: string; count: number }>()
   const cities = new Map<string, { id: string; label: string; count: number; country_code: string }>()
-  const chains = new Map<number, { id: string; label: string; count: number }>()
+  const chains = new Map<number, { id: string; label: string; count: number; sort_order: number }>()
   
   hotels.forEach((hotel: any) => {
     // 국가 (country_code를 id로 사용)
@@ -206,7 +206,8 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
       const existing = chains.get(hotel.chain_id) || { 
         id: String(hotel.chain_id), 
         label: chainLabel, 
-        count: 0 
+        count: 0,
+        sort_order: (chainInfo as any).chain_sort_order || 9999
       }
       existing.count++
       chains.set(hotel.chain_id, existing)
@@ -296,7 +297,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
     countries: Array.from(countries.values()).sort((a, b) => b.count - a.count),
     cities: Array.from(cities.values()).sort((a, b) => b.count - a.count),
     brands: brands,  // API와 동일한 형식
-    chains: Array.from(chains.values()).sort((a, b) => a.label.localeCompare(b.label))
+    chains: Array.from(chains.values()).sort((a, b) => a.sort_order - b.sort_order)
   }
   
   console.log('✅ [HotelPage] 필터 옵션 생성 완료:', {

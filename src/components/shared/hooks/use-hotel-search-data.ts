@@ -144,7 +144,7 @@ export function useHotelSearchData() {
         
         supabase
           .from('hotel_chains')
-          .select('chain_id, chain_name_ko, chain_name_en')
+          .select('chain_id, chain_name_ko, chain_name_en, chain_sort_order')
           .eq('is_active', true)
       ])
       
@@ -189,8 +189,9 @@ export function useHotelSearchData() {
       const chains = (chainsResult.data || []).map(chain => ({
         id: chain.chain_id.toString(),
         label: chain.chain_name_ko || chain.chain_name_en || '',
+        sort_order: chain.chain_sort_order || 9999,
         count: 0 // 실제 호텔 수는 별도 계산 필요
-      }))
+      })).sort((a, b) => a.sort_order - b.sort_order)
       
       return {
         countries,

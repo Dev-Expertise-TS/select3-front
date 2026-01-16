@@ -6,6 +6,7 @@ import { ScrollToTop } from '@/features/scroll-to-top'
 import { getBrandDetailData } from './brand-detail-server'
 import { getAllActiveBrands } from '@/lib/brand-data-server'
 import { BrandDetailClient } from './brand-detail-client'
+import { getCompanyFromSearchParams } from '@/lib/company-filter'
 
 // 정적 경로 생성 (SSG)
 export async function generateStaticParams() {
@@ -19,9 +20,17 @@ export async function generateStaticParams() {
 }
 
 // 메타데이터 생성
-export async function generateMetadata({ params }: { params: Promise<{ brandSlug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ brandSlug: string }>,
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}): Promise<Metadata> {
   const { brandSlug } = await params
-  const data = await getBrandDetailData(brandSlug)
+  const resolvedSearchParams = await searchParams
+  const company = getCompanyFromSearchParams(resolvedSearchParams)
+  const data = await getBrandDetailData(brandSlug, company)
   
   if (!data) {
     return {
@@ -75,9 +84,17 @@ export async function generateMetadata({ params }: { params: Promise<{ brandSlug
 }
 
 // 브랜드 상세 페이지
-export default async function BrandDetailPage({ params }: { params: Promise<{ brandSlug: string }> }) {
+export default async function BrandDetailPage({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ brandSlug: string }>,
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { brandSlug } = await params
-  const data = await getBrandDetailData(brandSlug)
+  const resolvedSearchParams = await searchParams
+  const company = getCompanyFromSearchParams(resolvedSearchParams)
+  const data = await getBrandDetailData(brandSlug, company)
   
   // 브랜드를 찾을 수 없는 경우 404
   if (!data) {

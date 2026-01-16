@@ -12,7 +12,6 @@ interface HotelBannerSectionProps {
     city: string
     city_ko?: string
     media_path?: string
-    image_1?: string
     brand_name_en?: string | null
     chain_name_en?: string | null
   } | null

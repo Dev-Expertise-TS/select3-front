@@ -12,7 +12,7 @@ interface RecommendationPageContentProps {
 
 export function RecommendationPageContent({ recommendationPage, hotels, slug }: RecommendationPageContentProps) {
   const hotelImageUrls = hotels
-    .map(item => item.card_image_url || item.hotelMedia?.public_url || item.hotelMedia?.storage_path || item.hotel?.image_1)
+    .map(item => item.card_image_url || item.hotelMedia?.public_url || item.hotelMedia?.storage_path)
     .filter(Boolean)
     .slice(0, 9)
   

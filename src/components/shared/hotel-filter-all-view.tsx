@@ -150,15 +150,16 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
           if (chainIds.length > 0) {
             const { data: chainData } = await supabase
               .from('hotel_chains')
-              .select('chain_id, chain_name_en, chain_name_ko, vcc')
+              .select('chain_id, chain_name_en, chain_name_ko, chain_sort_order, vcc')
               .in('chain_id', chainIds)
               .eq('vcc', true)
               .eq('status', 'active')
             
             chains = (chainData || []).map((c: any) => ({
               id: String(c.chain_id),
-              label: c.chain_name_en || c.chain_name_ko || ''
-            })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+              label: c.chain_name_en || c.chain_name_ko || '',
+              sort_order: c.chain_sort_order || 9999
+            })).sort((a: any, b: any) => a.sort_order - b.sort_order)
           }
         } else {
           // 일반적인 경우: 호텔 데이터에서 체인 추출

@@ -9,6 +9,7 @@ import { getCityBySlug } from '@/lib/city-data-server'
 import { getCityHotelsData } from './city-hotels-server'
 import { HotelSearchResults } from '@/components/shared/hotel-search-results'
 import { Suspense } from 'react'
+import { getCompanyFromSearchParams } from '@/lib/company-filter'
 
 // URL을 절대 URL로 변환하는 함수
 function toAbsoluteUrl(url: string): string {
@@ -59,14 +60,22 @@ function stripHtmlTags(html: string): string {
 }
 
 // 동적 메타데이터 생성
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ 
+  params, 
+  searchParams 
+}: { 
+  params: Promise<{ slug: string }>,
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}): Promise<Metadata> {
   const { slug } = await params
+  const resolvedSearchParams = await searchParams
+  const company = getCompanyFromSearchParams(resolvedSearchParams)
   const decodedSlug = decodeURIComponent(slug)
   
   // 1순위: 도시 slug 확인
   const city = await getCityBySlug(slug)
   if (city) {
-    const cityData = await getCityHotelsData(slug)
+    const cityData = await getCityHotelsData(slug, resolvedSearchParams)
     if (cityData) {
       const cityName = cityData.city.city_ko || cityData.city.city_en || '도시'
       const countryName = cityData.city.country_ko || cityData.city.country_en || ''
@@ -111,7 +120,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   // 2순위: 호텔 slug로 처리
-  const detailData = await getHotelDetailData(slug)
+  const detailData = await getHotelDetailData(slug, company)
   
   if (!detailData) {
     return {
@@ -372,11 +381,12 @@ export default async function HotelDetailPage({
   const productCode = resolvedSearchParams.productCode as string | undefined
   const checkIn = resolvedSearchParams.checkIn as string | undefined
   const checkOut = resolvedSearchParams.checkOut as string | undefined
+  const company = getCompanyFromSearchParams(resolvedSearchParams)
   
   // 1순위: 도시 slug 확인
   const city = await getCityBySlug(slug)
   if (city) {
-    const cityData = await getCityHotelsData(slug)
+    const cityData = await getCityHotelsData(slug, resolvedSearchParams)
     
     if (cityData) {
       const { city: cityInfo, hotels, filterOptions } = cityData
@@ -391,7 +401,7 @@ export default async function HotelDetailPage({
             showAllHotels={true}
             hideSearchBar={false}
             showFilters={true}
-            hidePromotionBanner={false}
+            hidePromotionBadge={false}
             initialHotels={hotels}
             serverFilterOptions={filterOptions}
             initialFilters={{
@@ -399,6 +409,7 @@ export default async function HotelDetailPage({
               cities: [cityInfo.city_code]
             }}
             enableFilterNavigation={true}
+            company={company}
           />
         </Suspense>
       )
@@ -406,7 +417,7 @@ export default async function HotelDetailPage({
   }
   
   // 2순위: 호텔 slug로 처리
-  const detailData = await getHotelDetailData(slug)
+  const detailData = await getHotelDetailData(slug, company)
   
   // 호텔을 찾을 수 없는 경우 HotelNotFound 페이지 표시 (Header/Footer 포함)
   if (!detailData) {

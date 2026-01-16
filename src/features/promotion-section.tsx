@@ -12,52 +12,17 @@ async function getPromotionHotels(
 ) {
   const supabase = await createClient()
   
-  // KST 오늘 (YYYY-MM-DD)
-  const now = new Date()
-  const kstMs = now.getTime() + 9 * 60 * 60 * 1000
-  const todayKst = new Date(kstMs).toISOString().slice(0, 10)
+  // 1. select_hotel_promotions_map에서 sabre_id 조회 (/promotion 페이지와 동일한 풀)
+  const { data: promotionMap, error: mapError } = await supabase
+    .from('select_hotel_promotions_map')
+    .select('sabre_id')
 
-  // 1. select_feature_slots에서 surface가 "프로모션"인 sabre_id 조회 (slot_key 오름차순)
-  const { data: featureSlots } = await supabase
-    .from('select_feature_slots')
-    .select('sabre_id, slot_key, start_date, end_date')
-    .eq('surface', '프로모션')
-    .order('slot_key', { ascending: true })
-  
-  // 시작/종료 날짜 필터 적용
-  const activeSlots = (featureSlots || [])
-    .filter((slot: any) => {
-      const start = (slot.start_date ?? '').toString().slice(0, 10)
-      const end = (slot.end_date ?? '').toString().slice(0, 10)
-      if (!start && !end) return true
-      if (start && todayKst < start) return false
-      if (end && todayKst > end) return false
-      return true
-    })
-
-  // slot_key 순서 맵 (일반 사용자용)
-  const orderMap = new Map<number, number>()
-  activeSlots.forEach((slot: any, idx: number) => orderMap.set(slot.sabre_id, idx))
-
-  let poolSabreIds = activeSlots.map((slot: any) => slot.sabre_id)
-
-  // SK인 경우 풀을 /promotion 페이지와 동일하게 설정 (프로모션 맵에 등록된 호텔만)
-  if (company === 'sk') {
-    const { data: promotionMap } = await supabase
-      .from('select_hotel_promotions_map')
-      .select('sabre_id')
-    
-    if (promotionMap && promotionMap.length > 0) {
-      // /promotion 페이지와 동일하게 promotion_map 기반으로만 구성
-      poolSabreIds = [...new Set(promotionMap.map(item => item.sabre_id))]
-    } else {
-      return []
-    }
-  }
-
-  if (poolSabreIds.length === 0) {
+  if (mapError || !promotionMap || promotionMap.length === 0) {
     return []
   }
+
+  // 중복 제거 및 sabre_id 목록 생성
+  const poolSabreIds = [...new Set(promotionMap.map(item => item.sabre_id))]
   
   // 2. select_hotels에서 호텔 정보 조회
   let hotelQuery = supabase
@@ -68,12 +33,8 @@ async function getPromotionHotels(
   // company=sk일 때 vcc=true 필터 적용
   hotelQuery = applyVccFilter(hotelQuery, company || null)
   
-  // SK인 경우 더 많은 후보를 가져와서 랜덤화 (최대 50개)
-  if (company === 'sk') {
-    hotelQuery = hotelQuery.limit(50)
-  } else {
-    hotelQuery = hotelQuery.limit(hotelCount * 2)
-  }
+  // 랜덤하게 선택하기 위해 넉넉하게 가져옴
+  hotelQuery = hotelQuery.limit(100)
   
   const { data: hotels, error: hotelsError } = await hotelQuery
   
@@ -84,17 +45,10 @@ async function getPromotionHotels(
   // publish 필터링 (null이거나 true인 것만)
   let processedHotels = hotels.filter((h: any) => h.publish !== false)
 
-  if (company === 'sk') {
-    // SK인 경우 랜덤하게 섞고 요청된 개수만큼 선택
-    processedHotels = processedHotels
-      .sort(() => Math.random() - 0.5)
-      .slice(0, hotelCount)
-  } else {
-    // 일반 사용자는 slot_key 순서대로 정렬 후 선택
-    processedHotels = processedHotels
-      .sort((a: any, b: any) => (orderMap.get(a.sabre_id) ?? 0) - (orderMap.get(b.sabre_id) ?? 0))
-      .slice(0, hotelCount)
-  }
+  // 모든 사용자에게 랜덤하게 섞고 요청된 개수만큼 선택
+  processedHotels = processedHotels
+    .sort(() => Math.random() - 0.5)
+    .slice(0, hotelCount)
   
   // 3. select_hotel_media에서 호텔 이미지 조회
   const hotelSabreIds = processedHotels.map(h => String(h.sabre_id))
@@ -264,7 +218,7 @@ export async function PromotionSection({
   return (
     <HotelCardGridSection
       hotels={promotionHotels || []}
-      title="Hotel & Resorts"
+      title="Hotel & Resort Promotions"
       subtitle="프로모션 진행 중인 호텔 & 리조트"
       variant="promotion"
       gap="md"

@@ -58,12 +58,12 @@ export type Database = {
           link: string | null
           property_details: string | null
           
-          // 이미지 정보
-          image_1: string
-          image_2: string
-          image_3: string
-          image_4: string
-          image_5: string
+          // 이미지 정보 (더 이상 사용되지 않음 - select_hotel_media 테이블 사용)
+          image_1?: string
+          image_2?: string
+          image_3?: string
+          image_4?: string
+          image_5?: string
           
           // 배지 정보
           badge: string
@@ -151,7 +151,7 @@ export type Database = {
           link?: string | null
           property_details?: string | null
           
-          // 이미지 정보
+          // 이미지 정보 (더 이상 사용되지 않음)
           image_1?: string
           image_2?: string
           image_3?: string
@@ -244,7 +244,7 @@ export type Database = {
           link?: string | null
           property_details?: string | null
           
-          // 이미지 정보
+          // 이미지 정보 (더 이상 사용되지 않음)
           image_1?: string
           image_2?: string
           image_3?: string

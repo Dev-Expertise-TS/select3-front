@@ -5,7 +5,7 @@ import { getFirstImagePerHotel } from '@/lib/media-utils'
  * 호텔 상세 페이지 서버 데이터 조회
  * 호텔 기본 정보 + 이미지 + 혜택 + 프로모션을 한번에 조회
  */
-export async function getHotelDetailData(slug: string) {
+export async function getHotelDetailData(slug: string, company?: string | null) {
   const supabase = await createClient()
   
   // URL 디코딩 처리
@@ -24,6 +24,11 @@ export async function getHotelDetailData(slug: string) {
   
   // publish가 false면 null 반환
   if (hotel.publish === false) {
+    return null
+  }
+
+  // company=sk일 때 vcc가 true가 아니면 null 반환
+  if (company === 'sk' && hotel.vcc !== true) {
     return null
   }
   
@@ -163,7 +168,50 @@ export async function getHotelDetailData(slug: string) {
   })
   
   // 블로그 데이터 처리
-  const blogs = blogsResult.data || []
+  let blogs = blogsResult.data || []
+
+  // company=sk일 때 블로그 필터링 (vcc=TRUE인 호텔만 포함된 블로그만 표시)
+  if (company === 'sk' && blogs.length > 0) {
+    const allMentionedSabreIds = new Set<number>()
+    blogs.forEach((blog: any) => {
+      for (let i = 1; i <= 12; i++) {
+        const id = blog[`s${i}_sabre_id`]
+        if (id) allMentionedSabreIds.add(id)
+      }
+    })
+
+    if (allMentionedSabreIds.size > 0) {
+      const { data: vccData, error: vccError } = await supabase
+        .from('select_hotels')
+        .select('sabre_id, vcc')
+        .in('sabre_id', Array.from(allMentionedSabreIds))
+
+      if (!vccError && vccData) {
+        const vccMap = new Map(vccData.map((h: any) => [h.sabre_id, h.vcc]))
+        
+        blogs = blogs.filter((blog: any) => {
+          for (let i = 1; i <= 12; i++) {
+            const id = blog[`s${i}_sabre_id`]
+            if (id && vccMap.get(id) !== true) {
+              return false
+            }
+          }
+          return true
+        })
+      }
+    }
+  }
+
+  // sabre_id 필드 제거
+  const resultBlogs = blogs.map((blog: any) => {
+    const { 
+      s1_sabre_id, s2_sabre_id, s3_sabre_id, s4_sabre_id, 
+      s5_sabre_id, s6_sabre_id, s7_sabre_id, s8_sabre_id, 
+      s9_sabre_id, s10_sabre_id, s11_sabre_id, s12_sabre_id,
+      ...rest 
+    } = blog
+    return rest
+  })
   
   // 후기 데이터 처리 (AggregateRating용)
   const reviews = reviewsResult.data || []
@@ -180,7 +228,7 @@ export async function getHotelDetailData(slug: string) {
     images,
     benefits,
     promotions,
-    blogs,
+    blogs: resultBlogs,
     reviews: {
       count: reviewCount,
       averageRating,

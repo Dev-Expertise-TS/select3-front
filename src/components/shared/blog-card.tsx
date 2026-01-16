@@ -66,7 +66,7 @@ export function BlogCard({
           </div>
           <div className="flex items-center justify-between pt-4 mt-auto">
             <span className="text-xs text-gray-500">
-              {formatDate(updatedAt || createdAt)}
+              {formatDate(createdAt)}
             </span>
           </div>
         </CardContent>

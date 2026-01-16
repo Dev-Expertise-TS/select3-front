@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 import { createNavigationUrl } from "@/lib/url-utils"
 import { Header } from "@/components/header"
 import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
@@ -524,10 +525,18 @@ export function HotelSearchResults({
     handleFiltersChange(newFilters)
   }
 
+  // 현재 설정된 필터 중 유효한 필터만 (showAllHotels일 때는 브랜드 제외)
+  const effectiveFilters = useMemo(() => {
+    if (showAllHotels) {
+      return { ...filters, brand: '' }
+    }
+    return filters
+  }, [filters, showAllHotels])
+
   // 필터링된 데이터 계산
   const filteredData = useMemo(() => {
     // 브랜드 페이지에서 브랜드가 선택되었거나 필터가 설정된 경우 필터링 적용
-    const hasActiveFilters = filters.city || filters.country || filters.brand || filters.chain
+    const hasActiveFilters = effectiveFilters.city || effectiveFilters.country || effectiveFilters.brand || effectiveFilters.chain
     const hasInitialBrandId = initialBrandId && initialBrandId !== ''
     
     // initialHotels가 있고 필터가 완전히 비어있고 initialBrandId도 없으면 필터 옵션을 기다리지 않고 바로 반환
@@ -547,8 +556,8 @@ export function HotelSearchResults({
       return brandFilteredHotels
     }
     
-    return filterAllHotels(allHotels || [], filters, finalFilterOptions)
-  }, [allHotels, filters, finalFilterOptions, initialHotels, initialBrandId])
+    return filterAllHotels(allHotels || [], effectiveFilters, finalFilterOptions)
+  }, [allHotels, effectiveFilters, finalFilterOptions, initialHotels, initialBrandId])
   
   // filteredData 디버깅
   useEffect(() => {
@@ -704,27 +713,28 @@ export function HotelSearchResults({
 
   // 검색 결과용 필터링된 데이터
   const filteredSearchResults = useMemo(() => {
-    return filterSearchResults(searchResults || [], filters, finalFilterOptions)
-  }, [searchResults, filters, finalFilterOptions])
+    return filterSearchResults(searchResults || [], effectiveFilters, finalFilterOptions)
+  }, [searchResults, effectiveFilters, finalFilterOptions])
 
   // 체인 페이지용 필터링된 데이터
   const filteredChainHotels = useMemo(() => {
-    return filterInitialHotels(initialHotels, filters, finalFilterOptions)
-  }, [initialHotels, filters, finalFilterOptions])
+    return filterInitialHotels(initialHotels, effectiveFilters, finalFilterOptions)
+  }, [initialHotels, effectiveFilters, finalFilterOptions])
 
   // 브랜드로 가져온 데이터에 도시/국가/체인 교차 필터 적용
   const filteredBrandHotels = useMemo(() => {
-    return filterAllHotels(brandHotels || [], filters, finalFilterOptions)
-  }, [brandHotels, filters, finalFilterOptions])
+    return filterAllHotels(brandHotels || [], effectiveFilters, finalFilterOptions)
+  }, [brandHotels, effectiveFilters, finalFilterOptions])
 
   // 체인으로 가져온 데이터에 도시/국가/브랜드 교차 필터 적용
   const filteredChainBrandHotels = useMemo(() => {
-    return filterAllHotels(chainBrandHotels || [], filters, finalFilterOptions)
-  }, [chainBrandHotels, filters, finalFilterOptions])
+    return filterAllHotels(chainBrandHotels || [], effectiveFilters, finalFilterOptions)
+  }, [chainBrandHotels, effectiveFilters, finalFilterOptions])
 
   // 브랜드/체인 필터가 초기값과 다른지 확인
   const isFilterChanged = useMemo(() => {
-    if (filters.brand && initialBrandId && filters.brand !== initialBrandId) {
+    // 전체보기 페이지에서는 브랜드 필터 변경을 무시
+    if (!showAllHotels && filters.brand && initialBrandId && filters.brand !== initialBrandId) {
       return true
     }
     if (filters.chain && currentChainId && filters.chain !== currentChainId) {
@@ -735,7 +745,7 @@ export function HotelSearchResults({
       return true
     }
     return false
-  }, [filters, initialBrandId, currentChainId])
+  }, [filters, initialBrandId, currentChainId, showAllHotels])
 
   // 표시할 데이터 결정 (우선순위: 검색(필터링) > 필터변경시전체호텔 > initialHotels(필터링) > 브랜드선택(필터링) > 체인선택(필터링) > 전체호텔)
   const allData = searchQuery.trim() 
@@ -1005,42 +1015,46 @@ export function HotelSearchResults({
                                 </div>
                               </div>
                             ) : (
-                              <div className="grid grid-cols-4 gap-3 flex-grow">
-                                {/* 도시 필터 */}
-                                <div>
-                                  <select
-                                    value={filters.city}
-                                    onChange={(e) => handleSingleFilterChange('city', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
-                                    disabled={isFinalFilterOptionsLoading}
-                                  >
-                                    <option value="">도시 전체</option>
-                                    {finalFilterOptions?.cities?.map((city: any) => (
-                                      <option key={city.id} value={city.id}>
-                                        {city.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                
-                                {/* 국가 필터 */}
-                                <div>
-                                  <select
-                                    value={filters.country}
-                                    onChange={(e) => handleSingleFilterChange('country', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
-                                    disabled={isFinalFilterOptionsLoading}
-                                  >
-                                    <option value="">국가 전체</option>
-                                    {finalFilterOptions?.countries?.map((country: any) => (
-                                      <option key={country.id} value={country.id}>
-                                        {country.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                
-                                {/* 브랜드 필터 */}
+                              <div className={cn(
+                              "grid gap-3 flex-grow",
+                              showAllHotels ? "grid-cols-3" : "grid-cols-4"
+                            )}>
+                              {/* 도시 필터 */}
+                              <div>
+                                <select
+                                  value={filters.city}
+                                  onChange={(e) => handleSingleFilterChange('city', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
+                                  disabled={isFinalFilterOptionsLoading}
+                                >
+                                  <option value="">도시 전체</option>
+                                  {finalFilterOptions?.cities?.map((city: any) => (
+                                    <option key={city.id} value={city.id}>
+                                      {city.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              
+                              {/* 국가 필터 */}
+                              <div>
+                                <select
+                                  value={filters.country}
+                                  onChange={(e) => handleSingleFilterChange('country', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
+                                  disabled={isFinalFilterOptionsLoading}
+                                >
+                                  <option value="">국가 전체</option>
+                                  {finalFilterOptions?.countries?.map((country: any) => (
+                                    <option key={country.id} value={country.id}>
+                                      {country.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              
+                              {/* 브랜드 필터 - 전체보기 페이지에서는 숨김 */}
+                              {!showAllHotels && (
                                 <div>
                                   <select
                                     value={filters.brand}
@@ -1056,24 +1070,25 @@ export function HotelSearchResults({
                                     ))}
                                   </select>
                                 </div>
-                                
-                                {/* 체인 필터 */}
-                                <div>
-                                  <select
-                                    value={filters.chain}
-                                    onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
-                                    disabled={isFinalFilterOptionsLoading}
-                                  >
-                                    <option value="">체인 전체</option>
-                                    {finalFilterOptions?.chains?.map((chain: any) => (
-                                      <option key={chain.id} value={chain.id}>
-                                        {chain.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
+                              )}
+                              
+                              {/* 체인 필터 */}
+                              <div>
+                                <select
+                                  value={filters.chain}
+                                  onChange={(e) => handleSingleFilterChange('chain', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent h-10"
+                                  disabled={isFinalFilterOptionsLoading}
+                                >
+                                  <option value="">{showAllHotels ? "브랜드 & 체인 전체" : "체인 전체"}</option>
+                                  {finalFilterOptions?.chains?.map((chain: any) => (
+                                    <option key={chain.id} value={chain.id}>
+                                      {chain.label}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
+                            </div>
                             )}
                           </div>
                         </div>
@@ -1141,22 +1156,24 @@ export function HotelSearchResults({
                                 </select>
                               </div>
                               
-                              {/* 브랜드 필터 */}
-                              <div>
-                                <select
-                                  value={filters.brand}
-                                  onChange={(e) => handleSingleFilterChange('brand', e.target.value)}
-                                  className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  disabled={isFinalFilterOptionsLoading}
-                                >
-                                  <option value="">브랜드 전체</option>
-                                  {finalFilterOptions?.brands?.map((brand: any) => (
-                                    <option key={brand.id} value={brand.id}>
-                                      {brand.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                              {/* 브랜드 필터 - 전체보기 페이지에서는 숨김 */}
+                              {!showAllHotels && (
+                                <div>
+                                  <select
+                                    value={filters.brand}
+                                    onChange={(e) => handleSingleFilterChange('brand', e.target.value)}
+                                    className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    disabled={isFinalFilterOptionsLoading}
+                                  >
+                                    <option value="">브랜드 전체</option>
+                                    {finalFilterOptions?.brands?.map((brand: any) => (
+                                      <option key={brand.id} value={brand.id}>
+                                        {brand.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
                               
                               {/* 체인 필터 */}
                               <div>
@@ -1166,7 +1183,7 @@ export function HotelSearchResults({
                                   className="w-full px-2 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                                   disabled={isFinalFilterOptionsLoading}
                                 >
-                                  <option value="">체인 전체</option>
+                                  <option value="">{showAllHotels ? "브랜드 & 체인 전체" : "체인 전체"}</option>
                                   {finalFilterOptions?.chains?.map((chain: any) => (
                                     <option key={chain.id} value={chain.id}>
                                       {chain.label}

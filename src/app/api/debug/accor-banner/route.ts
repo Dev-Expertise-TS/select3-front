@@ -48,7 +48,7 @@ export async function GET() {
         // 3. 해당 호텔의 정보 확인
         const { data: hotelData, error: hotelError } = await supabase
           .from('select_hotels')
-          .select('sabre_id, property_name_ko, image_1')
+          .select('sabre_id, property_name_ko')
           .eq('sabre_id', sabreId)
           .single()
         
@@ -81,7 +81,7 @@ export async function GET() {
       // 호텔 정보 조회
       const { data: hotelData, error: hotelError } = await supabase
         .from('select_hotels')
-        .select('sabre_id, property_name_ko, image_1')
+        .select('sabre_id, property_name_ko')
         .eq('sabre_id', sabreId)
         .single()
       

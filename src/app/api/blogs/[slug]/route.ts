@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getCompanyFromSearchParams } from "@/lib/company-filter"
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +9,8 @@ export async function GET(
   try {
     const supabase = await createClient()
     const { slug } = await params
+    const searchParams = Object.fromEntries(request.nextUrl.searchParams)
+    const company = getCompanyFromSearchParams(searchParams)
     
     const { data: blog, error } = await supabase
       .from("select_hotel_blogs")
@@ -40,12 +43,13 @@ export async function GET(
         s10_sabre_id,
         s11_sabre_id,
         s12_sabre_id,
-        created_at
+        created_at,
+        publish
       `)
       .eq("slug", slug)
       .single()
 
-    if (error) {
+    if (error || !blog) {
       console.error("Blog fetch error:", error)
       return NextResponse.json(
         { success: false, error: "블로그를 찾을 수 없습니다." },
@@ -53,16 +57,49 @@ export async function GET(
       )
     }
 
-    if (!blog) {
+    // publish 상태 확인
+    if (blog.publish === false) {
       return NextResponse.json(
-        { success: false, error: "블로그를 찾을 수 없습니다." },
+        { success: false, error: "게시되지 않은 블로그입니다." },
         { status: 404 }
       )
     }
 
+    // company=sk일 때 vcc=true 필터 적용
+    if (company === 'sk') {
+      const sabreIds = []
+      for (let i = 1; i <= 12; i++) {
+        const id = (blog as any)[`s${i}_sabre_id`]
+        if (id) sabreIds.push(id)
+      }
+
+      if (sabreIds.length > 0) {
+        const { data: vccData, error: vccError } = await supabase
+          .from('select_hotels')
+          .select('sabre_id, vcc')
+          .in('sabre_id', sabreIds)
+
+        if (!vccError && vccData) {
+          const vccMap = new Map(vccData.map((h: any) => [h.sabre_id, h.vcc]))
+          
+          for (const id of sabreIds) {
+            if (vccMap.get(id) !== true) {
+              return NextResponse.json(
+                { success: false, error: "접근 권한이 없는 블로그입니다." },
+                { status: 403 }
+              )
+            }
+          }
+        }
+      }
+    }
+
+    // 불필요한 필드 제거 후 반환
+    const { publish, ...blogData } = blog
+
     return NextResponse.json({
       success: true,
-      data: blog
+      data: blogData
     })
   } catch (error) {
     console.error("Unexpected error:", error)

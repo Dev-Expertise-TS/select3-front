@@ -12,8 +12,7 @@ export function HotelCard({ item, index }: HotelCardProps) {
   const hotel = item.hotel
   const imageUrl = item.card_image_url || 
                    item.hotelMedia?.public_url || 
-                   item.hotelMedia?.storage_path ||
-                   hotel.image_1
+                   item.hotelMedia?.storage_path
 
   return (
     <Link

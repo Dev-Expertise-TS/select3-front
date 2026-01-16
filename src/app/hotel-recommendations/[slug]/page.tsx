@@ -87,7 +87,7 @@ function generateStructuredData(recommendationPage: any, hotels: any[], slug: st
           '@type': 'Hotel',
           name: hotel.property_name_ko || hotel.property_name_en,
           description: item.card_blurb_ko || hotel.property_details,
-          image: item.card_image_url || hotel.image_1,
+          image: item.card_image_url || item.hotelMedia?.public_url || item.hotelMedia?.storage_path,
           address: {
             '@type': 'PostalAddress',
             streetAddress: hotel.property_address,

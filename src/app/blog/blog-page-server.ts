@@ -25,7 +25,7 @@ export async function getBlogPageData(company?: string | null) {
       s9_sabre_id, s10_sabre_id, s11_sabre_id, s12_sabre_id
     `)
     .eq('publish', true)
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .order('id', { ascending: false })
   
   if (error) {

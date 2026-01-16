@@ -14,7 +14,6 @@ interface HotelAdBannerProps {
     city: string
     city_ko?: string
     media_path?: string
-    image_1?: string
     brand_name_en?: string | null
     chain_name_en?: string | null
   }
@@ -55,14 +54,13 @@ export function HotelAdBanner({ hotel, className }: HotelAdBannerProps) {
     return path
   }
   
-  const imagePath = normalizeMediaPath(hotel.media_path || hotel.image_1)
+  const imagePath = normalizeMediaPath(hotel.media_path)
   
   // 디버깅 로그
   console.log('🖼️ [HotelAdBanner] 이미지 경로 디버깅:', {
     sabre_id: hotel.sabre_id,
     hotel_name: hotel.property_name_ko,
     media_path: hotel.media_path,
-    image_1: hotel.image_1,
     final_imagePath: imagePath,
     hasImage: !!imagePath,
     imagePathType: typeof imagePath

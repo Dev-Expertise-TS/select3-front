@@ -119,15 +119,14 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       console.warn('⚠️ [Server] 배너 호텔 이미지 조회 실패:', mediaError.message)
     }
     
-    // 이미지 경로 결정 (storage_path 우선, 없으면 image_1 fallback)
-    const imagePath = mediaData?.storage_path || mediaData?.public_url || randomHotel.image_1 || null
+    // 이미지 경로 결정 (storage_path 우선, 없으면 public_url)
+    const imagePath = mediaData?.storage_path || mediaData?.public_url || null
     
     console.log('🖼️ [Server] 배너 이미지 경로:', {
       sabre_id: randomHotel.sabre_id,
       hotel_name: randomHotel.property_name_ko,
       storage_path: mediaData?.storage_path,
       public_url: mediaData?.public_url,
-      image_1: randomHotel.image_1,
       final_path: imagePath
     })
     
