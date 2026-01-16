@@ -78,7 +78,7 @@ export async function BrandProgramPage({ company }: { company?: string | null })
   // company=sk일 때 특정 브랜드만 노출
   let filteredChains = chains
   if (company === 'sk') {
-    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts']
+    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts', 'hyatt']
     filteredChains = chains.filter(chain => allowedSlugs.includes(chain.chain_slug))
   } else {
     // 특정 브랜드 숨기기: marriott, platinum
@@ -125,18 +125,20 @@ export async function BrandProgramPage({ company }: { company?: string | null })
             ))}
           </div>
 
-          {/* 더 많은 브랜드 보기 버튼 */}
-          <div className="text-center mt-8">
-            <Link
-              href="/hotel/brand"
-              className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-            >
-              더 많은 브랜드 보기
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
+          {/* 더 많은 브랜드 보기 버튼 (SK인 경우 숨김) */}
+          {company !== 'sk' && (
+            <div className="text-center mt-8">
+              <Link
+                href="/hotel/brand"
+                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+              >
+                더 많은 브랜드 보기
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </>

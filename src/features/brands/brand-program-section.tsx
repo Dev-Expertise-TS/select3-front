@@ -40,7 +40,7 @@ export async function BrandProgramSection({ company }: { company?: string | null
   // company=sk일 때 특정 브랜드만 노출
   let filteredChains = chains
   if (company === 'sk') {
-    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts']
+    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts', 'hyatt']
     filteredChains = chains.filter(chain => allowedSlugs.includes(chain.slug))
   } else {
     // 특정 브랜드 숨기기: marriott, platinum
