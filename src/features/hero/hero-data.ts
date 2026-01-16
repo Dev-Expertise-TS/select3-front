@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
+import { applyVccFilter } from '@/lib/company-filter'
 
 export interface HeroImageData {
   sabre_id: number
@@ -25,7 +26,7 @@ const getHotelBrandIds = (hotel: any) =>
  * - 성능 최적화: 클라이언트 API 호출 제거
  * - 즉시 이미지 표시 (빠른 LCP)
  */
-export async function getHeroImages(): Promise<HeroImageData[]> {
+export async function getHeroImages(company?: string | null): Promise<HeroImageData[]> {
   const supabase = await createClient()
 
   try {
@@ -62,10 +63,15 @@ export async function getHeroImages(): Promise<HeroImageData[]> {
     const sabreIds = activeSlots.map(slot => slot.sabre_id)
     
     // 2. select_hotels에서 호텔 정보 조회
-    const { data: hotels, error: hotelsError } = await supabase
+    let hotelQuery = supabase
       .from('select_hotels')
       .select('*')
       .in('sabre_id', sabreIds)
+    
+    // company=sk일 때 vcc=TRUE 필터 적용
+    hotelQuery = applyVccFilter(hotelQuery, company || null)
+    
+    const { data: hotels, error: hotelsError } = await hotelQuery
     
     if (hotelsError || !hotels) {
       return []

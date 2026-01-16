@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BrandCard } from "@/components/shared/brand-card"
+import { withCompanyParam } from "@/lib/url-utils"
 
 interface HotelChain {
   chain_id: number
@@ -33,13 +34,20 @@ async function getHotelChains() {
   return brandCards
 }
 
-export async function BrandProgramSection() {
+export async function BrandProgramSection({ company }: { company?: string | null }) {
   const chains = await getHotelChains()
   
-  // 특정 브랜드 숨기기: marriott, platinum
-  const filteredChains = chains.filter(
-    chain => chain.slug !== 'marriott' && chain.slug !== 'platinum'
-  )
+  // company=sk일 때 특정 브랜드만 노출
+  let filteredChains = chains
+  if (company === 'sk') {
+    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts']
+    filteredChains = chains.filter(chain => allowedSlugs.includes(chain.slug))
+  } else {
+    // 특정 브랜드 숨기기: marriott, platinum
+    filteredChains = chains.filter(
+      chain => chain.slug !== 'marriott' && chain.slug !== 'platinum'
+    )
+  }
   
   // 아만 리조트 인터네셔널을 첫번째로 정렬
   const sortedChains = [...filteredChains].sort((a, b) => {
@@ -72,7 +80,7 @@ export async function BrandProgramSection() {
         {/* 더 보기 버튼 */}
         <div className="text-center mt-8">
           <Link
-            href="/brand"
+            href={withCompanyParam("/brand")}
             className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
           >
             브랜드 더 보기

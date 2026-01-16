@@ -70,9 +70,20 @@ export async function generateMetadata({ params }: { params: Promise<{ chainSlug
 }
 
 // 체인별 호텔 목록 페이지
-export default async function ChainHotelsPage({ params }: { params: Promise<{ chainSlug: string }> }) {
+export default async function ChainHotelsPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ chainSlug: string }>
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { chainSlug } = await params
-  const data = await getChainHotelsData(chainSlug)
+  
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = searchParams ? await getCompanyFromServer(searchParams) : null
+  
+  const data = await getChainHotelsData(chainSlug, company)
   
   // 체인을 찾을 수 없는 경우 404
   if (!data) {

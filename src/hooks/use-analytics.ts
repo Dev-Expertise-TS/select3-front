@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
+import { getErrorMessage } from '@/lib/logger'
 
 export function useAnalytics() {
   const pathname = usePathname()
@@ -42,7 +43,7 @@ export function useAnalytics() {
           console.log('📊 [Analytics] 이벤트 전송:', { action, category, label, value })
         }
       } catch (error) {
-        console.error('❌ [Analytics] 이벤트 전송 실패:', error)
+        console.error('❌ [Analytics] 이벤트 전송 실패:', getErrorMessage(error))
       }
     } else {
       if (process.env.NODE_ENV === 'development') {
@@ -133,7 +134,7 @@ export function useAnalytics() {
         dataLayer_로드: typeof window !== 'undefined' && typeof (window as any).dataLayer !== 'undefined'
       })
     } catch (error) {
-      console.error('❌ [Analytics] 호텔 검색 이벤트 전송 실패:', error)
+      console.error('❌ [Analytics] 호텔 검색 이벤트 전송 실패:', getErrorMessage(error))
     }
   }
 

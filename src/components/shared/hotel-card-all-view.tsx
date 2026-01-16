@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import { addCompanyParam } from "@/lib/url-utils"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -70,6 +71,7 @@ export interface HotelCardAllViewProps {
   imageClassName?: string
   contentClassName?: string
   isThreeGrid?: boolean // 3개 그리드 여부
+  company?: string | null // company 파라미터 (하이드레이션 오류 방지)
 }
 
 // 호텔 이미지 영역 컴포넌트
@@ -118,7 +120,7 @@ function HotelImageSection({
         .in('brand_id', missingBrandIds)
       
       if (error) {
-        console.error('❌ 브랜드 정보 조회 오류:', error)
+        console.error('❌ 브랜드 정보 조회 오류:', error instanceof Error ? error.message : String(error))
         return []
       }
       
@@ -301,7 +303,8 @@ export function HotelCardAllView({
   className,
   imageClassName,
   contentClassName,
-  isThreeGrid = false
+  isThreeGrid = false,
+  company = null
 }: HotelCardAllViewProps) {
   const promotionQuery = useHotelPromotion(hotel.sabre_id)
   const promotions: HotelPromotion[] = Array.isArray(promotionQuery.data) ? promotionQuery.data : []
@@ -315,8 +318,35 @@ export function HotelCardAllView({
     promotion: "bg-white"
   }
 
+  // company prop이 있으면 사용, 없으면 클라이언트에서 확인 (하이드레이션 오류 방지)
+  let companyValue: string | null = null
+  if (company !== undefined && company !== null) {
+    companyValue = company
+  } else if (typeof window !== 'undefined') {
+    // 클라이언트 사이드에서만 실행
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const companyParam = urlParams.get('company')
+      if (companyParam === 'sk') {
+        companyValue = 'sk'
+      } else {
+        const cookies = document.cookie.split(';')
+        const companyCookie = cookies.find(c => c.trim().startsWith('company='))
+        if (companyCookie?.split('=')[1]?.trim() === 'sk') {
+          companyValue = 'sk'
+        }
+      }
+    } catch (e) {
+      // 에러 발생 시 무시
+      companyValue = null
+    }
+  }
+  
+  const hotelUrl = hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`
+  const href = addCompanyParam(hotelUrl, companyValue)
+
   return (
-    <Link href={hotel.slug ? `/hotel/${hotel.slug}` : `/hotel/${hotel.sabre_id}`}>
+    <Link href={href}>
       <Card 
         className={cn(
           "group cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 p-0 flex flex-col border-0 shadow-none", // 테두리와 그림자 강제 제거

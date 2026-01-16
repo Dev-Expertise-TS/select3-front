@@ -68,7 +68,7 @@ export function BlogDetailSection({ slug }: BlogDetailSectionProps) {
         }
       } catch (err) {
         setError("네트워크 오류가 발생했습니다.")
-        console.error("Blog detail fetch error:", err)
+        console.error("Blog detail fetch error:", err instanceof Error ? err.message : String(err))
       } finally {
         setLoading(false)
       }

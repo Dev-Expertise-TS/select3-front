@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from "next/navigation"
+import { createNavigationUrl } from "@/lib/url-utils"
 import { HotelSearchResults } from "@/components/shared/hotel-search-results"
 
 interface ChainPageClientProps {
@@ -49,9 +50,9 @@ export function ChainPageClient({
   const handleChainChange = (chainId: string) => {
     const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
     if (selectedChain?.chain_slug) {
-      router.push(`/brand/${selectedChain.chain_slug}`)
+      router.push(createNavigationUrl(`/brand/${selectedChain.chain_slug}`))
     } else {
-      router.push(`/brand/brand?chain=${chainId}`)
+      router.push(createNavigationUrl(`/brand/brand`, { chain: chainId }))
     }
   }
 
@@ -60,9 +61,9 @@ export function ChainPageClient({
     // 해당 체인의 chain_slug 찾기
     const selectedChain = allChains.find(chain => String(chain.chain_id) === chainId)
     if (selectedChain?.chain_slug) {
-      router.push(`/brand/${selectedChain.chain_slug}?brand=${brandId}`)
+      router.push(createNavigationUrl(`/brand/${selectedChain.chain_slug}`, { brand: brandId }))
     } else {
-      router.push(`/brand/brand?chain=${chainId}&brand=${brandId}`)
+      router.push(createNavigationUrl(`/brand/brand`, { chain: chainId, brand: brandId }))
     }
   }
 

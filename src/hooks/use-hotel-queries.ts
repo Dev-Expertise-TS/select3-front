@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
+import { getCompanyFromURL, applyVccFilter } from '@/lib/company-filter'
+import { getErrorMessage } from '@/lib/logger'
 
 const supabase = createClient()
 
@@ -29,12 +31,19 @@ export function useSearchResults(query: string, tick: number) {
     queryFn: async () => {
       if (!query.trim()) return []
       
+      const company = getCompanyFromURL()
+      
       // 호텔 검색 (publish가 null이거나 true인 호텔만)
-      const { data, error } = await supabase
+      let hotelQuery = supabase
         .from('select_hotels')
         .select('*')
         .or(`property_name_ko.ilike.%${query}%,property_name_en.ilike.%${query}%,city.ilike.%${query}%,city_ko.ilike.%${query}%,city_en.ilike.%${query}%,country_ko.ilike.%${query}%,country_en.ilike.%${query}%`)
         .or('publish.is.null,publish.eq.true')
+      
+      // company=sk일 때 vcc=true 필터 적용
+      hotelQuery = applyVccFilter(hotelQuery, company)
+      
+      const { data, error } = await hotelQuery
       
       if (error) throw error
       if (!data) return []
@@ -59,7 +68,7 @@ export function useSearchResults(query: string, tick: number) {
           .in('brand_id', brandIds)
         
         if (brandError) {
-          console.error('❌ 검색 결과 브랜드 정보 조회 오류:', brandError)
+          console.error('❌ 검색 결과 브랜드 정보 조회 오류:', getErrorMessage(brandError))
         } else {
           brandData = brandResult || []
           console.log('🏷️ 검색 결과 브랜드 정보 조회:', brandData.length)
@@ -80,7 +89,11 @@ export function useFilterOptions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['filter-options', 'v14'], // v14: 몬트리올 도시명 업데이트 반영
     queryFn: async () => {
-      const response = await fetch('/api/filter-options')
+      // company 파라미터를 URL에서 가져와서 API에 전달
+      const company = getCompanyFromURL()
+      const url = company === 'sk' ? '/api/filter-options?company=sk' : '/api/filter-options'
+      
+      const response = await fetch(url)
       
       if (!response.ok) {
         throw new Error(`필터 옵션 조회 실패: ${response.status}`)
@@ -93,6 +106,7 @@ export function useFilterOptions(options?: { enabled?: boolean }) {
       }
       
       console.log('📥 클라이언트: 필터 옵션 수신:', {
+        company,
         도시개수: result.data?.cities?.length || 0,
         국가개수: result.data?.countries?.length || 0,
         브랜드개수: result.data?.brands?.length || 0,
@@ -118,11 +132,18 @@ export function useAllHotels(options?: { enabled?: boolean }) {
       try {
         console.log('🏨 useAllHotels: 전체 호텔 조회 시작')
         
-        const { data, error } = await supabase
+        const company = getCompanyFromURL()
+        
+        let hotelQuery = supabase
           .from('select_hotels')
           .select('*')
           .or('publish.is.null,publish.eq.true')
           .order('sabre_id')
+        
+        // company=sk일 때 vcc=true 필터 적용
+        hotelQuery = applyVccFilter(hotelQuery, company)
+        
+        const { data, error } = await hotelQuery
         
         console.log('🏨 useAllHotels: 호텔 데이터 조회 결과:', {
           총개수: data?.length || 0,
@@ -130,7 +151,7 @@ export function useAllHotels(options?: { enabled?: boolean }) {
         })
         
         if (error) {
-          console.error('❌ 호텔 목록 조회 오류:', error)
+          console.error('❌ 호텔 목록 조회 오류:', getErrorMessage(error))
           throw error
         }
         if (!data) {
@@ -158,7 +179,7 @@ export function useAllHotels(options?: { enabled?: boolean }) {
             .in('brand_id', brandIds)
           
           if (brandError) {
-            console.error('❌ 브랜드 정보 조회 오류:', brandError)
+            console.error('❌ 브랜드 정보 조회 오류:', getErrorMessage(brandError))
           } else {
             brandData = brandResult || []
             console.log('🏷️ 브랜드 정보 조회:', brandData.length)
@@ -169,7 +190,15 @@ export function useAllHotels(options?: { enabled?: boolean }) {
         console.log('✅ useAllHotels: 최종 반환 데이터:', result?.length || 0)
         return result
       } catch (error) {
-        console.error('전체 호텔 조회 중 오류 발생:', error)
+        const errorInfo = {
+          message: getErrorMessage(error),
+          name: error instanceof Error ? error.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined,
+          ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+          ...(error && typeof error === 'object' && 'details' in error ? { details: (error as any).details } : {}),
+          ...(error && typeof error === 'object' && 'hint' in error ? { hint: (error as any).hint } : {})
+        }
+        console.error('❌ 전체 호텔 조회 중 오류 발생:', errorInfo)
         throw error
       }
     },
@@ -261,7 +290,17 @@ export function useBannerHotel(options?: { enabled?: boolean }) {
           chain_name_en: hotelChain?.chain_name_en || null
         }
       } catch (error) {
-        console.error('베너 호텔 조회 오류:', error)
+        // 에러 정보를 더 자세히 로깅 (객체 직접 참조 제거)
+        const errorInfo = {
+          message: getErrorMessage(error),
+          name: error instanceof Error ? error.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined,
+          // Supabase 에러의 경우 추가 정보 추출
+          ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+          ...(error && typeof error === 'object' && 'details' in error ? { details: (error as any).details } : {}),
+          ...(error && typeof error === 'object' && 'hint' in error ? { hint: (error as any).hint } : {})
+        }
+        console.error('❌ 베너 호텔 조회 오류:', errorInfo)
         return null
       }
     },
@@ -292,12 +331,19 @@ export function useChainBrandHotels(selectedChainId: string | null) {
         const brandIds = brands.map((b: any) => b.brand_id)
         const brandIdList = brandIds.join(',')
         
+        const company = getCompanyFromURL()
+        
         // select_hotels에서 해당 brand_id를 가진 호텔들 조회
-        const { data: hotels, error: hotelsError } = await supabase
+        let hotelQuery = supabase
           .from('select_hotels')
           .select('*')
           .or(`brand_id.in.(${brandIdList}),brand_id_2.in.(${brandIdList}),brand_id_3.in.(${brandIdList})`)
           .or('publish.is.null,publish.eq.true')
+        
+        // company=sk일 때 vcc=true 필터 적용
+        hotelQuery = applyVccFilter(hotelQuery, company)
+        
+        const { data: hotels, error: hotelsError } = await hotelQuery
         
         if (hotelsError) throw hotelsError
         if (!hotels || hotels.length === 0) return []
@@ -324,7 +370,15 @@ export function useChainBrandHotels(selectedChainId: string | null) {
         
         return transformHotelsToAllViewCardData(hotels, firstImages, brandData)
       } catch (error) {
-        console.error('체인 브랜드 호텔 조회 오류:', error)
+        const errorInfo = {
+          message: getErrorMessage(error),
+          name: error instanceof Error ? error.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined,
+          ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+          ...(error && typeof error === 'object' && 'details' in error ? { details: (error as any).details } : {}),
+          ...(error && typeof error === 'object' && 'hint' in error ? { hint: (error as any).hint } : {})
+        }
+        console.error('❌ 체인 브랜드 호텔 조회 오류:', errorInfo)
         return []
       }
     },
@@ -343,13 +397,20 @@ export function useBrandHotels(brandId: string | null) {
       if (!brandId) return []
       
       try {
+        const company = getCompanyFromURL()
+        
         // 호텔 조회
-        const { data: hotels, error } = await supabase
+        let hotelQuery = supabase
           .from('select_hotels')
           .select('*')
           .or(`brand_id.eq.${brandId},brand_id_2.eq.${brandId},brand_id_3.eq.${brandId}`)
           .or('publish.is.null,publish.eq.true')
           .order('property_name_ko')
+        
+        // company=sk일 때 vcc=true 필터 적용
+        hotelQuery = applyVccFilter(hotelQuery, company)
+        
+        const { data: hotels, error } = await hotelQuery
         
         if (error) throw error
         if (!hotels || hotels.length === 0) return []
@@ -377,7 +438,15 @@ export function useBrandHotels(brandId: string | null) {
         
         return transformHotelsToAllViewCardData(hotels, firstImages, brandData)
       } catch (error) {
-        console.error('브랜드 호텔 조회 오류:', error)
+        const errorInfo = {
+          message: getErrorMessage(error),
+          name: error instanceof Error ? error.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined,
+          ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+          ...(error && typeof error === 'object' && 'details' in error ? { details: (error as any).details } : {}),
+          ...(error && typeof error === 'object' && 'hint' in error ? { hint: (error as any).hint } : {})
+        }
+        console.error('❌ 브랜드 호텔 조회 오류:', errorInfo)
         throw error
       }
     },
@@ -405,7 +474,15 @@ export function useChainBrands(chainId: string | null) {
         if (brandsError) throw brandsError
         return brands || []
       } catch (error) {
-        console.error('체인 브랜드 조회 오류:', error)
+        const errorInfo = {
+          message: getErrorMessage(error),
+          name: error instanceof Error ? error.name : typeof error,
+          stack: error instanceof Error ? error.stack : undefined,
+          ...(error && typeof error === 'object' && 'code' in error ? { code: (error as any).code } : {}),
+          ...(error && typeof error === 'object' && 'details' in error ? { details: (error as any).details } : {}),
+          ...(error && typeof error === 'object' && 'hint' in error ? { hint: (error as any).hint } : {})
+        }
+        console.error('❌ 체인 브랜드 조회 오류:', errorInfo)
         return []
       }
     },

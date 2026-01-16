@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { applyVccFilter } from '@/lib/company-filter'
 
 /**
  * 브랜드 slug로 브랜드 정보 조회
@@ -14,7 +15,7 @@ export async function getBrandBySlug(brandSlug: string) {
     .maybeSingle()
   
   if (error) {
-    console.error('❌ 브랜드 정보 조회 오류:', error)
+    console.error('❌ 브랜드 정보 조회 오류:', error instanceof Error ? error.message : String(error))
     return null
   }
   
@@ -23,20 +24,26 @@ export async function getBrandBySlug(brandSlug: string) {
 
 /**
  * brand_id로 해당 브랜드의 호텔 목록 조회
+ * company 파라미터가 있으면 vcc=TRUE 필터 적용
  */
-export async function getHotelsByBrandId(brandId: string | number) {
+export async function getHotelsByBrandId(brandId: string | number, company?: string | null) {
   const supabase = await createClient()
   
   // publish = null 또는 publish = true인 호텔만 조회
-  const { data: hotels, error: hotelsError } = await supabase
+  let hotelQuery = supabase
     .from('select_hotels')
     .select('*')
     .or(`brand_id.eq.${brandId},brand_id_2.eq.${brandId},brand_id_3.eq.${brandId}`)
     .or('publish.is.null,publish.eq.true')
     .order('property_name_en')
   
+  // company=sk일 때 vcc=TRUE 필터 적용
+  hotelQuery = applyVccFilter(hotelQuery, company || null)
+  
+  const { data: hotels, error: hotelsError } = await hotelQuery
+  
   if (hotelsError) {
-    console.error('❌ 브랜드별 호텔 조회 오류:', hotelsError)
+    console.error('❌ 브랜드별 호텔 조회 오류:', hotelsError instanceof Error ? hotelsError.message : String(hotelsError))
     return []
   }
   
@@ -57,7 +64,7 @@ export async function getHotelsByBrandName(brandName: string) {
     .order('property_name_en')
   
   if (hotelsError) {
-    console.error('❌ 브랜드별 호텔 조회 오류:', hotelsError)
+    console.error('❌ 브랜드별 호텔 조회 오류:', hotelsError instanceof Error ? hotelsError.message : String(hotelsError))
     return []
   }
   
@@ -90,7 +97,7 @@ export async function getAllActiveBrands() {
     .not('brand_slug', 'eq', '')
   
   if (error) {
-    console.error('❌ 전체 브랜드 목록 조회 오류:', error)
+    console.error('❌ 전체 브랜드 목록 조회 오류:', error instanceof Error ? error.message : String(error))
     return []
   }
   

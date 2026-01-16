@@ -8,6 +8,7 @@ import { getSafeImageUrl, handleImageError } from "@/lib/image-utils"
 import { HotelCardCta, HotelCardCtaData } from "./hotel-card-cta"
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { getErrorMessage } from "@/lib/logger"
 
 interface BlogContent {
   slug: string
@@ -88,7 +89,7 @@ function useHotelData(sabreId: number | null) {
             errorCode: error?.code,
             timestamp: new Date().toISOString()
           })
-          console.error('🔴 [BlogContentRenderer] Raw error object:', error)
+          console.error('🔴 [BlogContentRenderer] Raw error object:', getErrorMessage(error))
           // 에러 발생 시 null 반환
           return null
         }
@@ -146,11 +147,11 @@ function useHotelData(sabreId: number | null) {
         // 예외 객체를 안전하게 로깅
         console.error('🔴 [BlogContentRenderer] 호텔 데이터 조회 중 예외 발생:', {
           sabreId,
-          errorMessage: err instanceof Error ? err.message : String(err),
+          errorMessage: getErrorMessage(err),
           errorStack: err instanceof Error ? err.stack : null,
           timestamp: new Date().toISOString()
         })
-        console.error('🔴 [BlogContentRenderer] Exception object:', err)
+        console.error('🔴 [BlogContentRenderer] Exception object:', getErrorMessage(err))
         return null
       }
     },

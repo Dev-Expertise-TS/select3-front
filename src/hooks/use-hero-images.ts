@@ -45,7 +45,7 @@ export function useHeroImages() {
           .order('slot_key', { ascending: true })
         
         if (featureError) {
-          console.error('❌ 히어로 feature slots 조회 실패:', featureError)
+          console.error('❌ 히어로 feature slots 조회 실패:', featureError instanceof Error ? featureError.message : String(featureError))
           throw featureError
         }
         if (!featureSlots || featureSlots.length === 0) {
@@ -81,7 +81,7 @@ export function useHeroImages() {
           .in('sabre_id', sabreIds)
         
         if (hotelsError) {
-          console.error('❌ 히어로 호텔 데이터 조회 실패:', hotelsError)
+          console.error('❌ 히어로 호텔 데이터 조회 실패:', hotelsError instanceof Error ? hotelsError.message : String(hotelsError))
           throw hotelsError
         }
         if (!hotels) {
@@ -103,7 +103,7 @@ export function useHeroImages() {
         const mediaData = getFirstImagePerHotel(rawMediaData || [])
         
         if (mediaError) {
-          console.error('❌ 히어로 미디어 데이터 조회 실패:', mediaError)
+          console.error('❌ 히어로 미디어 데이터 조회 실패:', mediaError instanceof Error ? mediaError.message : String(mediaError))
         }
         
         // 3. hotel_brands에서 brand_id로 브랜드 정보 조회 (null이 아닌 것만)

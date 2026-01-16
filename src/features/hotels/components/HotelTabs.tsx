@@ -150,7 +150,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       }
     } catch (error) {
       setBenefitsError("네트워크 오류가 발생했습니다.")
-      console.error("Hotel benefits fetch error:", error)
+      console.error("Hotel benefits fetch error:", error instanceof Error ? error.message : String(error))
     } finally {
       setIsLoadingBenefits(false)
     }
@@ -190,7 +190,7 @@ export function HotelTabs({ introHtml, locationHtml, hotelName, propertyAddress,
       }
     } catch (error) {
       setArticlesError("네트워크 오류가 발생했습니다.")
-      console.error("Hotel articles fetch error:", error)
+      console.error("Hotel articles fetch error:", error instanceof Error ? error.message : String(error))
     } finally {
       setIsLoadingArticles(false)
     }

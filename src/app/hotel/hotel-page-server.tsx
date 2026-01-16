@@ -2,18 +2,21 @@ import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 import { getBannerHotel } from '@/lib/banner-hotel-server'
+import { getCompanyFromSearchParams, applyVccFilter } from '@/lib/company-filter'
+import { getErrorMessage } from '@/lib/logger'
 
 /**
  * 서버에서 호텔 목록 페이지 데이터 조회
  * UI는 유지하고 데이터 페칭만 서버로 이동
  */
-export async function getHotelPageData(opts?: { region?: string }) {
+export async function getHotelPageData(opts?: { region?: string; company?: string | null }) {
   const supabase = await createClient()
   
   console.log('🔍 [HotelPage] 서버 데이터 조회 시작')
 
   // 0. 배너 호텔 조회 (병렬 처리를 위해 먼저 시작)
-  const bannerHotelPromise = getBannerHotel()
+  const company = opts?.company || null
+  const bannerHotelPromise = getBannerHotel(company)
 
   // 1. 호텔 조회 (전체 또는 region 필터)
   const region = opts?.region?.trim()
@@ -24,21 +27,26 @@ export async function getHotelPageData(opts?: { region?: string }) {
     // region(도시/지역 한/영) 정확 일치로 필터
     const fields = ['city_ko', 'city_en', 'area_ko', 'area_en'] as const
     const results = await Promise.all(
-      fields.map((field) =>
-        supabase
+      fields.map((field) => {
+        let query = supabase
           .from('select_hotels')
           .select('*')
           .eq(field, region)
           .or('publish.is.null,publish.eq.true')
           .order('property_name_en')
-      )
+        
+        // company=sk일 때 vcc=true 필터 적용
+        query = applyVccFilter(query, company)
+        
+        return query
+      })
     )
 
     const merged: any[] = []
     const errors: any[] = []
     for (const r of results) {
       if (r.error) {
-        console.error(`❌ [HotelPage] region 필터 호텔 조회 실패 (${String(r.error?.message || '')})`)
+        console.error(`❌ [HotelPage] region 필터 호텔 조회 실패 (${getErrorMessage(r.error)})`)
         errors.push(r.error)
         continue
       }
@@ -56,18 +64,24 @@ export async function getHotelPageData(opts?: { region?: string }) {
     }
   } else {
     // 전체 호텔 조회
-    const result = await supabase
-    .from('select_hotels')
-    .select('*')
-    .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
-    .order('property_name_en')
+    let hotelQuery = supabase
+      .from('select_hotels')
+      .select('*')
+      .or('publish.is.null,publish.eq.true')  // 비공개 호텔 제외
+      .order('property_name_en')
+    
+    // company=sk일 때 vcc=true 필터 적용
+    hotelQuery = applyVccFilter(hotelQuery, company)
+    
+    const result = await hotelQuery
 
+    
     hotels = result.data || []
     hotelsError = result.error
   }
   
   if (hotelsError) {
-    console.error('❌ [HotelPage] 호텔 조회 실패:', hotelsError)
+    console.error('❌ [HotelPage] 호텔 조회 실패:', getErrorMessage(hotelsError))
     return { allHotels: [], filterOptions: { countries: [], cities: [], brands: [], chains: [] } }
   }
   
@@ -98,7 +112,7 @@ export async function getHotelPageData(opts?: { region?: string }) {
       .in('brand_id', brandIds)
     
     if (brandError) {
-      console.error('❌ [HotelPage] 브랜드 조회 실패:', brandError)
+      console.error('❌ [HotelPage] 브랜드 조회 실패:', getErrorMessage(brandError))
     } else {
       brandData = brandResult || []
       console.log('✅ [HotelPage] 브랜드 조회 완료:', brandData.length, '개')
@@ -121,18 +135,27 @@ export async function getHotelPageData(opts?: { region?: string }) {
   })
   
   if (chainIds.length > 0) {
-    const { data: chainResult, error: chainError } = await supabase
+    let chainQuery = supabase
       .from('hotel_chains')
       .select('chain_id, chain_name_en, chain_name_ko')
       .in('chain_id', chainIds)
     
+    // company=sk일 때 vcc=TRUE인 체인만 필터링
+    if (company === 'sk') {
+      chainQuery = chainQuery.eq('vcc', true)
+    }
+    
+    const { data: chainResult, error: chainError } = await chainQuery
+    
     if (chainError) {
-      console.error('❌ [HotelPage] 체인 조회 실패:', chainError)
+      console.error('❌ [HotelPage] 체인 조회 실패:', getErrorMessage(chainError))
     } else {
       chainData = chainResult || []
       console.log('✅ [HotelPage] 체인 조회 완료:', {
         조회된체인수: chainData.length,
-        체인샘플: chainData.slice(0, 3)
+        체인샘플: chainData.slice(0, 3),
+        company: company,
+        vcc필터적용: company === 'sk'
       })
     }
   } else {
@@ -172,10 +195,13 @@ export async function getHotelPageData(opts?: { region?: string }) {
       cities.set(hotel.city_code, existing)
     }
     
-    // 체인 (chainData에서 체인명 조회)
+    // 체인 (chainData에서 체인명 조회 - company=sk일 때는 vcc=TRUE인 체인만 포함)
     if (hotel.chain_id) {
       const chainInfo = chainData.find(c => c.chain_id === hotel.chain_id)
-      const chainLabel = chainInfo?.chain_name_ko || chainInfo?.chain_name_en || `Chain ${hotel.chain_id}`
+      // company=sk일 때는 chainData에 이미 vcc=TRUE인 체인만 포함되어 있음
+      if (!chainInfo) return // chainData에 없으면 스킵
+      
+      const chainLabel = chainInfo.chain_name_ko || chainInfo.chain_name_en || `Chain ${hotel.chain_id}`
       
       const existing = chains.get(hotel.chain_id) || { 
         id: String(hotel.chain_id), 
@@ -199,15 +225,24 @@ export async function getHotelPageData(opts?: { region?: string }) {
   let brands: Array<{ id: string; label: string }> = []
   
   if (allBrandIds.length > 0) {
-    const { data: allBrandData, error: allBrandError } = await supabase
+    let brandQuery = supabase
       .from('hotel_brands')
       .select('brand_id, brand_name_ko, brand_name_en, chain_id, status, brand_sort_order')
       .in('brand_id', allBrandIds)
       .eq('status', 'active')
-      .order('brand_sort_order', { ascending: true })
+    
+    // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
+    if (company === 'sk' && chainData.length > 0) {
+      const vccChainIds = chainData.map(c => c.chain_id)
+      brandQuery = brandQuery.in('chain_id', vccChainIds)
+    }
+    
+    brandQuery = brandQuery.order('brand_sort_order', { ascending: true })
+    
+    const { data: allBrandData, error: allBrandError } = await brandQuery
     
     if (allBrandError) {
-      console.error('❌ [HotelPage] 전체 브랜드 조회 실패:', allBrandError)
+      console.error('❌ [HotelPage] 전체 브랜드 조회 실패:', getErrorMessage(allBrandError))
     } else {
       console.log('✅ [HotelPage] 브랜드 데이터 조회 성공:', (allBrandData || []).length, '개')
       
@@ -216,10 +251,17 @@ export async function getHotelPageData(opts?: { region?: string }) {
       const chainMap = new Map<number, { chain_name_ko?: string; chain_name_en?: string }>()
       
       if (chainIdsForBrands.length > 0) {
-        const { data: chainDataForBrands } = await supabase
+        let chainQueryForBrands = supabase
           .from('hotel_chains')
           .select('chain_id, chain_name_ko, chain_name_en')
           .in('chain_id', chainIdsForBrands)
+        
+        // company=sk일 때 vcc=TRUE인 체인만 필터링
+        if (company === 'sk') {
+          chainQueryForBrands = chainQueryForBrands.eq('vcc', true)
+        }
+        
+        const { data: chainDataForBrands } = await chainQueryForBrands
         
         if (chainDataForBrands) {
           chainDataForBrands.forEach((c: any) => {

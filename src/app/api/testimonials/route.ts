@@ -41,7 +41,7 @@ export async function GET() {
       .limit(12)
 
     if (error) {
-      console.error('Testimonials fetch error:', error)
+      console.error('Testimonials fetch error:', error instanceof Error ? error.message : String(error))
       return NextResponse.json(
         { success: false, error: '고객 후기를 불러오는데 실패했습니다.' },
         { status: 500 }
@@ -76,7 +76,7 @@ export async function GET() {
       }
     )
   } catch (err) {
-    console.error('Testimonials API error:', err)
+    console.error('Testimonials API error:', err instanceof Error ? err.message : String(err))
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -96,9 +96,20 @@ export async function generateMetadata({ params }: { params: Promise<{ brandSlug
 }
 
 // 브랜드별 호텔 목록 페이지
-export default async function BrandHotelsPage({ params }: { params: Promise<{ brandSlug: string }> }) {
+export default async function BrandHotelsPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ brandSlug: string }>
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { brandSlug } = await params
-  const data = await getBrandHotelsData(brandSlug)
+  
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = searchParams ? await getCompanyFromServer(searchParams) : null
+  
+  const data = await getBrandHotelsData(brandSlug, company)
   
   // 브랜드를 찾을 수 없는 경우 404
   if (!data) {

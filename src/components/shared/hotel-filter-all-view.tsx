@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { getCompanyFromURL } from '@/lib/company-filter'
 
 const supabase = createClient()
 
@@ -44,10 +45,20 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
       try {
         setIsLoading(true)
         
+        const company = getCompanyFromURL()
+        
         // 호텔 데이터 조회
-        const { data: hotels, error: hotelsError } = await supabase
+        // company=sk일 때 vcc=TRUE 필터 적용
+        let hotelQuery = supabase
           .from('select_hotels')
-          .select('city, city_ko, city_en, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en')
+          .select('city, city_ko, city_en, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en, vcc')
+          .or('publish.is.null,publish.eq.true')
+        
+        if (company === 'sk') {
+          hotelQuery = hotelQuery.eq('vcc', true)
+        }
+        
+        const { data: hotels, error: hotelsError } = await hotelQuery
         
         if (hotelsError) throw hotelsError
         
@@ -65,9 +76,24 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         if (brandIds.length > 0) {
           const { data: brandData } = await supabase
             .from('hotel_brands')
-            .select('brand_id, brand_name_en')
+            .select('brand_id, brand_name_en, chain_id')
             .in('brand_id', brandIds)
           brands = brandData || []
+        }
+        
+        // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
+        let vccChainIds: number[] = []
+        if (company === 'sk' && brands.length > 0) {
+          const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
+          if (chainIds.length > 0) {
+            const { data: chainData } = await supabase
+              .from('hotel_chains')
+              .select('chain_id, vcc')
+              .in('chain_id', chainIds)
+              .eq('vcc', true)
+            vccChainIds = (chainData || []).map((c: any) => c.chain_id)
+            brands = brands.filter((b: any) => !b.chain_id || vccChainIds.includes(b.chain_id))
+          }
         }
         
         // 도시 옵션 생성 (city_kr로 그룹핑 및 표시)
@@ -116,17 +142,38 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })).sort((a: any, b: any) => a.label.localeCompare(b.label))
         
         // 체인 옵션 생성
-        const chainMap = new Map()
-        hotels?.forEach((hotel: any) => {
-          const chain = hotel.chain_ko || hotel.chain_en
-          if (chain) {
-            chainMap.set(chain, (chainMap.get(chain) || 0) + 1)
+        // company=sk일 때는 vcc=TRUE인 체인만 표시
+        let chains: Array<{ id: string; label: string }> = []
+        if (company === 'sk') {
+          // vcc=TRUE인 체인만 조회
+          const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
+          if (chainIds.length > 0) {
+            const { data: chainData } = await supabase
+              .from('hotel_chains')
+              .select('chain_id, chain_name_en, chain_name_ko, vcc')
+              .in('chain_id', chainIds)
+              .eq('vcc', true)
+              .eq('status', 'active')
+            
+            chains = (chainData || []).map((c: any) => ({
+              id: String(c.chain_id),
+              label: c.chain_name_en || c.chain_name_ko || ''
+            })).sort((a: any, b: any) => a.label.localeCompare(b.label))
           }
-        })
-        const chains = Array.from(chainMap.entries()).map(([label, count]) => ({
-          id: label,
-          label
-        })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+        } else {
+          // 일반적인 경우: 호텔 데이터에서 체인 추출
+          const chainMap = new Map()
+          hotels?.forEach((hotel: any) => {
+            const chain = hotel.chain_ko || hotel.chain_en
+            if (chain) {
+              chainMap.set(chain, (chainMap.get(chain) || 0) + 1)
+            }
+          })
+          chains = Array.from(chainMap.entries()).map(([label, count]) => ({
+            id: label,
+            label
+          })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+        }
         
         setFilterOptions({
           cities: cities.slice(0, 20), // 상위 20개만
@@ -136,7 +183,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         })
         
       } catch (error) {
-        console.error('필터 옵션 로드 오류:', error)
+        console.error('필터 옵션 로드 오류:', error instanceof Error ? error.message : String(error))
       } finally {
         setIsLoading(false)
       }

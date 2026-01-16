@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import { withCompanyParam } from "@/lib/url-utils"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -75,7 +76,7 @@ export function BrandHotelCard({
         .in('brand_id', missingBrandIds)
       
       if (error) {
-        console.error('❌ 브랜드 정보 조회 오류:', error)
+        console.error('❌ 브랜드 정보 조회 오류:', error instanceof Error ? error.message : String(error))
         return []
       }
       
@@ -155,7 +156,7 @@ export function BrandHotelCard({
   }, [priority])
 
   return (
-    <Link href={href}>
+    <Link href={withCompanyParam(href)}>
       <Card
         ref={cardRef}
         className={cn(

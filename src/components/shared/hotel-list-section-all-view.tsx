@@ -34,6 +34,7 @@ interface HotelListSectionAllViewProps {
   
   className?: string
   isThreeGrid?: boolean
+  company?: string | null // company 파라미터 (하이드레이션 오류 방지)
 }
 
 export function HotelListSectionAllView({
@@ -56,7 +57,8 @@ export function HotelListSectionAllView({
   showPromotionBadge = false,
   searchQuery,
   className,
-  isThreeGrid = false
+  isThreeGrid = false,
+  company = null
 }: HotelListSectionAllViewProps) {
   const renderContent = () => {
     if (isLoading) {
@@ -106,6 +108,7 @@ export function HotelListSectionAllView({
           showPrice={showPrice}
           showBadge={showBadge}
           showPromotionBadge={showPromotionBadge}
+          company={company}
           emptyMessage="호텔 목록이 없습니다."
           isThreeGrid={isThreeGrid}
         />

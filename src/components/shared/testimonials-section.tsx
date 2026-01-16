@@ -63,7 +63,7 @@ export default function TestimonialsSection({ className }: TestimonialsSectionPr
           })
         }
       } catch (error) {
-        console.error('Failed to fetch testimonials:', error)
+        console.error('Failed to fetch testimonials:', error instanceof Error ? error.message : String(error))
       } finally {
         setIsLoading(false)
       }

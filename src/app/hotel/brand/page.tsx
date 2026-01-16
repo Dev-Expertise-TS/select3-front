@@ -56,8 +56,16 @@ export const metadata: Metadata = {
   }
 }
 
-export default async function AllBrandsPage() {
-  const brands = await getAllBrandsWithHotelCount()
+export default async function AllBrandsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = searchParams ? await getCompanyFromServer(searchParams) : null
+  
+  const brands = await getAllBrandsWithHotelCount(company)
   
   // 알파벳 순 정렬
   const sortedBrands = [...brands].sort((a, b) => {

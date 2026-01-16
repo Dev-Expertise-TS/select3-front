@@ -61,7 +61,12 @@ export class TranslationErrorBoundary extends Component<Props, State> {
       return
     }
     
-    console.error('❌ Error Boundary에서 에러 감지:', error, errorInfo)
+    console.error('❌ Error Boundary에서 에러 감지:', {
+      message: error?.message || String(error),
+      name: error?.name || 'Unknown',
+      stack: error?.stack,
+      componentStack: errorInfo?.componentStack
+    })
   }
 
   render() {

@@ -18,6 +18,7 @@ export interface HotelCardData {
   sabre_id: number
   property_name_ko: string
   property_name_en?: string // 영문 호텔명 추가
+  brand_names_en?: string[] // 브랜드 영문명 배열 (brand_id, brand_id_2, brand_id_3 모두 포함)
   city: string
   property_address: string
   image: string
@@ -71,7 +72,7 @@ export function HotelCard({
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}.${month}.${day}`
     } catch (error) {
-      console.error('날짜 포맷 오류:', error)
+      console.error('날짜 포맷 오류:', error instanceof Error ? error.message : String(error))
       return dateString
     }
   }
@@ -137,8 +138,22 @@ export function HotelCard({
             }}
           />
 
-          {/* 배지들 */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {/* 좌측 상단: 브랜드 배지 (히어로 캐로셀 스타일) */}
+          {hotel.brand_names_en && hotel.brand_names_en.length > 0 && (
+            <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
+              {hotel.brand_names_en.map((brandName, index) => (
+                <span
+                  key={index}
+                  className="inline-block bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded"
+                >
+                  {brandName}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 우측 상단: 프로모션 배지 및 기타 배지 */}
+          <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
             {showPromotionBadge && hotel.isPromotion && (
               <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
                 프로모션
@@ -149,20 +164,21 @@ export function HotelCard({
                 {hotel.badge}
               </span>
             )}
-          </div>
-
-          {/* 우측 상단 정보 */}
-          <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
-            {showRating && hotel.rating && (
-              <div className="flex items-center bg-black/70 text-white px-2 py-1 rounded-full text-xs">
-                <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-                {hotel.rating}
-              </div>
-            )}
-            {showPrice && hotel.price && (
-              <div className="bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                ₩{hotel.price.toLocaleString()}
-              </div>
+            {/* 브랜드가 없을 때만 평점/가격 표시 */}
+            {(!hotel.brand_names_en || hotel.brand_names_en.length === 0) && (
+              <>
+                {showRating && hotel.rating && (
+                  <div className="flex items-center bg-black/70 text-white px-2 py-1 rounded-full text-xs">
+                    <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+                    {hotel.rating}
+                  </div>
+                )}
+                {showPrice && hotel.price && (
+                  <div className="bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    ₩{hotel.price.toLocaleString()}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

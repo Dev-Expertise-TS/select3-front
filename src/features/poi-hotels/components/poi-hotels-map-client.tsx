@@ -246,7 +246,7 @@ export function PoiHotelsMapClient({ destinationRaw, destinationLabel, destinati
       console.log('[Map] Select hotels data loaded:', json.data?.markers?.length || 0, 'markers')
       setSelectData(json.data as HotelMapMarkersResponse)
     } catch (e) {
-      console.error('[Map] Error loading select hotels:', e)
+      console.error('[Map] Error loading select hotels:', e instanceof Error ? e.message : String(e))
       setSelectData(null)
       setError(e instanceof Error ? e.message : String(e))
     } finally {

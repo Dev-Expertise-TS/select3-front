@@ -1,16 +1,33 @@
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getCompanyFromServer } from '@/lib/company-filter'
+import { getErrorMessage } from '@/lib/logger'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    console.log('🔄 필터 옵션 API 호출 시작')
+    // company 파라미터 추출 (쿠키 우선, 없으면 URL 파라미터)
+    const company = await getCompanyFromServer(
+      Object.fromEntries(request.nextUrl.searchParams.entries())
+    )
+    
+    console.log('🔄 필터 옵션 API 호출 시작', { company })
     
     // 호텔 데이터 조회 (필터 옵션 생성을 위해 모든 호텔 조회)
-    const { data: hotels, error: hotelsError } = await supabase
+    // company=sk일 때 vcc=TRUE 필터 적용
+    let hotelQuery = supabase
       .from('select_hotels')
-      .select('city_code, city_ko, city_en, country_code, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en, publish')
+      .select('city_code, city_ko, city_en, country_code, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en, publish, vcc')
+      .or('publish.is.null,publish.eq.true')
+    
+    // company=sk일 때 vcc=TRUE 필터 적용
+    if (company === 'sk') {
+      hotelQuery = hotelQuery.eq('vcc', true)
+    }
+    
+    const { data: hotels, error: hotelsError } = await hotelQuery
     
     console.log('📊 호텔 데이터 조회 결과:', {
       총호텔수: hotels?.length || 0,
@@ -25,7 +42,7 @@ export async function GET() {
     })
     
     if (hotelsError) {
-      console.error('❌ 호텔 데이터 조회 오류:', hotelsError)
+      console.error('❌ 호텔 데이터 조회 오류:', getErrorMessage(hotelsError))
       throw hotelsError
     }
     
@@ -54,10 +71,27 @@ export async function GET() {
         .order('brand_sort_order', { ascending: true })
       
       if (brandError) {
-        console.error('❌ 브랜드 데이터 조회 오류:', brandError)
+        console.error('❌ 브랜드 데이터 조회 오류:', getErrorMessage(brandError))
       } else {
         brands = brandData || []
-        console.log('🏷️ 브랜드 데이터 (status=active):', brands.length, '/', brandIds.length)
+        
+        // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
+        if (company === 'sk' && brands.length > 0) {
+          const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
+          if (chainIds.length > 0) {
+            const { data: vccChainData } = await supabase
+              .from('hotel_chains')
+              .select('chain_id, vcc')
+              .in('chain_id', chainIds)
+              .eq('vcc', true)
+            
+            const vccChainIds = (vccChainData || []).map((c: any) => c.chain_id)
+            brands = brands.filter((b: any) => !b.chain_id || vccChainIds.includes(b.chain_id))
+            console.log('🏷️ 브랜드 데이터 (vcc=TRUE 체인만):', brands.length, '/', brandIds.length)
+          }
+        } else {
+          console.log('🏷️ 브랜드 데이터 (status=active):', brands.length, '/', brandIds.length)
+        }
         console.log('📋 조회된 브랜드 샘플:', brands.slice(0, 3).map((b: any) => ({
           id: b.brand_id,
           ko: b.brand_name_ko,
@@ -90,7 +124,7 @@ export async function GET() {
     })
     
     if (cityError) {
-      console.error('❌ [에러] 도시 데이터 조회 실패:', cityError)
+      console.error('❌ [에러] 도시 데이터 조회 실패:', getErrorMessage(cityError))
       throw new Error(`도시 데이터 조회 실패: ${cityError.message}`)
     }
     
@@ -157,7 +191,7 @@ export async function GET() {
     let countries: any[] = []
     
     if (countryError) {
-      console.warn('⚠️ [국가] select_regions 조회 실패, select_hotels 데이터 사용:', countryError.message)
+      console.warn('⚠️ [국가] select_regions 조회 실패, select_hotels 데이터 사용:', getErrorMessage(countryError))
       // Fallback: select_hotels에서 국가 목록 추출
       const countryMap = new Map<string, { code: string; ko: string }>()
       filteredHotels.forEach((hotel: any) => {
@@ -215,21 +249,29 @@ export async function GET() {
     
     let hotelChains: any[] = []
     if (chainIds.length > 0) {
-      const { data: chainData, error: chainError } = await supabase
+      let chainQuery = supabase
         .from('hotel_chains')
-        .select('chain_id, chain_name_en, chain_name_ko, chain_slug, status, chain_sort_order')
+        .select('chain_id, chain_name_en, chain_name_ko, chain_slug, status, chain_sort_order, vcc')
         .in('chain_id', chainIds)
         .eq('status', 'active')
       
+      // company=sk일 때 vcc=TRUE인 체인만 필터링
+      if (company === 'sk') {
+        chainQuery = chainQuery.eq('vcc', true)
+      }
+      
+      const { data: chainData, error: chainError } = await chainQuery
+      
       if (chainError) {
-        console.error('❌ 체인 데이터 조회 오류:', chainError)
+        console.error('❌ 체인 데이터 조회 오류:', getErrorMessage(chainError))
       } else {
         hotelChains = chainData || []
-        console.log('⛓️ hotel_chains 테이블에서 조회:', hotelChains.length)
+        console.log('⛓️ hotel_chains 테이블에서 조회:', hotelChains.length, company === 'sk' ? '(vcc=TRUE만)' : '(전체)')
       }
     }
     
     // 브랜드 옵션 (브랜드영문명 (체인영문명) 형식)
+    // company=sk일 때는 vcc=TRUE인 체인에 속한 브랜드만 포함
     const brandMap = new Map<string, { 
       id: number; 
       brand_name: string; 
@@ -249,6 +291,11 @@ export async function GET() {
           const chain = brand.chain_id 
             ? hotelChains.find((c: any) => c.chain_id === brand.chain_id)
             : null
+          
+          // company=sk일 때는 vcc=TRUE인 체인에 속한 브랜드만 포함
+          if (company === 'sk' && brand.chain_id && !chain) {
+            return // vcc=TRUE인 체인이 아니면 제외
+          }
           
           const brandNameEn = brand.brand_name_en || brand.brand_name_ko || ''
           const chainNameEn = chain?.chain_name_en || ''
@@ -342,11 +389,11 @@ export async function GET() {
     })
     
   } catch (error) {
-    console.error('💥 필터 옵션 API 오류:', error)
+    console.error('💥 필터 옵션 API 오류:', getErrorMessage(error))
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: getErrorMessage(error)
       },
       { status: 500 }
     )

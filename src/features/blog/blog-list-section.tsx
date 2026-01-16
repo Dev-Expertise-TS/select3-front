@@ -46,7 +46,9 @@ export function BlogListSection({ initialBlogs = [] }: BlogListSectionProps) {
     const fetchBlogs = async () => {
       try {
         setLoading(true)
-        const response = await fetch("/api/blogs")
+        const company = searchParams?.get('company')
+        const url = company === 'sk' ? "/api/blogs?company=sk" : "/api/blogs"
+        const response = await fetch(url)
         const data: BlogResponse = await response.json()
 
         if (data.success) {
@@ -56,7 +58,7 @@ export function BlogListSection({ initialBlogs = [] }: BlogListSectionProps) {
         }
       } catch (err) {
         setError("네트워크 오류가 발생했습니다.")
-        console.error("Blog fetch error:", err)
+        console.error("Blog fetch error:", err instanceof Error ? err.message : String(err))
       } finally {
         setLoading(false)
       }

@@ -87,7 +87,7 @@ export function HotelCardCta({
         setHotelBenefits(formattedBenefits)
       }
     } catch (error) {
-      console.error("Hotel benefits fetch error:", error)
+      console.error("Hotel benefits fetch error:", error instanceof Error ? error.message : String(error))
     } finally {
       setIsLoadingBenefits(false)
     }

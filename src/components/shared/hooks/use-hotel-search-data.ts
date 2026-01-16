@@ -63,7 +63,7 @@ export function useHotelSearchData() {
       
       return data || []
     } catch (err) {
-      console.error('호텔 검색 오류:', err)
+      console.error('호텔 검색 오류:', err instanceof Error ? err.message : String(err))
       setError(err instanceof Error ? err.message : '검색 중 오류가 발생했습니다.')
       return []
     } finally {
@@ -113,7 +113,7 @@ export function useHotelSearchData() {
       
       return data || []
     } catch (err) {
-      console.error('호텔 데이터 조회 오류:', err)
+      console.error('호텔 데이터 조회 오류:', err instanceof Error ? err.message : String(err))
       setError(err instanceof Error ? err.message : '데이터 조회 중 오류가 발생했습니다.')
       return []
     } finally {
@@ -199,7 +199,7 @@ export function useHotelSearchData() {
         chains
       }
     } catch (err) {
-      console.error('필터 옵션 조회 오류:', err)
+      console.error('필터 옵션 조회 오류:', err instanceof Error ? err.message : String(err))
       setError(err instanceof Error ? err.message : '필터 옵션 조회 중 오류가 발생했습니다.')
       return {
         countries: [],

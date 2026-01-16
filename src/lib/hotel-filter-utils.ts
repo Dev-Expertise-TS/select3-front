@@ -36,20 +36,26 @@ function getHotelBrandIdStrings(hotel: any): string[] {
  */
 export function getChainBrandIds(chainId: string, brands?: Array<{ id: string; chain_id?: string }>): string[] {
   if (!chainId || !brands) {
-    console.log('⚠️ [체인 필터] chainId 또는 brands 없음:', { chainId, brandsCount: brands?.length || 0 })
+    // 개발 환경에서만 로그 출력 (정상적인 경우일 수 있음)
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('🔍 [체인 필터] chainId 또는 brands 없음:', { chainId, brandsCount: brands?.length || 0 })
+    }
     return []
   }
   
   const matchingBrands = brands.filter((b: any) => String(b.chain_id) === chainId)
   const brandIds = matchingBrands.map((b: any) => b.id)
   
-  console.log('🔍 [체인 필터] 브랜드 ID 목록 생성:', {
-    체인ID: chainId,
-    전체브랜드수: brands.length,
-    매칭된브랜드수: matchingBrands.length,
-    브랜드ID목록: brandIds,
-    매칭된브랜드샘플: matchingBrands.slice(0, 3).map((b: any) => ({ id: b.id, label: b.label, chain_id: b.chain_id }))
-  })
+  // 개발 환경에서만 상세 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('🔍 [체인 필터] 브랜드 ID 목록 생성:', {
+      체인ID: chainId,
+      전체브랜드수: brands.length,
+      매칭된브랜드수: matchingBrands.length,
+      브랜드ID목록: brandIds,
+      매칭된브랜드샘플: matchingBrands.slice(0, 3).map((b: any) => ({ id: b.id, label: b.label, chain_id: b.chain_id }))
+    })
+  }
   
   return brandIds
 }
@@ -156,14 +162,20 @@ export function filterSearchResults(
   filters: HotelFilters,
   filterOptions?: FilterOptions
 ): any[] {
-  console.log('🔧 검색 결과 필터링:', {
-    searchResultsCount: searchResults?.length || 0,
-    filters: filters
-  })
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('🔧 검색 결과 필터링:', {
+      searchResultsCount: searchResults?.length || 0,
+      filters: filters
+    })
+  }
   
   const result = filterHotels(searchResults, filters, filterOptions)
   
-  console.log('✅ 검색 결과 필터링 완료:', result.length)
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('✅ 검색 결과 필터링 완료:', result.length)
+  }
   return result
 }
 
@@ -179,18 +191,21 @@ export function filterInitialHotels(
   filters: HotelFilters,
   filterOptions?: FilterOptions
 ): any[] {
-  console.log('🔧 초기 호텔 필터링:', {
-    initialHotelsCount: initialHotels.length,
-    filters: filters,
-    sampleHotel: initialHotels[0]
-  })
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('🔧 초기 호텔 필터링:', {
+      initialHotelsCount: initialHotels.length,
+      filters: filters,
+      sampleHotel: initialHotels[0]
+    })
+  }
   
   if (initialHotels.length === 0) return []
   
   const chainBrandIds = getChainBrandIds(filters.chain, filterOptions?.brands)
   
-  if (filters.chain && chainBrandIds.length > 0) {
-    console.log('⛓️ 체인 필터 활성:', {
+  if (filters.chain && chainBrandIds.length > 0 && process.env.NODE_ENV === 'development') {
+    console.debug('⛓️ 체인 필터 활성:', {
       chainId: filters.chain,
       chainBrandIds: chainBrandIds.length
     })
@@ -199,9 +214,9 @@ export function filterInitialHotels(
   const result = initialHotels.filter(hotel => {
     const passed = filterHotel(hotel, filters, chainBrandIds)
     
-    if (!passed && filters.brand) {
+    if (!passed && filters.brand && process.env.NODE_ENV === 'development') {
       const hotelBrandIds = getHotelBrandIdStrings(hotel)
-      console.log('🔍 브랜드 필터 체크:', {
+      console.debug('🔍 브랜드 필터 체크:', {
         호텔: hotel.property_name_ko,
         호텔brand_ids: hotelBrandIds,
         필터brand: filters.brand,
@@ -212,7 +227,10 @@ export function filterInitialHotels(
     return passed
   })
   
-  console.log('✅ 초기 호텔 필터링 완료:', result.length)
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('✅ 초기 호텔 필터링 완료:', result.length)
+  }
   return result
 }
 
@@ -228,13 +246,19 @@ export function filterAllHotels(
   filters: HotelFilters,
   filterOptions?: FilterOptions
 ): any[] {
-  console.log('🔧 전체 호텔 필터링:', {
-    allHotelsCount: allHotels?.length || 0,
-    filters: filters
-  })
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('🔧 전체 호텔 필터링:', {
+      allHotelsCount: allHotels?.length || 0,
+      filters: filters
+    })
+  }
   
   if (!allHotels || allHotels.length === 0) {
-    console.warn('⚠️ 전체 호텔 데이터가 비어있습니다')
+    // 개발 환경에서만 경고 출력 (반복 로그 방지)
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('⚠️ 전체 호텔 데이터가 비어있습니다')
+    }
     return []
   }
   
@@ -271,7 +295,10 @@ export function filterAllHotels(
     return filterHotel(hotel, filters, chainBrandIds)
   })
   
-  console.log('✅ 전체 호텔 필터링 완료:', result.length)
+  // 개발 환경에서만 로그 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('✅ 전체 호텔 필터링 완료:', result.length)
+  }
   return result
 }
 

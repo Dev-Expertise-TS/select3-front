@@ -13,6 +13,8 @@ import { useRouter } from "next/navigation"
 import { generateSlug } from "@/lib/hotel-utils"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import { useAnalytics } from "@/hooks/use-analytics"
+import { getCompanyFromURL, applyVccFilter } from "@/lib/company-filter"
+import { getErrorMessage } from "@/lib/logger"
 
 interface CommonSearchBarProps {
   variant?: "landing" | "hotel-detail" | "destination"
@@ -257,19 +259,29 @@ export function CommonSearchBar({
         setSuggestionError(null)
         
         // 1) 호텔 자동완성: 개별 쿼리로 분리하여 or() 문제 해결
+        const company = getCompanyFromURL()
         const hotelQueries = [
-          supabase
-            .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
-            .ilike('property_name_ko', `%${q}%`),
-          supabase
-            .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
-            .ilike('property_name_en', `%${q}%`),
-          supabase
-            .from('select_hotels')
-            .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
-            .ilike('city', `%${q}%`)
+          (() => {
+            let query = supabase
+              .from('select_hotels')
+              .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
+              .ilike('property_name_ko', `%${q}%`)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase
+              .from('select_hotels')
+              .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
+              .ilike('property_name_en', `%${q}%`)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase
+              .from('select_hotels')
+              .select('slug,sabre_id,property_name_ko,property_name_en,city,publish')
+              .ilike('city', `%${q}%`)
+            return applyVccFilter(query, company)
+          })()
         ]
         
         // 2) 지역 자동완성: select_regions(도시) + select_hotels(city/area 한/영)
@@ -283,10 +295,22 @@ export function CommonSearchBar({
           .limit(10)
 
         const regionFieldQueries = [
-          supabase.from('select_hotels').select('city_ko, publish').ilike('city_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('city_en, publish').ilike('city_en', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('area_ko, publish').ilike('area_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('area_en, publish').ilike('area_en', `%${q}%`).limit(20),
+          (() => {
+            let query = supabase.from('select_hotels').select('city_ko, publish').ilike('city_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('city_en, publish').ilike('city_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('area_ko, publish').ilike('area_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('area_en, publish').ilike('area_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
         ]
 
         const [hotelResults, regionCityResult, ...regionFieldResults] = await Promise.all([
@@ -307,7 +331,7 @@ export function CommonSearchBar({
         // 결과 병합 및 중복 제거
         hotelResults.forEach((result, index) => {
           if (result.error) {
-            console.error(`쿼리 ${index + 1} 오류:`, result.error)
+            console.error(`쿼리 ${index + 1} 오류:`, getErrorMessage(result.error))
             return
           }
           if (result.data) {
@@ -364,10 +388,10 @@ export function CommonSearchBar({
           }
         }
 
-        const cityKoRows = (regionFieldResults[0].data || []) as any[]
-        const cityEnRows = (regionFieldResults[1].data || []) as any[]
-        const areaKoRows = (regionFieldResults[2].data || []) as any[]
-        const areaEnRows = (regionFieldResults[3].data || []) as any[]
+        const cityKoRows = (regionFieldResults[0]?.error ? [] : (regionFieldResults[0]?.data || [])) as any[]
+        const cityEnRows = (regionFieldResults[1]?.error ? [] : (regionFieldResults[1]?.data || [])) as any[]
+        const areaKoRows = (regionFieldResults[2]?.error ? [] : (regionFieldResults[2]?.data || [])) as any[]
+        const areaEnRows = (regionFieldResults[3]?.error ? [] : (regionFieldResults[3]?.data || [])) as any[]
 
         addValues('city', cityKoRows.map(r => r.city_ko), '도시')
         addValues('city', cityEnRows.map(r => r.city_en), 'City')
@@ -379,18 +403,27 @@ export function CommonSearchBar({
         }
       } catch (e) {
         // 상세한 오류 정보 로깅
+        const errorMessage = e instanceof Error ? e.message : String(e)
+        const errorStack = e instanceof Error ? e.stack : undefined
+        const errorName = e instanceof Error ? e.name : 'Unknown'
+        
         console.error('자동완성 조회 오류 상세:', {
-          error: e,
-          message: e instanceof Error ? e.message : String(e),
-          stack: e instanceof Error ? e.stack : undefined,
+          name: errorName,
+          message: errorMessage,
+          stack: errorStack,
           query: q,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          errorString: String(e),
+          errorType: typeof e,
         })
+        
+        // 에러 객체는 문자열로만 로깅 (콘솔 [object Object] 방지)
+        console.error('에러 객체:', getErrorMessage(e))
         
         if (!cancelled) {
           setHotelSuggestions([])
           setRegionSuggestions([])
-          setSuggestionError('자동완성 기능에 일시적인 문제가 발생했습니다.')
+          setSuggestionError(`자동완성 기능에 일시적인 문제가 발생했습니다. (${errorMessage})`)
         }
       } finally {
         if (!cancelled) setIsSuggesting(false)
@@ -490,16 +523,15 @@ export function CommonSearchBar({
       
       // 선택된 호텔이 있으면 상세 페이지로 이동, 없으면 검색 결과로
       if (selectedRegion) {
-        const params = new URLSearchParams()
-        params.set('region', selectedRegion.value)
-        router.push(`/hotel?${params.toString()}`)
+        const { createNavigationUrl } = await import('@/lib/url-utils')
+        router.push(createNavigationUrl('/hotel', { region: selectedRegion.value }))
       } else if (selectedHotel) {
+        const { createNavigationUrl } = await import('@/lib/url-utils')
         const slug = selectedHotel.slug || generateSlug(selectedHotel.name)
-        const params = new URLSearchParams()
-        if (localCheckIn) params.set('checkIn', localCheckIn)
-        if (localCheckOut) params.set('checkOut', localCheckOut)
-        const queryString = params.toString()
-        router.push(`/hotel/${slug}${queryString ? `?${queryString}` : ''}`)
+        const params: Record<string, string> = {}
+        if (localCheckIn) params.checkIn = localCheckIn
+        if (localCheckOut) params.checkOut = localCheckOut
+        router.push(createNavigationUrl(`/hotel/${slug}`, params))
       } else if (onSearch) {
         const result = onSearch(query, dates, localGuests) as unknown
         if (typeof (result as any)?.then === 'function') {
@@ -507,7 +539,7 @@ export function CommonSearchBar({
         }
       }
     } catch (error) {
-      console.error('검색 중 오류 발생:', error)
+      console.error('검색 중 오류 발생:', getErrorMessage(error))
     } finally {
       // 검색 완료 후 즉시 로딩 해제 (Sabre API 상태는 별도로 관리)
       setIsSearching(false)

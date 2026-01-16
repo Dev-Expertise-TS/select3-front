@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { createNavigationUrl } from "@/lib/url-utils"
 import { Header } from "@/components/header"
 import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
@@ -94,7 +95,9 @@ export function HotelSearchResults({
   // 초기 필터 상태
   initialFilters,
   // 필터 네비게이션 활성화 여부
-  enableFilterNavigation = false
+  enableFilterNavigation = false,
+  // company 파라미터 (하이드레이션 오류 방지)
+  company
 }: HotelSearchResultsProps) {
   const router = useRouter()
   
@@ -333,11 +336,11 @@ export function HotelSearchResults({
           
           if (data.success && data.citySlug) {
             // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
-            router.push(`/hotel/${data.citySlug}`)
+            router.push(createNavigationUrl(`/hotel/${data.citySlug}`))
             return
           }
         } catch (error) {
-          console.error('도시 slug 조회 실패:', error)
+          console.error('도시 slug 조회 실패:', error instanceof Error ? error.message : String(error))
         }
       }
       
@@ -350,11 +353,11 @@ export function HotelSearchResults({
           
           if (data.success && data.brandSlug) {
             // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
-            router.push(`/hotel/brand/${data.brandSlug}`)
+            router.push(createNavigationUrl(`/hotel/brand/${data.brandSlug}`))
             return
           }
         } catch (error) {
-          console.error('브랜드 slug 조회 실패:', error)
+          console.error('브랜드 slug 조회 실패:', error instanceof Error ? error.message : String(error))
         }
       }
       
@@ -367,11 +370,11 @@ export function HotelSearchResults({
           
           if (data.success && data.chainSlug) {
             // 페이지 전환 없이 URL 변경 및 서버 데이터 재페치
-            router.push(`/hotel/chain/${data.chainSlug}`)
+            router.push(createNavigationUrl(`/hotel/chain/${data.chainSlug}`))
             return
           }
         } catch (error) {
-          console.error('체인 slug 조회 실패:', error)
+          console.error('체인 slug 조회 실패:', error instanceof Error ? error.message : String(error))
         }
       }
     }
@@ -751,45 +754,58 @@ export function HotelSearchResults({
                 ? filteredChainBrandHotels // 체인 필터 선택 데이터 + 교차 필터 적용
                 : []
   
-  console.log('🔍 [ allData 결정 로직 ]', {
-    searchQuery: searchQuery.trim(),
-    selectedChainId,
-    selectedBrandId,
-    initialHotelsLength: initialHotels.length,
-    showAllHotels,
-    showAllInsteadOfInitial,
-    isFilterChanged,
-    initialBrandId,
-    currentChainId,
-    allHotelsLength: allHotels?.length || 0,
-    allHotelsLoaded: !!(allHotels && allHotels.length > 0),
-    filteredDataLength: filteredData?.length || 0,
-    searchResultsLength: searchResults?.length || 0,
-    filteredSearchResultsLength: filteredSearchResults?.length || 0,
-    chainBrandHotelsLength: chainBrandHotels?.length || 0,
-    brandHotelsLength: brandHotels?.length || 0,
-    filteredChainHotelsLength: filteredChainHotels?.length || 0,
-    dataSource: searchQuery.trim() 
-      ? 'filteredSearchResults (검색 결과 + 필터 적용) ✅'
-      : showAllHotels
-        ? 'filteredData (/hotel 페이지 - 전체 호텔 + 필터 적용) ✅'
-        : showAllInsteadOfInitial
-          ? 'filteredData (전체 호텔 - 필터 초기화) ✅'
-          : initialHotels.length > 0 && isFilterChanged && allHotels && allHotels.length > 0
-            ? 'filteredData (전체 호텔 - 필터 변경 + allHotels 로드 완료) ✅'
-            : initialHotels.length > 0
-              ? 'filteredChainHotels (initialHotels 필터 적용 - 이미지 포함) ✅'
-              : selectedBrandId && filteredBrandHotels && filteredBrandHotels.length > 0
-                ? 'filteredBrandHotels (브랜드 데이터 + 교차 필터 적용)'
-                : selectedChainId 
-                  ? 'filteredChainBrandHotels (체인 데이터 + 교차 필터 적용)'
-                  : '빈 배열',
-    resultCount: allData?.length || 0,
-    '첫번째호텔이미지': allData?.[0]?.image || 'none',
-    filters,
-    isAllHotelsLoading,
-    allHotelsError: allHotelsError?.message || null
-  })
+  // 개발 환경에서만 상세 로그 출력 (useEffect로 이동)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      // filters 객체의 속성만 추출 (직접 참조 제거)
+      const filtersInfo = filters ? {
+        city: filters.city || '',
+        country: filters.country || '',
+        brand: filters.brand || '',
+        chain: filters.chain || ''
+      } : null
+      
+      console.debug('🔍 [ allData 결정 로직 ]', {
+        searchQuery: searchQuery.trim(),
+        selectedChainId,
+        selectedBrandId,
+        initialHotelsLength: initialHotels.length,
+        showAllHotels,
+        showAllInsteadOfInitial,
+        isFilterChanged,
+        initialBrandId,
+        currentChainId,
+        allHotelsLength: allHotels?.length || 0,
+        allHotelsLoaded: !!(allHotels && allHotels.length > 0),
+        filteredDataLength: filteredData?.length || 0,
+        searchResultsLength: searchResults?.length || 0,
+        filteredSearchResultsLength: filteredSearchResults?.length || 0,
+        chainBrandHotelsLength: chainBrandHotels?.length || 0,
+        brandHotelsLength: brandHotels?.length || 0,
+        filteredChainHotelsLength: filteredChainHotels?.length || 0,
+        dataSource: searchQuery.trim() 
+          ? 'filteredSearchResults (검색 결과 + 필터 적용) ✅'
+          : showAllHotels
+            ? 'filteredData (/hotel 페이지 - 전체 호텔 + 필터 적용) ✅'
+            : showAllInsteadOfInitial
+              ? 'filteredData (전체 호텔 - 필터 초기화) ✅'
+              : initialHotels.length > 0 && isFilterChanged && allHotels && allHotels.length > 0
+                ? 'filteredData (전체 호텔 - 필터 변경 + allHotels 로드 완료) ✅'
+                : initialHotels.length > 0
+                  ? 'filteredChainHotels (initialHotels 필터 적용 - 이미지 포함) ✅'
+                  : selectedBrandId && filteredBrandHotels && filteredBrandHotels.length > 0
+                    ? 'filteredBrandHotels (브랜드 데이터 + 교차 필터 적용)'
+                    : selectedChainId 
+                      ? 'filteredChainBrandHotels (체인 데이터 + 교차 필터 적용)'
+                      : '빈 배열',
+        resultCount: allData?.length || 0,
+        '첫번째호텔이미지': allData?.[0]?.image || 'none',
+        filters: filtersInfo,
+        isAllHotelsLoading,
+        allHotelsError: allHotelsError?.message || null
+      })
+    }
+  }, [searchQuery, selectedChainId, selectedBrandId, initialHotels.length, showAllHotels, showAllInsteadOfInitial, isFilterChanged, initialBrandId, currentChainId, allHotels, filteredData, searchResults, filteredSearchResults, chainBrandHotels, brandHotels, filteredChainHotels, allData, filters, isAllHotelsLoading, allHotelsError])
   
   // 동적 타이틀 계산 (브랜드 필터 선택 시 변경)
   const dynamicTitle = useMemo(() => {
@@ -839,17 +855,19 @@ export function HotelSearchResults({
   const displayData = allData?.slice(0, displayCount) || []
   const hasMoreData = allData && allData.length > displayCount
   
-  // displayData 디버깅
+  // displayData 디버깅 (개발 환경에서만)
   useEffect(() => {
-    console.log('🎯 [ displayData 상태 ]', {
-      allDataLength: allData?.length || 0,
-      displayCount,
-      displayDataLength: displayData?.length || 0,
-      displayData샘플: displayData?.slice(0, 2).map(h => ({
-        name: h?.property_name_ko,
-        sabre_id: h?.sabre_id
-      }))
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('🎯 [ displayData 상태 ]', {
+        allDataLength: allData?.length || 0,
+        displayCount,
+        displayDataLength: displayData?.length || 0,
+        displayData샘플: displayData?.slice(0, 2).map(h => ({
+          name: h?.property_name_ko,
+          sabre_id: h?.sabre_id
+        }))
+      })
+    }
   }, [displayData, allData, displayCount])
   const isPageLoading = searchQuery.trim() 
     ? isSearchLoading 
@@ -1241,6 +1259,7 @@ export function HotelSearchResults({
                     showPrice={false}
                     showBadge={false}
                     showPromotionBadge={false}
+                    company={company}
                   />
                 </div>
               </div>
@@ -1270,6 +1289,7 @@ export function HotelSearchResults({
                 showBadge={false}
                 showPromotionBadge={false}
                 searchQuery={searchQuery}
+                company={company}
               />
               </>
             ) : (

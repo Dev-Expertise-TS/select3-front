@@ -73,8 +73,15 @@ export default async function AllHotelResortPage({
         ? regionParamRaw[0]
         : undefined
 
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = await getCompanyFromServer(searchParams)
+  
   // 서버에서 초기 데이터 조회 (region 필터 지원)
-  const { allHotels, filterOptions, bannerHotel } = await getHotelPageData({ region: regionParam })
+  const { allHotels, filterOptions, bannerHotel } = await getHotelPageData({ 
+    region: regionParam,
+    company 
+  })
 
   const brandIdParam = params.brand_id as string | undefined
   const brandNameParam = params.brand as string | undefined
@@ -210,6 +217,7 @@ export default async function AllHotelResortPage({
         serverFilterOptions={filterOptions}
         serverBannerHotel={bannerHotel}
         initialFilters={initialFilters}
+        company={company}
       />
       </Suspense>
     </>

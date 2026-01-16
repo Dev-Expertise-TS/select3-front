@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { applyVccFilter } from '@/lib/company-filter'
 
 export interface BrandWithCount {
   brand_id: number
@@ -12,8 +13,9 @@ export interface BrandWithCount {
 /**
  * 모든 브랜드와 각 브랜드의 호텔 수를 조회
  * publish가 null이거나 true인 호텔만 카운트
+ * company 파라미터가 있으면 vcc=TRUE 필터 적용
  */
-export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
+export async function getAllBrandsWithHotelCount(company?: string | null): Promise<BrandWithCount[]> {
   const supabase = await createClient()
   
   // 1. 모든 브랜드 조회
@@ -37,11 +39,16 @@ export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
   const brandsWithCount = await Promise.all(
     brands.map(async (brand) => {
       // 호텔 수 조회
-      const { count, error: countError } = await supabase
+      let countQuery = supabase
         .from('select_hotels')
         .select('*', { count: 'exact', head: true })
         .or(`brand_id.eq.${brand.brand_id},brand_id_2.eq.${brand.brand_id},brand_id_3.eq.${brand.brand_id}`)
         .or('publish.is.null,publish.eq.true')
+      
+      // company=sk일 때 vcc=TRUE 필터 적용
+      countQuery = applyVccFilter(countQuery, company || null)
+      
+      const { count, error: countError } = await countQuery
       
       if (countError) {
         console.error(`❌ 브랜드 ${brand.brand_id} 호텔 수 조회 오류:`, countError)
@@ -53,13 +60,18 @@ export async function getAllBrandsWithHotelCount(): Promise<BrandWithCount[]> {
       }
       
       // 호텔 이미지 조회 (최대 30개)
-      const { data: hotels, error: hotelsError } = await supabase
+      let hotelsQuery = supabase
         .from('select_hotels')
         .select('image, property_name_ko, property_name_en')
         .or(`brand_id.eq.${brand.brand_id},brand_id_2.eq.${brand.brand_id},brand_id_3.eq.${brand.brand_id}`)
         .or('publish.is.null,publish.eq.true')
         .not('image', 'is', null)
         .limit(30)
+      
+      // company=sk일 때 vcc=TRUE 필터 적용
+      hotelsQuery = applyVccFilter(hotelsQuery, company || null)
+      
+      const { data: hotels, error: hotelsError } = await hotelsQuery
       
       const hotel_images = hotels
         ?.filter(h => h.image && h.image.trim() !== '') // 빈 URL 필터링

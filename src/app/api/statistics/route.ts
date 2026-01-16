@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getErrorMessage } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -46,12 +47,12 @@ export async function GET() {
 
     if (hotelsError || brandsError || blogsError || citiesError || testimonialsError || promotionsError) {
       console.error('❌ 통계 조회 오류:', {
-        hotelsError,
-        brandsError,
-        blogsError,
-        citiesError,
-        testimonialsError,
-        promotionsError
+        hotelsError: hotelsError ? getErrorMessage(hotelsError) : null,
+        brandsError: brandsError ? getErrorMessage(brandsError) : null,
+        blogsError: blogsError ? getErrorMessage(blogsError) : null,
+        citiesError: citiesError ? getErrorMessage(citiesError) : null,
+        testimonialsError: testimonialsError ? getErrorMessage(testimonialsError) : null,
+        promotionsError: promotionsError ? getErrorMessage(promotionsError) : null
       })
     }
 
@@ -67,7 +68,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('❌ 통계 API 오류:', error)
+    console.error('❌ 통계 API 오류:', getErrorMessage(error))
     return NextResponse.json(
       {
         success: false,

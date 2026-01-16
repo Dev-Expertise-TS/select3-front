@@ -57,8 +57,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
+  
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = searchParams ? await getCompanyFromServer(searchParams) : null
   
   // Organization Structured Data
   const organizationData = {
@@ -110,14 +118,14 @@ export default function HomePage() {
       
       <main>
         <PromotionBannerWrapper>
-          <Hero />
+          <Hero company={company} />
           <Suspense fallback={<div className="bg-white sm:bg-gray-50 pt-3 pb-1 sm:py-6 h-20" />}>
             <SearchSection />
           </Suspense>
           <BenefitsSection />
           <TestimonialsSection />
-          <PromotionSection hotelCount={3} />
-          <BrandProgramSection />
+          <PromotionSection hotelCount={3} company={company} />
+          <BrandProgramSection company={company} />
           <TrendingDestinationsSection />
           <HotelGrid />
         </PromotionBannerWrapper>

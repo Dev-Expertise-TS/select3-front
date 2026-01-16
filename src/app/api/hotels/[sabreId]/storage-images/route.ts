@@ -219,7 +219,7 @@ export async function GET(
     return res;
 
   } catch (error) {
-    console.error('호텔 스토리지 이미지 조회 오류:', error);
+    console.error('호텔 스토리지 이미지 조회 오류:', error instanceof Error ? error.message : String(error));
     
     const errRes = NextResponse.json({
       success: false,

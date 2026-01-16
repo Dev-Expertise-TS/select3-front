@@ -299,7 +299,7 @@ export function useRoomAIProcessing() {
             await new Promise(resolve => setTimeout(resolve, 500))
           }
         } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 소개 생성 실패:`, roomError)
+          console.error(`❌ ${i + 1}번째 객실 소개 생성 실패:`, roomError instanceof Error ? roomError.message : String(roomError))
           // 개별 객실 실패 시 fallback 사용
           const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
           
@@ -325,7 +325,7 @@ export function useRoomAIProcessing() {
       console.log('✅ 모든 객실 소개 순차 처리 완료')
       
     } catch (error) {
-      console.error('❌ 객실 소개 AI 생성 중 오류 발생:', error)
+      console.error('❌ 객실 소개 AI 생성 중 오류 발생:', error instanceof Error ? error.message : String(error))
     } finally {
       setIsGeneratingIntroductions(false)
       setCurrentProcessingRow(-1) // 처리 완료 후 초기화
@@ -500,7 +500,7 @@ export function useRoomAIProcessing() {
             await new Promise(resolve => setTimeout(resolve, 300))
           }
         } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 실패:`, roomError)
+          console.error(`❌ ${i + 1}번째 객실 글로벌 호텔 OTA 스타일 객실명 생성 실패:`, roomError instanceof Error ? roomError.message : String(roomError))
           // 개별 객실 실패 시 fallback 사용
           const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
           
@@ -526,7 +526,7 @@ export function useRoomAIProcessing() {
       console.log('✅ 모든 객실명 순차 처리 완료')
       
     } catch (error) {
-      console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error)
+      console.error('❌ 글로벌 호텔 OTA 스타일 객실명 생성 오류:', error instanceof Error ? error.message : String(error))
       // 에러 발생 시 기본 객실명 생성 (전체 레코드)
       const fallbackNames = new Map<string, string>()
       const roomsToProcess = ratePlans
@@ -554,7 +554,7 @@ export function useRoomAIProcessing() {
       cacheKeys.forEach(key => localStorage.removeItem(key))
       console.log('🗑️ 캐시 클리어 완료:', cacheKeys.length, '개 항목 삭제')
     } catch (error) {
-      console.warn('캐시 클리어 실패:', error)
+      console.warn('캐시 클리어 실패:', error instanceof Error ? error.message : String(error))
     }
   }
 
@@ -582,7 +582,7 @@ export function useRoomAIProcessing() {
         stats: cacheStats
       }
     } catch (error) {
-      console.warn('캐시 정보 조회 실패:', error)
+      console.warn('캐시 정보 조회 실패:', error instanceof Error ? error.message : String(error))
       return { totalItems: 0, items: [], stats: cacheStats }
     }
   }
@@ -625,7 +625,7 @@ export function useRoomAIProcessing() {
         await generateGlobalOTAStyleRoomNames(ratePlans, hotelName, checkIn, checkOut, 0, 3)
         await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, 0, 3)
       } catch (error) {
-        console.error('초기 AI 처리 중 오류:', error)
+        console.error('초기 AI 처리 중 오류:', error instanceof Error ? error.message : String(error))
       } finally {
         setIsGeneratingIntroductions(false)
         setIsGeneratingRoomNames(false)
@@ -713,7 +713,7 @@ export function useRoomAIProcessing() {
             await new Promise(resolve => setTimeout(resolve, 300))
           }
         } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 나머지 객실명 생성 실패:`, roomError)
+          console.error(`❌ ${i + 1}번째 나머지 객실명 생성 실패:`, roomError instanceof Error ? roomError.message : String(roomError))
           const fallbackName = roomType && roomType !== 'N/A' ? roomType.substring(0, 15) : '객실'
           
           setCachedData(cacheKey, fallbackName)
@@ -788,7 +788,7 @@ export function useRoomAIProcessing() {
             await new Promise(resolve => setTimeout(resolve, 500))
           }
         } catch (roomError) {
-          console.error(`❌ ${i + 1}번째 나머지 객실 소개 생성 실패:`, roomError)
+          console.error(`❌ ${i + 1}번째 나머지 객실 소개 생성 실패:`, roomError instanceof Error ? roomError.message : String(roomError))
           const fallbackIntro = `${hotelName}의 ${roomType} ${roomName} 객실입니다. ${description || '편안하고 아늑한 분위기로 최고의 숙박 경험을 제공합니다.'}`
           
           setCachedData(cacheKey, fallbackIntro)
@@ -805,7 +805,7 @@ export function useRoomAIProcessing() {
       }
       
     } catch (error) {
-      console.error('❌ 나머지 레코드 직접 AI 처리 중 오류:', error)
+      console.error('❌ 나머지 레코드 직접 AI 처리 중 오류:', error instanceof Error ? error.message : String(error))
     } finally {
       setIsGeneratingIntroductions(false)
       setIsGeneratingRoomNames(false)
@@ -831,7 +831,7 @@ export function useRoomAIProcessing() {
       // 해당 인덱스만 처리
       await generateRoomIntroductionsSequential(ratePlans, hotelName, checkIn, checkOut, index, index + 1)
     } catch (error) {
-      console.error('❌ 단일 객실 소개 생성 실패:', { index, error })
+      console.error('❌ 단일 객실 소개 생성 실패:', { index, error: error instanceof Error ? error.message : String(error) })
     } finally {
       setIsGeneratingIntroductions(false)
       setCurrentProcessingRow(-1)

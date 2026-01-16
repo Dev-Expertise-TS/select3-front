@@ -45,6 +45,7 @@ import { checkMultipleImages } from "@/lib/image-cache"
 import { useHotelImages } from "@/hooks/use-hotel-images"
 import { useHotelStorageImages } from "@/hooks/use-hotel-storage-images"
 import { HotelHeroImage, HotelThumbnail } from "@/components/ui/smart-image"
+import { getErrorMessage } from "@/lib/logger"
 
 // Types
 interface HotelDetailProps {
@@ -764,7 +765,7 @@ export function HotelDetail({
         .eq('sabre_id', sabreId)
       
       if (mapError) {
-        console.error('❌ 프로모션 맵 조회 오류:', mapError)
+        console.error('❌ 프로모션 맵 조회 오류:', mapError instanceof Error ? mapError.message : String(mapError))
         return []
       }
       
@@ -861,7 +862,7 @@ export function HotelDetail({
       return normalized as any
       
     } catch (error) {
-      console.error('❌ 프로모션 데이터 조회 중 오류:', error)
+      console.error('❌ 프로모션 데이터 조회 중 오류:', getErrorMessage(error))
       return []
     } finally {
       setIsLoadingPromotions(false)
@@ -1564,23 +1565,44 @@ export function HotelDetail({
         })
         
         if (!response.ok) {
-          let errorData: any = {}
+          let errorData: any = null
+          let errorText: string = ''
+          
           try {
-            const text = await response.text()
-            if (text) {
-              errorData = JSON.parse(text)
+            errorText = await response.text()
+            if (errorText && errorText.trim()) {
+              try {
+                errorData = JSON.parse(errorText)
+              } catch (parseError) {
+                // JSON이 아닌 경우 텍스트 그대로 사용
+                errorData = { message: errorText }
+              }
             }
-          } catch (parseError) {
-            // JSON 파싱 실패 시 빈 객체 유지
-            console.warn('⚠️ 에러 응답 JSON 파싱 실패:', parseError)
+          } catch (textError) {
+            // 텍스트 읽기 실패
+            console.warn('⚠️ 에러 응답 본문 읽기 실패:', textError)
           }
           
-          console.error('❌ Hotel Details API 응답 오류:', {
+          const errorMessage = errorData?.error || errorData?.message || `API 호출 실패: ${response.status} ${response.statusText}`
+          
+          // 더 자세한 에러 정보 로깅 (객체 직접 참조 제거)
+          const errorInfo = {
             status: response.status,
             statusText: response.statusText,
-            errorData: Object.keys(errorData).length > 0 ? errorData : '빈 응답 또는 파싱 실패'
-          })
-          throw new Error(errorData.error || `API 호출 실패: ${response.status} ${response.statusText}`)
+            hasErrorData: !!errorData,
+            // errorData 객체의 속성만 추출 (직접 참조 제거)
+            ...(errorData && typeof errorData === 'object' ? {
+              errorDataError: errorData.error,
+              errorDataMessage: errorData.message,
+              errorDataCode: errorData.code,
+              errorDataDetails: errorData.details
+            } : { errorData: errorData }),
+            errorText: errorText || '(응답 본문 없음)',
+            errorMessage
+          }
+          
+          console.error('❌ Hotel Details API 응답 오류:', errorInfo)
+          throw new Error(errorMessage)
         }
         
         const result = await response.json()
@@ -1636,7 +1658,7 @@ export function HotelDetail({
         console.warn('⚠️ API 응답에서 유효한 데이터를 찾을 수 없음:', result)
         return null
       } catch (error) {
-        console.error('Hotel Details API 호출 오류:', error)
+        console.error('Hotel Details API 호출 오류:', getErrorMessage(error))
         
         // 네트워크 오류인 경우 더 자세한 로그
         if (error instanceof TypeError && error.message === 'Failed to fetch') {

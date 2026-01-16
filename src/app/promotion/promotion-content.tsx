@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { HotelCardGridSection } from '@/components/shared/hotel-card-grid'
 import { transformHotelsToCardData } from '@/lib/hotel-utils'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
+import { getCompanyFromURL, applyVccFilter } from '@/lib/company-filter'
 
 const supabase = createClient()
 
@@ -24,11 +25,18 @@ function usePromotionPageHotels() {
       // 중복 제거
       const uniqueSabreIds = [...new Set(promotionMap.map(item => item.sabre_id))]
       
+      const company = getCompanyFromURL()
+      
       // 2. select_hotels에서 해당 sabre_id의 호텔 정보 조회
-      const { data: hotels, error: hotelsError } = await supabase
+      let hotelQuery = supabase
         .from('select_hotels')
         .select('*')
         .in('sabre_id', uniqueSabreIds)
+      
+      // company=sk일 때 vcc=TRUE 필터 적용
+      hotelQuery = applyVccFilter(hotelQuery, company)
+      
+      const { data: hotels, error: hotelsError } = await hotelQuery
       
       if (hotelsError) throw hotelsError
       if (!hotels) return []
@@ -45,14 +53,49 @@ function usePromotionPageHotels() {
         .order('image_seq', { ascending: true })
       
       if (mediaError) {
-        console.error('프로모션 페이지 미디어 조회 오류:', mediaError)
+        console.error('프로모션 페이지 미디어 조회 오류:', mediaError instanceof Error ? mediaError.message : String(mediaError))
       }
       
       // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
       const mediaData = getFirstImagePerHotel(rawMediaData || [])
       
-      // 4. 데이터 변환 (select_hotel_media 사용)
-      return transformHotelsToCardData(filteredHotels, mediaData, true)
+      // 4. 브랜드 정보 조회 (brand_id, brand_id_2, brand_id_3)
+      const allBrandIds = [
+        ...new Set(
+          filteredHotels
+            .flatMap((h: any) => [h.brand_id, h.brand_id_2, h.brand_id_3])
+            .filter((id) => id !== null && id !== undefined && id !== '')
+        )
+      ]
+      
+      let brandData: any[] = []
+      if (allBrandIds.length > 0) {
+        const { data: brands, error: brandError } = await supabase
+          .from('hotel_brands')
+          .select('brand_id, brand_name_en')
+          .in('brand_id', allBrandIds)
+        
+        if (brandError) {
+          console.error('프로모션 페이지 브랜드 조회 오류:', {
+            message: brandError.message,
+            details: brandError.details,
+            hint: brandError.hint,
+            code: brandError.code
+          })
+        } else {
+          brandData = brands || []
+          console.log('✅ 프로모션 페이지 브랜드 데이터 조회:', {
+            brand_ids_count: allBrandIds.length,
+            brands_found: brandData.length,
+            sample_brands: brandData.slice(0, 3)
+          })
+        }
+      } else {
+        console.warn('⚠️ 프로모션 페이지: 브랜드 ID가 없음')
+      }
+      
+      // 5. 데이터 변환 (select_hotel_media 사용, 브랜드 정보 포함)
+      return transformHotelsToCardData(filteredHotels, mediaData, true, brandData)
     },
     staleTime: 5 * 60 * 1000, // 5분
   })

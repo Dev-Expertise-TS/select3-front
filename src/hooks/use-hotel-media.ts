@@ -15,7 +15,7 @@ export function useHotelMedia(sabreId: string | null) {
         .order('image_seq', { ascending: true })
       
       if (error) {
-        console.error('select_hotel_media 조회 오류:', error)
+        console.error('select_hotel_media 조회 오류:', error instanceof Error ? error.message : String(error))
         throw error
       }
       
@@ -45,7 +45,7 @@ export function useHotelMainImage(sabreId: string | null) {
         .maybeSingle()
       
       if (error) {
-        console.error('select_hotel_media 메인 이미지 조회 오류:', error)
+        console.error('select_hotel_media 메인 이미지 조회 오류:', error instanceof Error ? error.message : String(error))
         throw error
       }
       

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getErrorMessage } from '@/lib/logger'
 
 const supabase = createClient()
 
@@ -15,7 +16,7 @@ export function useHotels() {
         .order('property_name_ko')
       
       if (error) {
-        console.error('호텔 목록 조회 오류:', error)
+        console.error('호텔 목록 조회 오류:', getErrorMessage(error))
         throw error
       }
       
@@ -40,7 +41,7 @@ export function useHotel(sabreId: number) {
         .maybeSingle()
       
       if (error) {
-        console.error('호텔 조회 오류:', error)
+        console.error('호텔 조회 오류:', getErrorMessage(error))
         throw error
       }
       
@@ -82,7 +83,7 @@ export function useHotelBySlug(slug: string) {
         console.error('호텔 slug 조회 오류:', {
           originalSlug: slug,
           decodedSlug: decodedSlug,
-          error: error.message || error,
+          error: getErrorMessage(error),
           code: error.code,
           details: error.details,
           hint: error.hint
@@ -116,7 +117,7 @@ export function useHotelMedia(sabreId: number, options?: { enabled?: boolean }) 
         .order('image_seq', { ascending: true })
       
       if (error) {
-        console.error('select_hotel_media 조회 오류:', error)
+        console.error('select_hotel_media 조회 오류:', getErrorMessage(error))
         throw error
       }
       
@@ -145,7 +146,7 @@ export function useHotelSearch(query: string) {
         .order('property_name_ko')
       
       if (error) {
-        console.error('호텔 검색 오류:', error)
+        console.error('호텔 검색 오류:', getErrorMessage(error))
         throw error
       }
       
@@ -173,7 +174,7 @@ export function useBrandHotels(brandId: string | null) {
         .order('property_name_ko')
       
       if (error) {
-        console.error('브랜드 호텔 조회 오류:', error)
+        console.error('브랜드 호텔 조회 오류:', getErrorMessage(error))
         throw error
       }
       

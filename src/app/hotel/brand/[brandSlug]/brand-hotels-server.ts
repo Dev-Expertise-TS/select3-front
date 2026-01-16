@@ -2,11 +2,12 @@ import { getBrandBySlug, getHotelsByBrandId } from '@/lib/brand-data-server'
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
+import { applyVccFilter } from '@/lib/company-filter'
 
 /**
  * 브랜드별 호텔 페이지 데이터 조회
  */
-export async function getBrandHotelsData(brandSlug: string) {
+export async function getBrandHotelsData(brandSlug: string, company?: string | null) {
   // 1. 브랜드 정보 조회
   const brand = await getBrandBySlug(brandSlug)
   
@@ -17,7 +18,7 @@ export async function getBrandHotelsData(brandSlug: string) {
   const supabase = await createClient()
   
   // 2. 해당 브랜드의 호텔 목록 조회 (brand_id 기준)
-  const hotels = await getHotelsByBrandId(String(brand.brand_id))
+  const hotels = await getHotelsByBrandId(String(brand.brand_id), company)
   
   if (!hotels || hotels.length === 0) {
     return {
@@ -28,10 +29,15 @@ export async function getBrandHotelsData(brandSlug: string) {
   }
   
   // 2-1. 전체 호텔 목록 조회 (필터 옵션용)
-  const { data: allHotelsForFilter } = await supabase
+  let filterQuery = supabase
     .from('select_hotels')
     .select('city_code, city_ko, country_code, country_ko, brand_id, brand_id_2, brand_id_3, chain_id')
     .or('publish.is.null,publish.eq.true')
+  
+  // company=sk일 때 vcc=TRUE 필터 적용
+  filterQuery = applyVccFilter(filterQuery, company || null)
+  
+  const { data: allHotelsForFilter } = await filterQuery
   
   // 2-2. 체인 정보 조회 (필터 옵션용)
   const chainIdsForFilter = [...new Set(allHotelsForFilter?.filter(h => h.chain_id).map(h => h.chain_id) || [])]

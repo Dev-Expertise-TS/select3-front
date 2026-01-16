@@ -21,7 +21,8 @@ export function generateSlug(propertyName: string): string {
 export function transformHotelToCardData(
   hotel: any,
   imageUrl?: string,
-  benefits?: string[]
+  benefits?: string[],
+  brandNamesEn?: string[]
 ): HotelCardData {
   // slug 사용: 기존 slug가 있으면 사용, 없으면 undefined
   const slug = hotel.slug || undefined
@@ -30,6 +31,7 @@ export function transformHotelToCardData(
     sabre_id: hotel.sabre_id,
     property_name_ko: hotel.property_name_ko || hotel.property_name_en || `호텔 ${hotel.sabre_id}`,
     property_name_en: hotel.property_name_en || undefined,
+    brand_names_en: brandNamesEn && brandNamesEn.length > 0 ? brandNamesEn : undefined,
     city: hotel.city || hotel.city_ko || hotel.city_en || '위치 정보 없음',
     property_address: hotel.property_address || '주소 정보 없음',
     image: imageUrl || '/placeholder.svg', // image_1 사용 제거, mediaData의 imageUrl 우선
@@ -55,10 +57,11 @@ export function transformHotelToCardData(
 export function transformPromotionHotelToCardData(
   hotel: any,
   imageUrl?: string,
-  benefits?: string[]
+  benefits?: string[],
+  brandNamesEn?: string[]
 ): HotelCardData {
   return {
-    ...transformHotelToCardData(hotel, imageUrl, benefits),
+    ...transformHotelToCardData(hotel, imageUrl, benefits, brandNamesEn),
     isPromotion: true
   }
 }
@@ -67,7 +70,8 @@ export function transformPromotionHotelToCardData(
 export function transformHotelsToCardData(
   hotels: any[],
   mediaData?: any[],
-  isPromotion: boolean = false
+  isPromotion: boolean = false,
+  brandData?: any[]
 ): HotelCardData[] {
   return hotels.map(hotel => {
     // 1순위: select_hotel_media 테이블에서 해당 호텔의 이미지 찾기 (image_seq=1 우선)
@@ -115,11 +119,49 @@ export function transformHotelsToCardData(
       hotel.benefit_6
     ].filter(Boolean)
     
-    if (isPromotion) {
-      return transformPromotionHotelToCardData(hotel, imageUrl, benefits)
+    // 브랜드 정보 찾기 (brand_id, brand_id_2, brand_id_3 모두 포함)
+    const brandNamesEn: string[] = []
+    if (brandData && brandData.length > 0) {
+      // brand_id, brand_id_2, brand_id_3 순서대로 찾아서 배열에 추가
+      const brandIds = [hotel.brand_id, hotel.brand_id_2, hotel.brand_id_3].filter(
+        (id) => id !== null && id !== undefined && id !== ''
+      )
+      
+      if (brandIds.length > 0) {
+        brandIds.forEach((brandId) => {
+          // 숫자와 문자열 모두 비교 가능하도록 처리
+          const brand = brandData.find((b: any) => {
+            const bId = b.brand_id
+            const hId = brandId
+            return String(bId) === String(hId) || Number(bId) === Number(hId)
+          })
+          if (brand?.brand_name_en && !brandNamesEn.includes(brand.brand_name_en)) {
+            brandNamesEn.push(brand.brand_name_en)
+          }
+        })
+        
+        // 디버깅: 브랜드 정보 확인
+        if (brandNamesEn.length === 0) {
+          console.log(`⚠️ [Hotel ${hotel.sabre_id}] 브랜드 ID는 있지만 브랜드명을 찾지 못함:`, {
+            sabre_id: hotel.sabre_id,
+            brand_ids: brandIds,
+            brand_ids_types: brandIds.map(id => typeof id),
+            brand_data_count: brandData.length,
+            brand_data_sample: brandData.slice(0, 3).map((b: any) => ({
+              brand_id: b.brand_id,
+              brand_id_type: typeof b.brand_id,
+              brand_name_en: b.brand_name_en
+            }))
+          })
+        }
+      }
     }
     
-    return transformHotelToCardData(hotel, imageUrl, benefits)
+    if (isPromotion) {
+      return transformPromotionHotelToCardData(hotel, imageUrl, benefits, brandNamesEn.length > 0 ? brandNamesEn : undefined)
+    }
+    
+    return transformHotelToCardData(hotel, imageUrl, benefits, brandNamesEn.length > 0 ? brandNamesEn : undefined)
   })
 }
 

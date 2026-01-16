@@ -651,7 +651,7 @@ export function RoomRatesTable({
                 
                 processRemainingRatePlans(ratePlans, hotelName, checkIn, checkOut)
                   .catch((error: any) => {
-                    console.error('❌ AI 처리 함수 호출 실패:', error)
+                    console.error('❌ AI 처리 함수 호출 실패:', error instanceof Error ? error.message : String(error))
                   })
               }
               

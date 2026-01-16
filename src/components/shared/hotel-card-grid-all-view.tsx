@@ -22,6 +22,7 @@ export interface HotelCardGridAllViewProps {
   loading?: boolean
   skeletonCount?: number
   isThreeGrid?: boolean
+  company?: string | null // company 파라미터 (하이드레이션 오류 방지)
 }
 
 // 전체보기용 호텔 카드 그리드 컴포넌트
@@ -41,7 +42,8 @@ export function HotelCardGridAllView({
   emptyMessage = "표시할 호텔이 없습니다.",
   loading = false,
   skeletonCount = HOTEL_GRID_CONFIG.DEFAULT_SKELETON_COUNT,
-  isThreeGrid = false
+  isThreeGrid = false,
+  company = null
 }: HotelCardGridAllViewProps) {
   // 전체보기용 4개 컬럼 그리드 클래스
   const gridColumnsClasses = HOTEL_CARD_CONFIG.GRID_COLUMNS.FOUR
@@ -120,6 +122,7 @@ export function HotelCardGridAllView({
           imageClassName={imageClassName}
           contentClassName={contentClassName}
           isThreeGrid={isThreeGrid}
+          company={company}
         />
       ))}
     </div>

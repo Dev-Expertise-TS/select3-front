@@ -295,7 +295,7 @@ export function HotelComparisonMap({ destinationRaw, destinationLabel }: HotelCo
         mapInstanceRef.current.setZoom(13)
       }
     } catch (e) {
-      console.error('[Map] Error loading select hotels:', e)
+      console.error('[Map] Error loading select hotels:', e instanceof Error ? e.message : String(e))
       setSelectData(null)
       setError(e instanceof Error ? e.message : String(e))
     } finally {

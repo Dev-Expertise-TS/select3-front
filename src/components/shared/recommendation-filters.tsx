@@ -44,7 +44,7 @@ export function RecommendationFilters({ onFilterChange }: RecommendationFiltersP
           }
         }
       } catch (error) {
-        console.error('필터 조회 실패:', error)
+        console.error('필터 조회 실패:', error instanceof Error ? error.message : String(error))
       } finally {
         setLoading(false)
       }

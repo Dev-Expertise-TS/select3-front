@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ChainPageClient } from "./chain-page-client"
 import { getFirstImagePerHotel } from "@/lib/media-utils"
 import { getBrandBannerHotel } from "@/lib/banner-hotel-server"
+import { getCompanyFromServer, applyVccFilter } from '@/lib/company-filter'
 
 interface HotelRow {
   sabre_id: number
@@ -17,7 +18,7 @@ interface HotelRow {
 }
 
 
-async function getChainHotels(chainSlug: string) {
+async function getChainHotels(chainSlug: string, company?: string | null) {
   const supabase = await createClient()
   
   console.log(`[ Server ] 체인 chain_slug '${chainSlug}'로 호텔 검색 시작`)
@@ -125,11 +126,16 @@ async function getChainHotels(chainSlug: string) {
     })
     
     // brand_id로 호텔 조회 + publish 필터링 (DB 레벨에서)
-    const { data: hotelData, error: hotelsError } = await supabase
+    let hotelQuery = supabase
       .from('select_hotels')
       .select('*')
       .or(`brand_id.in.(${brandIds.join(',')}),brand_id_2.in.(${brandIds.join(',')}),brand_id_3.in.(${brandIds.join(',')})`)
       .or('publish.is.null,publish.eq.true') // 비공개 호텔 제외
+    
+    // company=sk일 때 vcc=true 필터 적용
+    hotelQuery = applyVccFilter(hotelQuery, company || null)
+    
+    const { data: hotelData, error: hotelsError } = await hotelQuery
     
     console.log(`[ Server ] select_hotels 조회 결과:`, { 
       count: hotelData?.length || 0, 
@@ -163,7 +169,7 @@ async function getChainHotels(chainSlug: string) {
       .order('image_seq', { ascending: true })
     
     if (mediaError) {
-      console.error('[ Server ] 호텔 미디어 조회 에러:', mediaError)
+      console.error('[ Server ] 호텔 미디어 조회 에러:', mediaError instanceof Error ? mediaError.message : String(mediaError))
     } else {
       // 각 호텔별로 첫 번째 이미지만 선택 (image_seq가 가장 작은 것)
       hotelMediaData = getFirstImagePerHotel(mediaData || [])
@@ -199,13 +205,17 @@ interface ChainPageProps {
 
 export default async function ChainPage({ params, searchParams }: ChainPageProps) {
   const { chain } = await params
-  const { brand: brandParam } = await searchParams
+  const resolvedSearchParams = await searchParams
+  const { brand: brandParam } = resolvedSearchParams
+  
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const company = await getCompanyFromServer(resolvedSearchParams)
   
   // 배너 호텔과 체인 호텔을 병렬로 조회
   // 브랜드 페이지에서는 chain slug에 맞는 브랜드 배너 호텔 조회
   const [bannerHotelResult, chainHotelsResult] = await Promise.all([
-    getBrandBannerHotel(chain),
-    getChainHotels(chain)
+    getBrandBannerHotel(chain, company),
+    getChainHotels(chain, company)
   ])
   
   // 브랜드 배너가 없으면 일반 상단 배너로 fallback
@@ -213,7 +223,7 @@ export default async function ChainPage({ params, searchParams }: ChainPageProps
   if (!finalBannerHotel) {
     console.log(`🔄 [Server] ${chain} 브랜드 배너 없음, 상단 배너로 fallback`)
     const { getBannerHotel } = await import('@/lib/banner-hotel-server')
-    finalBannerHotel = await getBannerHotel()
+    finalBannerHotel = await getBannerHotel(company)
   }
   
   const { chain: chainRow, hotels, hotelMediaData, allChains, selectedChainBrands } = chainHotelsResult

@@ -52,7 +52,7 @@ export const createSupabaseImageUrl = (
 
     return `${baseUrl}?${params.toString()}`;
   } catch (error) {
-    console.warn('Supabase 이미지 URL 생성 에러:', error);
+    console.warn('Supabase 이미지 URL 생성 에러:', error instanceof Error ? error.message : String(error));
     return src;
   }
 };

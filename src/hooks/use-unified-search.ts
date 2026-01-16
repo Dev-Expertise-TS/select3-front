@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getCompanyFromURL, applyVccFilter } from '@/lib/company-filter'
 
 type UnifiedHotel = {
   type: 'hotel'
@@ -111,14 +112,14 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
           .limit(20)
 
         if (regionError) {
-          console.error('❌ Region search error:', regionError)
+          console.error('❌ Region search error:', regionError instanceof Error ? regionError.message : String(regionError))
           regions = []
         } else {
           regions = regionData || []
           console.log('✅ Region search successful, found:', regions.length, 'results')
         }
       } catch (err) {
-        console.error('❌ Region search critical error:', err)
+        console.error('❌ Region search critical error:', err instanceof Error ? err.message : String(err))
         regions = []
       }
 
@@ -145,7 +146,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
             console.log('✅ City media fetched successfully:', cityMediaMap.size, 'images')
           }
         } catch (err) {
-          console.error('❌ City media fetch error:', err)
+          console.error('❌ City media fetch error:', err instanceof Error ? err.message : String(err))
           // 에러 발생해도 계속 진행
         }
       }
@@ -174,64 +175,60 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
         // 최소한의 필수 컬럼만 선택
         const selectFields = 'sabre_id, slug, property_name_ko, property_name_en, city, city_ko, city_en, country_ko, country_en, publish, property_details'
         
+        const company = getCompanyFromURL()
+        
         // 개별 쿼리 실행 (에러 발생 시에도 다른 쿼리는 계속 진행)
         const queryPromises = [
           // 쿼리 1: 호텔명 한글
-          supabase
-            .from('select_hotels')
-            .select(selectFields)
-            .ilike('property_name_ko', `%${query}%`)
-            .limit(15)
-            .then(result => {
-              if (result.error) {
-                console.error('Hotel search error (property_name_ko):', result.error)
-                return { data: [], error: null }
-              }
-              console.log('✅ Hotel search query 1 successful, found:', result.data?.length || 0, 'results')
-              return result
-            })
-            .catch(err => {
-              console.error('❌ Hotel search query 1 failed:', err)
-              return { data: [], error: err }
-            }),
+          (async () => {
+            let hotelQuery = supabase
+              .from('select_hotels')
+              .select(selectFields)
+              .ilike('property_name_ko', `%${query}%`)
+              .limit(15)
+            hotelQuery = applyVccFilter(hotelQuery, company)
+            const result = await hotelQuery
+            if (result.error) {
+              console.error('Hotel search error (property_name_ko):', result.error instanceof Error ? result.error.message : String(result.error))
+              return { data: [], error: null }
+            }
+            console.log('✅ Hotel search query 1 successful, found:', result.data?.length || 0, 'results')
+            return result
+          })(),
           
           // 쿼리 2: 호텔명 영문
-          supabase
-            .from('select_hotels')
-            .select(selectFields)
-            .ilike('property_name_en', `%${query}%`)
-            .limit(15)
-            .then(result => {
-              if (result.error) {
-                console.error('Hotel search error (property_name_en):', result.error)
-                return { data: [], error: null }
-              }
-              console.log('✅ Hotel search query 2 successful, found:', result.data?.length || 0, 'results')
-              return result
-            })
-            .catch(err => {
-              console.error('❌ Hotel search query 2 failed:', err)
-              return { data: [], error: err }
-            }),
+          (async () => {
+            let hotelQuery = supabase
+              .from('select_hotels')
+              .select(selectFields)
+              .ilike('property_name_en', `%${query}%`)
+              .limit(15)
+            hotelQuery = applyVccFilter(hotelQuery, company)
+            const result = await hotelQuery
+            if (result.error) {
+              console.error('Hotel search error (property_name_en):', result.error instanceof Error ? result.error.message : String(result.error))
+              return { data: [], error: null }
+            }
+            console.log('✅ Hotel search query 2 successful, found:', result.data?.length || 0, 'results')
+            return result
+          })(),
           
           // 쿼리 3: 도시명
-          supabase
-            .from('select_hotels')
-            .select(selectFields)
-            .ilike('city_ko', `%${query}%`)
-            .limit(15)
-            .then(result => {
-              if (result.error) {
-                console.error('Hotel search error (city_ko):', result.error)
-                return { data: [], error: null }
-              }
-              console.log('✅ Hotel search query 3 successful, found:', result.data?.length || 0, 'results')
-              return result
-            })
-            .catch(err => {
-              console.error('❌ Hotel search query 3 failed:', err)
-              return { data: [], error: err }
-            })
+          (async () => {
+            let hotelQuery = supabase
+              .from('select_hotels')
+              .select(selectFields)
+              .ilike('city_ko', `%${query}%`)
+              .limit(15)
+            hotelQuery = applyVccFilter(hotelQuery, company)
+            const result = await hotelQuery
+            if (result.error) {
+              console.error('Hotel search error (city_ko):', result.error instanceof Error ? result.error.message : String(result.error))
+              return { data: [], error: null }
+            }
+            console.log('✅ Hotel search query 3 successful, found:', result.data?.length || 0, 'results')
+            return result
+          })()
         ]
 
         // 모든 쿼리 병렬 실행
@@ -254,7 +251,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
         console.log('🏨 Final hotel search results:', hotels.length)
         
       } catch (err) {
-        console.error('❌ Hotel search critical error:', err)
+        console.error('❌ Hotel search critical error:', err instanceof Error ? err.message : String(err))
         console.error('Error details:', {
           message: err instanceof Error ? err.message : 'Unknown error',
           stack: err instanceof Error ? err.stack : undefined,
@@ -287,7 +284,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
             console.log('✅ Hotel media fetched successfully:', mediaMap.size, 'images')
           }
         } catch (err) {
-          console.error('❌ Hotel media fetch error:', err)
+          console.error('❌ Hotel media fetch error:', err instanceof Error ? err.message : String(err))
           // 에러 발생해도 계속 진행
         }
       }
@@ -324,14 +321,14 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
           .limit(20)
 
         if (blogError) {
-          console.error('❌ Blog search error:', blogError)
+          console.error('❌ Blog search error:', blogError instanceof Error ? blogError.message : String(blogError))
           blogs = []
         } else {
           blogs = blogData || []
           console.log('✅ Blog search successful, found:', blogs.length, 'results')
         }
       } catch (err) {
-        console.error('❌ Blog search critical error:', err)
+        console.error('❌ Blog search critical error:', err instanceof Error ? err.message : String(err))
         blogs = []
       }
 

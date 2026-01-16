@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { applyVccFilter } from '@/lib/company-filter'
 
 const getHotelBrandIds = (hotel: any) =>
   [hotel?.brand_id, hotel?.brand_id_2, hotel?.brand_id_3].filter(
@@ -9,22 +10,22 @@ const getHotelBrandIds = (hotel: any) =>
  * 배너용 호텔 데이터 조회 (서버 사이드)
  * select_feature_slots 테이블에서 '상단베너' surface의 활성 호텔 조회
  */
-export async function getBannerHotel() {
-  return getBannerHotelByCondition('상단베너', null)
+export async function getBannerHotel(company?: string | null) {
+  return getBannerHotelByCondition('상단베너', null, company)
 }
 
 /**
  * 브랜드 페이지용 배너 호텔 조회
  * select_feature_slots 테이블에서 '브랜드베너' surface + chain_slug 조건의 활성 호텔 조회
  */
-export async function getBrandBannerHotel(chainSlug: string) {
-  return getBannerHotelByCondition('브랜드베너', chainSlug)
+export async function getBrandBannerHotel(chainSlug: string, company?: string | null) {
+  return getBannerHotelByCondition('브랜드베너', chainSlug, company)
 }
 
 /**
  * 공통 배너 호텔 조회 로직
  */
-async function getBannerHotelByCondition(surface: string, chainSlug: string | null) {
+async function getBannerHotelByCondition(surface: string, chainSlug: string | null, company?: string | null) {
   try {
     const supabase = await createClient()
     
@@ -47,7 +48,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
     const { data: featureSlots, error: featureError } = await query
 
     if (featureError) {
-      console.error(`❌ [Server] ${surface} 배너 슬롯 조회 오류:`, featureError)
+      console.error(`❌ [Server] ${surface} 배너 슬롯 조회 오류:`, featureError instanceof Error ? featureError.message : String(featureError))
       return null
     }
     
@@ -76,13 +77,18 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
     const sabreIds = activeSlots.map((slot: any) => slot.sabre_id)
     
     // select_hotels에서 호텔 정보 조회
-    const { data: hotels, error: hotelsError } = await supabase
+    let hotelQuery = supabase
       .from('select_hotels')
       .select('*')
       .in('sabre_id', sabreIds)
     
+    // company=sk일 때 vcc=TRUE 필터 적용
+    hotelQuery = applyVccFilter(hotelQuery, company || null)
+    
+    const { data: hotels, error: hotelsError } = await hotelQuery
+    
     if (hotelsError) {
-      console.error('❌ [Server] 배너 호텔 조회 오류:', hotelsError)
+      console.error('❌ [Server] 배너 호텔 조회 오류:', hotelsError instanceof Error ? hotelsError.message : String(hotelsError))
       return null
     }
     
@@ -137,7 +143,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
         .in('brand_id', brandIds)
       
       if (brandsError) {
-        console.error('❌ [Server] 브랜드 조회 오류:', brandsError)
+        console.error('❌ [Server] 브랜드 조회 오류:', brandsError instanceof Error ? brandsError.message : String(brandsError))
       } else {
         brandsData = data || []
       }
@@ -152,7 +158,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
         .in('chain_id', chainIds)
       
       if (chainsError) {
-        console.error('❌ [Server] 체인 조회 오류:', chainsError)
+        console.error('❌ [Server] 체인 조회 오류:', chainsError instanceof Error ? chainsError.message : String(chainsError))
       } else {
         chainsData = data || []
       }
@@ -172,7 +178,7 @@ async function getBannerHotelByCondition(surface: string, chainSlug: string | nu
       chain_name_en: hotelChain?.chain_name_en || null
     }
   } catch (error) {
-    console.error('💥 [Server] 배너 호텔 조회 중 예외:', error)
+    console.error('💥 [Server] 배너 호텔 조회 중 예외:', error instanceof Error ? error.message : String(error))
     return null
   }
 }

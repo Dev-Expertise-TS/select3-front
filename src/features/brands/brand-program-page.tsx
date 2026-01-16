@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { withCompanyParam } from "@/lib/url-utils"
 
 interface HotelChain {
   chain_id: number
@@ -71,13 +72,20 @@ async function getHotelChains() {
     .filter(chain => chain.logo_path) // logo_path가 있는 브랜드만
 }
 
-export async function BrandProgramPage() {
+export async function BrandProgramPage({ company }: { company?: string | null }) {
   const chains = await getHotelChains()
   
-  // 특정 브랜드 숨기기: marriott, platinum
-  const filteredChains = chains.filter(
-    chain => chain.chain_slug !== 'marriott' && chain.chain_slug !== 'platinum'
-  )
+  // company=sk일 때 특정 브랜드만 노출
+  let filteredChains = chains
+  if (company === 'sk') {
+    const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts']
+    filteredChains = chains.filter(chain => allowedSlugs.includes(chain.chain_slug))
+  } else {
+    // 특정 브랜드 숨기기: marriott, platinum
+    filteredChains = chains.filter(
+      chain => chain.chain_slug !== 'marriott' && chain.chain_slug !== 'platinum'
+    )
+  }
   
   return (
     <>
@@ -97,7 +105,7 @@ export async function BrandProgramPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredChains.map((chain) => (
-              <Link key={chain.chain_id} href={`/brand/${chain.chain_slug}`}>
+              <Link key={chain.chain_id} href={withCompanyParam(`/brand/${chain.chain_slug}`)}>
                 <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer overflow-hidden aspect-[4/3] relative border border-gray-100">
                   <Image
                     src={chain.logo_path || "/placeholder.svg"}

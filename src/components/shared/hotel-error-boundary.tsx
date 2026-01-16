@@ -29,7 +29,12 @@ export class HotelErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('호텔 관련 오류 발생:', error, errorInfo)
+    console.error('호텔 관련 오류 발생:', {
+      message: error?.message || String(error),
+      name: error?.name || 'Unknown',
+      stack: error?.stack,
+      componentStack: errorInfo?.componentStack
+    })
     this.setState({ error, errorInfo })
   }
 

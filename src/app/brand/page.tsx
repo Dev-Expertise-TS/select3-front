@@ -46,7 +46,15 @@ export const metadata: Metadata = {
   }
 }
 
-export default function BrandsPage() {
+export default async function BrandsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  // company 파라미터 추출 (쿠키 우선, 없으면 searchParams)
+  const { getCompanyFromServer } = await import('@/lib/company-filter')
+  const company = searchParams ? await getCompanyFromServer(searchParams) : null
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -55,7 +63,7 @@ export default function BrandsPage() {
         <PromotionBanner />
       </div>
       <main>
-        <BrandProgramPage />
+        <BrandProgramPage company={company} />
       </main>
       <Footer />
     </div>

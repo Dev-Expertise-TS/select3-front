@@ -5,6 +5,7 @@ import { PromotionBannerWrapper } from "@/components/promotion-banner-wrapper"
 import { Footer } from "@/components/footer"
 import { BlogListSection } from '@/features/blog/blog-list-section'
 import { getBlogPageData } from './blog-page-server'
+import { getCompanyFromSearchParams } from '@/lib/company-filter'
 
 // 블로그 페이지 캐시: 10분마다 재검증
 export const revalidate = 600
@@ -59,9 +60,15 @@ export const metadata: Metadata = {
   }
 }
 
-export default async function BlogPage() {
+interface BlogPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function BlogPage({ searchParams }: BlogPageProps) {
   // 서버에서 초기 데이터 조회
-  const { blogs } = await getBlogPageData()
+  const params = await searchParams
+  const company = getCompanyFromSearchParams(params)
+  const { blogs } = await getBlogPageData(company)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxury-select.co.kr'
   
   // Blog CollectionPage Structured Data

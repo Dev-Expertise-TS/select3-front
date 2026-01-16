@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Database } from './supabase'
+import { getErrorMessage } from './logger'
 
 type SelectHotel = Database['public']['Tables']['select_hotels']['Row']
 type SelectHotelMedia = Database['public']['Tables']['select_hotel_media']['Row']
@@ -66,7 +67,7 @@ export const supabaseConnectionTest = {
         }
       }
     } catch (err) {
-      console.error('❌ select_hotels 테이블 확인 예외:', err)
+      console.error('❌ select_hotels 테이블 확인 예외:', getErrorMessage(err))
     }
     
     // 다른 테이블들도 확인
@@ -96,7 +97,7 @@ export const supabaseConnectionTest = {
           console.log(`⚠️ ${tableName} 테이블에 데이터가 없습니다.`)
         }
       } catch (err) {
-        console.error(`❌ ${tableName} 테이블 확인 예외:`, err)
+        console.error(`❌ ${tableName} 테이블 확인 예외:`, getErrorMessage(err))
       }
     }
   },
@@ -136,7 +137,7 @@ export const supabaseConnectionTest = {
         console.error('❌ Health check 예외:', healthErr)
         return { 
           success: false, 
-          error: `Health check 예외: ${String(healthErr)}` 
+          error: `Health check 예외: ${getErrorMessage(healthErr)}` 
         }
       }
 
@@ -148,21 +149,22 @@ export const supabaseConnectionTest = {
         .limit(1)
 
       if (error) {
-        console.error('❌ 연결 테스트 실패 객체:', error)
-        console.error('❌ 오류 타입:', typeof error)
-        console.error('❌ 오류 키들:', Object.keys(error))
-        console.error('❌ 오류 값들:', Object.values(error))
-        console.error('❌ 오류 JSON:', JSON.stringify(error, null, 2))
+        // 안전한 오류 정보 추출 (객체 직접 참조 제거)
+        const errorMessage = error?.message || '알 수 없는 오류'
+        const errorCode = (error as any)?.code || 'UNKNOWN_CODE'
+        const errorDetails = (error as any)?.details || null
+        const errorHint = (error as any)?.hint || null
         
-        // 오류 객체의 모든 속성을 순회하며 로깅
-        for (const [key, value] of Object.entries(error)) {
-          console.error(`❌ 오류.${key}:`, value, typeof value)
+        const errorInfo = {
+          message: errorMessage,
+          code: errorCode,
+          details: errorDetails,
+          hint: errorHint,
+          type: typeof error,
+          keys: error && typeof error === 'object' ? Object.keys(error) : []
         }
         
-        // 안전한 오류 정보 추출
-        const errorMessage = error?.message || '알 수 없는 오류'
-        
-        console.error('❌ 오류 메시지:', errorMessage)
+        console.error('❌ 연결 테스트 실패:', errorInfo)
         return { 
           success: false, 
           error: `연결 실패: ${errorMessage}` 
@@ -172,10 +174,14 @@ export const supabaseConnectionTest = {
       console.log('✅ Supabase 연결 성공')
       return { success: true }
     } catch (err) {
-      console.error('❌ 연결 테스트 예외:', err)
+      const errorInfo = {
+        message: getErrorMessage(err),
+        name: err instanceof Error ? err.name : typeof err
+      }
+      console.error('❌ 연결 테스트 예외:', errorInfo)
       return { 
         success: false, 
-        error: `연결 테스트 중 오류: ${String(err)}` 
+        error: `연결 테스트 중 오류: ${getErrorMessage(err)}` 
       }
     }
   }
@@ -211,40 +217,44 @@ export const selectHotelUtils = {
         .from('select_hotels')
         .select('*')
 
-      console.log('📊 Supabase 응답:', { data, error })
+      // 안전한 로깅 (error 객체 직접 참조 제거)
+      console.log('📊 Supabase 응답:', { 
+        dataLength: data?.length || 0,
+        hasError: !!error,
+        errorMessage: error?.message || null
+      })
 
       if (error) {
-        console.error('❌ Supabase 오류 객체:', error)
-        console.error('❌ 오류 타입:', typeof error)
-        console.error('❌ 오류 키들:', Object.keys(error))
-        console.error('❌ 오류 값들:', Object.values(error))
-        console.error('❌ 오류 JSON:', JSON.stringify(error, null, 2))
+        // 안전한 오류 정보 추출 (객체 직접 참조 제거)
+        const errorCode = (error as any)?.code || 'UNKNOWN_CODE'
+        const errorMessage = error?.message || '알 수 없는 오류'
+        const errorDetails = (error as any)?.details || null
+        const errorHint = (error as any)?.hint || null
         
-        // 오류 객체의 모든 속성을 순회하며 로깅
-        for (const [key, value] of Object.entries(error)) {
-          console.error(`❌ 오류.${key}:`, value, typeof value)
+        const errorInfo = {
+          code: errorCode,
+          message: errorMessage,
+          details: errorDetails,
+          hint: errorHint,
+          type: typeof error
         }
         
-        // 안전한 오류 정보 추출
-        const errorCode = error?.code || 'UNKNOWN_CODE'
-        const errorMessage = error?.message || '알 수 없는 오류'
-        const errorDetails = error?.details || '상세 정보 없음'
-        
-        console.error('❌ 오류 코드:', errorCode)
-        console.error('❌ 오류 메시지:', errorMessage)
-        console.error('❌ 오류 상세:', errorDetails)
-        
+        console.error('❌ Supabase 오류:', errorInfo)
         throw new Error(`Supabase 오류: ${errorCode} - ${errorMessage}`)
       }
 
       console.log('✅ 조회 성공, 데이터 수:', data?.length || 0)
       return data || []
     } catch (err) {
-      console.error('❌ 예외 발생:', err)
+      const errorInfo = {
+        message: getErrorMessage(err),
+        name: err instanceof Error ? err.name : typeof err
+      }
+      console.error('❌ 예외 발생:', errorInfo)
       if (err instanceof Error) {
         throw new Error(`select_hotels 조회 실패: ${err.message}`)
       }
-      throw new Error(`select_hotels 조회 중 알 수 없는 오류: ${String(err)}`)
+      throw new Error(`select_hotels 조회 중 알 수 없는 오류: ${getErrorMessage(err)}`)
     }
   },
 
@@ -257,7 +267,7 @@ export const selectHotelUtils = {
       .maybeSingle()
     
     if (error) {
-      console.error('Error fetching select_hotel by id:', error)
+      console.error('Error fetching select_hotel by id:', getErrorMessage(error))
       throw error
     }
     
@@ -278,7 +288,7 @@ export const selectHotelUtils = {
       .order('property_name_kor')
     
     if (error) {
-      console.error('Error fetching select_hotels by brand:', error)
+      console.error('Error fetching select_hotels by brand:', getErrorMessage(error))
       throw error
     }
     
@@ -295,7 +305,7 @@ export const selectHotelUtils = {
       .order('property_name_kor')
     
     if (error) {
-      console.error('Error fetching select_hotels by location:', error)
+      console.error('Error fetching select_hotels by location:', getErrorMessage(error))
       throw error
     }
     
@@ -312,7 +322,7 @@ export const selectHotelUtils = {
       .order('property_name_kor')
     
     if (error) {
-      console.error('Error searching select_hotels:', error)
+      console.error('Error searching select_hotels:', getErrorMessage(error))
       throw error
     }
     
@@ -330,23 +340,25 @@ export const selectHotelUtils = {
         .select('id')
         .limit(1)
 
-      console.log('📊 테이블 확인 응답:', { data, error })
+      // 안전한 로깅 (error 객체 직접 참조 제거)
+      console.log('📊 테이블 확인 응답:', { 
+        hasData: !!data,
+        dataLength: Array.isArray(data) ? data.length : data ? 1 : 0,
+        hasError: !!error,
+        errorMessage: error?.message || null
+      })
 
       if (error) {
-        console.error('❌ 테이블 확인 오류 객체:', error)
-        console.error('❌ 오류 타입:', typeof error)
-        console.error('❌ 오류 키들:', Object.keys(error))
-        console.error('❌ 오류 값들:', Object.values(error))
-        console.error('❌ 오류 JSON:', JSON.stringify(error, null, 2))
-        
-        // 오류 객체의 모든 속성을 순회하며 로깅
-        for (const [key, value] of Object.entries(error)) {
-          console.error(`❌ 오류.${key}:`, value, typeof value)
-        }
-        
-        // 안전한 오류 정보 추출
-        const errorCode = error?.code || 'UNKNOWN_CODE'
+        // 안전한 오류 정보 추출 (객체 직접 참조 제거)
+        const errorCode = (error as any)?.code || null
         const errorMessage = error?.message || '알 수 없는 오류'
+        const errorInfo = {
+          message: errorMessage,
+          code: errorCode,
+          details: (error as any)?.details || null,
+          type: typeof error
+        }
+        console.error('❌ 테이블 확인 오류:', errorInfo)
         
         console.error('❌ 오류 코드:', errorCode)
         console.error('❌ 오류 메시지:', errorMessage)
@@ -356,7 +368,7 @@ export const selectHotelUtils = {
       console.log('✅ 테이블 존재 확인 성공')
       return true
     } catch (error) {
-      console.error('❌ 테이블 확인 예외:', error)
+      console.error('❌ 테이블 확인 예외:', getErrorMessage(error))
       return false
     }
   }

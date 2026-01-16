@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveDestination } from '@/lib/regions/resolve-destination'
+import { getErrorMessage } from '@/lib/logger'
 
 type LatLng = { lat: number; lng: number }
 
@@ -292,7 +293,7 @@ export async function GET(request: NextRequest) {
     console.log(`[hotel-map-markers] 최종 필터링 결과: ${hotels.length}개 호텔 (destination="${destinationRaw}", resolved.kind="${resolved.kind}", resolved.label="${resolved.label}")`)
 
     if (hotels.length === 0 && errors.length > 0) {
-      console.error(`[hotel-map-markers] 호텔 조회 실패:`, errors)
+      console.error(`[hotel-map-markers] 호텔 조회 실패:`, errors.map(e => getErrorMessage(e)))
       return jsonErr('호텔 목록을 가져올 수 없습니다', 500, 'hotels_query_failed')
     }
 
@@ -538,7 +539,7 @@ export async function GET(request: NextRequest) {
       { headers: { 'Cache-Control': 'no-store' } }
     )
   } catch (err) {
-    console.error('hotel-map-markers api error:', err)
+    console.error('hotel-map-markers api error:', getErrorMessage(err))
     return jsonErr('서버 오류가 발생했습니다', 500)
   }
 }

@@ -40,7 +40,7 @@ export function Header() {
           }
         }
       } catch (error) {
-        console.error('토픽 페이지 목록 조회 실패:', error)
+        console.error('토픽 페이지 목록 조회 실패:', error instanceof Error ? error.message : String(error))
       }
     }
     fetchTopicPages()

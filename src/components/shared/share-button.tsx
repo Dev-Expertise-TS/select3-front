@@ -73,7 +73,7 @@ export function ShareButton({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
-      console.error('링크 복사 실패:', error)
+      console.error('링크 복사 실패:', error instanceof Error ? error.message : String(error))
     }
   }
 
@@ -111,7 +111,7 @@ export function ShareButton({
       })
       setIsOpen(false)
     } catch (error) {
-      console.error('카카오톡 공유 실패:', error)
+      console.error('카카오톡 공유 실패:', error instanceof Error ? error.message : String(error))
       // 폴백: 카카오스토리 공유
       window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank')
     }

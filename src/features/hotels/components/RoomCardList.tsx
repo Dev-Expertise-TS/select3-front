@@ -57,7 +57,7 @@ export function RoomCardList({
       }
     } catch (error) {
       // localStorage 접근 실패 시 (예: 프라이빗 브라우징 모드)
-      console.warn('localStorage 접근 실패:', error)
+      console.warn('localStorage 접근 실패:', error instanceof Error ? error.message : String(error))
     }
   }, [])
   
@@ -274,7 +274,7 @@ export function RoomCardList({
       // localStorage에 카카오 친구 추가 상태 저장 (영구 저장)
       localStorage.setItem(KAKAO_FRIEND_ADDED_KEY, 'true')
     } catch (error) {
-      console.warn('localStorage 저장 실패:', error)
+      console.warn('localStorage 저장 실패:', error instanceof Error ? error.message : String(error))
     }
     
     // 새 창에서 카카오 친구 추가 링크 열기
@@ -646,7 +646,7 @@ export function RoomCardList({
                               }
                             }
                           } catch (e) {
-                            console.error('❌ [취소 정보 추출] 날짜 계산 오류:', e)
+                            console.error('❌ [취소 정보 추출] 날짜 계산 오류:', e instanceof Error ? e.message : String(e))
                           }
                         }
                       }

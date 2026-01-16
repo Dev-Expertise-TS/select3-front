@@ -71,11 +71,11 @@ export function useHotelAnalytics() {
       .insert([eventData])
       .then(({ error }) => {
         if (error) {
-          console.warn('호텔 뷰 이벤트 저장 실패:', error)
+          console.warn('호텔 뷰 이벤트 저장 실패:', error instanceof Error ? error.message : String(error))
         }
       })
       .catch((error) => {
-        console.warn('호텔 뷰 이벤트 저장 중 오류:', error)
+        console.warn('호텔 뷰 이벤트 저장 중 오류:', error instanceof Error ? error.message : String(error))
       })
   }, [])
 
@@ -122,11 +122,11 @@ export function useHotelAnalytics() {
       .insert([eventData])
       .then(({ error }) => {
         if (error) {
-          console.warn('호텔 검색 이벤트 저장 실패:', error)
+          console.warn('호텔 검색 이벤트 저장 실패:', error instanceof Error ? error.message : String(error))
         }
       })
       .catch((error) => {
-        console.warn('호텔 검색 이벤트 저장 중 오류:', error)
+        console.warn('호텔 검색 이벤트 저장 중 오류:', error instanceof Error ? error.message : String(error))
       })
   }, [])
 
@@ -164,11 +164,11 @@ export function useHotelAnalytics() {
       .insert([eventData])
       .then(({ error }) => {
         if (error) {
-          console.warn('호텔 문의 이벤트 저장 실패:', error)
+          console.warn('호텔 문의 이벤트 저장 실패:', error instanceof Error ? error.message : String(error))
         }
       })
       .catch((error) => {
-        console.warn('호텔 문의 이벤트 저장 중 오류:', error)
+        console.warn('호텔 문의 이벤트 저장 중 오류:', error instanceof Error ? error.message : String(error))
       })
   }, [])
 

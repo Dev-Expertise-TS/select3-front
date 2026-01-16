@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { generateSlug } from "@/lib/hotel-utils"
+import { getCompanyFromURL, applyVccFilter } from "@/lib/company-filter"
 
 interface SimpleHotelSearchProps {
   onSearch?: (query: string) => void | Promise<void>
@@ -119,17 +120,46 @@ export function SimpleHotelSearch({
         // ✅ 콤마 입력 등에서 or(...) 이슈를 피하기 위해 개별 쿼리로 분리
         const selectFields =
           'slug,sabre_id,property_name_ko,property_name_en,city,city_ko,city_en,country_ko,country_en,publish'
+        const company = getCompanyFromURL()
+        
         const hotelQueries = [
-          supabase.from('select_hotels').select(selectFields).ilike('property_name_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('property_name_en', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('city', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('city_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('city_en', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('country_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('country_en', `%${q}%`).limit(20),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('property_name_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('property_name_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('city', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('city_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('city_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('country_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('country_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
           // 지역(Area)
-          supabase.from('select_hotels').select(selectFields).ilike('area_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select(selectFields).ilike('area_en', `%${q}%`).limit(20),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('area_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select(selectFields).ilike('area_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
         ]
 
         const regionCityPromise = supabase
@@ -142,10 +172,22 @@ export function SimpleHotelSearch({
           .limit(10)
 
         const regionFieldQueries = [
-          supabase.from('select_hotels').select('city_ko, publish').ilike('city_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('city_en, publish').ilike('city_en', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('area_ko, publish').ilike('area_ko', `%${q}%`).limit(20),
-          supabase.from('select_hotels').select('area_en, publish').ilike('area_en', `%${q}%`).limit(20),
+          (() => {
+            let query = supabase.from('select_hotels').select('city_ko, publish').ilike('city_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('city_en, publish').ilike('city_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('area_ko, publish').ilike('area_ko', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
+          (() => {
+            let query = supabase.from('select_hotels').select('area_en, publish').ilike('area_en', `%${q}%`).limit(20)
+            return applyVccFilter(query, company)
+          })(),
         ]
 
         const [hotelResults, regionCityResult, ...regionFieldResults] = await Promise.all([
@@ -197,10 +239,10 @@ export function SimpleHotelSearch({
           }
         }
 
-        const cityKoRows = ((regionFieldResults[0].data || []) as any[]).filter(r => r.publish !== false)
-        const cityEnRows = ((regionFieldResults[1].data || []) as any[]).filter(r => r.publish !== false)
-        const areaKoRows = ((regionFieldResults[2].data || []) as any[]).filter(r => r.publish !== false)
-        const areaEnRows = ((regionFieldResults[3].data || []) as any[]).filter(r => r.publish !== false)
+        const cityKoRows = ((regionFieldResults[0]?.error ? [] : (regionFieldResults[0]?.data || [])) as any[]).filter(r => r.publish !== false)
+        const cityEnRows = ((regionFieldResults[1]?.error ? [] : (regionFieldResults[1]?.data || [])) as any[]).filter(r => r.publish !== false)
+        const areaKoRows = ((regionFieldResults[2]?.error ? [] : (regionFieldResults[2]?.data || [])) as any[]).filter(r => r.publish !== false)
+        const areaEnRows = ((regionFieldResults[3]?.error ? [] : (regionFieldResults[3]?.data || [])) as any[]).filter(r => r.publish !== false)
 
         addValues('city', cityKoRows.map(r => r.city_ko), '도시')
         addValues('city', cityEnRows.map(r => r.city_en), 'City')
@@ -212,12 +254,28 @@ export function SimpleHotelSearch({
           setRegionSuggestions(regionItems.slice(0, 12))
         }
       } catch (e) {
-        console.error('자동완성 조회 오류:', e)
+        // 상세한 오류 정보 로깅
+        const errorMessage = e instanceof Error ? e.message : String(e)
+        const errorStack = e instanceof Error ? e.stack : undefined
+        const errorName = e instanceof Error ? e.name : 'Unknown'
+        
+        console.error('자동완성 조회 오류 상세:', {
+          name: errorName,
+          message: errorMessage,
+          stack: errorStack,
+          query: q,
+          timestamp: new Date().toISOString(),
+          errorString: String(e),
+          errorType: typeof e,
+        })
+        
+        // 에러 객체는 문자열로만 로깅 (콘솔 [object Object] 방지)
+        console.error('에러 객체:', e instanceof Error ? e.message : String(e))
         
         if (!cancelled) {
           setHotelSuggestions([])
           setRegionSuggestions([])
-          setSuggestionError('자동완성 기능에 일시적인 문제가 발생했습니다.')
+          setSuggestionError(`자동완성 기능에 일시적인 문제가 발생했습니다. (${errorMessage})`)
         }
       } finally {
         if (!cancelled) setIsSuggesting(false)
@@ -297,7 +355,7 @@ export function SimpleHotelSearch({
         }
       }
     } catch (error) {
-      console.error('검색 중 오류 발생:', error)
+      console.error('검색 중 오류 발생:', error instanceof Error ? error.message : String(error))
     } finally {
       if (typeof isBusy !== 'boolean') {
         setInternalSearching(false)

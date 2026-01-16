@@ -4,6 +4,7 @@ import { HERO_CONFIG, type HotelCount } from '@/config/layout'
 
 interface HeroProps {
   hotelCount?: HotelCount
+  company?: string | null
 }
 
 /**
@@ -14,8 +15,8 @@ interface HeroProps {
  * - 클라이언트 API 호출 제거 (1-2초 절약)
  * - 즉시 이미지 표시 (빠른 LCP)
  */
-export async function HeroServer({ hotelCount = HERO_CONFIG.DEFAULT_HOTEL_COUNT }: HeroProps) {
-  const heroImages = await getHeroImages()
+export async function HeroServer({ hotelCount = HERO_CONFIG.DEFAULT_HOTEL_COUNT, company }: HeroProps) {
+  const heroImages = await getHeroImages(company)
   
   // 현재는 3개 카드만 지원
   return <HeroCarousel3Client heroImages={heroImages} />

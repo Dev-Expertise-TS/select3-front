@@ -63,6 +63,27 @@ const CITY_CODE_TO_SLUG: Record<string, string> = {
 // 네트워크 경계를 명확히 하고 Node.js 런타임에서 실행됩니다
 export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
+  const response = NextResponse.next()
+  
+  // company 파라미터 감지 및 쿠키 저장
+  const companyParam = searchParams.get('company')
+  const companyCookie = request.cookies.get('company')?.value
+  
+  if (companyParam === 'sk') {
+    // URL에 company=sk가 있으면 쿠키에 저장 (30일 유지)
+    response.cookies.set('company', 'sk', {
+      maxAge: 30 * 24 * 60 * 60, // 30일
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false // 클라이언트에서도 읽을 수 있도록
+    })
+  } else if (companyCookie === 'sk' && !searchParams.has('company')) {
+    // 쿠키에 company=sk가 있지만 URL에 없으면 URL에 추가
+    const newUrl = new URL(request.url)
+    newUrl.searchParams.set('company', 'sk')
+    return NextResponse.redirect(newUrl)
+  }
   
   // /hotel?city=DANANG → /hotel/danang 리다이렉트
   if (pathname === '/hotel' && searchParams.has('city')) {
@@ -72,23 +93,32 @@ export default function proxy(request: NextRequest) {
       const citySlug = CITY_CODE_TO_SLUG[cityCode] || cityCode.toLowerCase().replace(/_/g, '-')
       const newUrl = new URL(`/hotel/${citySlug}`, request.url)
       
+      // company 파라미터 유지
       searchParams.forEach((value, key) => {
         if (key !== 'city') {
           newUrl.searchParams.set(key, value)
         }
       })
       
+      // 쿠키에 company가 있으면 URL에도 추가
+      if (companyCookie === 'sk' && !newUrl.searchParams.has('company')) {
+        newUrl.searchParams.set('company', 'sk')
+      }
+      
       return NextResponse.redirect(newUrl, { status: 301 })
     }
   }
   
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
   matcher: [
-    '/hotel',
-    '/brand/:path*',
+    /*
+     * 모든 경로에 매칭 (company 파라미터 처리용)
+     * 단, 정적 파일과 API 라우트는 제외
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico)).*)',
   ],
 }
 

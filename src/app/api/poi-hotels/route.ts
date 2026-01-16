@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
       nextPageToken,
     })
   } catch (err) {
-    console.error('poi-hotels api error:', err)
+    console.error('poi-hotels api error:', err instanceof Error ? err.message : String(err))
     return jsonErr('서버 오류가 발생했습니다', 500)
   }
 }

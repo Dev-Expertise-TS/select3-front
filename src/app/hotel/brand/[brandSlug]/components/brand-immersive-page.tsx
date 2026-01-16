@@ -57,7 +57,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
           return
         }
       } catch (e) {
-        console.warn('[Brand AI] 로컬 스토리지 읽기 실패:', e)
+        console.warn('[Brand AI] 로컬 스토리지 읽기 실패:', e instanceof Error ? e.message : String(e))
       }
       
       // 로딩 메시지 표시
@@ -116,7 +116,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
                   localStorage.setItem(cacheKey, fullText)
                   console.log('[Brand AI] 설명 캐시 저장 완료:', brandName)
                 } catch (e) {
-                  console.warn('[Brand AI] 로컬 스토리지 저장 실패:', e)
+                  console.warn('[Brand AI] 로컬 스토리지 저장 실패:', e instanceof Error ? e.message : String(e))
                 }
               }
               hasLoadedRef.current = true
@@ -145,7 +145,7 @@ export function BrandImmersivePage({ brand, hotels, allHotelImages, aiDescriptio
         setIsStreaming(false)
         hasLoadedRef.current = true
       } catch (error) {
-        console.error('AI 설명 스트리밍 오류:', error)
+        console.error('AI 설명 스트리밍 오류:', error instanceof Error ? error.message : String(error))
         // 에러 발생 시 폴백 설명 표시
         setDisplayedDescription(aiDescription)
         setIsStreaming(false)
