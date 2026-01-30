@@ -25,6 +25,7 @@
 Select 3.0은 프리미엄 호텔 브랜드와 리조트를 큐레이션하여 사용자에게 맞춤형 추천을 제공하는 플랫폼입니다. AI 기반 검색, 브랜드별 특별 혜택, 그리고 상세한 호텔 정보를 통해 사용자의 럭셔리 여행 경험을 향상시킵니다.
 
 ### 핵심 가치
+
 - **프리미엄 큐레이션**: 엄선된 럭셔리 호텔 브랜드만을 선별
 - **AI 기반 추천**: 사용자 선호도와 여행 스타일에 맞는 맞춤형 추천
 - **브랜드 특별 혜택**: 각 호텔 체인별 독점적인 혜택과 프로모션
@@ -33,18 +34,21 @@ Select 3.0은 프리미엄 호텔 브랜드와 리조트를 큐레이션하여 �
 ## ✨ 주요 기능
 
 ### 🏠 **홈페이지**
+
 - **히어로 섹션**: 동적 이미지 캐러셀과 검색 기능
 - **브랜드 쇼케이스**: 주요 호텔 체인 브랜드 소개
 - **프로모션 배너**: 특별 혜택과 이벤트 안내
 - **목적지별 추천**: 인기 여행지별 호텔 추천
 
 ### 🔍 **호텔 검색 & 필터링**
+
 - **다중 검색 옵션**: 호텔명, 도시, 브랜드, 체인별 검색
 - **고급 필터**: 가격대, 위치, 브랜드, 체인, 혜택별 필터링
 - **실시간 검색**: 타이핑과 동시에 결과 업데이트
 - **검색 결과 최적화**: 관련도와 인기도 기반 정렬
 
 ### 🏨 **호텔 상세 페이지**
+
 - **풍부한 미디어**: 고화질 이미지 갤러리와 360도 뷰
 - **상세 정보**: 객실, 시설, 서비스, 위치 정보
 - **브랜드 혜택**: 체인별 특별 혜택과 멤버십 혜택
@@ -52,18 +56,21 @@ Select 3.0은 프리미엄 호텔 브랜드와 리조트를 큐레이션하여 �
 - **예약 문의**: 다양한 예약 채널 (카카오톡, 전화, 온라인 폼)
 
 ### 🏢 **브랜드 페이지**
+
 - **체인별 호텔 목록**: 브랜드별 호텔 컬렉션
 - **브랜드 스토리**: 각 체인의 역사와 철학
 - **관련 아티클**: 브랜드와 연관된 콘텐츠
 - **특별 혜택**: 브랜드별 독점 혜택 안내
 
 ### 📝 **블로그 & 콘텐츠**
+
 - **여행 가이드**: 목적지별 여행 팁과 가이드
 - **호텔 리뷰**: 상세한 호텔 리뷰와 경험담
 - **브랜드 스토리**: 호텔 브랜드의 역사와 특별함
 - **여행 트렌드**: 최신 여행 트렌드와 인사이트
 
 ### 🤖 **AI 기능**
+
 - **스마트 검색**: 자연어 기반 호텔 검색
 - **개인화 추천**: 사용자 선호도 기반 호텔 추천
 - **가격 예측**: 시즌별 가격 트렌드 분석
@@ -72,6 +79,7 @@ Select 3.0은 프리미엄 호텔 브랜드와 리조트를 큐레이션하여 �
 ## 🛠 기술 스택
 
 ### **Frontend**
+
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript 5.9.2
 - **Styling**: Tailwind CSS 4.1.12
@@ -81,17 +89,20 @@ Select 3.0은 프리미엄 호텔 브랜드와 리조트를 큐레이션하여 �
 - **Icons**: Lucide React
 
 ### **Backend & Database**
+
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
 - **File Storage**: Supabase Storage
 - **Real-time**: Supabase Realtime
 
 ### **External APIs**
+
 - **Hotel Data**: Sabre API
 - **AI Services**: OpenAI GPT
 - **Image Optimization**: Next.js Image Optimization
 
 ### **Development Tools**
+
 - **Package Manager**: pnpm
 - **Linting**: ESLint
 - **Type Checking**: TypeScript
@@ -145,23 +156,27 @@ src/
 ### 설치 및 실행
 
 1. **저장소 클론**
+
    ```bash
    git clone https://github.com/your-org/select3-front.git
    cd select3-front
    ```
 
 2. **의존성 설치**
+
    ```bash
    pnpm install
    ```
 
 3. **환경 변수 설정**
+
    ```bash
    cp .env.example .env.local
    # .env.local 파일을 편집하여 필요한 환경 변수 설정
    ```
 
 4. **개발 서버 실행**
+
    ```bash
    pnpm dev
    ```
@@ -226,6 +241,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    - 프로젝트 URL과 API 키 확인
 
 2. **데이터베이스 스키마 설정**
+
    ```bash
    # 스키마 파일 실행
    psql -h your-db-host -U postgres -d postgres -f supabase-schema.sql
@@ -240,22 +256,26 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### 코딩 컨벤션
 
 #### **TypeScript**
+
 - 엄격한 타입 체크 사용
 - `any` 타입 사용 금지
 - 인터페이스는 `PascalCase`로 명명
 - 함수는 `camelCase`로 명명
 
 #### **React 컴포넌트**
+
 - 함수형 컴포넌트 사용
 - Props 인터페이스는 `ComponentNameProps`로 명명
 - `export default` 대신 named export 사용
 
 #### **스타일링**
+
 - Tailwind CSS 클래스 사용
 - `cn()` 유틸리티로 클래스 병합
 - 컴포넌트별 스타일은 해당 파일에 정의
 
 #### **파일 구조**
+
 ```
 src/
 ├── components/
@@ -272,13 +292,14 @@ src/
 ### 컴포넌트 개발
 
 #### **새 컴포넌트 생성**
+
 ```tsx
 // components/shared/MyComponent.tsx
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 interface MyComponentProps {
-  title: string
-  className?: string
+  title: string;
+  className?: string;
 }
 
 export function MyComponent({ title, className }: MyComponentProps) {
@@ -286,11 +307,12 @@ export function MyComponent({ title, className }: MyComponentProps) {
     <div className={cn("base-styles", className)}>
       <h2>{title}</h2>
     </div>
-  )
+  );
 }
 ```
 
 #### **shadcn/ui 컴포넌트 추가**
+
 ```bash
 # 새 컴포넌트 추가
 npx shadcn@latest add button
@@ -301,35 +323,34 @@ npx shadcn@latest add dialog
 ### API 개발
 
 #### **API 라우트 생성**
+
 ```typescript
 // app/api/example/route.ts
-import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
-      .from('table_name')
-      .select('*')
-    
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.from("table_name").select("*");
+
     if (error) {
       return NextResponse.json(
         { success: false, error: error.message },
-        { status: 500 }
-      )
+        { status: 500 },
+      );
     }
-    
+
     return NextResponse.json({
       success: true,
-      data
-    })
+      data,
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "서버 오류가 발생했습니다." },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 ```
@@ -337,25 +358,26 @@ export async function GET(request: NextRequest) {
 ### 데이터베이스 작업
 
 #### **Supabase 클라이언트 사용**
+
 ```typescript
 // lib/supabase/server.ts (서버 사이드)
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
 export async function createClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
 }
 
 // lib/supabase/client.ts (클라이언트 사이드)
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 }
 ```
 
@@ -364,9 +386,11 @@ export function createClient() {
 ### 호텔 관련 API
 
 #### **GET /api/hotels**
+
 호텔 목록 조회
 
 **Query Parameters:**
+
 - `q`: 검색어 (선택)
 - `city`: 도시 필터 (선택)
 - `brand`: 브랜드 필터 (선택)
@@ -375,6 +399,7 @@ export function createClient() {
 - `limit`: 페이지당 항목 수 (기본값: 12)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -398,22 +423,27 @@ export function createClient() {
 ```
 
 #### **GET /api/hotels/[sabreId]**
+
 특정 호텔 상세 정보 조회
 
 #### **GET /api/hotels/[sabreId]/blogs**
+
 호텔 관련 아티클 조회
 
 ### 브랜드 관련 API
 
 #### **GET /api/brands/[chainId]/articles**
+
 브랜드별 관련 아티클 조회
 
 ### 블로그 관련 API
 
 #### **GET /api/blogs**
+
 블로그 목록 조회
 
 #### **GET /api/blogs/[slug]**
+
 특정 블로그 상세 조회
 
 ## 🚀 배포
@@ -421,6 +451,7 @@ export function createClient() {
 ### Vercel 배포 (권장)
 
 1. **Vercel 프로젝트 연결**
+
    ```bash
    npx vercel
    ```
