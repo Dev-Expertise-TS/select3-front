@@ -10,6 +10,7 @@ import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { GTMDebug } from "@/components/analytics/gtm-debug"
 import { RouteEvents } from "@/components/analytics/route-events"
+import { HyattPrivePopup } from "@/components/hyatt-prive-popup"
 
 // BottomNav가 usePathname을 사용하므로 동적 렌더링 필요
 export const dynamic = 'force-dynamic'
@@ -146,6 +147,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <KakaoConsultationButton />
             </Suspense>
+            <HyattPrivePopup />
           </QueryProvider>
         </AnalyticsProvider>
       </body>
