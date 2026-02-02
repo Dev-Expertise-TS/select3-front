@@ -68,7 +68,7 @@ export function HyattPrivePopup() {
     >
       {/* 오버레이 */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200"
+        className="absolute inset-0 bg-black/60 animate-in fade-in-0 duration-200"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -149,24 +149,26 @@ export function HyattPrivePopup() {
 
         {/* 보지 않기 체크박스 및 닫기 버튼 영역 */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 space-y-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hideForDay}
-              onChange={(e) => setHideForDay(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
-            />
-            <span className="text-sm text-gray-700">오늘 하루 보지 않기</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hideForWeek}
-              onChange={(e) => setHideForWeek(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
-            />
-            <span className="text-sm text-gray-700">7일 동안 보지 않기</span>
-          </label>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideForDay}
+                onChange={(e) => setHideForDay(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+              />
+              <span className="text-sm text-gray-700">오늘 하루 보지 않기</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideForWeek}
+                onChange={(e) => setHideForWeek(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+              />
+              <span className="text-sm text-gray-700">7일 동안 보지 않기</span>
+            </label>
+          </div>
           <button
             type="button"
             onClick={handleClose}
