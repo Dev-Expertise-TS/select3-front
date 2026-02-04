@@ -76,10 +76,17 @@ export function PromotionBanner() {
   }
 
   return (
-    <div 
-      className="promotion-banner-fixed bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white cursor-pointer hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 shadow-lg fixed left-0 right-0 w-full top-12 md:top-16"
-      style={{ 
+    <div
+      className="promotion-banner-fixed text-white cursor-pointer shadow-lg fixed left-0 right-0 w-full top-12 md:top-16"
+      style={{
         zIndex: 40,
+        background: 'linear-gradient(to right, var(--company-primary), var(--company-primary-hover), var(--company-primary-dark))',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'linear-gradient(to right, var(--company-primary-hover), var(--company-primary-dark), var(--company-primary-dark))'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'linear-gradient(to right, var(--company-primary), var(--company-primary-hover), var(--company-primary-dark))'
       }}
       onClick={handleBannerClick}
     >

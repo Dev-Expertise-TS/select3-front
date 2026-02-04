@@ -144,7 +144,7 @@ export function CommonSearchBar({
     return (
       <>
         {before}
-        <span className="font-semibold text-blue-700">{match}</span>
+        <span className="font-semibold" style={{ color: 'var(--company-primary-hover)' }}>{match}</span>
         {after}
       </>
     )
@@ -548,8 +548,10 @@ export function CommonSearchBar({
 
   return (
     <>
-      <div className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
-      style={{ borderColor: '#C7D2FE' }}>
+      <div
+        className={`${className} bg-white rounded-none sm:rounded-xl py-3 px-2 sm:p-4 shadow-none sm:shadow-xl sm:hover:shadow-2xl transition-all duration-500 border-0 sm:border-2`}
+        style={{ borderColor: 'var(--company-primary-border-light)' }}
+      >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         {/* 호텔명 검색 영역 - 1행 (모바일: 혜택 카드 스타일) */}
         <div className="flex sm:hidden items-center gap-2 w-full relative">
@@ -558,7 +560,7 @@ export function CommonSearchBar({
               "flex items-center flex-1 rounded-md bg-white shadow-xl border-2 h-[42px] px-3 relative backdrop-blur-sm transition-all duration-500",
               isSearching && "cursor-not-allowed opacity-50"
             )}
-            style={{ borderColor: '#C7D2FE' }}
+            style={{ borderColor: 'var(--company-primary-border-light)' }}
           >
             <MapPin className="h-4 w-4 text-gray-800 flex-shrink-0 mr-2" />
             <Input
@@ -699,7 +701,7 @@ export function CommonSearchBar({
 
         {/* 데스크톱용 호텔명 검색 영역 (기존 스타일) */}
         <div className="hidden sm:flex items-center gap-2 w-full sm:w-[30%] relative group">
-          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 transition-colors group-focus-within:text-blue-600 flex-shrink-0" />
+          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 transition-colors flex-shrink-0 group-focus-within:[color:var(--company-primary)]" />
           <div className="flex-1 relative">
             <Input
               type="text"
@@ -848,7 +850,7 @@ export function CommonSearchBar({
                 ? "cursor-not-allowed opacity-50" 
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
-            style={{ borderColor: '#C7D2FE' }}
+            style={{ borderColor: 'var(--company-primary-border-light)' }}
             onClick={() => !isSearching && setShowDatePicker(true)}
           >
             <span className="text-gray-800 font-medium text-xs truncate">
@@ -857,21 +859,21 @@ export function CommonSearchBar({
                 : "날짜 선택"}
             </span>
             {localCheckIn && localCheckOut && (
-              <span className="ml-1 px-1 py-0.5 bg-blue-50 text-blue-700 font-medium rounded text-[10px] whitespace-nowrap">
+              <span className="ml-1 px-1 py-0.5 font-medium rounded text-[10px] whitespace-nowrap" style={{ backgroundColor: 'var(--company-primary-light)', color: 'var(--company-primary-hover)' }}>
                 {calculateNights()}박
               </span>
             )}
           </div>
 
           {/* 게스트 정보 영역 */}
-          <div 
+          <div
             className={cn(
               "flex items-center flex-1 rounded-md bg-white shadow-xl border-2 h-[42px] px-2 backdrop-blur-sm transition-all duration-500",
-              isSearching 
-                ? "cursor-not-allowed opacity-50" 
+              isSearching
+                ? "cursor-not-allowed opacity-50"
                 : "cursor-pointer hover:scale-105 hover:-translate-y-1"
             )}
-            style={{ borderColor: '#C7D2FE' }}
+            style={{ borderColor: 'var(--company-primary-border-light)' }}
             onClick={() => !isSearching && setShowGuestSelector(true)}
           >
             <span className="text-gray-800 font-medium text-xs truncate text-center w-full">
@@ -884,12 +886,12 @@ export function CommonSearchBar({
             onClick={handleSearch}
             disabled={isSearching || isSabreLoading}
             className={cn(
-              "flex items-center justify-center w-[42px] h-[42px] rounded-md bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl border border-blue-300/30 transition-all duration-500 flex-shrink-0 backdrop-blur-sm",
+              "flex items-center justify-center w-[42px] h-[42px] rounded-md shadow-xl border transition-all duration-500 flex-shrink-0 backdrop-blur-sm text-white",
               isSearching || isSabreLoading
                 ? "cursor-not-allowed opacity-50"
-                : "hover:scale-105 hover:-translate-y-1 hover:shadow-2xl text-white"
+                : "hover:scale-105 hover:-translate-y-1 hover:shadow-2xl"
             )}
-            style={{ borderColor: '#E6CDB5' }}
+            style={{ backgroundColor: 'var(--company-primary)', borderColor: 'var(--company-primary-border)' }}
             aria-label="호텔 검색"
           >
             {(isSearching || isSabreLoading) ? (
@@ -905,8 +907,8 @@ export function CommonSearchBar({
         {/* 데스크톱용 기존 레이아웃 (숨김) */}
         <div className="hidden sm:flex items-center gap-1 sm:gap-0 w-full sm:flex-[1.6] border-t sm:border-t-0 pt-2 sm:pt-0">
           {/* 날짜 입력 영역 */}
-          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#C7D2FE' }}>
-            <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: 'var(--company-primary-border-light)' }}>
+            <div className="flex items-center gap-1 flex-shrink-0" style={{ color: 'var(--company-primary)' }}>
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
             
@@ -927,7 +929,7 @@ export function CommonSearchBar({
                     : "날짜 선택"}
               </span>
               {variant !== "destination" && localCheckIn && localCheckOut && (
-                <span className="ml-1 sm:ml-2 px-1 py-0.5 sm:px-2 sm:py-1 bg-blue-50 text-blue-700 font-medium rounded-md border border-blue-200 text-[10px] sm:text-xs whitespace-nowrap">
+                <span className="ml-1 sm:ml-2 px-1 py-0.5 sm:px-2 sm:py-1 font-medium rounded-md border text-[10px] sm:text-xs whitespace-nowrap" style={{ backgroundColor: 'var(--company-primary-light)', color: 'var(--company-primary-hover)', borderColor: 'var(--company-primary-border)' }}>
                   {calculateNights()}박
                 </span>
               )}
@@ -938,8 +940,8 @@ export function CommonSearchBar({
           <div className="h-4 w-px bg-gray-300 mx-1 sm:hidden"></div>
 
           {/* 게스트 정보 영역 */}
-          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: '#C7D2FE' }}>
-            <div className="flex items-center gap-1 text-blue-600 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-1 sm:border-l-2 sm:pl-4" style={{ borderLeftColor: 'var(--company-primary-border-light)' }}>
+            <div className="flex items-center gap-1 flex-shrink-0" style={{ color: 'var(--company-primary)' }}>
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
             <div 

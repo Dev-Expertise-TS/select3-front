@@ -2,10 +2,13 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { desktopNavItems } from "@/config/navigation"
 import { ChevronDown } from "lucide-react"
+import { getCompanyFromURL } from "@/lib/company-filter"
+import { withCompanyParam } from "@/lib/url-utils"
 
 /**
  * 상단 헤더
@@ -15,9 +18,15 @@ import { ChevronDown } from "lucide-react"
  * - 설정: src/config/navigation.ts
  */
 export function Header() {
+  const searchParams = useSearchParams()
   const [isScrolled, setIsScrolled] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [topicPages, setTopicPages] = useState<Array<{ slug: string; title_ko: string }>>([])
+  const [company, setCompany] = useState<string | null>(null)
+
+  useEffect(() => {
+    setCompany(getCompanyFromURL())
+  }, [searchParams])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,16 +65,34 @@ export function Header() {
       >
           <div className="container mx-auto max-w-[1440px] px-2 lg:px-2 xl:px-4">
             <div className="flex h-12 md:h-16 items-center justify-between">
-            <Link href="/" className="flex items-center text-blue-600 hover:text-blue-700 transition-colors py-0 my-0">
-              <div className="w-20 h-10 md:w-28 md:h-14 py-0 my-0">
+            <Link
+              href={withCompanyParam("/")}
+              className="flex items-center gap-1.5 transition-colors py-0 my-0 [color:var(--company-primary)] hover:[color:var(--company-primary-hover)]"
+              aria-label={company === "benepia" ? "SELECT for Benepia" : "Tourvis Select Logo"}
+            >
+              <div className="w-20 h-10 md:w-28 md:h-14 py-0 my-0 shrink-0">
                 <Image
                   src="/select_logo.avif"
-                  alt="Tourvis Select Logo"
+                  alt="SELECT"
                   width={112}
                   height={56}
                   className="w-full h-full object-contain py-0 my-0"
                 />
               </div>
+              {company === "benepia" && (
+                <div className="h-10 md:h-14 flex items-end gap-1.5 shrink-0 pb-0.5 md:pb-1">
+                  <span className="text-gray-500 font-medium text-sm md:text-base -translate-y-0.5">for</span>
+                  <div className="h-6 md:h-8 w-auto flex items-end shrink-0">
+                    <Image
+                      src="/logo_benepia.png"
+                      alt="Benepia"
+                      width={80}
+                      height={32}
+                      className="h-full w-auto object-contain object-bottom"
+                    />
+                  </div>
+                </div>
+              )}
             </Link>
 
             <nav className="hidden lg:flex items-center">
@@ -81,7 +108,7 @@ export function Header() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
+                      className="flex items-center whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 transition-colors px-2 lg:px-2 xl:px-4 hover:[color:var(--company-primary)]"
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {
                           (window as any).dataLayer.push({
@@ -109,7 +136,7 @@ export function Header() {
                     <>
                       <Link
                         href={item.href}
-                        className="flex items-center gap-1 whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
+                        className="flex items-center gap-1 whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 transition-colors px-2 lg:px-2 xl:px-4 hover:[color:var(--company-primary)]"
                         onClick={() => {
                           if (typeof window !== 'undefined' && (window as any).dataLayer) {
                             (window as any).dataLayer.push({
@@ -135,7 +162,7 @@ export function Header() {
                         <div className="absolute top-full left-0 mt-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl py-2 z-50">
                           <Link
                             href="/hotel-recommendations"
-                            className="block px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            className="block px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-[var(--company-primary-light)] hover:[color:var(--company-primary)]"
                           >
                             전체 추천 보기
                           </Link>
@@ -145,7 +172,7 @@ export function Header() {
                               <Link
                                 key={page.slug}
                                 href={`/hotel-recommendations/${page.slug}`}
-                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-[var(--company-primary-light)] hover:[color:var(--company-primary)]"
                               >
                                 {page.title_ko}
                               </Link>
@@ -157,7 +184,7 @@ export function Header() {
                   ) : (
                     <Link
                       href={item.href}
-                      className="whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors px-2 lg:px-2 xl:px-4"
+                      className="whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 transition-colors px-2 lg:px-2 xl:px-4 hover:[color:var(--company-primary)]"
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {
                           (window as any).dataLayer.push({
@@ -183,7 +210,7 @@ export function Header() {
 
             {/* 로그인/회원가입 버튼 - 주석 처리됨
             <div className="hidden lg:flex items-center space-x-4">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button size="sm" className="text-white bg-[var(--company-primary)] hover:bg-[var(--company-primary-hover)]">
                 로그인 / 회원가입
               </Button>
             </div>

@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
+import { CompanyThemeProvider } from "@/providers/company-theme-provider"
 import { Header } from "@/components/header"
 import { BottomNav } from "@/components/bottom-nav"
 import { KakaoConsultationButton } from "@/components/shared/kakao-consultation-button"
@@ -131,23 +132,24 @@ export default function RootLayout({
         
         <AnalyticsProvider>
           <QueryProvider>
-            {/* GTM 디버그 헬퍼 (개발 환경에서만 작동) */}
-            <GTMDebug />
-            <RouteEvents />
-            
-            <Suspense fallback={null}>
-              <Header />
-            </Suspense>
-            <main className="pt-12 md:pt-16">
-              {children}
-            </main>
-            <Suspense fallback={null}>
-              <BottomNav />
-            </Suspense>
-            <Suspense fallback={null}>
-              <KakaoConsultationButton />
-            </Suspense>
-            <HyattPrivePopup />
+            <CompanyThemeProvider>
+              {/* GTM 디버그 헬퍼 (개발 환경에서만 작동) */}
+              <GTMDebug />
+              <RouteEvents />
+              <Suspense fallback={null}>
+                <Header />
+              </Suspense>
+              <main className="pt-12 md:pt-16">
+                {children}
+              </main>
+              <Suspense fallback={null}>
+                <BottomNav />
+              </Suspense>
+              <Suspense fallback={null}>
+                <KakaoConsultationButton />
+              </Suspense>
+              <HyattPrivePopup />
+            </CompanyThemeProvider>
           </QueryProvider>
         </AnalyticsProvider>
       </body>
