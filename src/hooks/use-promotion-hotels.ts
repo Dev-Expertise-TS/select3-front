@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { transformHotelsToCardData } from '@/lib/hotel-utils'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { PROMOTION_CONFIG } from '@/config/layout'
-import { getCompanyFromURL, applyVccFilter } from '@/lib/company-filter'
+import { getCompanyFromURL, applyVccFilter, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 /**
  * 띠베너용 호텔 데이터 조회 훅 (Client Component용)
@@ -47,7 +47,7 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       const company = getCompanyFromURL()
 
       // SK인 경우 풀을 /promotion 페이지와 동일하게 설정
-      if (company === 'sk') {
+      if (isCompanyWithVccFilter(company)) {
         const { data: promotionMap } = await supabase
           .from('select_hotel_promotions_map')
           .select('sabre_id')
@@ -69,7 +69,7 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       hotelQuery = applyVccFilter(hotelQuery, company)
       
       // SK인 경우 더 많은 후보를 가져와서 랜덤화
-      if (company === 'sk') {
+      if (isCompanyWithVccFilter(company)) {
         hotelQuery = hotelQuery.limit(50)
       } else {
         hotelQuery = hotelQuery.limit(hotelCount * 2)
@@ -83,7 +83,7 @@ export function useTopBannerHotels(hotelCount: number = PROMOTION_CONFIG.DEFAULT
       // publish 필터링 (null이거나 true인 것만)
       let processedHotels = hotels.filter((h: any) => h.publish !== false)
 
-      if (company === 'sk') {
+      if (isCompanyWithVccFilter(company)) {
         // SK인 경우 랜덤하게 섞고 요청된 개수만큼 선택
         processedHotels = processedHotels
           .sort(() => Math.random() - 0.5)

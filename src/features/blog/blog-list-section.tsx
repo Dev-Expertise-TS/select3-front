@@ -47,7 +47,7 @@ export function BlogListSection({ initialBlogs = [] }: BlogListSectionProps) {
       try {
         setLoading(true)
         const company = searchParams?.get('company')
-        const url = company === 'sk' ? "/api/blogs?company=sk" : "/api/blogs"
+        const url = company ? `/api/blogs?company=${company}` : "/api/blogs"
         const response = await fetch(url)
         const data: BlogResponse = await response.json()
 

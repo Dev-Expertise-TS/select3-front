@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { RegionListClient } from './region-list-client'
 import { createClient } from '@/lib/supabase/server'
-import { getCompanyFromServer } from '@/lib/company-filter'
+import { getCompanyFromServer, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 export const metadata: Metadata = {
   title: '지역별 호텔 & 리조트 | 투어비스 셀렉트',
@@ -47,7 +47,7 @@ export default async function RegionListPage({
       .or('publish.is.null,publish.eq.true')
     
     // company=sk일 때 vcc=true 필터 적용
-    if (company === 'sk') {
+    if (isCompanyWithVccFilter(company)) {
       hotelQuery = hotelQuery.eq('vcc', true)
     }
 
@@ -58,12 +58,12 @@ export default async function RegionListPage({
         const code = h.city_code
         hotelCounts[code] = (hotelCounts[code] || 0) + 1
       })
-      console.log(`🏨 도시별 호텔 개수 집계 완료 ${company === 'sk' ? '(vcc=TRUE 필터 적용)' : ''}`)
+      console.log(`🏨 도시별 호텔 개수 집계 완료 ${isCompanyWithVccFilter(company) ? '(vcc=TRUE 필터 적용)' : ''}`)
     }
   }
 
   // 3. company=sk일 경우, vcc=TRUE 호텔이 없는 지역 제외
-  const filteredRegions = company === 'sk' 
+  const filteredRegions = isCompanyWithVccFilter(company) 
     ? (regions || []).filter(region => (hotelCounts[region.city_code] || 0) > 0)
     : (regions || [])
 

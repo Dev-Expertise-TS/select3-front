@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
 import { getBannerHotel } from '@/lib/banner-hotel-server'
-import { getCompanyFromSearchParams, applyVccFilter } from '@/lib/company-filter'
+import { getCompanyFromSearchParams, applyVccFilter, isCompanyWithVccFilter } from '@/lib/company-filter'
 import { getErrorMessage } from '@/lib/logger'
 
 /**
@@ -141,7 +141,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
       .in('chain_id', chainIds)
     
     // company=sk일 때 vcc=TRUE인 체인만 필터링
-    if (company === 'sk') {
+    if (isCompanyWithVccFilter(company)) {
       chainQuery = chainQuery.eq('vcc', true)
     }
     
@@ -155,7 +155,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
         조회된체인수: chainData.length,
         체인샘플: chainData.slice(0, 3),
         company: company,
-        vcc필터적용: company === 'sk'
+        vcc필터적용: isCompanyWithVccFilter(company)
       })
     }
   } else {
@@ -233,7 +233,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
       .eq('status', 'active')
     
     // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
-    if (company === 'sk' && chainData.length > 0) {
+    if (isCompanyWithVccFilter(company) && chainData.length > 0) {
       const vccChainIds = chainData.map(c => c.chain_id)
       brandQuery = brandQuery.in('chain_id', vccChainIds)
     }
@@ -258,7 +258,7 @@ export async function getHotelPageData(opts?: { region?: string; company?: strin
           .in('chain_id', chainIdsForBrands)
         
         // company=sk일 때 vcc=TRUE인 체인만 필터링
-        if (company === 'sk') {
+        if (isCompanyWithVccFilter(company)) {
           chainQueryForBrands = chainQueryForBrands.eq('vcc', true)
         }
         

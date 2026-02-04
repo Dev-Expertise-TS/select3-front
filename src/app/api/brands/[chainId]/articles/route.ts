@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getCompanyFromSearchParams } from "@/lib/company-filter"
+import { getCompanyFromSearchParams, isCompanyWithVccFilter } from "@/lib/company-filter"
 
 /**
  * brand_id_connect 컬럼 파싱 함수
@@ -134,8 +134,8 @@ export async function GET(
       return hasMatch
     })
 
-    // 4. company=sk일 때 vcc=true 필터 적용
-    if (company === 'sk' && matchedBlogs.length > 0) {
+    // 4. vcc 필터 적용 company일 때 vcc=true 필터 적용
+    if (isCompanyWithVccFilter(company) && matchedBlogs.length > 0) {
       const sabreIds = new Set<number>()
       matchedBlogs.forEach((blog: any) => {
         for (let i = 1; i <= 12; i++) {
@@ -187,7 +187,7 @@ export async function GET(
       return rest
     })
     
-    console.log(`[ API ] 체인 ${chainId}의 아티클 ${resultBlogs.length}개 조회 완료 (brand_id_connect 기반${company === 'sk' ? ', vcc=TRUE 필터 적용' : ''})`)
+    console.log(`[ API ] 체인 ${chainId}의 아티클 ${resultBlogs.length}개 조회 완료 (brand_id_connect 기반${isCompanyWithVccFilter(company) ? ', vcc=TRUE 필터 적용' : ''})`)
     
     return NextResponse.json({
       success: true,

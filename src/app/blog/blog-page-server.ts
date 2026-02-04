@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isCompanyWithVccFilter } from '@/lib/company-filter'
 
 /**
  * 서버에서 블로그 목록 페이지 데이터 조회
@@ -35,8 +36,8 @@ export async function getBlogPageData(company?: string | null) {
 
   let filteredBlogs = blogs || []
 
-  // company=sk일 때 vcc=true 필터 적용
-  if (company === 'sk' && filteredBlogs.length > 0) {
+  // vcc 필터 적용 company일 때 vcc=true 필터 적용
+  if (isCompanyWithVccFilter(company) && filteredBlogs.length > 0) {
     const sabreIds = new Set<number>()
     filteredBlogs.forEach((blog: any) => {
       for (let i = 1; i <= 12; i++) {
@@ -78,7 +79,7 @@ export async function getBlogPageData(company?: string | null) {
     return rest
   })
   
-  console.log('✅ [BlogPage] 블로그 조회 완료:', resultBlogs.length, '개', company === 'sk' ? '(vcc=TRUE 필터 적용)' : '')
+  console.log('✅ [BlogPage] 블로그 조회 완료:', resultBlogs.length, '개', isCompanyWithVccFilter(company) ? '(vcc=TRUE 필터 적용)' : '')
 
   return {
     blogs: resultBlogs

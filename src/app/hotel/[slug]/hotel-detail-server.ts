@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isCompanyWithVccFilter } from '@/lib/company-filter'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 
 /**
@@ -27,8 +28,8 @@ export async function getHotelDetailData(slug: string, company?: string | null) 
     return null
   }
 
-  // company=sk일 때 vcc가 true가 아니면 null 반환
-  if (company === 'sk' && hotel.vcc !== true) {
+  // vcc 필터 적용 company일 때 vcc가 true가 아니면 null 반환
+  if (isCompanyWithVccFilter(company) && hotel.vcc !== true) {
     return null
   }
   
@@ -170,8 +171,8 @@ export async function getHotelDetailData(slug: string, company?: string | null) 
   // 블로그 데이터 처리
   let blogs = blogsResult.data || []
 
-  // company=sk일 때 블로그 필터링 (vcc=TRUE인 호텔만 포함된 블로그만 표시)
-  if (company === 'sk' && blogs.length > 0) {
+  // vcc 필터 적용 company일 때 블로그 필터링 (vcc=TRUE인 호텔만 포함된 블로그만 표시)
+  if (isCompanyWithVccFilter(company) && blogs.length > 0) {
     const allMentionedSabreIds = new Set<number>()
     blogs.forEach((blog: any) => {
       for (let i = 1; i <= 12; i++) {

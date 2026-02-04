@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { getCompanyFromURL } from '@/lib/company-filter'
+import { getCompanyFromURL, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 const supabase = createClient()
 
@@ -54,7 +54,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
           .select('city, city_ko, city_en, country_ko, country_en, brand_id, brand_id_2, brand_id_3, chain_ko, chain_en, vcc')
           .or('publish.is.null,publish.eq.true')
         
-        if (company === 'sk') {
+        if (isCompanyWithVccFilter(company)) {
           hotelQuery = hotelQuery.eq('vcc', true)
         }
         
@@ -83,7 +83,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         
         // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
         let vccChainIds: number[] = []
-        if (company === 'sk' && brands.length > 0) {
+        if (isCompanyWithVccFilter(company) && brands.length > 0) {
           const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
           if (chainIds.length > 0) {
             const { data: chainData } = await supabase
@@ -144,7 +144,7 @@ export function HotelFilterAllView({ onFiltersChange, className }: HotelFilterAl
         // 체인 옵션 생성
         // company=sk일 때는 vcc=TRUE인 체인만 표시
         let chains: Array<{ id: string; label: string }> = []
-        if (company === 'sk') {
+        if (isCompanyWithVccFilter(company)) {
           // vcc=TRUE인 체인만 조회
           const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
           if (chainIds.length > 0) {

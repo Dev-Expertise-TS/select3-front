@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BrandCard } from "@/components/shared/brand-card"
+import { isCompanyWithVccFilter } from "@/lib/company-filter"
 import { withCompanyParam } from "@/lib/url-utils"
 
 interface HotelChain {
@@ -37,9 +38,9 @@ async function getHotelChains() {
 export async function BrandProgramSection({ company }: { company?: string | null }) {
   const chains = await getHotelChains()
   
-  // company=sk일 때 특정 브랜드만 노출
+  // vcc 필터 적용 company일 때 특정 브랜드만 노출 (설정: config/company.ts)
   let filteredChains = chains
-  if (company === 'sk') {
+  if (isCompanyWithVccFilter(company)) {
     const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts', 'hyatt']
     filteredChains = chains.filter(chain => allowedSlugs.includes(chain.slug))
   } else {

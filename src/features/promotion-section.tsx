@@ -3,7 +3,7 @@ import { HotelCardGridSection } from '@/components/shared/hotel-card-grid'
 import { transformHotelsToCardData } from '@/lib/hotel-utils'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { PROMOTION_CONFIG, type HotelCount } from '@/config/layout'
-import { applyVccFilter } from '@/lib/company-filter'
+import { applyVccFilter, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 // 프로모션 호텔 데이터 조회 (Server-side)
 async function getPromotionHotels(
@@ -120,8 +120,8 @@ async function getTopBannerHotels(
 
   let poolSabreIds = activeTopSlots.map((slot: any) => slot.sabre_id)
 
-  // SK인 경우 풀을 /promotion 페이지와 동일하게 설정
-  if (company === 'sk') {
+  // vcc 필터 적용 company인 경우 풀을 /promotion 페이지와 동일하게 설정
+  if (isCompanyWithVccFilter(company)) {
     const { data: promotionMap } = await supabase
       .from('select_hotel_promotions_map')
       .select('sabre_id')
@@ -144,8 +144,8 @@ async function getTopBannerHotels(
   // company=sk일 때 vcc=true 필터 적용
   hotelQuery = applyVccFilter(hotelQuery, company || null)
   
-  // SK인 경우 더 많은 후보를 가져와서 랜덤화 (최대 50개)
-  if (company === 'sk') {
+  // vcc 필터 적용 company인 경우 더 많은 후보를 가져와서 랜덤화 (최대 50개)
+  if (isCompanyWithVccFilter(company)) {
     hotelQuery = hotelQuery.limit(50)
   } else {
     hotelQuery = hotelQuery.limit(hotelCount * 2)
@@ -158,8 +158,8 @@ async function getTopBannerHotels(
   // publish 필터링 (null이거나 true인 것만)
   let processedHotels = hotels.filter((h: any) => h.publish !== false)
 
-  if (company === 'sk') {
-    // SK인 경우 랜덤하게 섞고 요청된 개수만큼 선택
+  if (isCompanyWithVccFilter(company)) {
+    // vcc 필터 적용 company인 경우 랜덤하게 섞고 요청된 개수만큼 선택
     processedHotels = processedHotels
       .sort(() => Math.random() - 0.5)
       .slice(0, hotelCount)
@@ -233,7 +233,7 @@ export async function PromotionSection({
       hotelCount={hotelCount}
       showViewAll={true}
       viewAllText="프로모션 더 보기"
-      viewAllHref={company === 'sk' ? "/promotion?company=sk" : "/promotion"}
+      viewAllHref={company ? `/promotion?company=${company}` : "/promotion"}
       onViewAllClick={undefined}
     />
   )

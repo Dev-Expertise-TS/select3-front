@@ -91,7 +91,7 @@ export function useFilterOptions(options?: { enabled?: boolean }) {
     queryFn: async () => {
       // company 파라미터를 URL에서 가져와서 API에 전달
       const company = getCompanyFromURL()
-      const url = company === 'sk' ? '/api/filter-options?company=sk' : '/api/filter-options'
+      const url = company ? `/api/filter-options?company=${company}` : '/api/filter-options'
       
       const response = await fetch(url)
       

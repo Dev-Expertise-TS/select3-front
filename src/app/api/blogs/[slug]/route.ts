@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getCompanyFromSearchParams } from "@/lib/company-filter"
+import { getCompanyFromSearchParams, isCompanyWithVccFilter } from "@/lib/company-filter"
 
 export async function GET(
   request: NextRequest,
@@ -65,8 +65,8 @@ export async function GET(
       )
     }
 
-    // company=sk일 때 vcc=true 필터 적용
-    if (company === 'sk') {
+    // vcc 필터 적용 company일 때 vcc=true 필터 적용
+    if (isCompanyWithVccFilter(company)) {
       const sabreIds = []
       for (let i = 1; i <= 12; i++) {
         const id = (blog as any)[`s${i}_sabre_id`]

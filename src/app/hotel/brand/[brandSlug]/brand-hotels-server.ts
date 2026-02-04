@@ -2,7 +2,7 @@ import { getBrandBySlug, getHotelsByBrandId } from '@/lib/brand-data-server'
 import { createClient } from '@/lib/supabase/server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
-import { applyVccFilter } from '@/lib/company-filter'
+import { applyVccFilter, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 /**
  * 브랜드별 호텔 페이지 데이터 조회
@@ -196,8 +196,8 @@ export async function getBrandHotelsData(brandSlug: string, company?: string | n
   
   let filteredArticles = articles || []
 
-  // company=sk일 때 vcc=true 필터 적용
-  if (company === 'sk' && filteredArticles.length > 0) {
+  // vcc 필터 적용 company일 때 vcc=true 필터 적용
+  if (isCompanyWithVccFilter(company) && filteredArticles.length > 0) {
     const sabreIds = new Set<number>()
     filteredArticles.forEach((article: any) => {
       for (let i = 1; i <= 12; i++) {

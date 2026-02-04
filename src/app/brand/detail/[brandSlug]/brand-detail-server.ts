@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isCompanyWithVccFilter } from '@/lib/company-filter'
 import { getBrandBySlug, getHotelsByBrandName } from '@/lib/brand-data-server'
 import { getFirstImagePerHotel } from '@/lib/media-utils'
 import { getHotelBrandIds, transformHotelsToAllViewCardData } from '@/lib/hotel-utils'
@@ -71,7 +72,7 @@ export async function getBrandDetailData(brandSlug: string, company?: string | n
   let filteredArticles = articles || []
 
   // company=sk일 때 vcc=true 필터 적용
-  if (company === 'sk' && filteredArticles.length > 0) {
+  if (isCompanyWithVccFilter(company) && filteredArticles.length > 0) {
     const sabreIds = new Set<number>()
     filteredArticles.forEach((article: any) => {
       for (let i = 1; i <= 12; i++) {

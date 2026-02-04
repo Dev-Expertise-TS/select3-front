@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { isCompanyWithVccFilter } from "@/lib/company-filter"
 import { withCompanyParam } from "@/lib/url-utils"
 
 interface HotelChain {
@@ -75,9 +76,9 @@ async function getHotelChains() {
 export async function BrandProgramPage({ company }: { company?: string | null }) {
   const chains = await getHotelChains()
   
-  // company=sk일 때 특정 브랜드만 노출
+  // vcc 필터 적용 company일 때 특정 브랜드만 노출 (설정: config/company.ts)
   let filteredChains = chains
-  if (company === 'sk') {
+  if (isCompanyWithVccFilter(company)) {
     const allowedSlugs = ['accor', 'aman', 'hilton', 'preferred-hotels-resorts', 'hyatt']
     filteredChains = chains.filter(chain => allowedSlugs.includes(chain.chain_slug))
   } else {
@@ -126,7 +127,7 @@ export async function BrandProgramPage({ company }: { company?: string | null })
           </div>
 
           {/* 더 많은 브랜드 보기 버튼 (SK인 경우 숨김) */}
-          {company !== 'sk' && (
+          {!isCompanyWithVccFilter(company) && (
             <div className="text-center mt-8">
               <Link
                 href="/hotel/brand"

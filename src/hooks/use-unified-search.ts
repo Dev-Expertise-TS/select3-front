@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { getCompanyFromURL, applyVccFilter } from '@/lib/company-filter'
+import { getCompanyFromURL, applyVccFilter, isCompanyWithVccFilter } from '@/lib/company-filter'
 
 type UnifiedHotel = {
   type: 'hotel'
@@ -333,8 +333,8 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
         } else {
           blogs = blogData || []
           
-          // company=sk일 때 vcc=true 필터 적용
-          if (company === 'sk' && blogs.length > 0) {
+          // vcc 필터 적용 company일 때 vcc=true 필터 적용
+          if (isCompanyWithVccFilter(company) && blogs.length > 0) {
             const allMentionedSabreIds = new Set<number>()
             blogs.forEach((blog: any) => {
               for (let i = 1; i <= 12; i++) {
@@ -365,7 +365,7 @@ export function useUnifiedSearch(q: string, opts?: { includePromotions?: boolean
             }
           }
           
-          console.log('✅ Blog search successful, found:', blogs.length, 'results', company === 'sk' ? '(vcc=TRUE 필터 적용)' : '')
+          console.log('✅ Blog search successful, found:', blogs.length, 'results', isCompanyWithVccFilter(company) ? '(vcc=TRUE 필터 적용)' : '')
         }
       } catch (err) {
         console.error('❌ Blog search critical error:', err instanceof Error ? err.message : String(err))

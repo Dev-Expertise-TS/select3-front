@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { normalizeCompany } from '@/config/company'
 
 // city_code → city_slug 매핑
 // ⚠️ 중요: select_regions 테이블의 city_slug 값과 정확히 일치해야 함!
@@ -65,23 +66,23 @@ export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const response = NextResponse.next()
   
-  // company 파라미터 감지 및 쿠키 저장
-  const companyParam = searchParams.get('company')
-  const companyCookie = request.cookies.get('company')?.value
-  
-  if (companyParam === 'sk') {
-    // URL에 company=sk가 있으면 쿠키에 저장 (30일 유지)
-    response.cookies.set('company', 'sk', {
+  // company 파라미터 감지 및 쿠키 저장 (허용 목록: config/company.ts)
+  const companyParam = normalizeCompany(searchParams.get('company'))
+  const companyCookie = normalizeCompany(request.cookies.get('company')?.value)
+
+  if (companyParam) {
+    // URL에 허용된 company가 있으면 쿠키에 저장 (30일 유지)
+    response.cookies.set('company', companyParam, {
       maxAge: 30 * 24 * 60 * 60, // 30일
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false // 클라이언트에서도 읽을 수 있도록
     })
-  } else if (companyCookie === 'sk' && !searchParams.has('company')) {
-    // 쿠키에 company=sk가 있지만 URL에 없으면 URL에 추가
+  } else if (companyCookie && !searchParams.has('company')) {
+    // 쿠키에 허용된 company가 있지만 URL에 없으면 URL에 추가
     const newUrl = new URL(request.url)
-    newUrl.searchParams.set('company', 'sk')
+    newUrl.searchParams.set('company', companyCookie)
     return NextResponse.redirect(newUrl)
   }
   
@@ -100,9 +101,9 @@ export default function proxy(request: NextRequest) {
         }
       })
       
-      // 쿠키에 company가 있으면 URL에도 추가
-      if (companyCookie === 'sk' && !newUrl.searchParams.has('company')) {
-        newUrl.searchParams.set('company', 'sk')
+      // 쿠키에 허용된 company가 있으면 URL에도 추가
+      if (companyCookie && !newUrl.searchParams.has('company')) {
+        newUrl.searchParams.set('company', companyCookie)
       }
       
       return NextResponse.redirect(newUrl, { status: 301 })

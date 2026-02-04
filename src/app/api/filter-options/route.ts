@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getCompanyFromServer } from '@/lib/company-filter'
+import { getCompanyFromServer, isCompanyWithVccFilter } from '@/lib/company-filter'
 import { getErrorMessage } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .or('publish.is.null,publish.eq.true')
     
     // company=sk일 때 vcc=TRUE 필터 적용
-    if (company === 'sk') {
+    if (isCompanyWithVccFilter(company)) {
       hotelQuery = hotelQuery.eq('vcc', true)
     }
     
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         brands = brandData || []
         
         // company=sk일 때 vcc=TRUE인 체인에 속한 브랜드만 필터링
-        if (company === 'sk' && brands.length > 0) {
+        if (isCompanyWithVccFilter(company) && brands.length > 0) {
           const chainIds = Array.from(new Set(brands.map((b: any) => b.chain_id).filter(Boolean)))
           if (chainIds.length > 0) {
             const { data: vccChainData } = await supabase
@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
         .eq('status', 'active')
       
       // company=sk일 때 vcc=TRUE인 체인만 필터링
-      if (company === 'sk') {
+      if (isCompanyWithVccFilter(company)) {
         chainQuery = chainQuery.eq('vcc', true)
       }
       
@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
         console.error('❌ 체인 데이터 조회 오류:', getErrorMessage(chainError))
       } else {
         hotelChains = chainData || []
-        console.log('⛓️ hotel_chains 테이블에서 조회:', hotelChains.length, company === 'sk' ? '(vcc=TRUE만)' : '(전체)')
+        console.log('⛓️ hotel_chains 테이블에서 조회:', hotelChains.length, isCompanyWithVccFilter(company) ? '(vcc=TRUE만)' : '(전체)')
       }
     }
     
@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
             : null
           
           // company=sk일 때는 vcc=TRUE인 체인에 속한 브랜드만 포함
-          if (company === 'sk' && brand.chain_id && !chain) {
+          if (isCompanyWithVccFilter(company) && brand.chain_id && !chain) {
             return // vcc=TRUE인 체인이 아니면 제외
           }
           

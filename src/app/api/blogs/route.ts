@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getCompanyFromSearchParams } from "@/lib/company-filter"
+import { getCompanyFromSearchParams, isCompanyWithVccFilter } from "@/lib/company-filter"
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
 
     let filteredBlogs = blogs || []
 
-    // company=sk일 때 vcc=true 필터 적용
-    if (company === 'sk' && filteredBlogs.length > 0) {
+    // vcc 필터 적용 company일 때 vcc=true 필터 적용
+    if (isCompanyWithVccFilter(company) && filteredBlogs.length > 0) {
       // 1. 모든 블로그에서 언급된 sabre_id 추출
       const sabreIds = new Set<number>()
       filteredBlogs.forEach((blog: any) => {

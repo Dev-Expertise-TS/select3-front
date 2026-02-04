@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import { getCompanyFromURL } from "@/lib/company-filter"
 import { addCompanyParam } from "@/lib/url-utils"
 import { Card, CardContent } from "@/components/ui/hotel-card"
 import { MapPin } from "lucide-react"
@@ -323,21 +324,10 @@ export function HotelCardAllView({
   if (company !== undefined && company !== null) {
     companyValue = company
   } else if (typeof window !== 'undefined') {
-    // 클라이언트 사이드에서만 실행
+    // 클라이언트 사이드: 허용 목록에 있는 company만 사용 (config/company.ts)
     try {
-      const urlParams = new URLSearchParams(window.location.search)
-      const companyParam = urlParams.get('company')
-      if (companyParam === 'sk') {
-        companyValue = 'sk'
-      } else {
-        const cookies = document.cookie.split(';')
-        const companyCookie = cookies.find(c => c.trim().startsWith('company='))
-        if (companyCookie?.split('=')[1]?.trim() === 'sk') {
-          companyValue = 'sk'
-        }
-      }
-    } catch (e) {
-      // 에러 발생 시 무시
+      companyValue = getCompanyFromURL()
+    } catch {
       companyValue = null
     }
   }

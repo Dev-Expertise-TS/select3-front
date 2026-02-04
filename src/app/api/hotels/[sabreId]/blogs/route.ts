@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getCompanyFromSearchParams } from "@/lib/company-filter"
+import { getCompanyFromSearchParams, isCompanyWithVccFilter } from "@/lib/company-filter"
 
 export async function GET(
   request: NextRequest,
@@ -29,8 +29,8 @@ export async function GET(
       )
     }
 
-    // company=sk일 때 현재 호텔의 vcc가 TRUE가 아니면 빈 배열 반환
-    if (company === 'sk' && hotel?.vcc !== true) {
+    // vcc 필터 적용 company일 때 현재 호텔의 vcc가 TRUE가 아니면 빈 배열 반환
+    if (isCompanyWithVccFilter(company) && hotel?.vcc !== true) {
       return NextResponse.json({
         success: true,
         data: [],
@@ -83,8 +83,8 @@ export async function GET(
 
     let filteredBlogs = blogs || []
 
-    // company=sk일 때 vcc=true 필터 적용
-    if (company === 'sk' && filteredBlogs.length > 0) {
+    // vcc 필터 적용 company일 때 vcc=true 필터 적용
+    if (isCompanyWithVccFilter(company) && filteredBlogs.length > 0) {
       const allMentionedSabreIds = new Set<number>()
       filteredBlogs.forEach((blog: any) => {
         for (let i = 1; i <= 12; i++) {
@@ -126,7 +126,7 @@ export async function GET(
       return rest
     })
 
-    console.log(`✅ [API] 호텔 ${sabreId}의 블로그 ${resultBlogs.length}개 조회 완료 ${company === 'sk' ? '(vcc=TRUE 필터 적용)' : ''}`)
+    console.log(`✅ [API] 호텔 ${sabreId}의 블로그 ${resultBlogs.length}개 조회 완료 ${isCompanyWithVccFilter(company) ? '(vcc=TRUE 필터 적용)' : ''}`)
 
     return NextResponse.json({
       success: true,
