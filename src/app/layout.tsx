@@ -1,6 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 import { Suspense } from "react"
+import { normalizeCompany } from "@/config/company"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { QueryProvider } from "@/providers/query-provider"
@@ -90,11 +92,14 @@ export const metadata: Metadata = {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const headersList = await headers()
+  const initialCompany = normalizeCompany(headersList.get('x-company'))
+
   return (
     <html lang="ko" className={inter.variable} suppressHydrationWarning>
       <head>
@@ -132,18 +137,18 @@ export default function RootLayout({
         
         <AnalyticsProvider>
           <QueryProvider>
-            <CompanyThemeProvider>
+            <CompanyThemeProvider initialCompany={initialCompany}>
               {/* GTM 디버그 헬퍼 (개발 환경에서만 작동) */}
               <GTMDebug />
               <RouteEvents />
               <Suspense fallback={null}>
-                <Header />
+                <Header initialCompany={initialCompany} />
               </Suspense>
               <main className="pt-12 md:pt-16">
                 {children}
               </main>
               <Suspense fallback={null}>
-                <BottomNav />
+                <BottomNav initialCompany={initialCompany} />
               </Suspense>
               <Suspense fallback={null}>
                 <KakaoConsultationButton />

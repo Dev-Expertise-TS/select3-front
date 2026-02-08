@@ -5,8 +5,14 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { mobileNavItems, navigationItems } from "@/config/navigation"
+import { addCompanyParam } from "@/lib/url-utils"
 import { Menu, X } from "lucide-react"
 import { TourvisIcon } from "@/components/shared/icons/TourvisIcon"
+
+interface BottomNavProps {
+  /** 서버에서 전달한 company 값 (하이드레이션 일치용) */
+  initialCompany?: string | null
+}
 
 /**
  * 모바일 하단 네비게이션 바
@@ -15,7 +21,7 @@ import { TourvisIcon } from "@/components/shared/icons/TourvisIcon"
  * - 모든 페이지에서 공통으로 사용
  * - 설정: src/config/navigation.ts
  */
-export function BottomNav() {
+export function BottomNav({ initialCompany = null }: BottomNavProps) {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -66,7 +72,7 @@ export function BottomNav() {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href.startsWith("http") ? item.href : addCompanyParam(item.href, initialCompany)}
                 className={cn(
                   "group flex flex-col items-center justify-center h-full transition-colors flex-1 active:opacity-80",
                   isActive && !isKakaoMenu
@@ -151,7 +157,7 @@ export function BottomNav() {
                   return (
                     <Link
                       key={item.href}
-                      href={item.href}
+                      href={item.href.startsWith("http") ? item.href : addCompanyParam(item.href, initialCompany)}
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {
                           ;(window as any).dataLayer.push({

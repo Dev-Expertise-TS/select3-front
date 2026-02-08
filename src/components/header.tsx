@@ -8,7 +8,12 @@ import { cn } from "@/lib/utils"
 import { desktopNavItems } from "@/config/navigation"
 import { ChevronDown } from "lucide-react"
 import { getCompanyFromURL } from "@/lib/company-filter"
-import { withCompanyParam } from "@/lib/url-utils"
+import { addCompanyParam } from "@/lib/url-utils"
+
+interface HeaderProps {
+  /** 서버에서 전달한 company 값 (하이드레이션 일치용) */
+  initialCompany?: string | null
+}
 
 /**
  * 상단 헤더
@@ -17,16 +22,16 @@ import { withCompanyParam } from "@/lib/url-utils"
  * - 모바일에서는 로고만 표시 (하단 네비게이션 사용)
  * - 설정: src/config/navigation.ts
  */
-export function Header() {
+export function Header({ initialCompany = null }: HeaderProps) {
   const searchParams = useSearchParams()
   const [isScrolled, setIsScrolled] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [topicPages, setTopicPages] = useState<Array<{ slug: string; title_ko: string }>>([])
-  const [company, setCompany] = useState<string | null>(null)
+  const [company, setCompany] = useState<string | null>(initialCompany ?? null)
 
   useEffect(() => {
-    setCompany(getCompanyFromURL())
-  }, [searchParams])
+    setCompany(initialCompany ?? getCompanyFromURL())
+  }, [searchParams, initialCompany])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,7 +71,7 @@ export function Header() {
           <div className="container mx-auto max-w-[1440px] px-2 lg:px-2 xl:px-4">
             <div className="flex h-12 md:h-16 items-center justify-between">
             <Link
-              href={withCompanyParam("/")}
+              href={addCompanyParam("/", initialCompany)}
               className="flex items-center gap-1.5 transition-colors py-0 my-0 [color:var(--company-primary)] hover:[color:var(--company-primary-hover)]"
               aria-label={company === "benepia" ? "SELECT for Benepia" : "Tourvis Select Logo"}
             >
@@ -135,7 +140,7 @@ export function Header() {
                   ) : item.hasDropdown ? (
                     <>
                       <Link
-                        href={item.href}
+                        href={item.href.startsWith("http") ? item.href : addCompanyParam(item.href, initialCompany)}
                         className="flex items-center gap-1 whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 transition-colors px-2 lg:px-2 xl:px-4 hover:[color:var(--company-primary)]"
                         onClick={() => {
                           if (typeof window !== 'undefined' && (window as any).dataLayer) {
@@ -161,7 +166,7 @@ export function Header() {
                       {openDropdown === item.href && topicPages.length > 0 && (
                         <div className="absolute top-full left-0 mt-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl py-2 z-50">
                           <Link
-                            href="/hotel-recommendations"
+                            href={addCompanyParam("/hotel-recommendations", initialCompany)}
                             className="block px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-[var(--company-primary-light)] hover:[color:var(--company-primary)]"
                           >
                             전체 추천 보기
@@ -171,7 +176,7 @@ export function Header() {
                             {topicPages.map((page) => (
                               <Link
                                 key={page.slug}
-                                href={`/hotel-recommendations/${page.slug}`}
+                                href={addCompanyParam(`/hotel-recommendations/${page.slug}`, initialCompany)}
                                 className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-[var(--company-primary-light)] hover:[color:var(--company-primary)]"
                               >
                                 {page.title_ko}
@@ -183,7 +188,7 @@ export function Header() {
                     </>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={item.href.startsWith("http") ? item.href : addCompanyParam(item.href, initialCompany)}
                       className="whitespace-nowrap text-xs lg:text-xs xl:text-base font-semibold text-gray-900 transition-colors px-2 lg:px-2 xl:px-4 hover:[color:var(--company-primary)]"
                       onClick={() => {
                         if (typeof window !== 'undefined' && (window as any).dataLayer) {

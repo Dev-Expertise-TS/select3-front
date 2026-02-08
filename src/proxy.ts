@@ -64,14 +64,22 @@ const CITY_CODE_TO_SLUG: Record<string, string> = {
 // 네트워크 경계를 명확히 하고 Node.js 런타임에서 실행됩니다
 export default function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
-  const response = NextResponse.next()
-  
-  // company 파라미터 감지 및 쿠키 저장 (허용 목록: config/company.ts)
   const companyParam = normalizeCompany(searchParams.get('company'))
   const companyCookie = normalizeCompany(request.cookies.get('company')?.value)
 
+  // x-company 헤더: 서버 컴포넌트(레이아웃)에서 하이드레이션 일치용으로 사용
+  const requestHeaders = new Headers(request.headers)
   if (companyParam) {
-    // URL에 허용된 company가 있으면 쿠키에 저장 (30일 유지)
+    requestHeaders.set('x-company', companyParam)
+  }
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
+
+  // company 파라미터 감지 및 쿠키 저장 (허용 목록: config/company.ts)
+  if (companyParam) {
+    // URL에 허용된 company가 있으면 쿠키에 저장 (30일 유지) → 이후 네비게이션 시 company 유지
     response.cookies.set('company', companyParam, {
       maxAge: 30 * 24 * 60 * 60, // 30일
       path: '/',
@@ -79,11 +87,9 @@ export default function proxy(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false // 클라이언트에서도 읽을 수 있도록
     })
-  } else if (companyCookie && !searchParams.has('company')) {
-    // 쿠키에 허용된 company가 있지만 URL에 없으면 URL에 추가
-    const newUrl = new URL(request.url)
-    newUrl.searchParams.set('company', companyCookie)
-    return NextResponse.redirect(newUrl)
+  } else if (!searchParams.has('company') && companyCookie) {
+    // URL에 company 없음 + 쿠키 있음 → 사용자가 company 없이 URL 직접 입력 → 쿠키 삭제, 이후 네비게이션에서 company 제거
+    response.cookies.set('company', '', { maxAge: 0, path: '/' })
   }
   
   // /hotel?city=DANANG → /hotel/danang 리다이렉트
@@ -94,18 +100,13 @@ export default function proxy(request: NextRequest) {
       const citySlug = CITY_CODE_TO_SLUG[cityCode] || cityCode.toLowerCase().replace(/_/g, '-')
       const newUrl = new URL(`/hotel/${citySlug}`, request.url)
       
-      // company 파라미터 유지
+      // company 파라미터 유지 (URL에 있던 것만 - 쿠키만 있을 땐 추가하지 않음)
       searchParams.forEach((value, key) => {
         if (key !== 'city') {
           newUrl.searchParams.set(key, value)
         }
       })
-      
-      // 쿠키에 허용된 company가 있으면 URL에도 추가
-      if (companyCookie && !newUrl.searchParams.has('company')) {
-        newUrl.searchParams.set('company', companyCookie)
-      }
-      
+
       return NextResponse.redirect(newUrl, { status: 301 })
     }
   }
