@@ -88,8 +88,23 @@ export default function proxy(request: NextRequest) {
       httpOnly: false // 클라이언트에서도 읽을 수 있도록
     })
   } else if (!searchParams.has('company') && companyCookie) {
-    // URL에 company 없음 + 쿠키 있음 → 사용자가 company 없이 URL 직접 입력 → 쿠키 삭제, 이후 네비게이션에서 company 제거
-    response.cookies.set('company', '', { maxAge: 0, path: '/' })
+    // URL에 company 없음 + 쿠키 있음
+    if (pathname === '/') {
+      // 루트(/)로 ?company=benepia 제거 후 접속 → 쿠키 삭제, / 유지
+      response.cookies.set('company', '', { maxAge: 0, path: '/' })
+    } else if (searchParams.get('clear_company') === '1') {
+      // 의도적 제거: ?clear_company=1 일 때 쿠키 삭제 후 해당 경로 유지
+      response.cookies.set('company', '', { maxAge: 0, path: '/' })
+      const clearUrl = new URL(request.url)
+      clearUrl.searchParams.delete('clear_company')
+      const redirectPath = clearUrl.pathname + (clearUrl.search ? clearUrl.search : '')
+      return NextResponse.redirect(new URL(redirectPath, request.url))
+    } else {
+      // 그 외 경로: company 파라미터 누락 → URL에 추가하여 리다이렉트 (절대 풀리지 않음)
+      const newUrl = new URL(request.url)
+      newUrl.searchParams.set('company', companyCookie)
+      return NextResponse.redirect(newUrl)
+    }
   }
   
   // /hotel?city=DANANG → /hotel/danang 리다이렉트
@@ -100,12 +115,14 @@ export default function proxy(request: NextRequest) {
       const citySlug = CITY_CODE_TO_SLUG[cityCode] || cityCode.toLowerCase().replace(/_/g, '-')
       const newUrl = new URL(`/hotel/${citySlug}`, request.url)
       
-      // company 파라미터 유지 (URL에 있던 것만 - 쿠키만 있을 땐 추가하지 않음)
       searchParams.forEach((value, key) => {
         if (key !== 'city') {
           newUrl.searchParams.set(key, value)
         }
       })
+      if (companyCookie && !newUrl.searchParams.has('company')) {
+        newUrl.searchParams.set('company', companyCookie)
+      }
 
       return NextResponse.redirect(newUrl, { status: 301 })
     }
